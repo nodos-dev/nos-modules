@@ -1,14 +1,9 @@
 
-
-struct MZColorCorrectInput
+extern "C"
 {
-};
+    void AdderMain()
+    {
 
-struct MZColorCorrectOutput
-{
-};
-
-void PluginMain(MZColorCorrectInput* in, MZColorCorrectOutput* out)
-{
+    }
 }
 
