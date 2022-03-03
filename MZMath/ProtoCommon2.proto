@@ -9,31 +9,11 @@ message Node
     string node_id   = 1;
     string type_name = 2;
 
-    optional repeated Node       nodes       = 1; // Subgraph, if applicable
-    optional repeated Connection connections = 2; // Connections in the subgraph, if applicable
+    optional repeated Node   nodes       = 1; // Subgraph, if applicable
+    optional repeated string connections = 2; // Connections in the subgraph, if applicable
 
-    optional repeated Pin input_pins  = 3; // Input pin descriptors of the subgraph, if applicable
-    optional repeated Pin output_pins = 4; // Output pin descriptors of the subgraph, if applicable
-}
-
-message Pin
-{
-    string    name        = 1;
-    string    type_name   = 2;
-    ShowAs    show_as     = 3;
-    CanShowAs can_show_as = 4;
-}
-
-message PinLocator
-{
-    string node_id  = 1;
-    string pin_name = 2;
-}
-
-message Connection
-{
-    PinLocator from = 1;
-    PinLocator to   = 2;
+    optional repeated string input_pins  = 3; // Input pin declarations of the subgraph, if applicable. Will be connected to the pins of the subgraph.
+    optional repeated string output_pins = 4; // Output pin declarations of the subgraph, if applicable. Will be connected to the pins of the subgraph.
 }
 
 enum NodeFamily
@@ -74,10 +54,10 @@ extend google.protobuf.FieldOptions
 
 extend google.protobuf.MessageOptions
 {
-    optional NodeType node_type    = 51234;
-    optional string   file_name    = 51235; // dll, shader, or graph json
-    optional string   entry_point  = 51236; // entry function in dll or shader
-    optional string   display_name = 51237; // Node display name
+    optional NodeFamily node_family       = 51234;
+    optional string     file_name         = 51235; // dll, shader, or graph json
+    optional string     entry_point       = 51236; // entry function in dll or shader
+    optional string     node_display_name = 51237;
 }
 
 message mzTexture
