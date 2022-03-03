@@ -1,4 +1,4 @@
-add_library(MZMath SHARED main.cpp)
+add_library(MZMath SHARED MathMain.cpp)
 
 set_target_properties(MZMath
   PROPERTIES
