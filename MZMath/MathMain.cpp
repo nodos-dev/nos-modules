@@ -13,7 +13,7 @@ extern "C"
     void EntryPointMultiplier(/*MultiplierNode* multiplierNode*/)
     {
         // TODO
-        float in1 = multiplierNode->in_1();
+        // float in1 = multiplierNode->in_1();
         // float in2 = multiplierNode->in_2();
         // multiplierNode->set_output(in1 * in2);
     }
