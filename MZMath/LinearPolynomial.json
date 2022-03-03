@@ -1,14 +1,14 @@
 {
     "node_id": "LPNode",
-    "type_name": "LinearPolynomialNode",
+    "type_name": "mz.math.LinearPolynomialNode",
     "nodes": [
         {
             "id": "Adder",
-            "type_name": "AdderNode"
+            "type_name": "mz.math.AdderNode"
         },
         {
             "id": "Multiplier",
-            "type_name": "MultiplierNode"
+            "type_name": "mz.math.MultiplierNode"
         }
     ],
     "input_pins": [

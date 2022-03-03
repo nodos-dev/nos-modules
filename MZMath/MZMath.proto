@@ -1,6 +1,8 @@
 syntax = "proto3";
 
-import "ProtoCommon.proto";
+import "ProtoCommon2.proto";
+
+package mz.math;
 
 message AdderNode
 {
@@ -9,9 +11,9 @@ message AdderNode
     option (mz.proto.entry_point)       = "EntryPointAdder";
     option (mz.proto.node_display_name) = "Adder";
 
-    float in_1   = 1 [ (mz.proto.display_name) = "Input 1", (mz.proto.show_as) = INPUT_PIN, (mz.proto.can_show_as) = INPUT_PIN_ONLY ];
-    float in_2   = 2 [ (mz.proto.display_name) = "Input 2", (mz.proto.show_as) = INPUT_PIN, (mz.proto.can_show_as) = INPUT_PIN_ONLY ];
-    float output = 3 [ (mz.proto.display_name) = "Output", (mz.proto.show_as) = OUTPUT_PIN, (mz.proto.can_show_as) = OUTPUT_PIN_ONLY ];
+    float in_1   = 1 [ (mz.proto.pin_display_name) = "Input 1", (mz.proto.show_as) = INPUT_PIN, (mz.proto.can_show_as) = INPUT_PIN_ONLY ];
+    float in_2   = 2 [ (mz.proto.pin_display_name) = "Input 2", (mz.proto.show_as) = INPUT_PIN, (mz.proto.can_show_as) = INPUT_PIN_ONLY ];
+    float output = 3 [ (mz.proto.pin_display_name) = "Output", (mz.proto.show_as) = OUTPUT_PIN, (mz.proto.can_show_as) = OUTPUT_PIN_ONLY ];
 }
 
 message MultiplierNode

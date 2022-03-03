@@ -43,8 +43,8 @@ enum CanShowAs
 
 extend google.protobuf.FieldOptions
 {
-    optional bool   is_array     = 7740936;
-    optional string display_name = 7740937;
+    optional bool   is_array         = 7740936;
+    optional string pin_display_name = 7740937;
 
     ShowAs    show_as     = 7740938;
     CanShowAs can_show_as = 7740939;
