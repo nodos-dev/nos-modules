@@ -1,0 +1,10 @@
+{
+  "id" : "Adder1",
+  "class_name": "FAdd",
+  "display_name": "FAdd",
+  "job": {
+    "type": 0,
+    "source_file" : "mzMath",
+    "entry_point": "FAdd"
+  }
+}

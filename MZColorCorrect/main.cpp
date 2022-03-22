@@ -1,9 +1,0 @@
-
-extern "C"
-{
-    void AdderMain()
-    {
-
-    }
-}
-

@@ -1,0 +1,12 @@
+syntax = "proto3";
+
+package mz.math;
+
+import "ProtoCommon.proto";
+
+message FAdd
+{
+    float A = 1 [ (mz.proto.show_as) = INPUT_PIN, (mz.proto.can_show_as) = INPUT_PIN_ONLY ];
+    float B = 2 [ (mz.proto.show_as) = INPUT_PIN, (mz.proto.can_show_as) = INPUT_PIN_ONLY ];
+    float C = 3 [ (mz.proto.show_as) = OUTPUT_PIN, (mz.proto.can_show_as) = OUTPUT_PIN_ONLY ];
+}

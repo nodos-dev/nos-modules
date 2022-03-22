@@ -1,0 +1,11 @@
+{
+  "namespace": "mz.math",
+  "proto_includes": [ "mzMath.proto" ],
+  "menu_items": [
+    {
+      "category": "Math",
+      "graph_name": "FAdd",
+      "display_name": "FAdd"
+    }
+  ]
+}
