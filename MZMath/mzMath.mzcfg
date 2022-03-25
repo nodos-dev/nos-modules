@@ -1,5 +1,6 @@
 {
   "namespace": "mz.math",
+  "name": "op",
   "proto_includes": [ "mzMath.proto" ],
   "menu_items": [
     {
