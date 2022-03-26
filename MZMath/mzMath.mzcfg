@@ -5,7 +5,7 @@
   "menu_items": [
     {
       "category": "Math",
-      "graph_name": "FAdd",
+      "type_name": "FAdd",
       "display_name": "FAdd"
     }
   ]
