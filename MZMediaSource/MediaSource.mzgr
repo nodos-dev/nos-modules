@@ -1,0 +1,10 @@
+{
+  "id" : "MediaSource",
+  "class_name": "MediaSource",
+  "display_name": "MediaSource",
+  "job": {
+    "type": 0,
+    "source_file" : "mzMediaSource",
+    "entry_point": "MediaSourceEntry"
+  }
+}

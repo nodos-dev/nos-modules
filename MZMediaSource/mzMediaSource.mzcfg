@@ -1,0 +1,12 @@
+{
+  "namespace": "mz.media_source",
+  "name": "MediaSource",
+  "proto_includes": [ "mzMediaSource.proto" ],
+  "menu_items": [
+    {
+      "category": "Media",
+      "type_name": "MediaSource",
+      "display_name": "MediaSource"
+    }
+  ]
+}

@@ -1,0 +1,11 @@
+syntax = "proto3";
+
+package mz.media_source;
+
+import "ProtoCommon.proto";
+
+message MediaSource
+{
+    string Source          = 1 [ (mz.proto.show_as) = INPUT_PIN, (mz.proto.can_show_as) = INPUT_PIN_ONLY ];
+    mz.proto.Texture Media = 2 [ (mz.proto.show_as) = OUTPUT_PIN, (mz.proto.can_show_as) = OUTPUT_PIN_ONLY ];
+}
