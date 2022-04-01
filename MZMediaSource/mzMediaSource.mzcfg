@@ -5,7 +5,7 @@
   "menu_items": [
     {
       "category": "Media",
-      "type_name": "MediaSource",
+      "class_name": "MediaSource",
       "display_name": "MediaSource"
     }
   ]
