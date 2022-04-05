@@ -7,6 +7,21 @@
       "category": "Math",
       "class_name": "FAdd",
       "display_name": "FAdd"
+    },
+    {
+      "category": "Math",
+      "class_name": "Square",
+      "display_name": "Square"
+    },
+    {
+      "category": "Math",
+      "class_name": "SquareRoot",
+      "display_name": "Square Root"
+    },
+    {
+      "category": "Math",
+      "class_name": "Norm",
+      "display_name": "Norm"
     }
   ]
 }

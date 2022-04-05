@@ -1,0 +1,32 @@
+{
+  "id" : "Norm1",
+  "class_name" : "Norm",
+  "display_name" : "Norm",
+  
+  "graph" : {
+      "nodes" : [
+        {"id": "Square1",  "class_name" : "Square" },
+        {"id": "Square2",  "class_name" : "Square" },
+        {"id": "SquareRoot1", "class_name" : "SquareRoot" },
+        {"id": "FAdd1",    "class_name" : "FAdd" },
+    ],
+    "connections" : [
+        {"from" : "input1_id", "to": "Square1.X", "id" : "c1" },
+        {"from" : "input2_id", "to": "Square2.X", "id" : "c2" },
+
+        {"from" : "Square1.Return", "to": "FAdd1.A", "id" : "c3" },
+        {"from" : "Square2.Return", "to": "FAdd1.B", "id" : "c4" },
+        {"from" : "FAdd1.C", "to": "output1_id", "id" : "c5" },
+    ]
+  },
+
+  
+
+  "pins" : [
+      {"id" : "input1_id", "name": "A", "display_name" : "X" },
+      {"id" : "input2_id", "name": "B", "display_name" : "Y" }, 
+      {"id" : "output1_id", "name": "C", "display_name" : "return" },
+      ],
+  
+  
+}

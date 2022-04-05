@@ -10,3 +10,16 @@ message FAdd
     float B = 2 [ (mz.proto.show_as) = INPUT_PIN, (mz.proto.can_show_as) = INPUT_PIN_ONLY ];
     float C = 3 [ (mz.proto.show_as) = OUTPUT_PIN, (mz.proto.can_show_as) = OUTPUT_PIN_ONLY ];
 }
+
+message Square
+{
+    float X = 1 [ (mz.proto.show_as) = INPUT_PIN, (mz.proto.can_show_as) = INPUT_PIN_ONLY ];
+    float Return = 2 [ (mz.proto.show_as) = OUTPUT_PIN, (mz.proto.can_show_as) = OUTPUT_PIN_ONLY ];
+}
+
+message SquareRoot
+{
+    float Input = 1 [ (mz.proto.show_as) = INPUT_PIN, (mz.proto.can_show_as) = INPUT_PIN_ONLY ];
+    float Return = 2 [ (mz.proto.show_as) = OUTPUT_PIN, (mz.proto.can_show_as) = OUTPUT_PIN_ONLY ];
+}
+
