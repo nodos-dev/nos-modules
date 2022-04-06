@@ -7,14 +7,14 @@ import "ProtoCommon.proto";
 message FAdd
 {
     float X = 1 [ (mz.proto.show_as) = INPUT_PIN, (mz.proto.can_show_as) = INPUT_PIN_ONLY ];
-    float Y = 2 [ (mz.proto.show_as) = INPUT_PIN, (mz.proto.can_show_as) = INPUT_PIN_ONLY ];
-    float Z = 3 [ (mz.proto.show_as) = OUTPUT_PIN, (mz.proto.can_show_as) = OUTPUT_PIN_ONLY ];
+    float Y = 2 [ (mz.proto.display_name) = "Y", (mz.proto.show_as) = INPUT_PIN, (mz.proto.can_show_as) = INPUT_PIN_ONLY ];
+    float Z = 3 [ (mz.proto.display_name) = "Return", (mz.proto.show_as) = OUTPUT_PIN, (mz.proto.can_show_as) = OUTPUT_PIN_ONLY ];
 }
 
 message Square
 {
     float X = 1 [ (mz.proto.show_as) = INPUT_PIN, (mz.proto.can_show_as) = INPUT_PIN_ONLY ];
-    float Z = 2 [ (mz.proto.show_as) = OUTPUT_PIN, (mz.proto.can_show_as) = OUTPUT_PIN_ONLY ];
+    float Z = 2 [ (mz.proto.display_name) = "Return", (mz.proto.show_as) = OUTPUT_PIN, (mz.proto.can_show_as) = OUTPUT_PIN_ONLY ];
 }
 
 message SquareRoot
@@ -22,4 +22,3 @@ message SquareRoot
     float X = 1 [ (mz.proto.show_as) = INPUT_PIN, (mz.proto.can_show_as) = INPUT_PIN_ONLY ];
     float Z = 2 [ (mz.proto.show_as) = OUTPUT_PIN, (mz.proto.can_show_as) = OUTPUT_PIN_ONLY ];
 }
-
