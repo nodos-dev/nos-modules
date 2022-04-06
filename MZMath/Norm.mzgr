@@ -1,18 +1,22 @@
 {
   "id": "Norm1",
   "class_name": "Norm",
-  "display_name": "Norm",
-
+  "display_name": "Norm 1",
   "pins": [
     {
-      "id": "A",
-      "name": "Aa",
-      "display_name": "Aa"
+      "id": "norm_input_1",
+      "name": "A",
+      "display_name": "Input 1 Display Name"
     },
     {
-      "id": "C",
-      "name": "Cc",
-      "display_name": "Cc"
+      "id": "norm_input_2",
+      "name": "B",
+      "display_name": "Input 2 Display Name"
+    },
+    {
+      "id": "norm_output",
+      "name": "Output",
+      "display_name": "Output"
     }
   ],
 
@@ -23,12 +27,14 @@
         "class_name": "Square",
         "pins": [
           {
-            "id": "ovyes1",
-            "name": "X"
+            "id": "square_in_1",
+            "name": "X",
+            "display_name": "X"
           },
           {
-            "id": "ovyes2",
-            "name": "Return"
+            "id": "square_out_1",
+            "name": "Return",
+            "display_name": "Return"
           }
         ]
       },
@@ -37,11 +43,51 @@
         "class_name": "Square",
         "pins": [
           {
-            "id": "ovyes3",
-            "name": "X"
+            "id": "square_in_2",
+            "name": "X",
+            "display_name": "X"
           },
           {
-            "id": "ovyes4",
+            "id": "square_out_2",
+            "name": "Return",
+            "display_name": "Return"
+          }
+        ]
+      },
+      {
+        "id": "SquareRoot1",
+        "class_name": "SquareRoot",
+        "pins": [
+          {
+            "id": "square_root_in_1",
+            "name": "X",
+            "display_name": "X"
+          },
+          {
+            "id": "square_root_out_1",
+            "name": "Return",
+            "display_name": "Return"
+          }
+        ]
+      }
+      ,
+      {
+        "id": "FAdd1",
+        "class_name": "FAdd",
+        "pins": [
+          {
+            "id": "fadd_in_1",
+            "name": "X",
+            "display_name" : "X",
+          },
+          {
+            "id": "fadd_in_2",
+            "name": "Y",
+            "display_name": "Y"
+          },
+          {
+            "id": "fadd_out_1",
+            "display_name" : "Return",
             "name": "Return"
           }
         ]
@@ -49,21 +95,35 @@
     ],
     "connections": [
       {
-        "from": "ovyes2",
-        "to": "ovyes3",
+        "from": "norm_input_1",
+        "to": "square_in_1",
         "id": "c1"
       },
       {
-        "from": "A",
-        "to": "ovyes1",
+        "from": "norm_input_2",
+        "to": "square_in_2",
         "id": "c2"
       },
+
       {
-        "from": "ovyes4",
-        "to": "C",
+        "from": "square_out_1",
+        "to": "fadd_in_1",
         "id": "c3"
       }
+      ,
+      {
+        "from": "square_out_2",
+        "to": "fadd_in_2",
+        "id": "c4"
+      }
+      ,
+      {
+        "from": "fadd_out_1",
+        "to": "norm_output",
+        "id": "c5"
+      }
     ]
-  }
+  },
+
 
 }
