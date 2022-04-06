@@ -1,22 +1,22 @@
 {
-  "id": "Norm1",
+  "id": "norm1",
   "class_name": "Norm",
-  "display_name": "Norm 1",
+  "display_name": "Norm",
   "pins": [
     {
-      "id": "norm_input_1",
-      "name": "A",
-      "display_name": "Input 1 Display Name"
+      "id": "norm_x",
+      "name": "X",
+      "display_name": "norm input x"
     },
     {
-      "id": "norm_input_2",
-      "name": "B",
-      "display_name": "Input 2 Display Name"
+      "id": "norm_y",
+      "name": "Y",
+      "display_name": "norm input y"
     },
     {
-      "id": "norm_output",
-      "name": "Output",
-      "display_name": "Output"
+      "id": "norm_z",
+      "name": "Z",
+      "display_name": "norm output z"
     }
   ],
 
@@ -25,99 +25,107 @@
       {
         "id": "Square1",
         "class_name": "Square",
+        "display_name": "Square",
         "pins": [
           {
-            "id": "square_in_1",
+            "id": "square1_x",
             "name": "X",
-            "display_name": "X"
+            "display_name": "square1 input x"
           },
           {
-            "id": "square_out_1",
-            "name": "Return",
-            "display_name": "Return"
+            "id": "square1_z",
+            "name": "Z",
+            "display_name": "square1 output z"
           }
         ]
       },
       {
         "id": "Square2",
         "class_name": "Square",
+        "display_name": "Square2",
         "pins": [
           {
-            "id": "square_in_2",
+            "id": "square2_x",
             "name": "X",
-            "display_name": "X"
+            "display_name": "square2 input x"
           },
           {
-            "id": "square_out_2",
-            "name": "Return",
-            "display_name": "Return"
-          }
-        ]
-      },
-      {
-        "id": "SquareRoot1",
-        "class_name": "SquareRoot",
-        "pins": [
-          {
-            "id": "square_root_in_1",
-            "name": "X",
-            "display_name": "X"
-          },
-          {
-            "id": "square_root_out_1",
-            "name": "Return",
-            "display_name": "Return"
+            "id": "square2_z",
+            "name": "Z",
+            "display_name": "square2 output z"
           }
         ]
       },
       {
         "id": "FAdd1",
         "class_name": "FAdd",
+        "display_name": "FAdd",
         "pins": [
           {
-            "id": "fadd_in_1",
-            "display_name": "X",
-            "name": "A"
+            "id": "fadd_x",
+            "name": "X",
+            "display_name" : "fadd input x"
           },
           {
-            "id": "fadd_in_2",
-            "display_name": "Y",
-            "name": "B"
+            "id": "fadd_y",
+            "name": "Y",
+            "display_name": "fadd input y"
           },
           {
-            "id": "fadd_out_1",
-            "name": "C",
-            "display_name": "Return"
+            "id": "fadd_z",
+            "name": "Z",
+            "display_name" : "fadd output z"
+          }
+        ]
+      },
+      {
+        "id": "SquareRoot1",
+        "class_name": "SquareRoot",
+        "display_name": "Square Root",
+        "pins": [
+          {
+            "id": "square_root_x",
+            "name": "X",
+            "display_name": "square root input x"
+          },
+          {
+            "id": "square_root_z",
+            "name": "Z",
+            "display_name": "square root output z"
           }
         ]
       }
     ],
     "connections": [
       {
-        "from": "norm_input_1",
-        "to": "square_in_1",
+        "from": "norm_x",
+        "to": "square1_x",
         "id": "c1"
       },
       {
-        "from": "norm_input_2",
-        "to": "square_in_2",
+        "from": "norm_y",
+        "to": "square2_x",
         "id": "c2"
       },
-
       {
-        "from": "square_out_1",
-        "to": "fadd_in_1",
+        "from": "square1_z",
+        "to": "fadd_x",
         "id": "c3"
       },
       {
-        "from": "square_out_2",
-        "to": "fadd_in_2",
+        "from": "square2_z",
+        "to": "fadd_y",
         "id": "c4"
       },
       {
-        "from": "fadd_out_1",
-        "to": "norm_output",
+        "from": "fadd_z",
+        "to": "square_root_x",
         "id": "c5"
+      },
+      {
+        "from": "square_root_z",
+        "to": "norm_z",
+        "id": "c6"
       }
     ]
   }
