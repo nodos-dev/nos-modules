@@ -69,26 +69,25 @@
             "display_name": "Return"
           }
         ]
-      }
-      ,
+      },
       {
         "id": "FAdd1",
         "class_name": "FAdd",
         "pins": [
           {
             "id": "fadd_in_1",
-            "name": "X",
-            "display_name" : "X",
+            "display_name": "X",
+            "name": "A"
           },
           {
             "id": "fadd_in_2",
-            "name": "Y",
-            "display_name": "Y"
+            "display_name": "Y",
+            "name": "B"
           },
           {
             "id": "fadd_out_1",
-            "display_name" : "Return",
-            "name": "Return"
+            "name": "C",
+            "display_name": "Return"
           }
         ]
       }
@@ -109,21 +108,17 @@
         "from": "square_out_1",
         "to": "fadd_in_1",
         "id": "c3"
-      }
-      ,
+      },
       {
         "from": "square_out_2",
         "to": "fadd_in_2",
         "id": "c4"
-      }
-      ,
+      },
       {
         "from": "fadd_out_1",
         "to": "norm_output",
         "id": "c5"
       }
     ]
-  },
-
-
+  }
 }
