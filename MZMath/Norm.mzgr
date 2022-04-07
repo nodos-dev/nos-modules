@@ -39,7 +39,8 @@
             "name": "Z",
             "display_name": "square1 output z"
           }
-        ]
+        ],
+        "pos" : {"x" : -350, "y" : 60}
       },
       {
         "type": 0,
@@ -57,7 +58,8 @@
             "name": "Z",
             "display_name": "square2 output z"
           }
-        ]
+        ],
+        "pos" : {"x" : -350, "y" : 185}
       },
       {
         "type": 0,
@@ -80,7 +82,8 @@
             "name": "Z",
             "display_name": "fadd output z"
           }
-        ]
+        ],
+        "pos" : {"x" : -30, "y" : 90}
       },
       {
         "type": 0,
@@ -98,7 +101,8 @@
             "name": "Z",
             "display_name": "square root output z"
           }
-        ]
+        ],
+        "pos" : {"x" : 350, "y" : 90}
       }
     ],
     "connections": [
