@@ -9,6 +9,7 @@ message MediaSource
 	option(mz.proto.type) = CPU;
 	option(mz.proto.source_file) = "mzMediaSource";
 	option(mz.proto.entry_point) = "MediaSourceEntry";
+	option(mz.proto.job_display_name) = "Media Source";
 
     string Source          = 1 [ (mz.proto.show_as) = INPUT_PIN, (mz.proto.can_show_as) = INPUT_PIN_ONLY ];
     mz.proto.Texture Media = 2 [ (mz.proto.show_as) = OUTPUT_PIN, (mz.proto.can_show_as) = OUTPUT_PIN_ONLY ];
