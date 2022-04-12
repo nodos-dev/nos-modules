@@ -21,6 +21,26 @@ message FAdd
                   (mz.proto.pin_can_show_as)  = OUTPUT_PIN_ONLY ];
 }
 
+message FSubtract
+{
+    option (mz.proto.job_type)         = CPU;
+    option (mz.proto.job_source_file)  = "mzMath";
+    option (mz.proto.job_entry_point)  = "FSubtract";
+    option (mz.proto.job_display_name) = "Subtractor";
+
+    float X = 1 [ (mz.proto.pin_display_name) = "Minuend",
+                  (mz.proto.pin_show_as)      = INPUT_PIN,
+                  (mz.proto.pin_can_show_as)  = INPUT_PIN_ONLY ];
+
+    float Y = 2 [ (mz.proto.pin_display_name) = "Subtrahend",
+                  (mz.proto.pin_show_as)      = INPUT_PIN,
+                  (mz.proto.pin_can_show_as)  = INPUT_PIN_ONLY ];
+
+    float Z = 3 [ (mz.proto.pin_display_name) = "Difference",
+                  (mz.proto.pin_show_as)      = OUTPUT_PIN,
+                  (mz.proto.pin_can_show_as)  = OUTPUT_PIN_ONLY ];
+}
+
 message Square
 {
     option (mz.proto.job_type)         = CPU;
@@ -31,8 +51,8 @@ message Square
     float X = 1 [ (mz.proto.pin_show_as)     = INPUT_PIN,
                   (mz.proto.pin_can_show_as) = INPUT_PIN_ONLY ];
     float Z = 2 [ (mz.proto.pin_display_name) = "Return",
-                  (mz.proto.pin_show_as)          = OUTPUT_PIN,
-                  (mz.proto.pin_can_show_as)      = OUTPUT_PIN_ONLY ];
+                  (mz.proto.pin_show_as)      = OUTPUT_PIN,
+                  (mz.proto.pin_can_show_as)  = OUTPUT_PIN_ONLY ];
 }
 
 message SquareRoot
@@ -44,4 +64,16 @@ message SquareRoot
 
     float X = 1 [ (mz.proto.pin_show_as) = INPUT_PIN, (mz.proto.pin_can_show_as) = INPUT_PIN_ONLY ];
     float Z = 2 [ (mz.proto.pin_show_as) = OUTPUT_PIN, (mz.proto.pin_can_show_as) = OUTPUT_PIN_ONLY ];
+}
+
+message VectorDistance
+{
+    option (mz.proto.job_type)         = CPU;
+    option (mz.proto.job_source_file)  = "mzMath";
+    option (mz.proto.job_entry_point)  = "VectorDistance";
+    option (mz.proto.job_display_name) = "Vector Distance";
+
+    mz.proto.vec3 X = 1 [ (mz.proto.pin_show_as) = INPUT_PIN, (mz.proto.pin_can_show_as) = INPUT_PIN_ONLY ];
+    mz.proto.vec3 Y = 2 [ (mz.proto.pin_show_as) = INPUT_PIN, (mz.proto.pin_can_show_as) = INPUT_PIN_ONLY ];
+    float Z         = 3 [ (mz.proto.pin_show_as) = OUTPUT_PIN, (mz.proto.pin_can_show_as) = OUTPUT_PIN_ONLY ];
 }

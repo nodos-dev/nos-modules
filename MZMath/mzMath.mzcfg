@@ -22,6 +22,16 @@
       "category": "Math",
       "class_name": "Norm",
       "display_name": "Norm"
+    }, 
+    {
+      "category": "Math",
+      "class_name": "VectorDistance",
+      "display_name": "Vector Distance"
+    },
+    {
+      "category": "Math",
+      "class_name": "FSubtract",
+      "display_name": "FSubtract"
     }
   ]
 }
