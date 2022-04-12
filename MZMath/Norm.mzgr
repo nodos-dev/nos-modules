@@ -24,6 +24,30 @@
   "graph": {
     "nodes": [
       {
+        "type": 2,
+        "id": "VectorDistance1",
+        "class_name": "VectorDistance",
+        "display_name": "Vector Distance",
+        "pins": [
+          {
+            "id": "vec_dist_x",
+            "name": "X",
+            "display_name": "first vector x"
+          },
+          {
+              "id": "vec_dist_y",
+              "name": "Y",
+              "display_name": "second vector y"
+          },
+          {
+              "id": "vec_dist_z",
+              "name": "Z",
+              "display_name": "distance z"
+          }
+        ],
+        "pos" : {"x" : -350, "y" : 120}
+      },
+      {
         "type": 0,
         "id": "Square1",
         "class_name": "Square",
