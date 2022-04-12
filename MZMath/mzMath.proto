@@ -19,6 +19,14 @@ message FAdd
     float Z = 3 [ (mz.proto.pin_display_name) = "Return",
                   (mz.proto.pin_show_as)      = OUTPUT_PIN,
                   (mz.proto.pin_can_show_as)  = OUTPUT_PIN_ONLY ];
+
+    double P1 = 4 [ (mz.proto.pin_display_name) = "INPUT_PIN_OR_PROPERTY Double",
+                    (mz.proto.pin_show_as)      = INPUT_PIN,
+                    (mz.proto.pin_can_show_as)  = INPUT_PIN_OR_PROPERTY ];
+
+    float P2 = 5 [ (mz.proto.pin_display_name) = "PROPERTY_ONLY Float",
+                   (mz.proto.pin_show_as)      = PROPERTY,
+                   (mz.proto.pin_can_show_as)  = PROPERTY_ONLY ];
 }
 
 message FSubtract
@@ -39,6 +47,14 @@ message FSubtract
     float Z = 3 [ (mz.proto.pin_display_name) = "Difference",
                   (mz.proto.pin_show_as)      = OUTPUT_PIN,
                   (mz.proto.pin_can_show_as)  = OUTPUT_PIN_ONLY ];
+
+    int32 P1 = 4 [ (mz.proto.pin_display_name) = "INPUT_PIN_OR_PROPERTY Int32",
+                   (mz.proto.pin_show_as)      = INPUT_PIN,
+                   (mz.proto.pin_can_show_as)  = INPUT_PIN_OR_PROPERTY ];
+
+    mz.proto.vec2 P2 = 5 [ (mz.proto.pin_display_name) = "PROPERTY_ONLY Vec2",
+                           (mz.proto.pin_show_as)      = PROPERTY,
+                           (mz.proto.pin_can_show_as)  = PROPERTY_ONLY ];
 }
 
 message Square
@@ -53,6 +69,18 @@ message Square
     float Z = 2 [ (mz.proto.pin_display_name) = "Return",
                   (mz.proto.pin_show_as)      = OUTPUT_PIN,
                   (mz.proto.pin_can_show_as)  = OUTPUT_PIN_ONLY ];
+
+    int32 P1 = 3 [ (mz.proto.pin_display_name) = "INPUT_PIN_OR_PROPERTY Int32",
+                   (mz.proto.pin_show_as)      = INPUT_PIN,
+                   (mz.proto.pin_can_show_as)  = INPUT_PIN_OR_PROPERTY ];
+
+    mz.proto.mat2 P2 = 4 [ (mz.proto.pin_display_name) = "PROPERTY_ONLY Mat2",
+                           (mz.proto.pin_show_as)      = PROPERTY,
+                           (mz.proto.pin_can_show_as)  = PROPERTY_ONLY ];
+
+    bool P3 = 5 [ (mz.proto.pin_display_name) = "PROPERTY_ONLY Bool",
+                  (mz.proto.pin_show_as)      = PROPERTY,
+                  (mz.proto.pin_can_show_as)  = PROPERTY_ONLY ];
 }
 
 message SquareRoot
@@ -64,5 +92,12 @@ message SquareRoot
 
     float X = 1 [ (mz.proto.pin_show_as) = INPUT_PIN, (mz.proto.pin_can_show_as) = INPUT_PIN_ONLY ];
     float Z = 2 [ (mz.proto.pin_show_as) = OUTPUT_PIN, (mz.proto.pin_can_show_as) = OUTPUT_PIN_ONLY ];
-}
 
+    mz.proto.Texture P1 = 3 [ (mz.proto.pin_display_name) = "PROPERTY_ONLY Texture",
+                              (mz.proto.pin_show_as)      = PROPERTY,
+                              (mz.proto.pin_can_show_as)  = PROPERTY_ONLY ];
+
+    string P2 = 4 [ (mz.proto.pin_display_name) = "INPUT_PIN_OR_PROPERTY string",
+                    (mz.proto.pin_show_as)      = PROPERTY,
+                    (mz.proto.pin_can_show_as)  = INPUT_PIN_OR_PROPERTY ];
+}

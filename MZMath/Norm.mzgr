@@ -26,8 +26,8 @@
       {
         "type": 0,
         "id": "VectorDistance1",
-        "class_name": "VectorDistance",
-        "display_name": "Vector Distance",
+        "class_name": "AwesomeGraph",
+        "display_name": "Awesome Graph",
         "pins": [
           {
             "id": "vec_dist_x",

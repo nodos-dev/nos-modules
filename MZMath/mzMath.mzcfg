@@ -24,11 +24,10 @@
       "display_name": "Square Root"
     }, 
     {
-      "category": "Math",
-      "class_name": "VectorDistance",
-      "display_name": "Vector Distance"
-    }
-    ,
+      "category": "Experimental",
+      "class_name": "AwesomeGraph",
+      "display_name": "Awesome Graph"
+    },
     {
       "category": "Math",
       "class_name": "Norm",

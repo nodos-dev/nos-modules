@@ -1,23 +1,23 @@
 {
     "type": 2,
     "id": "vd1",
-    "class_name": "VectorDistance",
-    "display_name": "Vector Distance",
+    "class_name": "AwesomeGraph",
+    "display_name": "Awesome Graph",
     "pins": [
         {
             "id": "vec_dist_x",
             "name": "X",
-            "display_name": "first vector x"
+            "display_name": "input 1"
         },
         {
             "id": "vec_dist_y",
             "name": "Y",
-            "display_name": "second vector y"
+            "display_name": "input 2"
         },
         {
             "id": "vec_dist_z",
             "name": "Z",
-            "display_name": "distance z"
+            "display_name": "output"
         }
     ],
     "graph": {
@@ -26,7 +26,7 @@
                 "type": 0,
                 "id": "Subtract1",
                 "class_name": "FSubtract",
-                "display_name": "Subtract",
+                "display_name": "Some Node Name",
                 "pins": [
                     {
                         "id": "subtract1_x",
@@ -45,15 +45,15 @@
                     }
                 ],
                 "pos": {
-                    "x": -450,
-                    "y": 60
+                    "x": -600,
+                    "y": 20
                 }
             },
             {
                 "type": 0,
                 "id": "Subtract2",
                 "class_name": "FSubtract",
-                "display_name": "Subtract",
+                "display_name": "Some Node Name 2",
                 "pins": [
                     {
                         "id": "subtract2_x",
@@ -72,7 +72,7 @@
                     }
                 ],
                 "pos": {
-                    "x": -450,
+                    "x": -600,
                     "y": 185
                 }
             },
@@ -80,7 +80,7 @@
                 "type": 0,
                 "id": "Square1",
                 "class_name": "Square",
-                "display_name": "Square",
+                "display_name": "Some Node Name 3",
                 "pins": [
                     {
                         "id": "square1_x",
@@ -94,7 +94,7 @@
                     }
                 ],
                 "pos": {
-                    "x": -350,
+                    "x": -270,
                     "y": 60
                 }
             },
@@ -116,8 +116,8 @@
                     }
                 ],
                 "pos": {
-                    "x": -350,
-                    "y": 185
+                    "x": -270,
+                    "y": 180
                 }
             },
             {
@@ -165,11 +165,52 @@
                     }
                 ],
                 "pos": {
-                    "x": 350,
+                    "x": 220,
                     "y": 90
                 }
             }
         ],
-        "connections": []
+        "connections": [
+            {
+                "from": "vec_dist_x",
+                "to": "subtract2_x",
+                "id": "c1"
+            },
+            {
+                "from": "vec_dist_y",
+                "to": "subtract2_x",
+                "id": "c2"
+            },
+            {
+                "from": "subtract1_z",
+                "to": "square1_x",
+                "id": "c3"
+            },
+            {
+                "from": "subtract2_z",
+                "to": "square2_x",
+                "id": "c4"
+            },
+            {
+                "from": "square1_z",
+                "to": "fadd_x",
+                "id": "c5"
+            },
+            {
+                "from": "square2_z",
+                "to": "fadd_y",
+                "id": "c6"
+            },
+            {
+                "from": "fadd_z",
+                "to": "square_root_x",
+                "id": "c7"
+            },
+            {
+                "from": "square_root_z",
+                "to": "vec_dist_z",
+                "id": "c8"
+            },
+        ]
     }
 }
