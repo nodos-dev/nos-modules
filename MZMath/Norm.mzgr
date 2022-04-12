@@ -24,7 +24,7 @@
   "graph": {
     "nodes": [
       {
-        "type": 2,
+        "type": 0,
         "id": "VectorDistance1",
         "class_name": "VectorDistance",
         "display_name": "Vector Distance",
