@@ -10,6 +10,11 @@
     },
     {
       "category": "Math",
+      "class_name": "FSubtract",
+      "display_name": "FSubtract"
+    },
+    {
+      "category": "Math",
       "class_name": "Square",
       "display_name": "Square"
     },
@@ -27,11 +32,6 @@
       "category": "Math",
       "class_name": "VectorDistance",
       "display_name": "Vector Distance"
-    },
-    {
-      "category": "Math",
-      "class_name": "FSubtract",
-      "display_name": "FSubtract"
     }
   ]
 }

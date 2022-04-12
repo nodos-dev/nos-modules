@@ -1,0 +1,175 @@
+{
+    "type": 2,
+    "id": "vd1",
+    "class_name": "VectorDistance",
+    "display_name": "Vector Distance",
+    "pins": [
+        {
+            "id": "vec_dist_x",
+            "name": "X",
+            "display_name": "first vector x"
+        },
+        {
+            "id": "vec_dist_y",
+            "name": "Y",
+            "display_name": "second vector y"
+        },
+        {
+            "id": "vec_dist_z",
+            "name": "Z",
+            "display_name": "distance z"
+        }
+    ],
+    "graph": {
+        "nodes": [
+            {
+                "type": 0,
+                "id": "Subtract1",
+                "class_name": "FSubtract",
+                "display_name": "Subtract",
+                "pins": [
+                    {
+                        "id": "subtract1_x",
+                        "name": "X",
+                        "display_name": "subtract1 minuend"
+                    },
+                    {
+                        "id": "subtract1_y",
+                        "name": "Y",
+                        "display_name": "subtract1 subtrahend"
+                    },
+                    {
+                        "id": "subtract1_z",
+                        "name": "Z",
+                        "display_name": "subtract1 output"
+                    }
+                ],
+                "pos": {
+                    "x": -450,
+                    "y": 60
+                }
+            },
+            {
+                "type": 0,
+                "id": "Subtract2",
+                "class_name": "FSubtract",
+                "display_name": "Subtract",
+                "pins": [
+                    {
+                        "id": "subtract2_x",
+                        "name": "X",
+                        "display_name": "subtract2 minuend"
+                    },
+                    {
+                        "id": "subtract2_y",
+                        "name": "Y",
+                        "display_name": "subtract2 subtrahend"
+                    },
+                    {
+                        "id": "subtract2_z",
+                        "name": "Z",
+                        "display_name": "subtract2 output"
+                    }
+                ],
+                "pos": {
+                    "x": -450,
+                    "y": 185
+                }
+            },
+            {
+                "type": 0,
+                "id": "Square1",
+                "class_name": "Square",
+                "display_name": "Square",
+                "pins": [
+                    {
+                        "id": "square1_x",
+                        "name": "X",
+                        "display_name": "square1 input x"
+                    },
+                    {
+                        "id": "square1_z",
+                        "name": "Z",
+                        "display_name": "square1 output z"
+                    }
+                ],
+                "pos": {
+                    "x": -350,
+                    "y": 60
+                }
+            },
+            {
+                "type": 0,
+                "id": "Square2",
+                "class_name": "Square",
+                "display_name": "Square2",
+                "pins": [
+                    {
+                        "id": "square2_x",
+                        "name": "X",
+                        "display_name": "square2 input x"
+                    },
+                    {
+                        "id": "square2_z",
+                        "name": "Z",
+                        "display_name": "square2 output z"
+                    }
+                ],
+                "pos": {
+                    "x": -350,
+                    "y": 185
+                }
+            },
+            {
+                "type": 0,
+                "id": "FAdd1",
+                "class_name": "FAdd",
+                "display_name": "FAdd",
+                "pins": [
+                    {
+                        "id": "fadd_x",
+                        "name": "X",
+                        "display_name": "fadd input x"
+                    },
+                    {
+                        "id": "fadd_y",
+                        "name": "Y",
+                        "display_name": "fadd input y"
+                    },
+                    {
+                        "id": "fadd_z",
+                        "name": "Z",
+                        "display_name": "fadd output z"
+                    }
+                ],
+                "pos": {
+                    "x": -30,
+                    "y": 90
+                }
+            },
+            {
+                "type": 0,
+                "id": "SquareRoot1",
+                "class_name": "SquareRoot",
+                "display_name": "Square Root",
+                "pins": [
+                    {
+                        "id": "square_root_x",
+                        "name": "X",
+                        "display_name": "square root input x"
+                    },
+                    {
+                        "id": "square_root_z",
+                        "name": "Z",
+                        "display_name": "square root output z"
+                    }
+                ],
+                "pos": {
+                    "x": 350,
+                    "y": 90
+                }
+            }
+        ],
+        "connections": []
+    }
+}

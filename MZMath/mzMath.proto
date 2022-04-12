@@ -66,14 +66,3 @@ message SquareRoot
     float Z = 2 [ (mz.proto.pin_show_as) = OUTPUT_PIN, (mz.proto.pin_can_show_as) = OUTPUT_PIN_ONLY ];
 }
 
-message VectorDistance
-{
-    option (mz.proto.job_type)         = CPU;
-    option (mz.proto.job_source_file)  = "mzMath";
-    option (mz.proto.job_entry_point)  = "VectorDistance";
-    option (mz.proto.job_display_name) = "Vector Distance";
-
-    mz.proto.vec3 X = 1 [ (mz.proto.pin_show_as) = INPUT_PIN, (mz.proto.pin_can_show_as) = INPUT_PIN_ONLY ];
-    mz.proto.vec3 Y = 2 [ (mz.proto.pin_show_as) = INPUT_PIN, (mz.proto.pin_can_show_as) = INPUT_PIN_ONLY ];
-    float Z         = 3 [ (mz.proto.pin_show_as) = OUTPUT_PIN, (mz.proto.pin_can_show_as) = OUTPUT_PIN_ONLY ];
-}
