@@ -33,5 +33,16 @@
       "class_name": "Norm",
       "display_name": "Norm"
     }
+    ,
+    {
+      "category": "Math",
+      "class_name": "AllProtoTypesNode",
+      "display_name": "All Proto Types Node"
+    },
+    {
+      "category": "Math",
+      "class_name": "AllBuiltinTypesNode",
+      "display_name": "All Builtin Types Node"
+    }
   ]
 }
