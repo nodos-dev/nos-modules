@@ -43,6 +43,11 @@
       "category": "Math",
       "class_name": "AllBuiltinTypesNode",
       "display_name": "All Builtin Types Node"
+    },
+    {
+      "category": "Empty",
+      "class_name": "EmptyNode",
+      "display_name": "EmptyNode"
     }
   ]
 }

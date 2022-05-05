@@ -6,10 +6,10 @@ import "ProtoCommon.proto";
 
 message MediaSource
 {
-	option(mz.proto.job_type) = CPU;
-	option(mz.proto.job_source_file) = "mzMediaSource";
-	option(mz.proto.job_entry_point) = "MediaSourceEntry";
-	option(mz.proto.job_display_name) = "Media Source";
+    option (mz.proto.job_type)         = CPU;
+    option (mz.proto.job_source_file)  = "mzMediaSource";
+    option (mz.proto.job_entry_point)  = "MediaSourceEntry";
+    option (mz.proto.job_display_name) = "Media Source";
 
     string Source          = 1 [ (mz.proto.pin_show_as) = INPUT_PIN, (mz.proto.pin_can_show_as) = INPUT_PIN_ONLY ];
     mz.proto.Texture Media = 2 [ (mz.proto.pin_show_as) = OUTPUT_PIN, (mz.proto.pin_can_show_as) = OUTPUT_PIN_ONLY ];

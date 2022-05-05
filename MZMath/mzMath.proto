@@ -13,20 +13,10 @@ message FAdd
 
     float X = 1 [ (mz.proto.pin_show_as)     = INPUT_PIN,
                   (mz.proto.pin_can_show_as) = INPUT_PIN_ONLY ];
-    float Y = 2 [ (mz.proto.pin_display_name) = "Y",
-                  (mz.proto.pin_show_as)      = INPUT_PIN,
-                  (mz.proto.pin_can_show_as)  = INPUT_PIN_ONLY ];
-    float Z = 3 [ (mz.proto.pin_display_name) = "Return",
-                  (mz.proto.pin_show_as)      = OUTPUT_PIN,
-                  (mz.proto.pin_can_show_as)  = OUTPUT_PIN_ONLY ];
-
-    double P1 = 4 [ (mz.proto.pin_display_name) = "INPUT_PIN_OR_PROPERTY Double",
-                    (mz.proto.pin_show_as)      = INPUT_PIN,
-                    (mz.proto.pin_can_show_as)  = INPUT_PIN_OR_PROPERTY ];
-
-    float P2 = 5 [ (mz.proto.pin_display_name) = "PROPERTY_ONLY Float",
-                   (mz.proto.pin_show_as)      = PROPERTY,
-                   (mz.proto.pin_can_show_as)  = PROPERTY_ONLY ];
+    float Y = 2 [ (mz.proto.pin_show_as)     = INPUT_PIN,
+                  (mz.proto.pin_can_show_as) = INPUT_PIN_ONLY ];
+    float Z = 3 [ (mz.proto.pin_show_as)     = OUTPUT_PIN,
+                  (mz.proto.pin_can_show_as) = OUTPUT_PIN_ONLY ];
 }
 
 message FSubtract
@@ -162,11 +152,19 @@ message AllBuiltinTypesNode
 
     mz.proto.Texture Texture_x = 10 [ (mz.proto.pin_show_as) = PROPERTY, (mz.proto.pin_can_show_as) = PROPERTY_ONLY ];
     mz.proto.Void Void_x       = 11 [ (mz.proto.pin_show_as) = PROPERTY, (mz.proto.pin_can_show_as) = PROPERTY_ONLY ];
-    mz.proto.vec2 vec2_x     = 12 [ (mz.proto.pin_show_as) = PROPERTY, (mz.proto.pin_can_show_as) = PROPERTY_ONLY ];
+    mz.proto.vec2 vec2_x       = 12 [ (mz.proto.pin_show_as) = PROPERTY, (mz.proto.pin_can_show_as) = PROPERTY_ONLY ];
     mz.proto.vec2i vec2i_x     = 13 [ (mz.proto.pin_show_as) = PROPERTY, (mz.proto.pin_can_show_as) = PROPERTY_ONLY ];
     mz.proto.vec3 vec3_x       = 14 [ (mz.proto.pin_show_as) = PROPERTY, (mz.proto.pin_can_show_as) = PROPERTY_ONLY ];
     mz.proto.vec4 vec4_x       = 15 [ (mz.proto.pin_show_as) = PROPERTY, (mz.proto.pin_can_show_as) = PROPERTY_ONLY ];
     mz.proto.mat2 mat2_x       = 16 [ (mz.proto.pin_show_as) = PROPERTY, (mz.proto.pin_can_show_as) = PROPERTY_ONLY ];
     mz.proto.mat3 mat3_x       = 17 [ (mz.proto.pin_show_as) = PROPERTY, (mz.proto.pin_can_show_as) = PROPERTY_ONLY ];
-    mz.proto.mat4 mat4_x      = 18 [ (mz.proto.pin_show_as) = PROPERTY, (mz.proto.pin_can_show_as) = PROPERTY_ONLY ];
+    mz.proto.mat4 mat4_x       = 18 [ (mz.proto.pin_show_as) = PROPERTY, (mz.proto.pin_can_show_as) = PROPERTY_ONLY ];
+}
+
+message EmptyNode
+{
+    option (mz.proto.job_type)         = CPU;
+    option (mz.proto.job_source_file)  = "mzMath";
+    option (mz.proto.job_entry_point)  = "EmptyNode";
+    option (mz.proto.job_display_name) = "Empty__Node";
 }
