@@ -12,7 +12,8 @@ message FAdd
     option (mz.proto.job_display_name) = "Adder";
 
     float X = 1 [ (mz.proto.pin_show_as)     = INPUT_PIN,
-                  (mz.proto.pin_can_show_as) = INPUT_PIN_ONLY ];
+                  (mz.proto.pin_can_show_as) = INPUT_PIN_ONLY,
+                  (mz.proto.pin_category)    = "category|sub_category"];
     float Y = 2 [ (mz.proto.pin_show_as)     = INPUT_PIN,
                   (mz.proto.pin_can_show_as) = INPUT_PIN_ONLY ];
     float Z = 3 [ (mz.proto.pin_show_as)     = OUTPUT_PIN,
