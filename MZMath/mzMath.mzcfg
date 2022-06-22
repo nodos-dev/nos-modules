@@ -50,6 +50,11 @@
       "display_name": "GodNode"
     },
     {
+      "category": "Math",
+      "class_name": "MotherGod",
+      "display_name": "MotherGod"
+    },
+    {
       "category": "Empty",
       "class_name": "EmptyNode",
       "display_name": "EmptyNode"

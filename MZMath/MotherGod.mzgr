@@ -1,0 +1,316 @@
+{
+  "type": 2,
+  "id": "MotherGod",
+  "class_name": "MotherGod",
+  "display_name": "MotherGod",
+  "graph": {
+    "nodes": [
+ {
+        "type": 0,
+        "id": "God0",
+        "class_name": "GodNode",
+        "display_name": "GodNode"
+      },
+ {
+        "type": 0,
+        "id": "God1",
+        "class_name": "GodNode",
+        "display_name": "GodNode"
+      },
+ {
+        "type": 0,
+        "id": "God2",
+        "class_name": "GodNode",
+        "display_name": "GodNode"
+      },
+ {
+        "type": 0,
+        "id": "God3",
+        "class_name": "GodNode",
+        "display_name": "GodNode"
+      },
+ {
+        "type": 0,
+        "id": "God4",
+        "class_name": "GodNode",
+        "display_name": "GodNode"
+      },
+ {
+        "type": 0,
+        "id": "God5",
+        "class_name": "GodNode",
+        "display_name": "GodNode"
+      },
+ {
+        "type": 0,
+        "id": "God6",
+        "class_name": "GodNode",
+        "display_name": "GodNode"
+      },
+ {
+        "type": 0,
+        "id": "God7",
+        "class_name": "GodNode",
+        "display_name": "GodNode"
+      },
+ {
+        "type": 0,
+        "id": "God8",
+        "class_name": "GodNode",
+        "display_name": "GodNode"
+      },
+ {
+        "type": 0,
+        "id": "God9",
+        "class_name": "GodNode",
+        "display_name": "GodNode"
+      },
+ {
+        "type": 0,
+        "id": "God10",
+        "class_name": "GodNode",
+        "display_name": "GodNode"
+      },
+ {
+        "type": 0,
+        "id": "God11",
+        "class_name": "GodNode",
+        "display_name": "GodNode"
+      },
+ {
+        "type": 0,
+        "id": "God12",
+        "class_name": "GodNode",
+        "display_name": "GodNode"
+      },
+ {
+        "type": 0,
+        "id": "God13",
+        "class_name": "GodNode",
+        "display_name": "GodNode"
+      },
+ {
+        "type": 0,
+        "id": "God14",
+        "class_name": "GodNode",
+        "display_name": "GodNode"
+      },
+ {
+        "type": 0,
+        "id": "God15",
+        "class_name": "GodNode",
+        "display_name": "GodNode"
+      },
+ {
+        "type": 0,
+        "id": "God16",
+        "class_name": "GodNode",
+        "display_name": "GodNode"
+      },
+ {
+        "type": 0,
+        "id": "God17",
+        "class_name": "GodNode",
+        "display_name": "GodNode"
+      },
+ {
+        "type": 0,
+        "id": "God18",
+        "class_name": "GodNode",
+        "display_name": "GodNode"
+      },
+ {
+        "type": 0,
+        "id": "God19",
+        "class_name": "GodNode",
+        "display_name": "GodNode"
+      },
+ {
+        "type": 0,
+        "id": "God20",
+        "class_name": "GodNode",
+        "display_name": "GodNode"
+      },
+ {
+        "type": 0,
+        "id": "God21",
+        "class_name": "GodNode",
+        "display_name": "GodNode"
+      },
+ {
+        "type": 0,
+        "id": "God22",
+        "class_name": "GodNode",
+        "display_name": "GodNode"
+      },
+ {
+        "type": 0,
+        "id": "God23",
+        "class_name": "GodNode",
+        "display_name": "GodNode"
+      },
+ {
+        "type": 0,
+        "id": "God24",
+        "class_name": "GodNode",
+        "display_name": "GodNode"
+      },
+ {
+        "type": 0,
+        "id": "God25",
+        "class_name": "GodNode",
+        "display_name": "GodNode"
+      },
+ {
+        "type": 0,
+        "id": "God26",
+        "class_name": "GodNode",
+        "display_name": "GodNode"
+      },
+ {
+        "type": 0,
+        "id": "God27",
+        "class_name": "GodNode",
+        "display_name": "GodNode"
+      },
+ {
+        "type": 0,
+        "id": "God28",
+        "class_name": "GodNode",
+        "display_name": "GodNode"
+      },
+ {
+        "type": 0,
+        "id": "God29",
+        "class_name": "GodNode",
+        "display_name": "GodNode"
+      },
+ {
+        "type": 0,
+        "id": "God30",
+        "class_name": "GodNode",
+        "display_name": "GodNode"
+      },
+ {
+        "type": 0,
+        "id": "God31",
+        "class_name": "GodNode",
+        "display_name": "GodNode"
+      },
+ {
+        "type": 0,
+        "id": "God32",
+        "class_name": "GodNode",
+        "display_name": "GodNode"
+      },
+ {
+        "type": 0,
+        "id": "God33",
+        "class_name": "GodNode",
+        "display_name": "GodNode"
+      },
+ {
+        "type": 0,
+        "id": "God34",
+        "class_name": "GodNode",
+        "display_name": "GodNode"
+      },
+ {
+        "type": 0,
+        "id": "God35",
+        "class_name": "GodNode",
+        "display_name": "GodNode"
+      },
+ {
+        "type": 0,
+        "id": "God36",
+        "class_name": "GodNode",
+        "display_name": "GodNode"
+      },
+ {
+        "type": 0,
+        "id": "God37",
+        "class_name": "GodNode",
+        "display_name": "GodNode"
+      },
+ {
+        "type": 0,
+        "id": "God38",
+        "class_name": "GodNode",
+        "display_name": "GodNode"
+      },
+ {
+        "type": 0,
+        "id": "God39",
+        "class_name": "GodNode",
+        "display_name": "GodNode"
+      },
+ {
+        "type": 0,
+        "id": "God40",
+        "class_name": "GodNode",
+        "display_name": "GodNode"
+      },
+ {
+        "type": 0,
+        "id": "God41",
+        "class_name": "GodNode",
+        "display_name": "GodNode"
+      },
+ {
+        "type": 0,
+        "id": "God42",
+        "class_name": "GodNode",
+        "display_name": "GodNode"
+      },
+ {
+        "type": 0,
+        "id": "God43",
+        "class_name": "GodNode",
+        "display_name": "GodNode"
+      },
+ {
+        "type": 0,
+        "id": "God44",
+        "class_name": "GodNode",
+        "display_name": "GodNode"
+      },
+ {
+        "type": 0,
+        "id": "God45",
+        "class_name": "GodNode",
+        "display_name": "GodNode"
+      },
+ {
+        "type": 0,
+        "id": "God46",
+        "class_name": "GodNode",
+        "display_name": "GodNode"
+      },
+ {
+        "type": 0,
+        "id": "God47",
+        "class_name": "GodNode",
+        "display_name": "GodNode"
+      },
+ {
+        "type": 0,
+        "id": "God48",
+        "class_name": "GodNode",
+        "display_name": "GodNode"
+      },
+ {
+        "type": 0,
+        "id": "God49",
+        "class_name": "GodNode",
+        "display_name": "GodNode"
+      },
+ {
+        "type": 0,
+        "id": "God50",
+        "class_name": "GodNode",
+        "display_name": "GodNode"
+      }
+    ]
+  }
+}
