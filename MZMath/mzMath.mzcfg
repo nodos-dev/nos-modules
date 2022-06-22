@@ -45,6 +45,11 @@
       "display_name": "All Builtin Types Node"
     },
     {
+      "category": "Math",
+      "class_name": "GodNode",
+      "display_name": "GodNode"
+    },
+    {
       "category": "Empty",
       "class_name": "EmptyNode",
       "display_name": "EmptyNode"
