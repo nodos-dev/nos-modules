@@ -7,17 +7,17 @@
     {
       "id": "norm_x",
       "name": "X",
-      "display_name": "norm input x"
+      "display_name": "X"
     },
     {
       "id": "norm_y",
       "name": "Y",
-      "display_name": "norm input y"
+      "display_name": "Y"
     },
     {
       "id": "norm_z",
       "name": "Z",
-      "display_name": "norm output z"
+      "display_name": "Z"
     }
   ],
 

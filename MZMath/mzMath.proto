@@ -98,7 +98,7 @@ message AllProtoTypesNode
     option (mz.proto.job_type)         = CPU;
     option (mz.proto.job_source_file)  = "mzMath";
     option (mz.proto.job_entry_point)  = "AllProtoTypesNode";
-    option (mz.proto.job_display_name) = "AllProtoTypesNode";
+    option (mz.proto.job_display_name) = "All Proto Types Node";
 
     double double__     = 1 [ (mz.proto.pin_show_as) = INPUT_PIN,  (mz.proto.pin_display_name) = "double",      (mz.proto.pin_can_show_as) = INPUT_OUTPUT ];
     float float__       = 2 [ (mz.proto.pin_show_as) = INPUT_PIN,  (mz.proto.pin_display_name) = "float",        (mz.proto.pin_can_show_as) = INPUT_OUTPUT ];
@@ -138,7 +138,7 @@ message AllBuiltinTypesNode
     option (mz.proto.job_type)         = CPU;
     option (mz.proto.job_source_file)  = "mzMath";
     option (mz.proto.job_entry_point)  = "AllBuiltinTypesNode";
-    option (mz.proto.job_display_name) = "AllBuiltinTypesNode";
+    option (mz.proto.job_display_name) = "All Builtin Types Node";
 
     mz.proto.Texture Texture__ = 1  [ (mz.proto.pin_show_as) = INPUT_PIN, (mz.proto.pin_can_show_as) = INPUT_OUTPUT ];
     mz.proto.Void Void__       = 2  [ (mz.proto.pin_show_as) = INPUT_PIN, (mz.proto.pin_can_show_as) = INPUT_OUTPUT ];
@@ -227,5 +227,5 @@ message EmptyNode
     option (mz.proto.job_type)         = CPU;
     option (mz.proto.job_source_file)  = "mzMath";
     option (mz.proto.job_entry_point)  = "EmptyNode";
-    option (mz.proto.job_display_name) = "Empty__Node";
+    option (mz.proto.job_display_name) = "Empty Node";
 }
