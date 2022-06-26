@@ -10,6 +10,31 @@
     },
     {
       "category": "Math",
+      "class_name": "FSub",
+      "display_name": "FSub"
+    },
+    {
+      "category": "Math",
+      "class_name": "FMul",
+      "display_name": "FMul"
+    },
+    {
+      "category": "Math",
+      "class_name": "FDiv",
+      "display_name": "FDiv"
+    },
+    {
+      "category": "Math",
+      "class_name": "MakeVec3",
+      "display_name": "MakeVec3"
+    },
+    {
+      "category": "Math",
+      "class_name": "CastToVec3d",
+      "display_name": "Cast To Vec3d"
+    },
+    {
+      "category": "Math",
       "class_name": "FSubtract",
       "display_name": "FSubtract"
     },
