@@ -2,7 +2,7 @@
 
 extern "C"
 {
-    void MediaSourceEntry(/*AdderNode* adderNode*/)
-    {
-    }
+void MediaSourceEntry(size_t,void*,void*)
+{
+}
 }

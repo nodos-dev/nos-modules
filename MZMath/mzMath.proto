@@ -20,6 +20,54 @@ message FAdd
                   (mz.proto.pin_can_show_as) = INPUT_OUTPUT ];
 }
 
+message FSub
+{
+    option (mz.proto.job_type)         = CPU;
+    option (mz.proto.job_source_file)  = "mzMath";
+    option (mz.proto.job_entry_point)  = "FSub";
+    option (mz.proto.job_display_name) = "Sub";
+
+    float X = 1 [ (mz.proto.pin_show_as)     = INPUT_PIN,
+                  (mz.proto.pin_can_show_as) = INPUT_OUTPUT,
+                  (mz.proto.pin_category)    = "category|sub_category"];
+    float Y = 2 [ (mz.proto.pin_show_as)     = INPUT_PIN,
+                  (mz.proto.pin_can_show_as) = INPUT_OUTPUT ];
+    float Z = 3 [ (mz.proto.pin_show_as)     = OUTPUT_PIN,
+                  (mz.proto.pin_can_show_as) = INPUT_OUTPUT ];
+}
+
+message FMul
+{
+    option (mz.proto.job_type)         = CPU;
+    option (mz.proto.job_source_file)  = "mzMath";
+    option (mz.proto.job_entry_point)  = "FMul";
+    option (mz.proto.job_display_name) = "Mul";
+
+    float X = 1 [ (mz.proto.pin_show_as)     = INPUT_PIN,
+                  (mz.proto.pin_can_show_as) = INPUT_OUTPUT,
+                  (mz.proto.pin_category)    = "category|sub_category"];
+    float Y = 2 [ (mz.proto.pin_show_as)     = INPUT_PIN,
+                  (mz.proto.pin_can_show_as) = INPUT_OUTPUT ];
+    float Z = 3 [ (mz.proto.pin_show_as)     = OUTPUT_PIN,
+                  (mz.proto.pin_can_show_as) = INPUT_OUTPUT ];
+}
+
+message FDiv
+{
+    option (mz.proto.job_type)         = CPU;
+    option (mz.proto.job_source_file)  = "mzMath";
+    option (mz.proto.job_entry_point)  = "FDiv";
+    option (mz.proto.job_display_name) = "Div";
+
+    float X = 1 [ (mz.proto.pin_show_as)     = INPUT_PIN,
+                  (mz.proto.pin_can_show_as) = INPUT_OUTPUT,
+                  (mz.proto.pin_category)    = "category|sub_category"];
+    float Y = 2 [ (mz.proto.pin_show_as)     = INPUT_PIN,
+                  (mz.proto.pin_can_show_as) = INPUT_OUTPUT ];
+    float Z = 3 [ (mz.proto.pin_show_as)     = OUTPUT_PIN,
+                  (mz.proto.pin_can_show_as) = INPUT_OUTPUT ];
+}
+
 message FSubtract
 {
     option (mz.proto.job_type)         = CPU;
