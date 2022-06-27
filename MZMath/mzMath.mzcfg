@@ -35,11 +35,6 @@
     },
     {
       "category": "Math",
-      "class_name": "FSubtract",
-      "display_name": "FSubtract"
-    },
-    {
-      "category": "Math",
       "class_name": "Square",
       "display_name": "Square"
     },

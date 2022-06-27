@@ -47,4 +47,28 @@ void mzMath_API __stdcall CvtVec3ToVec3d(size_t szIn, void* in, void* out)
     ((double**)out)[0][2] = ((float**)in)[0][2];
 }
 
+void mzMath_API __stdcall Square(size_t szIn, void* in, void* out)
+{
+}
+
+void mzMath_API __stdcall SquareRoot(size_t szIn, void* in, void* out)
+{
+}
+
+void mzMath_API __stdcall AllProtoTypesNode(size_t szIn, void* in, void* out)
+{
+}
+
+void mzMath_API __stdcall AllBuiltinTypesNode(size_t szIn, void* in, void* out)
+{
+}
+
+void mzMath_API __stdcall GodNode(size_t szIn, void* in, void* out)
+{
+}
+
+void mzMath_API __stdcall EmptyNode(size_t szIn, void* in, void* out)
+{
+}
+
 }

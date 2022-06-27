@@ -25,7 +25,7 @@
             {
                 "type": 0,
                 "id": "Subtract1",
-                "class_name": "FSubtract",
+                "class_name": "FSub",
                 "display_name": "Some Node Name",
                 "pins": [
                     {
@@ -52,7 +52,7 @@
             {
                 "type": 0,
                 "id": "Subtract2",
-                "class_name": "FSubtract",
+                "class_name": "FSub",
                 "display_name": "Some Node Name 2",
                 "pins": [
                     {

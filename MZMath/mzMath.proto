@@ -95,33 +95,6 @@ message CastToVec3d
                              (mz.proto.pin_can_show_as) = OUTPUT_PIN_ONLY ];
 }
 
-message FSubtract
-{
-    option (mz.proto.job_type)         = CPU;
-    option (mz.proto.job_source_file)  = "mzMath";
-    option (mz.proto.job_entry_point)  = "FSubtract";
-    option (mz.proto.job_display_name) = "Subtractor";
-
-    float X = 1 [ (mz.proto.pin_display_name) = "Minuend",
-                  (mz.proto.pin_show_as)      = INPUT_PIN,
-                  (mz.proto.pin_can_show_as)  = INPUT_OUTPUT ];
-
-    float Y = 2 [ (mz.proto.pin_display_name) = "Subtrahend",
-                  (mz.proto.pin_show_as)      = INPUT_PIN,
-                  (mz.proto.pin_can_show_as)  = INPUT_OUTPUT ];
-
-    float Z = 3 [ (mz.proto.pin_display_name) = "Difference",
-                  (mz.proto.pin_show_as)      = OUTPUT_PIN,
-                  (mz.proto.pin_can_show_as)  = INPUT_OUTPUT ];
-
-    int32 P1 = 4 [ (mz.proto.pin_display_name) = "Int32",
-                   (mz.proto.pin_show_as)      = INPUT_PIN,
-                   (mz.proto.pin_can_show_as)  = INPUT_PIN_OR_PROPERTY ];
-
-    mz.proto.vec2 P2 = 5 [ (mz.proto.pin_display_name) = "Vec2",
-                           (mz.proto.pin_show_as)      = PROPERTY,
-                           (mz.proto.pin_can_show_as)  = INPUT_OUTPUT_PROPERTY ];
-}
 
 message Square
 {
