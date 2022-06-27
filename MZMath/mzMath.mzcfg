@@ -25,13 +25,13 @@
     },
     {
       "category": "Math",
-      "class_name": "MakeVec3",
-      "display_name": "MakeVec3"
+      "class_name": "MakeVec",
+      "display_name": "MakeVec"
     },
     {
       "category": "Math",
-      "class_name": "CastToVec3d",
-      "display_name": "Cast To Vec3d"
+      "class_name": "Cast",
+      "display_name": "Cast"
     },
     {
       "category": "Math",

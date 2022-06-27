@@ -80,35 +80,44 @@ message Div
                   (mz.proto.type_name)       = "{T}" ];
 }
 
-message MakeVec3
+message MakeVec
 {
     option (mz.proto.job_type)         = CPU;
     option (mz.proto.job_source_file)  = "mzMath";
-    option (mz.proto.job_entry_point)  = "MakeVec_f32x3";
-    option (mz.proto.job_display_name) = "MakeVec3";
+    option (mz.proto.job_entry_point)  = "MakeVec_{V}";
+    option (mz.proto.job_display_name) = "MakeVec";
 
     float X = 1 [ (mz.proto.pin_show_as)     = INPUT_PIN,
-                  (mz.proto.pin_can_show_as) = INPUT_PIN_ONLY];
+                  (mz.proto.pin_can_show_as) = INPUT_PIN_ONLY,
+                  (mz.proto.type_name)       = "{S}"  ];
     float Y = 2 [ (mz.proto.pin_show_as)     = INPUT_PIN,
-                  (mz.proto.pin_can_show_as) = INPUT_PIN_ONLY ];
+                  (mz.proto.pin_can_show_as) = INPUT_PIN_ONLY,
+                  (mz.proto.type_name)       = "{S}"  ];
     float Z = 3 [ (mz.proto.pin_show_as)     = INPUT_PIN,
-                  (mz.proto.pin_can_show_as) = INPUT_PIN_ONLY ];
-    mz.proto.vec3 V = 4 [ (mz.proto.pin_show_as)     = OUTPUT_PIN,
-                          (mz.proto.pin_can_show_as) = OUTPUT_PIN_ONLY ];
+                  (mz.proto.pin_can_show_as) = INPUT_PIN_ONLY,
+                  (mz.proto.type_name)       = "{S}"  ];
+    float W = 4 [ (mz.proto.pin_show_as)     = INPUT_PIN,
+                  (mz.proto.pin_can_show_as) = INPUT_PIN_ONLY,
+                  (mz.proto.type_name)       = "{S}"  ];
+    mz.proto.vec4 V = 5 [ (mz.proto.pin_show_as)     = OUTPUT_PIN,
+                          (mz.proto.pin_can_show_as) = OUTPUT_PIN_ONLY,
+                          (mz.proto.type_name)       = "{V}"  ];
 }
 
-message CastToVec3d
+message Cast
 {
     option (mz.proto.job_type)         = CPU;
     option (mz.proto.job_source_file)  = "mzMath";
-    option (mz.proto.job_entry_point)  = "Cast_Vec3_To_Vec3d";
-    option (mz.proto.job_display_name) = "Cast to Vec3d";
+    option (mz.proto.job_entry_point)  = "Cast_{T}_To_{U}";
+    option (mz.proto.job_display_name) = "Cast";
 
-    mz.proto.vec3  In = 1 [ (mz.proto.pin_show_as)     = INPUT_PIN,
-                            (mz.proto.pin_can_show_as) = INPUT_PIN_ONLY];
+    float In = 1 [ (mz.proto.pin_show_as)     = INPUT_PIN,
+                   (mz.proto.pin_can_show_as) = INPUT_PIN_ONLY,
+                   (mz.proto.type_name)       = "{T}" ];
 
-    mz.proto.vec3d Out = 4 [ (mz.proto.pin_show_as)     = OUTPUT_PIN,
-                             (mz.proto.pin_can_show_as) = OUTPUT_PIN_ONLY ];
+    float Out = 2 [ (mz.proto.pin_show_as)     = OUTPUT_PIN,
+                    (mz.proto.pin_can_show_as) = OUTPUT_PIN_ONLY ,
+                    (mz.proto.type_name)       = "{U}" ];
 }
 
 message FSubtract
