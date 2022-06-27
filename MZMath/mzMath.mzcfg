@@ -5,33 +5,33 @@
   "menu_items": [
     {
       "category": "Math",
-      "class_name": "FAdd",
-      "display_name": "FAdd"
+      "class_name": "Add",
+      "display_name": "Add"
     },
     {
       "category": "Math",
-      "class_name": "FSub",
-      "display_name": "FSub"
+      "class_name": "Sub",
+      "display_name": "Sub"
     },
     {
       "category": "Math",
-      "class_name": "FMul",
-      "display_name": "FMul"
+      "class_name": "Mul",
+      "display_name": "Mul"
     },
     {
       "category": "Math",
-      "class_name": "FDiv",
-      "display_name": "FDiv"
+      "class_name": "Div",
+      "display_name": "Div"
     },
     {
       "category": "Math",
-      "class_name": "MakeVec3",
-      "display_name": "MakeVec3"
+      "class_name": "MakeVec",
+      "display_name": "MakeVec"
     },
     {
       "category": "Math",
-      "class_name": "CastToVec3d",
-      "display_name": "Cast To Vec3d"
+      "class_name": "Cast",
+      "display_name": "Cast"
     },
     {
       "category": "Math",

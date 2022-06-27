@@ -1,12 +1,5 @@
 add_library(mzMediaSource SHARED MediaSource.cpp)
 
-set(WINDOWS_EXPORT_ALL_SYMBOLS)
-
-# set_target_properties(mzMediaSource
-#   PROPERTIES
-#   RUNTIME_OUTPUT_DIRECTORY "${MZ_PLUGIN_BINARY_OUTPUT_DIRECTORY}/mzMediaSource"
-#   RUNTIME_OUTPUT_DIRECTORY_DEBUG "${MZ_PLUGIN_BINARY_OUTPUT_DIRECTORY}/mzMediaSource"
-#   RUNTIME_OUTPUT_DIRECTORY_RELEASE "${MZ_PLUGIN_BINARY_OUTPUT_DIRECTORY}/mzMediaSource"
-# )
+target_link_libraries(mzMediaSource PRIVATE mzVulkan)
 
 compile_protos(mzMediaSource)
