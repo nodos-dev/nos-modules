@@ -141,27 +141,29 @@ ALL_GENERATORS(u64)
 ALL_GENERATORS(f32)
 ALL_GENERATORS(f64)
 
-void mzMath_API __stdcall Square(size_t szIn, void* in, void* out)
+void mzMath_API Square(size_t szIn, void* in, void* out)
+{
+    **(f32**)out = **(f32**)in * **(f32**)in;
+}
+
+void mzMath_API SquareRoot(size_t szIn, void* in, void* out)
+{
+    **(f32**)out = sqrtf(**(f32**)in);
+}
+
+void mzMath_API AllProtoTypesNode(size_t szIn, void* in, void* out)
 {
 }
 
-void mzMath_API __stdcall SquareRoot(size_t szIn, void* in, void* out)
+void mzMath_API AllBuiltinTypesNode(size_t szIn, void* in, void* out)
 {
 }
 
-void mzMath_API __stdcall AllProtoTypesNode(size_t szIn, void* in, void* out)
+void mzMath_API GodNode(size_t szIn, void* in, void* out)
 {
 }
 
-void mzMath_API __stdcall AllBuiltinTypesNode(size_t szIn, void* in, void* out)
-{
-}
-
-void mzMath_API __stdcall GodNode(size_t szIn, void* in, void* out)
-{
-}
-
-void mzMath_API __stdcall EmptyNode(size_t szIn, void* in, void* out)
+void mzMath_API EmptyNode(size_t szIn, void* in, void* out)
 {
 }
 
