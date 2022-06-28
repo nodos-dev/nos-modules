@@ -7,17 +7,20 @@
     {
       "id": "norm_x",
       "name": "X",
-      "display_name": "X"
+      "display_name": "X",
+      "show_as": "INPUT_PIN"
     },
     {
       "id": "norm_y",
       "name": "Y",
-      "display_name": "Y"
+      "display_name": "Y",
+      "show_as": "INPUT_PIN"
     },
     {
       "id": "norm_z",
       "name": "Z",
-      "display_name": "Z"
+      "display_name": "Z",
+      "show_as": "OUTPUT_PIN"
     }
   ],
 

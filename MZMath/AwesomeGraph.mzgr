@@ -7,17 +7,20 @@
         {
             "id": "vec_dist_x",
             "name": "X",
-            "display_name": "input 1"
+            "display_name": "input 1",
+            "show_as": "INPUT_PIN"
         },
         {
             "id": "vec_dist_y",
             "name": "Y",
-            "display_name": "input 2"
+            "display_name": "input 2",
+            "show_as": "INPUT_PIN"
         },
         {
             "id": "vec_dist_z",
             "name": "Z",
-            "display_name": "output"
+            "display_name": "output",
+            "show_as": "OUTPUT_PIN"
         }
     ],
     "graph": {
