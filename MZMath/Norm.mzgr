@@ -88,7 +88,7 @@
       {
         "type": 0,
         "id": "FAdd1",
-        "class_name": "FAdd",
+        "class_name": "Add",
         "display_name": "FAdd",
         "pins": [
           {
@@ -107,7 +107,8 @@
             "display_name": "fadd output z"
           }
         ],
-        "pos" : {"x" : -30, "y" : 90}
+        "pos" : {"x" : -30, "y" : 90},
+        "template_parameters": {"T" : "mz.proto.f32"}
       },
       {
         "type": 0,

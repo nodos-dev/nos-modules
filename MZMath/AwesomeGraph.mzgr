@@ -25,7 +25,7 @@
             {
                 "type": 0,
                 "id": "Subtract1",
-                "class_name": "FSub",
+                "class_name": "Sub",
                 "display_name": "Some Node Name",
                 "pins": [
                     {
@@ -47,12 +47,13 @@
                 "pos": {
                     "x": -600,
                     "y": 20
-                }
+                },
+                "template_parameters": { "T": "mz.proto.f32" }
             },
             {
                 "type": 0,
                 "id": "Subtract2",
-                "class_name": "FSub",
+                "class_name": "Sub",
                 "display_name": "Some Node Name 2",
                 "pins": [
                     {
@@ -74,7 +75,8 @@
                 "pos": {
                     "x": -600,
                     "y": 185
-                }
+                },
+                "template_parameters": { "T": "mz.proto.f32" }
             },
             {
                 "type": 0,
@@ -123,7 +125,7 @@
             {
                 "type": 0,
                 "id": "FAdd1",
-                "class_name": "FAdd",
+                "class_name": "Add",
                 "display_name": "FAdd",
                 "pins": [
                     {
@@ -145,7 +147,8 @@
                 "pos": {
                     "x": -30,
                     "y": 90
-                }
+                },
+                "template_parameters": { "T": "mz.proto.f32" }
             },
             {
                 "type": 0,
