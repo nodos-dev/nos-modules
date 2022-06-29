@@ -20,7 +20,8 @@ message Add
                   (mz.proto.type_name)       = "{T}" ];
     float Z = 3 [ (mz.proto.pin_show_as)     = OUTPUT_PIN,
                   (mz.proto.pin_can_show_as) = OUTPUT_PIN_ONLY,
-                  (mz.proto.type_name)       = "{T}" ];
+                  (mz.proto.type_name)       = "{T}",
+                  (mz.proto.pin_category) = "catA" ];
 }
 
 message Sub
@@ -98,6 +99,7 @@ message MakeVec
                   (mz.proto.type_name)       = "{S}"  ];
     float W = 4 [ (mz.proto.pin_show_as)     = INPUT_PIN,
                   (mz.proto.pin_can_show_as) = INPUT_PIN_ONLY,
+                  (mz.proto.pin_category)    = "catA",
                   (mz.proto.type_name)       = "{S}"  ];
     mz.proto.vec4 V = 5 [ (mz.proto.pin_show_as)     = OUTPUT_PIN,
                           (mz.proto.pin_can_show_as) = OUTPUT_PIN_ONLY,
@@ -136,7 +138,8 @@ message Square
 
     int32 P1 = 3 [ (mz.proto.pin_display_name) = "Int32",
                    (mz.proto.pin_show_as)      = INPUT_PIN,
-                   (mz.proto.pin_can_show_as)  = INPUT_PIN_OR_PROPERTY ];
+                   (mz.proto.pin_can_show_as)  = INPUT_PIN_OR_PROPERTY,
+                   (mz.proto.pin_category) = "A|B"];
 
     mz.proto.mat2 P2 = 4 [ (mz.proto.pin_display_name) = "Mat2",
                            (mz.proto.pin_show_as)      = PROPERTY,
@@ -144,7 +147,8 @@ message Square
 
     bool P3 = 5 [ (mz.proto.pin_display_name) = "Bool",
                   (mz.proto.pin_show_as)      = PROPERTY,
-                  (mz.proto.pin_can_show_as)  = INPUT_OUTPUT_PROPERTY ];
+                  (mz.proto.pin_can_show_as)  = INPUT_OUTPUT_PROPERTY,
+                  (mz.proto.pin_category) = "A|B|C" ];
 }
 
 message SquareRoot
@@ -159,11 +163,13 @@ message SquareRoot
 
     mz.proto.Texture P1 = 3 [ (mz.proto.pin_display_name) = "Texture",
                               (mz.proto.pin_show_as)      = PROPERTY,
-                              (mz.proto.pin_can_show_as)  = INPUT_OUTPUT_PROPERTY ];
+                              (mz.proto.pin_can_show_as)  = INPUT_OUTPUT_PROPERTY,
+                              (mz.proto.pin_category) = "A|B|C"  ];
 
     string P2 = 4 [ (mz.proto.pin_display_name) = "string",
                     (mz.proto.pin_show_as)      = PROPERTY,
-                    (mz.proto.pin_can_show_as)  = INPUT_PIN_OR_PROPERTY ];
+                    (mz.proto.pin_can_show_as)  = INPUT_PIN_OR_PROPERTY, 
+                    (mz.proto.pin_category) = "catA" ];
 }
 
 message AllProtoTypesNode
@@ -189,21 +195,21 @@ message AllProtoTypesNode
     string string__     = 14 [ (mz.proto.pin_show_as) = OUTPUT_PIN,(mz.proto.pin_display_name) = "string",       (mz.proto.pin_can_show_as) = INPUT_OUTPUT ];
     bytes bytes__       = 15 [ (mz.proto.pin_show_as) = OUTPUT_PIN,(mz.proto.pin_display_name) = "bytes",        (mz.proto.pin_can_show_as) = INPUT_OUTPUT ];
 
-    double double_x     = 16 [ (mz.proto.pin_display_name) = "double", (mz.proto.pin_show_as) = PROPERTY, (mz.proto.pin_can_show_as) = INPUT_OUTPUT_PROPERTY ];
-    float float_x       = 17 [ (mz.proto.pin_display_name) = "float",   (mz.proto.pin_show_as) = PROPERTY, (mz.proto.pin_can_show_as) = INPUT_OUTPUT_PROPERTY ];
-    int32 int32_x       = 18 [ (mz.proto.pin_display_name) = "int32",   (mz.proto.pin_show_as) = PROPERTY, (mz.proto.pin_can_show_as) = INPUT_OUTPUT_PROPERTY ];
-    int64 int64_x       = 19 [ (mz.proto.pin_display_name) = "int64",   (mz.proto.pin_show_as) = PROPERTY, (mz.proto.pin_can_show_as) = INPUT_OUTPUT_PROPERTY ];
-    uint32 uint32_x     = 20 [ (mz.proto.pin_display_name) = "uint32",  (mz.proto.pin_show_as) = PROPERTY, (mz.proto.pin_can_show_as) = INPUT_OUTPUT_PROPERTY ];
-    uint64 uint64_x     = 21 [ (mz.proto.pin_display_name) = "uint64",  (mz.proto.pin_show_as) = PROPERTY, (mz.proto.pin_can_show_as) = INPUT_OUTPUT_PROPERTY ];
-    sint32 sint32_x     = 22 [ (mz.proto.pin_display_name) = "sint32",  (mz.proto.pin_show_as) = PROPERTY, (mz.proto.pin_can_show_as) = INPUT_OUTPUT_PROPERTY ];
-    sint64 sint64_x     = 23 [ (mz.proto.pin_display_name) = "sint64",  (mz.proto.pin_show_as) = PROPERTY, (mz.proto.pin_can_show_as) = INPUT_OUTPUT_PROPERTY ];
-    fixed32 fixed32_x   = 24 [ (mz.proto.pin_display_name) = "fixed32", (mz.proto.pin_show_as) = PROPERTY, (mz.proto.pin_can_show_as) = INPUT_OUTPUT_PROPERTY ];
-    fixed64 fixed64_x   = 25 [ (mz.proto.pin_display_name) = "fixed64",     (mz.proto.pin_show_as) = PROPERTY, (mz.proto.pin_can_show_as) = INPUT_OUTPUT_PROPERTY ];
-    sfixed32 sfixed32_x = 26 [ (mz.proto.pin_display_name) = "sfixed32", (mz.proto.pin_show_as) = PROPERTY, (mz.proto.pin_can_show_as) = INPUT_OUTPUT_PROPERTY ];
-    sfixed64 sfixed64_x = 27 [ (mz.proto.pin_display_name) = "sfixed64", (mz.proto.pin_show_as) = PROPERTY, (mz.proto.pin_can_show_as) = INPUT_OUTPUT_PROPERTY ];
-    bool bool_x         = 28 [ (mz.proto.pin_display_name) = "bool",        (mz.proto.pin_show_as) = PROPERTY, (mz.proto.pin_can_show_as) = INPUT_OUTPUT_PROPERTY ];
-    string string_x     = 29 [ (mz.proto.pin_display_name) = "string",      (mz.proto.pin_show_as) = PROPERTY, (mz.proto.pin_can_show_as) = INPUT_OUTPUT_PROPERTY ];
-    bytes bytes_x       = 30 [ (mz.proto.pin_display_name) = "bytes",       (mz.proto.pin_show_as) = PROPERTY, (mz.proto.pin_can_show_as) = INPUT_OUTPUT_PROPERTY ];
+    double double_x     = 16 [ (mz.proto.pin_display_name) = "double", (mz.proto.pin_show_as) = PROPERTY,       (mz.proto.pin_can_show_as) = INPUT_OUTPUT_PROPERTY ];
+    float float_x       = 17 [ (mz.proto.pin_display_name) = "float",   (mz.proto.pin_show_as) = PROPERTY,      (mz.proto.pin_can_show_as) = INPUT_OUTPUT_PROPERTY ];
+    int32 int32_x       = 18 [ (mz.proto.pin_display_name) = "int32",   (mz.proto.pin_show_as) = PROPERTY,      (mz.proto.pin_can_show_as) = INPUT_OUTPUT_PROPERTY ];
+    int64 int64_x       = 19 [ (mz.proto.pin_display_name) = "int64",   (mz.proto.pin_show_as) = PROPERTY,      (mz.proto.pin_can_show_as) = INPUT_OUTPUT_PROPERTY ];
+    uint32 uint32_x     = 20 [ (mz.proto.pin_display_name) = "uint32",  (mz.proto.pin_show_as) = PROPERTY,      (mz.proto.pin_can_show_as) = INPUT_OUTPUT_PROPERTY ];
+    uint64 uint64_x     = 21 [ (mz.proto.pin_display_name) = "uint64",  (mz.proto.pin_show_as) = PROPERTY,      (mz.proto.pin_can_show_as) = INPUT_OUTPUT_PROPERTY ];
+    sint32 sint32_x     = 22 [ (mz.proto.pin_display_name) = "sint32",  (mz.proto.pin_show_as) = PROPERTY,      (mz.proto.pin_can_show_as) = INPUT_OUTPUT_PROPERTY ];
+    sint64 sint64_x     = 23 [ (mz.proto.pin_display_name) = "sint64",  (mz.proto.pin_show_as) = PROPERTY,      (mz.proto.pin_can_show_as) = INPUT_OUTPUT_PROPERTY ];
+    fixed32 fixed32_x   = 24 [ (mz.proto.pin_display_name) = "fixed32", (mz.proto.pin_show_as) = PROPERTY,      (mz.proto.pin_can_show_as) = INPUT_OUTPUT_PROPERTY ];
+    fixed64 fixed64_x   = 25 [ (mz.proto.pin_display_name) = "fixed64",     (mz.proto.pin_show_as) = PROPERTY,  (mz.proto.pin_can_show_as) = INPUT_OUTPUT_PROPERTY ];
+    sfixed32 sfixed32_x = 26 [ (mz.proto.pin_display_name) = "sfixed32", (mz.proto.pin_show_as) = PROPERTY,     (mz.proto.pin_can_show_as) = INPUT_OUTPUT_PROPERTY ];
+    sfixed64 sfixed64_x = 27 [ (mz.proto.pin_display_name) = "sfixed64", (mz.proto.pin_show_as) = PROPERTY,     (mz.proto.pin_can_show_as) = INPUT_OUTPUT_PROPERTY ];
+    bool bool_x         = 28 [ (mz.proto.pin_display_name) = "bool",        (mz.proto.pin_show_as) = PROPERTY,  (mz.proto.pin_can_show_as) = INPUT_OUTPUT_PROPERTY ];
+    string string_x     = 29 [ (mz.proto.pin_display_name) = "string",      (mz.proto.pin_show_as) = PROPERTY,  (mz.proto.pin_can_show_as) = INPUT_OUTPUT_PROPERTY ];
+    bytes bytes_x       = 30 [ (mz.proto.pin_display_name) = "bytes",       (mz.proto.pin_show_as) = PROPERTY,  (mz.proto.pin_can_show_as) = INPUT_OUTPUT_PROPERTY ];
 }
 
 message AllBuiltinTypesNode
@@ -224,15 +230,15 @@ message AllBuiltinTypesNode
     mz.proto.mat3 mat3__ = 8        [ (mz.proto.pin_show_as) = OUTPUT_PIN, (mz.proto.pin_can_show_as) = INPUT_OUTPUT ];
     mz.proto.mat4 mat4__ = 9        [ (mz.proto.pin_show_as) = OUTPUT_PIN, (mz.proto.pin_can_show_as) = INPUT_OUTPUT ];
 
-    mz.proto.Texture Texture_x = 10 [ (mz.proto.pin_display_name) = "mz.Texture", (mz.proto.pin_show_as) = PROPERTY, (mz.proto.pin_can_show_as) = INPUT_OUTPUT_PROPERTY ];
-    mz.proto.Void Void_x       = 11 [ (mz.proto.pin_display_name) = "mz.Void", (mz.proto.pin_show_as) = PROPERTY, (mz.proto.pin_can_show_as) = INPUT_OUTPUT_PROPERTY ];
-    mz.proto.vec2 vec2_x       = 12 [ (mz.proto.pin_display_name) = "mz.vec2", (mz.proto.pin_show_as) = PROPERTY, (mz.proto.pin_can_show_as) = INPUT_OUTPUT_PROPERTY ];
-    mz.proto.vec2i vec2i_x     = 13 [ (mz.proto.pin_display_name) = "mz.vec2i", (mz.proto.pin_show_as) = PROPERTY, (mz.proto.pin_can_show_as) = INPUT_OUTPUT_PROPERTY ];
-    mz.proto.vec3 vec3_x       = 14 [ (mz.proto.pin_display_name) = "mz.vec3", (mz.proto.pin_show_as) = PROPERTY, (mz.proto.pin_can_show_as) = INPUT_OUTPUT_PROPERTY ];
-    mz.proto.vec4 vec4_x       = 15 [ (mz.proto.pin_display_name) = "mz.vec4", (mz.proto.pin_show_as) = PROPERTY, (mz.proto.pin_can_show_as) = INPUT_OUTPUT_PROPERTY ];
-    mz.proto.mat2 mat2_x       = 16 [ (mz.proto.pin_display_name) = "mz.mat2", (mz.proto.pin_show_as) = PROPERTY, (mz.proto.pin_can_show_as) = INPUT_OUTPUT_PROPERTY ];
-    mz.proto.mat3 mat3_x       = 17 [ (mz.proto.pin_display_name) = "mz.mat3", (mz.proto.pin_show_as) = PROPERTY, (mz.proto.pin_can_show_as) = INPUT_OUTPUT_PROPERTY ];
-    mz.proto.mat4 mat4_x       = 18 [ (mz.proto.pin_display_name) = "mz.mat4", (mz.proto.pin_show_as) = PROPERTY, (mz.proto.pin_can_show_as) = INPUT_OUTPUT_PROPERTY ];
+    mz.proto.Texture Texture_x = 10 [ (mz.proto.pin_category) = "A|B|C", (mz.proto.pin_display_name) = "mz.Texture", (mz.proto.pin_show_as) = PROPERTY, (mz.proto.pin_can_show_as) = INPUT_OUTPUT_PROPERTY ];
+    mz.proto.Void Void_x       = 11 [ (mz.proto.pin_category) = "A|B", (mz.proto.pin_display_name) = "mz.Void",  (mz.proto.pin_show_as) = PROPERTY, (mz.proto.pin_can_show_as) = INPUT_OUTPUT_PROPERTY ];
+    mz.proto.vec2 vec2_x       = 12 [ (mz.proto.pin_category) = "A|B|C", (mz.proto.pin_display_name) = "mz.vec2", (mz.proto.pin_show_as) = PROPERTY, (mz.proto.pin_can_show_as) = INPUT_OUTPUT_PROPERTY ];
+    mz.proto.vec2i vec2i_x     = 13 [ (mz.proto.pin_category) = "A|B|C", (mz.proto.pin_display_name) = "mz.vec2i", (mz.proto.pin_show_as) = PROPERTY, (mz.proto.pin_can_show_as) = INPUT_OUTPUT_PROPERTY ];
+    mz.proto.vec3 vec3_x       = 14 [ (mz.proto.pin_category) = "A|B|D", (mz.proto.pin_display_name) = "mz.vec3", (mz.proto.pin_show_as) = PROPERTY, (mz.proto.pin_can_show_as) = INPUT_OUTPUT_PROPERTY ];
+    mz.proto.vec4 vec4_x       = 15 [ (mz.proto.pin_category) = "A|B|E", (mz.proto.pin_display_name) = "mz.vec4", (mz.proto.pin_show_as) = PROPERTY, (mz.proto.pin_can_show_as) = INPUT_OUTPUT_PROPERTY ];
+    mz.proto.mat2 mat2_x       = 16 [ (mz.proto.pin_category) = "A", (mz.proto.pin_display_name) = "mz.mat2", (mz.proto.pin_show_as) = PROPERTY, (mz.proto.pin_can_show_as) = INPUT_OUTPUT_PROPERTY ];
+    mz.proto.mat3 mat3_x       = 17 [ (mz.proto.pin_category) = "A|B", (mz.proto.pin_display_name) = "mz.mat3", (mz.proto.pin_show_as) = PROPERTY, (mz.proto.pin_can_show_as) = INPUT_OUTPUT_PROPERTY ];
+    mz.proto.mat4 mat4_x       = 18 [ (mz.proto.pin_category) = "A|B|C", (mz.proto.pin_display_name) = "mz.mat4", (mz.proto.pin_show_as) = PROPERTY, (mz.proto.pin_can_show_as) = INPUT_OUTPUT_PROPERTY ];
 }
 
 message GodNode
