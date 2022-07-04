@@ -27,6 +27,7 @@ void mzMath_API Add(void** inout, const char* metaData)
 {
 	mz::Args params(inout, metaData);
 	
+	//params.Get<float>(3) = params.Get<float>(1) + params.Get<float>(2);
 	params.Get<float>("Z") = params.Get<float>("X") + params.Get<float>("Y");
 }
 
