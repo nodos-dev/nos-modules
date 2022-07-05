@@ -34,6 +34,17 @@ void mzMath_API Add(void** inout, const char* metaData)
 	Z = X + Y;
 }
 
+void mzMath_API Sub(void** inout, const char* metaData)
+{
+	mz::Args params(inout, metaData);
+	
+	f32& X = params.Get<f32>(1);
+	f32& Y = params.Get<f32>(2);
+	f32& Z = params.Get<f32>(3);
+
+	Z = X - Y;
+}
+
 void mzMath_API SquareRoot(void** inout, const char* metaData)
 {
     //**(f32**)out = sqrtf(**(f32**)in);
