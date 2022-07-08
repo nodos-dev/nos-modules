@@ -1,0 +1,12 @@
+{
+  "namespace": "mz.cc",
+  "name": "ColorCorrect",
+  "proto_includes": [ "mzColorCorrect.proto" ],
+  "menu_items": [
+    {
+      "category": "Media",
+      "class_name": "ColorCorrect",
+      "display_name": "Color Correct"
+    }
+  ]
+}
