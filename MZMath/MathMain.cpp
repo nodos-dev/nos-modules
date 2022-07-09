@@ -47,23 +47,22 @@ void mzMath_API Sub(void** inout, const char* metaData)
 
 void mzMath_API SquareRoot(void** inout, const char* metaData)
 {
-    //**(f32**)out = sqrtf(**(f32**)in);
+	mz::Args params(inout, metaData);
+
+	f32& X = params.Get<f32>("X");
+	f32& Z = params.Get<f32>("Z");
+
+	Z = sqrtf(X);
 }
 
-void mzMath_API AllProtoTypesNode(void** inout, const char* metaData)
+void mzMath_API Square(void** inout, const char* metaData)
 {
-}
+	mz::Args params(inout, metaData);
+	
+	f32& X = params.Get<f32>("X");
+	f32& Z = params.Get<f32>("Z");
 
-void mzMath_API AllBuiltinTypesNode(void** inout, const char* metaData)
-{
-}
-
-void mzMath_API GodNode(void** inout, const char* metaData)
-{
-}
-
-void mzMath_API EmptyNode(void** inout, const char* metaData)
-{
+	Z = X * X;
 }
 
 }

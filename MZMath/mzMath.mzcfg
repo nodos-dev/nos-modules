@@ -30,11 +30,6 @@
     },
     {
       "category": "Math",
-      "class_name": "Cast",
-      "display_name": "Cast"
-    },
-    {
-      "category": "Math",
       "class_name": "Square",
       "display_name": "Square"
     },
@@ -44,40 +39,9 @@
       "display_name": "Square Root"
     }, 
     {
-      "category": "Experimental",
-      "class_name": "AwesomeGraph",
-      "display_name": "Awesome Graph"
-    },
-    {
       "category": "Math",
       "class_name": "Norm",
       "display_name": "Norm"
-    }
-    ,
-    {
-      "category": "Math",
-      "class_name": "AllProtoTypesNode",
-      "display_name": "All Proto Types Node"
-    },
-    {
-      "category": "Math",
-      "class_name": "AllBuiltinTypesNode",
-      "display_name": "All Builtin Types Node"
-    },
-    {
-      "category": "Math",
-      "class_name": "GodNode",
-      "display_name": "GodNode"
-    },
-    {
-      "category": "Math",
-      "class_name": "MotherGod",
-      "display_name": "MotherGod"
-    },
-    {
-      "category": "Empty",
-      "class_name": "EmptyNode",
-      "display_name": "EmptyNode"
     }
   ]
 }
