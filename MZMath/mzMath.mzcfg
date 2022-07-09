@@ -25,8 +25,8 @@
     },
     {
       "category": "Math",
-      "class_name": "MakeVec",
-      "display_name": "MakeVec"
+      "class_name": "MakeVec4",
+      "display_name": "MakeVec4"
     },
     {
       "category": "Math",

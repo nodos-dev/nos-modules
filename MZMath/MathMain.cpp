@@ -34,6 +34,22 @@ void mzMath_API Add(void** inout, const char* metaData)
 	Z = X + Y;
 }
 
+void mzMath_API MakeVec4(void** inout, const char* metaData)
+{
+	mz::Args params(inout, metaData);
+	
+	f32& X = params.Get<f32>(1);
+	f32& Y = params.Get<f32>(2);
+	f32& Z = params.Get<f32>(3);
+	f32& W = params.Get<f32>(4);
+	f32& V = params.Get<f32>(5);
+
+	(&V)[0] = X;
+	(&V)[1] = Y;
+	(&V)[2] = Z;
+	(&V)[3] = W;
+}
+
 void mzMath_API Sub(void** inout, const char* metaData)
 {
 	mz::Args params(inout, metaData);

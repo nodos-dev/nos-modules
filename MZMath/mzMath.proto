@@ -75,29 +75,23 @@ message Div
                   (mz.proto.type_name)       = "{T}" ];
 }
 
-message MakeVec
+message MakeVec4
 {
     option (mz.proto.job_type)         = CPU;
     option (mz.proto.job_source_file)  = "mzMath";
-    option (mz.proto.job_entry_point)  = "MakeVec";
-    option (mz.proto.job_display_name) = "MakeVec";
+    option (mz.proto.job_entry_point)  = "MakeVec4";
+    option (mz.proto.job_display_name) = "MakeVec4";
 
     float X = 1 [ (mz.proto.pin_show_as)     = INPUT_PIN,
-                  (mz.proto.pin_can_show_as) = INPUT_PIN_ONLY,
-                  (mz.proto.type_name)       = "{S}"  ];
+                  (mz.proto.pin_can_show_as) = INPUT_PIN_ONLY];
     float Y = 2 [ (mz.proto.pin_show_as)     = INPUT_PIN,
-                  (mz.proto.pin_can_show_as) = INPUT_PIN_ONLY,
-                  (mz.proto.type_name)       = "{S}"  ];
+                  (mz.proto.pin_can_show_as) = INPUT_PIN_ONLY];
     float Z = 3 [ (mz.proto.pin_show_as)     = INPUT_PIN,
-                  (mz.proto.pin_can_show_as) = INPUT_PIN_ONLY,
-                  (mz.proto.type_name)       = "{S}"  ];
+                  (mz.proto.pin_can_show_as) = INPUT_PIN_ONLY];
     float W = 4 [ (mz.proto.pin_show_as)     = INPUT_PIN,
-                  (mz.proto.pin_can_show_as) = INPUT_PIN_ONLY,
-                  (mz.proto.pin_category)    = "catA",
-                  (mz.proto.type_name)       = "{S}"  ];
+                  (mz.proto.pin_can_show_as) = INPUT_PIN_ONLY];
     mz.proto.vec4 V = 5 [ (mz.proto.pin_show_as)     = OUTPUT_PIN,
-                          (mz.proto.pin_can_show_as) = OUTPUT_PIN_ONLY,
-                          (mz.proto.type_name)       = "{V}"  ];
+                          (mz.proto.pin_can_show_as) = OUTPUT_PIN_ONLY];
 }
 
 message Square
