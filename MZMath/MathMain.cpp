@@ -38,11 +38,11 @@ void mzMath_API MakeVec4(void** inout, const char* metaData)
 {
 	mz::Args params(inout, metaData);
 	
-	f32& X = params.Get<f32>(1);
-	f32& Y = params.Get<f32>(2);
-	f32& Z = params.Get<f32>(3);
-	f32& W = params.Get<f32>(4);
-	f32& V = params.Get<f32>(5);
+	f32& X = params.Get<f32>("X");
+	f32& Y = params.Get<f32>("Y");
+	f32& Z = params.Get<f32>("Z");
+	f32& W = params.Get<f32>("W");
+	f32& V = params.Get<f32>("V");
 
 	(&V)[0] = X;
 	(&V)[1] = Y;
