@@ -7,14 +7,13 @@ import "ProtoCommon.proto";
 message ColorCorrect
 {
     option (mz.proto.job_type)         = GPU;
-    option (mz.proto.job_source_file)  = "mzColorCorrect";
+    option (mz.proto.job_source_file)  = "mzColorCorrect.frag";
     option (mz.proto.job_entry_point)  = "main";
     option (mz.proto.job_display_name) = "Color Correct";
 
     mz.proto.Texture Source = 1 [ (mz.proto.pin_show_as) = INPUT_PIN, (mz.proto.pin_can_show_as) = INPUT_PIN_ONLY ];
     mz.proto.Texture Output = 2 [ (mz.proto.pin_show_as) = OUTPUT_PIN, (mz.proto.pin_can_show_as) = OUTPUT_PIN_ONLY ];
 
-    mz.proto.vec3 WorkingColor = 3  [ (mz.proto.pin_show_as) = INPUT_PIN, (mz.proto.pin_can_show_as) = INPUT_PIN_OR_PROPERTY ];
     mz.proto.vec4 ColorSaturation = 4  [ (mz.proto.pin_show_as) = INPUT_PIN, (mz.proto.pin_can_show_as) = INPUT_PIN_OR_PROPERTY ];
     mz.proto.vec4 ColorContrast = 5 [ (mz.proto.pin_show_as) = INPUT_PIN, (mz.proto.pin_can_show_as) = INPUT_PIN_OR_PROPERTY ];
     mz.proto.vec4 ColorGamma = 6 [ (mz.proto.pin_show_as) = INPUT_PIN, (mz.proto.pin_can_show_as) = INPUT_PIN_OR_PROPERTY ];

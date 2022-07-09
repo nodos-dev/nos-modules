@@ -1,12 +1,11 @@
 #version 450
 
-layout(binding = 0) uniform sampler2D src;
+layout(binding = 0) uniform sampler2D Source;
 layout(location = 0) out vec4 rt;
 layout(location = 0) in vec2 uv;
 
 layout(binding=1) uniform ColorCorrectParams 
 {
-    vec3 WorkingColor;
     vec4 ColorSaturation;
     vec4 ColorContrast;
     vec4 ColorGamma;
@@ -34,5 +33,5 @@ vec3 ColorCorrect(vec3 WorkingColor, vec4 ColorSaturation, vec4 ColorContrast, v
 
 void main()
 {
-    rt = vec4(ColorCorrect(texture(src, uv).rgb, CC.ColorSaturation, CC.ColorContrast, CC.ColorGamma, CC.ColorGain, CC.ColorOffset, CC.ColorContrastCenter), 1);
+    rt = vec4(ColorCorrect(texture(Source, uv).rgb, CC.ColorSaturation, CC.ColorContrast, CC.ColorGamma, CC.ColorGain, CC.ColorOffset, CC.ColorContrastCenter), 1);
 }
