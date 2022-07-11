@@ -73,6 +73,34 @@ message AllBuiltinTypesNode
     mz.proto.mat4 mat4_x       = 18 [ (mz.proto.pin_category) = "A|B|C", (mz.proto.pin_display_name) = "mz.mat4", (mz.proto.pin_show_as) = PROPERTY, (mz.proto.pin_can_show_as) = INPUT_OUTPUT_PROPERTY ];
 }
 
+message StaticMeshComponent
+{
+    option (mz.proto.job_type)         = CPU;
+    option (mz.proto.job_source_file)  = "mzTestPlugin";
+    option (mz.proto.job_entry_point)  = "StaticMeshComponent";
+    option (mz.proto.job_display_name) = "Static Mesh Component";
+
+    float seePropertyPane = 13  [ (mz.proto.pin_show_as) = INPUT_PIN,(mz.proto.pin_display_name) = "See Property Pane", (mz.proto.pin_can_show_as) = INPUT_OUTPUT_PROPERTY ];
+    float byby     = 14  [ (mz.proto.pin_show_as) = OUTPUT_PIN, (mz.proto.pin_display_name) = "Bye bye",(mz.proto.pin_can_show_as) = INPUT_OUTPUT_PROPERTY ];
+
+    mz.proto.vec3 location  = 1  [(mz.proto.pin_category) = "Transform", (mz.proto.pin_display_name) = "Location", (mz.proto.pin_show_as) = PROPERTY, (mz.proto.pin_can_show_as) = INPUT_OUTPUT_PROPERTY ];
+    mz.proto.vec3 rotation  = 2  [(mz.proto.pin_category) = "Transform", (mz.proto.pin_display_name) = "Rotation",(mz.proto.pin_show_as) = PROPERTY, (mz.proto.pin_can_show_as) = INPUT_OUTPUT_PROPERTY ];
+    mz.proto.vec3 scale     = 3  [(mz.proto.pin_category) = "Transform", (mz.proto.pin_display_name) = "Scale",(mz.proto.pin_show_as) = PROPERTY, (mz.proto.pin_can_show_as) = INPUT_OUTPUT_PROPERTY ];
+    bool isStationary       = 4  [(mz.proto.pin_category) = "Transform", (mz.proto.pin_display_name) = "Stationary",(mz.proto.pin_show_as) = PROPERTY, (mz.proto.pin_can_show_as) = INPUT_OUTPUT_PROPERTY ];
+
+    mz.proto.Texture staticMesh = 5 [(mz.proto.pin_category) = "Static Mesh", (mz.proto.pin_display_name) = "Static Mesh", (mz.proto.pin_show_as) = PROPERTY, (mz.proto.pin_can_show_as) = INPUT_OUTPUT_PROPERTY ];
+
+    bool ignoreRadialImpulse       = 6  [(mz.proto.pin_category) = "Physics", (mz.proto.pin_display_name) = "Ignore Radial Impulse",(mz.proto.pin_show_as) = PROPERTY, (mz.proto.pin_can_show_as) = INPUT_OUTPUT_PROPERTY ];
+    bool ignoreRadialForce       = 7  [(mz.proto.pin_category) = "Physics", (mz.proto.pin_display_name) = "Ignore Radial Force",(mz.proto.pin_show_as) = PROPERTY, (mz.proto.pin_can_show_as) = INPUT_OUTPUT_PROPERTY ];
+    float linearDamping = 8  [(mz.proto.pin_category) = "Physics", (mz.proto.pin_display_name) = "Linear Damping",(mz.proto.pin_show_as) = PROPERTY, (mz.proto.pin_can_show_as) = INPUT_OUTPUT_PROPERTY ];
+    float angularDampint = 9  [(mz.proto.pin_category) = "Physics", (mz.proto.pin_display_name) = "Angular Damping",(mz.proto.pin_show_as) = PROPERTY, (mz.proto.pin_can_show_as) = INPUT_OUTPUT_PROPERTY ];
+
+    bool lockPositionx = 10 [(mz.proto.pin_category) = "Physics|Constraints", (mz.proto.pin_display_name) = "Lock Position X",(mz.proto.pin_show_as) = PROPERTY, (mz.proto.pin_can_show_as) = INPUT_OUTPUT_PROPERTY ];
+    bool lockPositiony = 11 [(mz.proto.pin_category) = "Physics|Constraints", (mz.proto.pin_display_name) = "Lock Position Y",(mz.proto.pin_show_as) = PROPERTY, (mz.proto.pin_can_show_as) = INPUT_OUTPUT_PROPERTY ];
+    bool lockPositionz = 12 [(mz.proto.pin_category) = "Physics|Constraints", (mz.proto.pin_display_name) = "Lock Position Z",(mz.proto.pin_show_as) = PROPERTY, (mz.proto.pin_can_show_as) = INPUT_OUTPUT_PROPERTY ];
+}
+
+
 message GodNode
 {
     option (mz.proto.job_type)         = CPU;

@@ -25,4 +25,7 @@ void mzTestPlugin_API EmptyNode(void** inout, const char* metaData)
 {
 }
 
+void mzTestPlugin_API StaticMeshComponent(void** inout, const char* metaData)
+{
+}
 }

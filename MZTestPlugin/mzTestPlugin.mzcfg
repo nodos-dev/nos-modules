@@ -27,6 +27,11 @@
       "category": "Test Plugin",
       "class_name": "EmptyNode",
       "display_name": "EmptyNode"
+    },
+    {
+      "category": "Test Plugin",
+      "class_name": "StaticMeshComponent",
+      "display_name": "Static Mesh Component"
     }
   ]
 }
