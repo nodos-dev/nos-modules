@@ -8,6 +8,7 @@
    "id": "a2bdc30e-c588-4d01-9438-c0fd15ad2e60",
    "name": "X",
    "displayName": "X",
+   "typeName": "mz.proto.f32",
    "showAs": "INPUT_PIN",
    "referredBy": [
     "d769a521-354a-495f-8da3-069324f759c8"
@@ -18,6 +19,7 @@
    "id": "fa6d65c2-3a08-4f7b-ada3-f1916e730d71",
    "name": "Y",
    "displayName": "Y",
+   "typeName": "mz.proto.f32",
    "showAs": "INPUT_PIN",
    "referredBy": [
     "99b265c0-6b8c-4de9-88ed-2701e087b738"
@@ -28,6 +30,7 @@
    "id": "23befd90-4160-4ddd-9297-cacb94a6895e",
    "name": "Z",
    "displayName": "Z",
+   "typeName": "mz.proto.f32",
    "showAs": "OUTPUT_PIN",
    "referredBy": [
     "481e18ad-71a4-45b4-89ba-9fed29472c9c"
