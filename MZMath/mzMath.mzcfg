@@ -10,6 +10,11 @@
     },
     {
       "category": "Math",
+      "class_name": "Addf64",
+      "display_name": "Addf64"
+    },
+    {
+      "category": "Math",
       "class_name": "Sub",
       "display_name": "Sub"
     },
@@ -27,6 +32,11 @@
       "category": "Math",
       "class_name": "MakeVec4",
       "display_name": "MakeVec4"
+    },
+    {
+      "category": "Math",
+      "class_name": "MakeVec3",
+      "display_name": "MakeVec3"
     },
     {
       "category": "Math",

@@ -21,6 +21,23 @@ message Add
                   (mz.proto.pin_category) = "catA" ];
 }
 
+message Addf64
+{
+    option (mz.proto.job_type)            = CPU;
+    option (mz.proto.job_source_file)     = "mzMath";
+    option (mz.proto.job_entry_point)     = "Addf64";
+    option (mz.proto.template_parameters) = "{T}";
+    option (mz.proto.job_display_name)    = "Addf64";
+    
+    double X = 1 [ (mz.proto.pin_show_as)     = INPUT_PIN,
+                  (mz.proto.pin_can_show_as) = INPUT_PIN_ONLY];
+    double Y = 2 [ (mz.proto.pin_show_as)     = INPUT_PIN,
+                  (mz.proto.pin_can_show_as) = INPUT_PIN_ONLY];
+    double Z = 3 [ (mz.proto.pin_show_as)     = OUTPUT_PIN,
+                  (mz.proto.pin_can_show_as) = OUTPUT_PIN_ONLY,
+                  (mz.proto.pin_category) = "catA" ];
+}
+
 message Sub
 {
     option (mz.proto.job_type)            = CPU;
@@ -91,6 +108,23 @@ message MakeVec4
     float W = 4 [ (mz.proto.pin_show_as)     = INPUT_PIN,
                   (mz.proto.pin_can_show_as) = INPUT_PIN_ONLY];
     mz.proto.vec4 V = 5 [ (mz.proto.pin_show_as)     = OUTPUT_PIN,
+                          (mz.proto.pin_can_show_as) = OUTPUT_PIN_ONLY];
+}
+
+message MakeVec3
+{
+    option (mz.proto.job_type)         = CPU;
+    option (mz.proto.job_source_file)  = "mzMath";
+    option (mz.proto.job_entry_point)  = "MakeVec3";
+    option (mz.proto.job_display_name) = "MakeVec3";
+
+    double X = 1 [ (mz.proto.pin_show_as)     = INPUT_PIN,
+                  (mz.proto.pin_can_show_as) = INPUT_PIN_ONLY];
+    double Y = 2 [ (mz.proto.pin_show_as)     = INPUT_PIN,
+                  (mz.proto.pin_can_show_as) = INPUT_PIN_ONLY];
+    double Z = 3 [ (mz.proto.pin_show_as)     = INPUT_PIN,
+                  (mz.proto.pin_can_show_as) = INPUT_PIN_ONLY];
+    mz.proto.vec3d V = 4 [ (mz.proto.pin_show_as)     = OUTPUT_PIN,
                           (mz.proto.pin_can_show_as) = OUTPUT_PIN_ONLY];
 }
 
