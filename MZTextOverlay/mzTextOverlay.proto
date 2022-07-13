@@ -1,0 +1,45 @@
+syntax = "proto3";
+
+package mz.text;
+
+import "ProtoCommon.proto";
+
+message GlyphData
+{
+    mz.proto.vec2 Pos = 1;
+    mz.proto.vec2 UV  = 2;
+}
+
+message VertexInput
+{
+    repeated GlyphData Input = 1;
+}
+
+message RenderText
+{
+    option (mz.proto.job_type)         = GPU_VERTEX_COMBINED;
+    option (mz.proto.job_source_file)  = "mzTextOverlay.vert";
+    option (mz.proto.job_entry_point)  = "main";
+    option (mz.proto.job_display_name) = "Render Text";
+
+    mz.proto.Texture Source   = 1 [ (mz.proto.pin_show_as) = INPUT_PIN, (mz.proto.pin_can_show_as) = INPUT_PIN_ONLY ];
+    mz.proto.Texture Output   = 2 [ (mz.proto.pin_show_as) = OUTPUT_PIN, (mz.proto.pin_can_show_as) = OUTPUT_PIN_ONLY ];
+
+    mz.proto.Texture Atlas    = 3 [ (mz.proto.pin_show_as) = HIDDEN, (mz.proto.pin_can_show_as) = NONE ];
+    mz.proto.vec2    Position = 4 [ (mz.proto.pin_show_as) = INPUT_PIN, (mz.proto.pin_can_show_as) = INPUT_PIN_OR_PROPERTY ];
+    mz.proto.vec2    Scale    = 5 [ (mz.proto.pin_show_as) = INPUT_PIN, (mz.proto.pin_can_show_as) = INPUT_PIN_OR_PROPERTY ];
+    mz.proto.vec3    Color    = 6 [ (mz.proto.pin_show_as) = INPUT_PIN, (mz.proto.pin_can_show_as) = INPUT_PIN_OR_PROPERTY ];
+    
+    VertexInput Vertices = 7 [ (mz.proto.pin_show_as) = INPUT_PIN, (mz.proto.pin_can_show_as) = INPUT_PIN_ONLY, (mz.proto.vertex_input) = true ];
+}
+
+message ProcessString
+{
+    option (mz.proto.job_type)         = CPU;
+    option (mz.proto.job_source_file)  = "mzTextOverlay";
+    option (mz.proto.job_entry_point)  = "ProcessString";
+    option (mz.proto.job_display_name) = "Process String";
+
+    mz.proto.String  Input = 1 [ (mz.proto.pin_show_as) = INPUT_PIN, (mz.proto.pin_can_show_as) = INPUT_PIN_ONLY ];
+    VertexInput Vertices = 2 [ (mz.proto.pin_show_as) = OUTPUT_PIN, (mz.proto.pin_can_show_as) = OUTPUT_PIN_ONLY ];
+}

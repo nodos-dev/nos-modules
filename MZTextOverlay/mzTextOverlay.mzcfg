@@ -1,0 +1,14 @@
+{
+    "namespace": "mz.text",
+    "name": "TextOverlay",
+    "proto_includes": [
+        "mzTextOverlay.proto"
+    ],
+    "menu_items": [
+        {
+            "category": "Media",
+            "class_name": "TextOverlay",
+            "display_name": "Text Overlay"
+        }
+    ]
+}

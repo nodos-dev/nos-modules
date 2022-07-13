@@ -1,37 +1,39 @@
 {
-  "namespace": "mz.testplugin",
-  "name": "op",
-  "proto_includes": [ "mzTestPlugin.proto" ],
-  "menu_items": [
-    {
-      "category": "Test Plugin",
-      "class_name": "AllProtoTypesNode",
-      "display_name": "All Proto Types Node"
-    },
-    {
-      "category": "Test Plugin",
-      "class_name": "AllBuiltinTypesNode",
-      "display_name": "All Builtin Types Node"
-    },
-    {
-      "category": "Test Plugin",
-      "class_name": "GodNode",
-      "display_name": "GodNode"
-    },
-    {
-      "category": "Test Plugin",
-      "class_name": "MotherGod",
-      "display_name": "MotherGod"
-    },
-    {
-      "category": "Test Plugin",
-      "class_name": "EmptyNode",
-      "display_name": "EmptyNode"
-    },
-    {
-      "category": "Test Plugin",
-      "class_name": "StaticMeshComponent",
-      "display_name": "Static Mesh Component"
-    }
-  ]
+    "namespace": "mz.testplugin",
+    "name": "op",
+    "proto_includes": [
+        "mzTestPlugin.proto"
+    ],
+    "menu_items": [
+        {
+            "category": "Test Plugin",
+            "class_name": "AllProtoTypesNode",
+            "display_name": "All Proto Types Node"
+        },
+        {
+            "category": "Test Plugin",
+            "class_name": "AllBuiltinTypesNode",
+            "display_name": "All Builtin Types Node"
+        },
+        {
+            "category": "Test Plugin",
+            "class_name": "GodNode",
+            "display_name": "GodNode"
+        },
+        {
+            "category": "Test Plugin",
+            "class_name": "MotherGod",
+            "display_name": "MotherGod"
+        },
+        {
+            "category": "Test Plugin",
+            "class_name": "EmptyNode",
+            "display_name": "EmptyNode"
+        },
+        {
+            "category": "Test Plugin",
+            "class_name": "StaticMeshComponent",
+            "display_name": "Static Mesh Component"
+        }
+    ]
 }

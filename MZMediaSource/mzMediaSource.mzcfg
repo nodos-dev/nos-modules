@@ -1,12 +1,14 @@
 {
-  "namespace": "mz.media_source",
-  "name": "MediaSource",
-  "proto_includes": [ "mzMediaSource.proto" ],
-  "menu_items": [
-    {
-      "category": "Media",
-      "class_name": "MediaSource",
-      "display_name": "Media Source"
-    }
-  ]
+    "namespace": "mz.media_source",
+    "name": "MediaSource",
+    "proto_includes": [
+        "mzMediaSource.proto"
+    ],
+    "menu_items": [
+        {
+            "category": "Media",
+            "class_name": "MediaSource",
+            "display_name": "Media Source"
+        }
+    ]
 }
