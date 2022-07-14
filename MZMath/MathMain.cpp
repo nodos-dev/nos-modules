@@ -4,6 +4,7 @@
 #include "stdint.h"
 #include <algorithm>
 #include "Args.h"
+#include "Builtins.pb.h"
 
 using i32 = int32_t;
 using i64 = int64_t;
@@ -27,11 +28,11 @@ void mzMath_API Add(void** inout, const char* metaData)
 {
 	mz::Args params(inout, metaData);
 	
-	f32& X = params.Get<f32>("X");
-	f32& Y = params.Get<f32>("Y");
-	f32& Z = params.Get<f32>("Z");
+	 auto& X = params.Get<mz::proto::f32>("X");
+	 auto& Y = params.Get<mz::proto::f32>("Y");
+	 auto& Z = params.Get<mz::proto::f32>("Z");
 
-	Z = X + Y;
+	Z.set_val(X.val() + Y.val());
 }
 
 
