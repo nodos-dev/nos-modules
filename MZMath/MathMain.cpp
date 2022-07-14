@@ -28,9 +28,9 @@ void mzMath_API Add(void** inout, const char* metaData)
 {
     mz::Args params(inout, metaData);
 
-    auto& X = *dynamic_cast<mz::proto::f32*>(params.Get<google::protobuf::Message>("X"));
-    auto& Y = *dynamic_cast<mz::proto::f32*>(params.Get<google::protobuf::Message>("Y"));
-    auto& Z = *dynamic_cast<mz::proto::f32*>(params.Get<google::protobuf::Message>("Z"));
+    auto& X = *params.Get<mz::proto::f32>("X");
+    auto& Y = *params.Get<mz::proto::f32>("Y");
+    auto& Z = *params.Get<mz::proto::f32>("Z");
     
 	assert(X.GetReflection() != nullptr);
 	assert(Y.GetReflection() != nullptr);
