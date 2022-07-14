@@ -50,8 +50,8 @@ static void process_char(mz::text::VertexInput *glyph, char c, vec2 tex, vec2 sc
 void mzTextOverlay_API ProcessString(void** inout, const char* metaData)
 {
 	mz::Args params(inout, metaData);
-    const char* text = params.Get<const char*>(0);
-    mz::text::VertexInput* input;
+    // const char* text = params.Get<const char*>(0);
+    // mz::text::VertexInput* input;
     // const char* text = params.Get<const char*>(1);
 
     // for(auto c : std::string(text))

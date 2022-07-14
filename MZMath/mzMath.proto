@@ -12,11 +12,11 @@ message Add
     option (mz.proto.template_parameters) = "{T}";
     option (mz.proto.job_display_name)    = "Add";
     
-    float X = 1 [ (mz.proto.pin_show_as)     = INPUT_PIN,
+    mz.proto.f32 X = 1 [ (mz.proto.pin_show_as)     = INPUT_PIN,
                   (mz.proto.pin_can_show_as) = INPUT_OUTPUT_PROPERTY];
-    float Y = 2 [ (mz.proto.pin_show_as)     = INPUT_PIN,
+    mz.proto.f32 Y = 2 [ (mz.proto.pin_show_as)     = INPUT_PIN,
                   (mz.proto.pin_can_show_as) = INPUT_OUTPUT_PROPERTY];
-    float Z = 3 [ (mz.proto.pin_show_as)     = OUTPUT_PIN,
+    mz.proto.f32 Z = 3 [ (mz.proto.pin_show_as)     = OUTPUT_PIN,
                   (mz.proto.pin_can_show_as) = INPUT_OUTPUT_PROPERTY,
                   (mz.proto.pin_category) = "catA" ];
 }
@@ -29,11 +29,11 @@ message Addf64
     option (mz.proto.template_parameters) = "{T}";
     option (mz.proto.job_display_name)    = "Addf64";
     
-    double X = 1 [ (mz.proto.pin_show_as)     = INPUT_PIN,
+    mz.proto.f64 X = 1 [ (mz.proto.pin_show_as)     = INPUT_PIN,
                   (mz.proto.pin_can_show_as) = INPUT_PIN_ONLY];
-    double Y = 2 [ (mz.proto.pin_show_as)     = INPUT_PIN,
+    mz.proto.f64 Y = 2 [ (mz.proto.pin_show_as)     = INPUT_PIN,
                   (mz.proto.pin_can_show_as) = INPUT_PIN_ONLY];
-    double Z = 3 [ (mz.proto.pin_show_as)     = OUTPUT_PIN,
+    mz.proto.f64 Z = 3 [ (mz.proto.pin_show_as)     = OUTPUT_PIN,
                   (mz.proto.pin_can_show_as) = OUTPUT_PIN_ONLY,
                   (mz.proto.pin_category) = "catA" ];
 }
@@ -46,11 +46,11 @@ message Sub
     option (mz.proto.template_parameters) = "{T}";
     option (mz.proto.job_display_name)    = "Sub";
 
-    float X = 1 [ (mz.proto.pin_show_as)     = INPUT_PIN,
+    mz.proto.f32 X = 1 [ (mz.proto.pin_show_as)     = INPUT_PIN,
                   (mz.proto.pin_can_show_as) = INPUT_OUTPUT_PROPERTY];
-    float Y = 2 [ (mz.proto.pin_show_as)     = INPUT_PIN,
+    mz.proto.f32 Y = 2 [ (mz.proto.pin_show_as)     = INPUT_PIN,
                   (mz.proto.pin_can_show_as) = INPUT_OUTPUT_PROPERTY];
-    float Z = 3 [ (mz.proto.pin_show_as)     = OUTPUT_PIN,
+    mz.proto.f32 Z = 3 [ (mz.proto.pin_show_as)     = OUTPUT_PIN,
                   (mz.proto.pin_can_show_as) = INPUT_OUTPUT_PROPERTY];
 }
 
@@ -62,13 +62,13 @@ message Mul
     option (mz.proto.template_parameters) = "{T}";
     option (mz.proto.job_display_name)    = "Mul";
 
-    float X = 1 [ (mz.proto.pin_show_as)     = INPUT_PIN,
+    mz.proto.f32 X = 1 [ (mz.proto.pin_show_as)     = INPUT_PIN,
                   (mz.proto.pin_can_show_as) = INPUT_OUTPUT_PROPERTY,
                   (mz.proto.type_name)       = "{T}" ];
-    float Y = 2 [ (mz.proto.pin_show_as)     = INPUT_PIN,
+    mz.proto.f32 Y = 2 [ (mz.proto.pin_show_as)     = INPUT_PIN,
                   (mz.proto.pin_can_show_as) = INPUT_OUTPUT_PROPERTY,
                   (mz.proto.type_name)       = "{T}" ];
-    float Z = 3 [ (mz.proto.pin_show_as)     = OUTPUT_PIN,
+    mz.proto.f32 Z = 3 [ (mz.proto.pin_show_as)     = OUTPUT_PIN,
                   (mz.proto.pin_can_show_as) = INPUT_OUTPUT_PROPERTY,
                   (mz.proto.type_name)       = "{T}" ];
 }
@@ -81,13 +81,13 @@ message Div
     option (mz.proto.template_parameters) = "{T}";
     option (mz.proto.job_display_name)    = "Div";
 
-    float X = 1 [ (mz.proto.pin_show_as)     = INPUT_PIN,
+    mz.proto.f32 X = 1 [ (mz.proto.pin_show_as)     = INPUT_PIN,
                   (mz.proto.pin_can_show_as) = INPUT_OUTPUT_PROPERTY,
                   (mz.proto.type_name)       = "{T}" ];
-    float Y = 2 [ (mz.proto.pin_show_as)     = INPUT_PIN,
+    mz.proto.f32 Y = 2 [ (mz.proto.pin_show_as)     = INPUT_PIN,
                   (mz.proto.pin_can_show_as) = INPUT_OUTPUT_PROPERTY,
                   (mz.proto.type_name)       = "{T}" ];
-    float Z = 3 [ (mz.proto.pin_show_as)     = OUTPUT_PIN,
+    mz.proto.f32 Z = 3 [ (mz.proto.pin_show_as)     = OUTPUT_PIN,
                   (mz.proto.pin_can_show_as) = INPUT_OUTPUT_PROPERTY,
                   (mz.proto.type_name)       = "{T}" ];
 }
@@ -99,13 +99,13 @@ message MakeVec4
     option (mz.proto.job_entry_point)  = "MakeVec4";
     option (mz.proto.job_display_name) = "MakeVec4";
 
-    float X = 1 [ (mz.proto.pin_show_as)     = INPUT_PIN,
+    mz.proto.f32 X = 1 [ (mz.proto.pin_show_as)     = INPUT_PIN,
                   (mz.proto.pin_can_show_as) = INPUT_OUTPUT_PROPERTY];
-    float Y = 2 [ (mz.proto.pin_show_as)     = INPUT_PIN,
+    mz.proto.f32 Y = 2 [ (mz.proto.pin_show_as)     = INPUT_PIN,
                   (mz.proto.pin_can_show_as) = INPUT_OUTPUT_PROPERTY];
-    float Z = 3 [ (mz.proto.pin_show_as)     = INPUT_PIN,
+    mz.proto.f32 Z = 3 [ (mz.proto.pin_show_as)     = INPUT_PIN,
                   (mz.proto.pin_can_show_as) = INPUT_OUTPUT_PROPERTY];
-    float W = 4 [ (mz.proto.pin_show_as)     = INPUT_PIN,
+    mz.proto.f32 W = 4 [ (mz.proto.pin_show_as)     = INPUT_PIN,
                   (mz.proto.pin_can_show_as) = INPUT_OUTPUT_PROPERTY];
     mz.proto.vec4 V = 5 [ (mz.proto.pin_show_as)     = OUTPUT_PIN,
                           (mz.proto.pin_can_show_as) = INPUT_OUTPUT_PROPERTY];
@@ -118,11 +118,11 @@ message MakeVec3
     option (mz.proto.job_entry_point)  = "MakeVec3";
     option (mz.proto.job_display_name) = "MakeVec3";
 
-    double X = 1 [ (mz.proto.pin_show_as)     = INPUT_PIN,
+    mz.proto.f64 X = 1 [ (mz.proto.pin_show_as)     = INPUT_PIN,
                   (mz.proto.pin_can_show_as) = INPUT_PIN_ONLY];
-    double Y = 2 [ (mz.proto.pin_show_as)     = INPUT_PIN,
+    mz.proto.f64 Y = 2 [ (mz.proto.pin_show_as)     = INPUT_PIN,
                   (mz.proto.pin_can_show_as) = INPUT_PIN_ONLY];
-    double Z = 3 [ (mz.proto.pin_show_as)     = INPUT_PIN,
+    mz.proto.f64 Z = 3 [ (mz.proto.pin_show_as)     = INPUT_PIN,
                   (mz.proto.pin_can_show_as) = INPUT_PIN_ONLY];
     mz.proto.vec3d V = 4 [ (mz.proto.pin_show_as)     = OUTPUT_PIN,
                           (mz.proto.pin_can_show_as) = OUTPUT_PIN_ONLY];
@@ -135,10 +135,10 @@ message Square
     option (mz.proto.job_entry_point)  = "Square";
     option (mz.proto.job_display_name) = "Square";
 
-    float X = 1 [ (mz.proto.pin_display_name) = "Input",
+    mz.proto.f32 X = 1 [ (mz.proto.pin_display_name) = "Input",
                   (mz.proto.pin_show_as)     = INPUT_PIN,
                   (mz.proto.pin_can_show_as) = INPUT_PIN_OR_PROPERTY ];
-    float Z = 2 [ (mz.proto.pin_display_name) = "Output",
+    mz.proto.f32 Z = 2 [ (mz.proto.pin_display_name) = "Output",
                   (mz.proto.pin_show_as)      = OUTPUT_PIN,
                   (mz.proto.pin_can_show_as) = INPUT_OUTPUT_PROPERTY ];
 }
@@ -150,10 +150,10 @@ message SquareRoot
     option (mz.proto.job_entry_point)  = "SquareRoot";
     option (mz.proto.job_display_name) = "Square Root";
 
-    float X = 1 [ (mz.proto.pin_display_name) = "Input",
+    mz.proto.f32 X = 1 [ (mz.proto.pin_display_name) = "Input",
                   (mz.proto.pin_show_as) = INPUT_PIN, 
                   (mz.proto.pin_can_show_as) = INPUT_PIN_OR_PROPERTY ];
-    float Z = 2 [ (mz.proto.pin_display_name) = "Output",
+    mz.proto.f32 Z = 2 [ (mz.proto.pin_display_name) = "Output",
                   (mz.proto.pin_show_as) = OUTPUT_PIN, 
                   (mz.proto.pin_can_show_as) = INPUT_OUTPUT_PROPERTY ];
 }

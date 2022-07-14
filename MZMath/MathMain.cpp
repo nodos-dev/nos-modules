@@ -28,10 +28,10 @@ void mzMath_API Add(void** inout, const char* metaData)
 {
     mz::Args params(inout, metaData);
 
-    auto& X = params.Get<mz::proto::f32>("X");
-    auto& Y = params.Get<mz::proto::f32>("Y");
-    auto& Z = params.Get<mz::proto::f32>("Z");
-
+    auto& X = *dynamic_cast<mz::proto::f32*>(params.Get<google::protobuf::Message>("X"));
+    auto& Y = *dynamic_cast<mz::proto::f32*>(params.Get<google::protobuf::Message>("Y"));
+    auto& Z = *dynamic_cast<mz::proto::f32*>(params.Get<google::protobuf::Message>("Z"));
+    
 	assert(X.GetReflection() != nullptr);
 	assert(Y.GetReflection() != nullptr);
 
@@ -43,9 +43,9 @@ void mzMath_API Addf64(void** inout, const char* metaData)
 {
 	mz::Args params(inout, metaData);
 	
-	f64& X = params.Get<f64>("X");
-	f64& Y = params.Get<f64>("Y");
-	f64& Z = params.Get<f64>("Z");
+	f64& X = *params.Get<f64>("X");
+	f64& Y = *params.Get<f64>("Y");
+	f64& Z = *params.Get<f64>("Z");
 
 	Z = X + Y;
 }
@@ -54,11 +54,11 @@ void mzMath_API MakeVec4(void** inout, const char* metaData)
 {
 	mz::Args params(inout, metaData);
 	
-	f32& X = params.Get<f32>("X");
-	f32& Y = params.Get<f32>("Y");
-	f32& Z = params.Get<f32>("Z");
-	f32& W = params.Get<f32>("W");
-	f32& V = params.Get<f32>("V");
+	f32& X = *params.Get<f32>("X");
+	f32& Y = *params.Get<f32>("Y");
+	f32& Z = *params.Get<f32>("Z");
+	f32& W = *params.Get<f32>("W");
+	f32& V = *params.Get<f32>("V");
 
 	(&V)[0] = X;
 	(&V)[1] = Y;
@@ -70,10 +70,10 @@ void mzMath_API MakeVec3(void** inout, const char* metaData)
 {
 	mz::Args params(inout, metaData);
 	
-	f64& X = params.Get<f64>("X");
-	f64& Y = params.Get<f64>("Y");
-	f64& Z = params.Get<f64>("Z");
-	f64& V = params.Get<f64>("V");
+	f64& X = *params.Get<f64>("X");
+	f64& Y = *params.Get<f64>("Y");
+	f64& Z = *params.Get<f64>("Z");
+	f64& V = *params.Get<f64>("V");
 
 	(&V)[0] = X;
 	(&V)[1] = Y;
@@ -84,9 +84,9 @@ void mzMath_API Sub(void** inout, const char* metaData)
 {
 	mz::Args params(inout, metaData);
 	
-	f32& X = params.Get<f32>(1);
-	f32& Y = params.Get<f32>(2);
-	f32& Z = params.Get<f32>(3);
+	f32& X = *params.Get<f32>(1);
+	f32& Y = *params.Get<f32>(2);
+	f32& Z = *params.Get<f32>(3);
 
 	Z = X - Y;
 }
@@ -95,8 +95,8 @@ void mzMath_API SquareRoot(void** inout, const char* metaData)
 {
 	mz::Args params(inout, metaData);
 
-	f32& X = params.Get<f32>("X");
-	f32& Z = params.Get<f32>("Z");
+	f32& X = *params.Get<f32>("X");
+	f32& Z = *params.Get<f32>("Z");
 
 	Z = sqrtf(X);
 }
@@ -105,8 +105,8 @@ void mzMath_API Square(void** inout, const char* metaData)
 {
 	mz::Args params(inout, metaData);
 	
-	f32& X = params.Get<f32>("X");
-	f32& Z = params.Get<f32>("Z");
+	f32& X = *params.Get<f32>("X");
+	f32& Z = *params.Get<f32>("Z");
 
 	Z = X * X;
 }
