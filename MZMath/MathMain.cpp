@@ -26,15 +26,18 @@ extern "C"
 
 void mzMath_API Add(void** inout, const char* metaData)
 {
-	mz::Args params(inout, metaData);
-	
-	 auto& X = params.Get<mz::proto::f32>("X");
-	 auto& Y = params.Get<mz::proto::f32>("Y");
-	 auto& Z = params.Get<mz::proto::f32>("Z");
+    mz::Args params(inout, metaData);
+
+    auto& X = params.Get<mz::proto::f32>("X");
+    auto& Y = params.Get<mz::proto::f32>("Y");
+    auto& Z = params.Get<mz::proto::f32>("Z");
+
+	assert(X.GetReflection() != nullptr);
+	assert(Y.GetReflection() != nullptr);
 
 	Z.set_val(X.val() + Y.val());
+	assert(Z.GetReflection() != nullptr);
 }
-
 
 void mzMath_API Addf64(void** inout, const char* metaData)
 {
