@@ -18,7 +18,6 @@
 #include <asio.hpp>
 #include <atomic>
 
-
 using asio::ip::udp;
 typedef uint8_t uint8;
 typedef int8_t int8;
@@ -230,24 +229,24 @@ struct FreeDNodeContext : public TrackNodeContext
 			TrackNodeContext(port)
 		{
 		}
-		
-        bool ProcessNextMessage(std::vector<u8> data, mz::Args& args)  override
-		{
+
+        bool Parse(std::vector<u8> const& data, fb::TTrack& TrackData) override
+        {
+            if(data.size() < sizeof(FZDFreeDMessage_D1))
+            {
+                return false;
+            }
 			FZDFreeDMessage_D1 d1msg = *(FZDFreeDMessage_D1*)data.data();
 			auto Location = (glm::dvec3)d1msg.GetLocation(glm::vec3(640));
 			auto Rotation = (glm::dvec3)d1msg.GetRotation(glm::vec3(32768));
 			auto Zoom = d1msg.Zoom.GetValue(0.0f, 60000.0f);
 			auto Focus = d1msg.Focus.GetValue(0.0f, 60000.0f);
-
-
 			TrackData.zoom = (Zoom);
 			TrackData.focus = (Focus);
 			TrackData.location = (mz::fb::vec3d&)Location;
 			TrackData.rotation = (mz::fb::vec3d&)Rotation;
-
-			UpdateTrackOut(args, *args.GetBuffer("Track"));
-			return true;
-		}
+            return true;
+        }
 
 		~FreeDNodeContext() {
 			if (IsRunning())

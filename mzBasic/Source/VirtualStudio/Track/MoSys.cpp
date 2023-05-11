@@ -185,9 +185,9 @@ struct MoSysPacket
 struct MoSys : public TrackNodeContext
 {
     using TrackNodeContext::TrackNodeContext;
-
+    
     // bool ProcessNextMessage(bool reset, u32 delay, mz::Args &args) override
-    bool ProcessNextMessage(std::vector<u8> buf, mz::Args& args)  override
+    bool Parse(std::vector<u8> const& buf, fb::TTrack& TrackData) override
     {
         switch(buf[0])
         {
@@ -287,7 +287,6 @@ struct MoSys : public TrackNodeContext
         TrackData.k1k2.mutate_x(TrackData.k1k2.x() * c);
         TrackData.k1k2.mutate_x(TrackData.k1k2.y() * c * c);
 
-        UpdateTrackOut(args, *args.GetBuffer("Track"));
         return true;
     }
 

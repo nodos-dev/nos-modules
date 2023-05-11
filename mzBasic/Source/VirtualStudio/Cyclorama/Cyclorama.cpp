@@ -288,22 +288,23 @@ struct Cyclorama : PinMapping
             return re;
         }
 
-        static FrameData New(fb::TCaptureData&& dat)
+        static bool New(fb::TCaptureData&& dat, FrameData& out)
         {
 			i32 w, h, n;
 			if (auto raw = stbi_load(dat.path.c_str(), &w, &h, &n, 4))
             {
 				auto tex = GServices.LoadImage(raw, fb::vec2u(w, h), fb::Format::R8G8B8A8_SRGB, fb::vec2u(w, h), fb::Format::R8G8B8A8_UNORM);
                 free(raw);
-                return FrameData {
+                out = {
                     .Path = std::move(dat.path),
                     .Texture = tex,
                     .Track = *dat.track,
                     .Pos = (glm::vec3&)dat.pos,
                     .Rot = (glm::vec3&)dat.rot,
                 };
+                return true;
             }
-            return {};
+            return false;
         }
     };
 
@@ -347,7 +348,12 @@ struct Cyclorama : PinMapping
     void LoadCleanPlates(std::vector<std::unique_ptr<mz::fb::TCaptureData>> data)
     {
         CleanCleanPlates();
-        std::transform(data.begin(), data.end(), std::back_inserter(CleanPlates), [](auto& capture){ return FrameData::New(std::move(*capture)); });
+        for (auto& capture : data)
+        {
+            FrameData fd;
+            if (FrameData::New(std::move(*capture), fd))
+                CleanPlates.emplace_back(std::move(fd));
+        }
     }
 
     void LoadCleanPlates(const mz::fb::CaptureDataArray &data)

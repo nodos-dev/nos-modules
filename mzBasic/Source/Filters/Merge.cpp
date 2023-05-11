@@ -39,13 +39,13 @@ struct MergeContext
         app::TRunPass mergePass;
         mergePass.pass = "Merge_Pass";
 
-        for (auto& [name, pin] : pins.m_PinData)
+        for (auto& [name, pin] : pins.PinData)
         {
             if (name.compare("Out") == 0) continue;
             CopyUniformFromPin(mergePass, pins, name);
         }
 
-        for (auto& [name, _] : pins.m_PinData)
+        for (auto& [name, _] : pins.PinData)
             if (name.starts_with("Texture_"))
                 TextureCount = std::max(TextureCount.load(), (u32)std::atoi(name.c_str() + sizeof("Texture_")));
         

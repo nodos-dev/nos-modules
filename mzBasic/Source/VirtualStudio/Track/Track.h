@@ -49,58 +49,41 @@ namespace mz
 {
 	struct TrackNodeContext : public NodeContext, public Thread
 	{
-		mz::EngineNodeServices NodeServices;
 		std::atomic<uint16_t> Port;
 		std::atomic_uint Delay;
 		std::mutex QMutex;
-		std::queue<std::vector<u8>> DataQueue;
-		fb::TTrack TrackData;
+
 		std::atomic_uint SpareCount = 0;
 		std::atomic_bool YetFillingSpares = true;
 		std::atomic_bool ShouldRestart = false;
 
+		std::queue<fb::TTrack> DataQueue;
+		std::atomic_uint LastServedFrameNumber = 0;
+
         struct TransformMapping
         {
-            glm::bvec3 NegatePos;
-            glm::bvec3 NegateRot;
-            bool EnableEffectiveFov;
+            glm::bvec3 NegatePos = {};
+            glm::bvec3 NegateRot = {};
+            bool EnableEffectiveFOV = true;
             f32 TransformScale = 1.f;
-		    mz::fb::CoordinateSystem CoordinateSystem;
-		    mz::fb::RotationSystem   RotationSystem;
+		    mz::fb::CoordinateSystem CoordinateSystem = fb::CoordinateSystem::XYZ;
+		    mz::fb::RotationSystem   RotationSystem = fb::RotationSystem::PTR;
+            glm::dvec3 DevicePosition = {};
+            glm::dvec3 DeviceRotation = {};
+            glm::dvec3 CameraPosition = {};
+            glm::dvec3 CameraRotation = {};
         };
         
-        static TransformMapping GetXfMapping(mz::Args& args)
-        {
-            return {
-                .NegatePos = { 
-                    args.GetOrDefo<bool>("NegateX"),
-                    args.GetOrDefo<bool>("NegateY"),
-                    args.GetOrDefo<bool>("NegateZ"),
-                },
-                .NegateRot = { 
-                    args.GetOrDefo<bool>("NegateRoll"),
-                    args.GetOrDefo<bool>("NegatePan"),
-                    args.GetOrDefo<bool>("NegateTilt"),
-                },
-                .EnableEffectiveFov = args.GetOrDefo<bool>("EnableEffectiveFOV"),
-                .TransformScale = args.GetOrDefo<f32>("TransformScale", 1.f),
-                .CoordinateSystem = args.GetOrDefo<mz::fb::CoordinateSystem>("CoordinateSystem", fb::CoordinateSystem::XYZ),
-                .RotationSystem = args.GetOrDefo<mz::fb::RotationSystem>("Pan/Tilt/Roll", fb::RotationSystem::PTR),
-            };
-        }
+        TransformMapping args;
+
 
 		TrackNodeContext(uint16_t port) :
-			Port(port),
-			NodeServices(GServices),
-            TrackData()
+			Port(port)
 		{
-            if(auto def = GServices.GetDefaultDataOfType("mz.fb.Track"))
-            {
-                TrackData = def->As<fb::TTrack>();
-            }
 		}
 
-		virtual bool ProcessNextMessage(std::vector<u8> data, mz::Args& args) = 0;
+	
+        virtual bool Parse(std::vector<u8> const& data, fb::TTrack& out) = 0;
 
 		void OnPathCommand(mz::fb::UUID pinID, app::PathCommand command, Buffer* params)
 		{
@@ -136,7 +119,9 @@ namespace mz
 			}
 
 			// Get data from queue and resize the fixed-size buffer coming from udp listener thread
-			ProcessNextMessage(std::move(DataQueue.front()), args);
+// <<<<<<< HEAD
+// 			ProcessNextMessage(std::move(DataQueue.front()), args);
+			*args.GetBuffer("Track") = UpdateTrackOut(DataQueue.front());
 			DataQueue.pop();
 			return true;
         }
@@ -144,13 +129,33 @@ namespace mz
 		virtual void OnPinValueChanged(mz::fb::UUID const& id, void* value) 
         {
 			const auto& pinName = GetPinName(id);
-			if (pinName == "Delay")
+
+            #define SET_VALUE(ty, name, var) if(pinName == #name) args.##var = *(ty*)value;
+            
+            SET_VALUE(bool, NegateX, NegatePos.x);
+            SET_VALUE(bool, NegateY, NegatePos.y);
+            SET_VALUE(bool, NegateZ, NegatePos.z);
+            SET_VALUE(bool, NegateRoll, NegateRot.x);
+            SET_VALUE(bool, NegatePan, NegateRot.y);
+            SET_VALUE(bool, NegateTilt, NegateRot.z);
+            SET_VALUE(bool, EnableEffectiveFOV, EnableEffectiveFOV);
+            SET_VALUE(f32, TransformScale, TransformScale);
+            SET_VALUE(fb::CoordinateSystem, CoordinateSystem, CoordinateSystem);
+            SET_VALUE(fb::RotationSystem, Pan/Tilt/Roll, RotationSystem);
+            
+            SET_VALUE(glm::dvec3, DevicePosition, DevicePosition);
+            SET_VALUE(glm::dvec3, DeviceRotation, DeviceRotation);
+            SET_VALUE(glm::dvec3, CameraPosition, CameraPosition);
+            SET_VALUE(glm::dvec3, CameraRotation, CameraRotation);
+			
+            if (pinName == "Delay")
 			{
 				Delay = *(u32*)value;
 				Restart();
 				return;
 			}
-			else if (pinName == "Enable")
+
+			if (pinName == "Enable")
 			{
 				Restart();
 				auto enable = *(bool*)value;
@@ -169,8 +174,10 @@ namespace mz
 						Stop();
 					}
 				}
+                return;
 			}
-			else if (pinName == "UDP_Port")
+
+			if (pinName == "UDP_Port")
 			{
 				if (IsRunning())
 				{
@@ -184,11 +191,14 @@ namespace mz
 					auto newPort = *(uint16_t*)value;
 					Port = newPort;
 				}
+                return;
 			}
-			else if (pinName == "Spare Count")
+			
+            if (pinName == "Spare Count")
 			{
 				SpareCount = *(uint32_t*)value;
 				Restart();
+                return;
 			}
         }
 
@@ -274,45 +284,38 @@ namespace mz
             return glm::mix(v, -v, n);
         }
 
-		void UpdateTrackOut(mz::Args& args, mz::Buffer& out)
+		mz::Buffer UpdateTrackOut(fb::TTrack& outTrack)
 		{
-			auto outTrack = TrackData;
-			auto xf = GetXfMapping(args);
+			auto xf = args;
 
-			auto pos = Swizzle((glm::dvec3&)TrackData.location, xf.NegatePos, (u8)xf.CoordinateSystem);
-			auto rot = Swizzle((glm::dvec3&)TrackData.rotation, xf.NegateRot, (u8)xf.RotationSystem);
+			auto pos = Swizzle((glm::dvec3&)outTrack.location, xf.NegatePos, (u8)xf.CoordinateSystem);
+			auto rot = Swizzle((glm::dvec3&)outTrack.rotation, xf.NegateRot, (u8)xf.RotationSystem);
 
-			auto dpos = *args.Get<glm::dvec3>("DevicePosition");
-			auto drot = *args.Get<glm::dvec3>("DeviceRotation");
-			auto cpos = *args.Get<glm::dvec3>("CameraPosition");
-			auto crot = *args.Get<glm::dvec3>("CameraRotation");
-
-			auto CR = MakeRotation(crot);
+			auto CR = MakeRotation(args.CameraRotation);
 			auto TR = MakeRotation(rot);
-			auto DR = MakeRotation(drot);
+			auto DR = MakeRotation(args.DeviceRotation);
 
-			glm::dvec3 finalPos = DR * (TR * cpos + pos) + dpos;
+			glm::dvec3 finalPos = DR * (TR * args.CameraPosition + pos) + args.DevicePosition;
 			glm::dvec3 finalRot = GetEulers(DR * TR * CR);
 			(glm::dvec3&)outTrack.location = finalPos;
 			(glm::dvec3&)outTrack.rotation = finalRot;
 			
-			auto AspectRatio = TrackData.sensor_size.x() / TrackData.sensor_size.y();
-			outTrack.distortion_scale = CalculateDistortionScale(AspectRatio, (glm::dvec2&)TrackData.k1k2);
+			auto AspectRatio = outTrack.sensor_size.x() / outTrack.sensor_size.y();
+			outTrack.distortion_scale = CalculateDistortionScale(AspectRatio, (glm::dvec2&)outTrack.k1k2);
 
-			if (xf.EnableEffectiveFov)
+			if (xf.EnableEffectiveFOV)
 			{
-				outTrack.fov = glm::degrees(2.0f * (atan((TrackData.distortion_scale / 2.0f) * 2.0f * tan(glm::radians(TrackData.fov / 2.0f)))));;
+				outTrack.fov = glm::degrees(2.0f * (atan((outTrack.distortion_scale / 2.0f) * 2.0f * tan(glm::radians(outTrack.fov / 2.0f)))));;
 			}
 
-			out = mz::Buffer::From(outTrack);
-			// auto outTrack = out.As<mz::fb::Track>();
+            return mz::Buffer::From(outTrack);
 		}
 
 		virtual void Run() override
 		{
 			flatbuffers::FlatBufferBuilder fbb;
 			GServices.HandleEvent(
-				CreateAppEvent(fbb, mz::app::CreateSetThreadNameDirect(fbb, (u64)m_Thread.native_handle(), "Track")));
+				CreateAppEvent(fbb, mz::app::CreateSetThreadNameDirect(fbb, (u64)StdThread.native_handle(), "Track")));
 
 			asio::io_service io_serv;
 			{
@@ -330,20 +333,27 @@ namespace mz
 					return;
 				}
 				u8 buf[4096];
-
-				while (!m_ShouldStop)
+                const auto DefaultTrackData = GServices.GetDefaultDataOfType("mz.fb.Track")->As<fb::TTrack>();
+				while (!ShouldStop)
 				{
 					try
 					{
 						udp::endpoint sender_endpoint;
 						size_t len = sock->receive_from(asio::buffer(buf, 4096), sender_endpoint);
 						{
-							std::unique_lock<std::mutex> guard(QMutex);
-							DataQueue.push(std::vector<u8>{buf, buf + len});
-							GServices.LogFast("Track Queue Size", std::to_string(DataQueue.size()));
+                            fb::TTrack data = DefaultTrackData;
+							if(Parse(std::vector<u8>{buf, buf + len}, data))
+                            {
+                                std::unique_lock<std::mutex> guard(QMutex);
+                                DataQueue.push(data);
 
-							if (YetFillingSpares && DataQueue.size() >= SpareCount)
-								YetFillingSpares = false;
+                                // Queue sisiyo mu?
+                                // while (DataQueue.size() > Delay) DataQueue.pop();
+                                GServices.LogFast("Track Queue Size", std::to_string(DataQueue.size()));
+
+                                if (YetFillingSpares && DataQueue.size() >= SpareCount)
+                                    YetFillingSpares = false;
+                            }
 						}
 					}
 					catch (const  asio::system_error& e)

@@ -126,16 +126,13 @@ struct Stype : public TrackNodeContext
 {
     using TrackNodeContext::TrackNodeContext;
 
-    bool ProcessNextMessage(std::vector<u8> buf, mz::Args& args)  override
+    bool Parse(std::vector<u8> const& buf, fb::TTrack& TrackData) override
     {
         TrackData.sensor_size.mutate_x(9.590f);
         TrackData.sensor_size.mutate_y(5.394f);
         TrackData.fov = 60.0;
         TrackData.distortion_scale = 1;
         TrackData.pixel_aspect_ratio = 1;
-
-        // OutputData->K1 = FMath::Lerp(0.0f, InputData->K1, DistortionRatio);
-        // OutputData->K2 = FMath::Lerp(0.0f, InputData->K2, DistortionRatio);
 
         switch (buf[0])
         {
@@ -172,8 +169,6 @@ struct Stype : public TrackNodeContext
 
         TrackData.k1k2.mutate_x(TrackData.k1k2.x() * RD2);
         TrackData.k1k2.mutate_y(TrackData.k1k2.y() * RD4);
-
-        UpdateTrackOut(args, *args.GetBuffer("Track"));
 
         return true;
     }

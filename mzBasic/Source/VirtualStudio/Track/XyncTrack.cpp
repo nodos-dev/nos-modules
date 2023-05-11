@@ -50,7 +50,7 @@
 #define trkNetHeaderSize      8
 
 
-#define M_PI 3.14159265358979323846
+#define PI 3.14159265358979323846
 
 using asio::ip::udp;
 typedef uint8_t uint8;
@@ -60,7 +60,6 @@ typedef int32_t int32;
 
 namespace mz
 {
-
 	typedef union
 	{
 		double         m[4][4];     /* m [j] [i] is matrix element */
@@ -200,14 +199,9 @@ namespace mz
 			return wordCount == numWords;
 		}
 
-		bool ProcessNextMessage(std::vector<u8> buffer, mz::Args& args) override
-		{
-            TrackData.sensor_size = fb::vec2d(9.590, 5.394);
-            TrackData.fov = 60;
-            TrackData.distortion_scale = 1;
-            TrackData.pixel_aspect_ratio = 1;
 
-			auto NumBytes = buffer.size();
+        std::vector<u8> ParseableBytes(std::vector<u8> buffer)
+        {
 			for (int32 Index = 0; Index < buffer.size(); ++Index)
 			{
 				if (buffer[Index] == 'D')
@@ -219,8 +213,19 @@ namespace mz
 					}
 				}
 			}
-			NumBytes = buffer.size();
+            return buffer;
+        }
 
+        bool Parse(std::vector<u8> const& data, fb::TTrack& TrackData) override
+		{
+            TrackData.sensor_size = fb::vec2d(9.590, 5.394);
+            TrackData.fov = 60;
+            TrackData.distortion_scale = 1;
+            TrackData.pixel_aspect_ratio = 1;
+            
+            auto buffer = ParseableBytes(data);
+			auto NumBytes = buffer.size();
+        
 			trkCameraConstants   CameraConstants;
 			trkCameraParams      CameraParameters;
 
@@ -350,9 +355,9 @@ namespace mz
 							z = 0;
 						}
 
-						auto degreesX = x * (180.0 / M_PI);
-						auto degreesY = y * (180.0 / M_PI);
-						auto degreesZ = z * (180.0 / M_PI) + 90.0;
+						auto degreesX = x * (180.0 / PI);
+						auto degreesY = y * (180.0 / PI);
+						auto degreesZ = z * (180.0 / PI) + 90.0;
 
 						auto posY = (CameraParameters.format & trkStudioY_Up) ? CameraParameters.t.m[3][2] : CameraParameters.t.m[3][1];
 						auto posZ = (CameraParameters.format & trkStudioY_Up) ? -CameraParameters.t.m[3][1] : CameraParameters.t.m[3][2];
@@ -365,9 +370,9 @@ namespace mz
 					{
 						if (CameraParameters.format & trkVertical)
 						{
-							auto radFov = CameraParameters.fov * M_PI / 180.0;
+							auto radFov = CameraParameters.fov * PI / 180.0;
 							auto radResult = 2 * atan(tan((float)radFov / 2) * 1.77777F); //TODO chipsize - aspect ratio
-							TrackData.fov = radResult * (180.0 / M_PI);
+							TrackData.fov = radResult * (180.0 / PI);
 						}
 						else if (CameraParameters.format & trkHorizontal)
 						{
@@ -420,7 +425,7 @@ namespace mz
 					NumBytes = buffer.size();
 				}
 			}
-			UpdateTrackOut(args, *args.GetBuffer("Track"));
+		
 			return true;
 		}
 

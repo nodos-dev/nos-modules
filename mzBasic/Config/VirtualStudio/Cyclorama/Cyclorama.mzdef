@@ -328,20 +328,7 @@
                     "name": "Track",
                     "type_name": "mz.fb.Track",
                     "show_as": "INPUT_PIN",
-                    "can_show_as": "INPUT_PIN_OR_PROPERTY",
-                    "data": {
-                        "fov": 64.6,
-                        "location": {
-                            "x": 600,
-                            "y": 50,
-                            "z": 100
-                        },
-                        "rotation": {
-                            "x": 0,
-                            "y": 0,
-                            "z": 180
-                        }
-                    }
+                    "can_show_as": "INPUT_PIN_OR_PROPERTY"
                 },
                 {
                     "name": "Render",
