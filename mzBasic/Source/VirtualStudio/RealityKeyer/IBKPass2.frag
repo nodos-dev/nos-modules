@@ -48,7 +48,7 @@ Params;
 layout(location = 0) out vec4 rt;
 layout(location = 0) in vec2 uv;
 
-#include "../ShaderCommon.glsl"
+#include "../../Shaders/ShaderCommon.glsl"
 #include "IBKCommon.glsl"
 
 vec3 Pow3(vec3 x, vec3 y, float clmp)

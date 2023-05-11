@@ -10,7 +10,7 @@ layout(binding = 1) uniform HorizontalBlurParams
 layout(location = 0) out vec4 rt;
 layout(location = 0) in vec2 uv;
 
-#include "../ShaderCommon.glsl"
+#include "../../Shaders/ShaderCommon.glsl"
 #include "IBKCommon.glsl"
 
 void main()
