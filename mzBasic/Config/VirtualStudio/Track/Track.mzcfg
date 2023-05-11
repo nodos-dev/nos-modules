@@ -1,0 +1,30 @@
+{
+    "namespace": "mz",
+    "name": "Track",
+    "node_definitions": [
+        "Track.mzdef"
+    ],
+    "fb_includes": [],
+    "menu_items": [
+        {
+            "category": "Track",
+            "class_name": "FreeD",
+            "display_name": "FreeD"
+        },
+        {
+            "category": "Track",
+            "class_name": "Xync",
+            "display_name": "Xync"
+        },
+        {
+            "category": "Track",
+            "class_name": "Stype",
+            "display_name": "Stype"
+        },
+        {
+            "category": "Track",
+            "class_name": "MoSys",
+            "display_name": "MoSys"
+        }
+    ]
+}

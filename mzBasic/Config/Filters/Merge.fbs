@@ -1,0 +1,13 @@
+namespace mz.fb;
+
+enum BlendMode : uint {
+  Normal = 0,
+  Additive = 1,
+  Add = 2,
+  Subtract = 3,
+  Multiply = 4,
+  Divide = 5,
+  Screen = 6,
+  Min = 7,
+  Max = 8
+}

@@ -1,0 +1,17 @@
+{
+    "namespace": "mz",
+    "name": "ChannelViewer",
+    "node_definitions": [
+        "ChannelViewer.mzdef"
+    ],
+    "fb_includes" :[
+      "ChannelViewer.fbs"  
+    ],
+    "menu_items": [
+        {
+            "category": "Channels",
+            "class_name": "ChannelViewer",
+            "display_name": "Channel Viewer"
+        }
+    ]
+}

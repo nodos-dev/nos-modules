@@ -1,0 +1,15 @@
+{
+    "namespace": "mz",
+    "name": "CalculateNodalPoint",
+    "node_definitions": [
+        "CalculateNodalPoint.mzdef"
+    ],
+    "fb_includes": [ "CalculateNodalPoint.fbs" ],
+    "menu_items": [
+        {
+            "category": "Track",
+            "class_name": "CalculateNodalPoint",
+            "display_name": "Calculate Nodal Point"
+        }
+    ]
+}

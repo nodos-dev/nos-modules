@@ -1,0 +1,14 @@
+namespace mz.plugin.switcher;
+
+enum TextureSwitcherChannel : uint {
+    Channel_1 = 0,
+    Channel_2 = 1,
+    Channel_3 = 2,
+    Channel_4 = 3,
+    Channel_5 = 4,
+    Channel_6 = 5,
+    Channel_7 = 6,
+    Channel_8 = 7,
+    Channel_9 = 8,
+    Channel_10 = 9,
+}

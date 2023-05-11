@@ -1,0 +1,17 @@
+{
+    "namespace": "ZD",
+    "name": "Frustum",
+    "node_definitions": [
+        "Frustum.mzdef"
+    ],
+    "fb_includes" :[
+      "Frustum.fbs"
+    ],
+    "menu_items": [
+        {
+            "category": "Lens",
+            "class_name": "Frustum",
+            "display_name": "Frustum"
+        }
+    ]
+}

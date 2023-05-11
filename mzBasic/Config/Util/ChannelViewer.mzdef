@@ -1,0 +1,42 @@
+{
+    "nodes": [
+        {
+            "class_name": "ChannelViewer",
+            "contents_type": "Job",
+            "contents": {
+                "type": "CPU"
+            },
+            "pins": [
+                {
+                    "name": "Input",
+                    "type_name": "mz.fb.Texture",
+                    "show_as": "INPUT_PIN",
+                    "can_show_as" : "INPUT_PIN_ONLY",
+                    "data": {
+                        "filtering": "LINEAR"
+                    }
+                },
+                {
+                    "name": "Channel",
+                    "type_name": "mz.fb.ChannelViewerChannels",
+                    "show_as": "PROPERTY",
+                    "can_show_as" : "PROPERTY_ONLY",
+                    "data": "R"
+                },
+                {
+                    "name": "Format",
+                    "type_name": "mz.fb.ChannelViewerFormats",
+                    "show_as": "PROPERTY",
+                    "can_show_as" : "PROPERTY_ONLY",
+                    "data": "Rec_709"
+                },
+                {
+                    "name": "Output",
+                    "type_name": "mz.fb.Texture",
+                    "show_as": "OUTPUT_PIN",
+                    "can_show_as" : "OUTPUT_PIN_ONLY"
+                }
+            ]
+        }
+    ]
+}

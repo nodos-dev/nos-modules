@@ -1,0 +1,14 @@
+{
+    "namespace": "mz",
+    "name": "Utility",
+    "node_definitions": [
+        "Util.mzdef"
+    ],
+    "menu_items": [
+        {
+            "category": "Utility",
+            "class_name": "Time",
+            "display_name": "Time"
+        }
+    ]
+}

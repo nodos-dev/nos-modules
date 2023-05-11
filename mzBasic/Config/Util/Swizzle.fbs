@@ -1,0 +1,15 @@
+namespace mz.fb;
+
+enum Source : uint {
+  Input1 = 0,
+  Input2 = 1,
+  Input3 = 2,
+  Input4 = 3,
+}
+
+enum Channel : uint {
+  Red = 0,
+  Green = 1,
+  Blue = 2,
+  Alpha = 3,
+}

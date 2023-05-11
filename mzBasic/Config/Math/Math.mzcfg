@@ -1,0 +1,405 @@
+{
+    "namespace": "mz.math",
+    "name": "op",
+    "fb_includes": [],
+    "node_definitions": [
+        "Math.mzdef"
+    ],
+    "menu_items": [
+        {
+            "category": "Math",
+            "class_name": "U32ToString",
+            "display_name": "ToString"
+        },
+        {
+            "category": "Math",
+            "class_name": "PerspectiveView",
+            "display_name": "Perspective View"
+        },
+        {
+            "category": "Math|Wave",
+            "class_name": "SineWave",
+            "display_name": "Sine Wave"
+        },
+        {
+            "category": "Math",
+            "class_name": "Clamp",
+            "display_name": "Clamp"
+        },
+        {
+            "category": "Math",
+            "class_name": "Absolute",
+            "display_name": "Absolute"
+        },
+		{
+            "category": "Math|Addition",
+            "class_name": "Add_Track",
+            "display_name": "Add Track"
+        },
+		{
+            "category": "Math|Addition",
+            "class_name": "Add_Transform",
+            "display_name": "Add Transform"
+        },
+        {
+            "category": "Math|Addition",
+            "class_name": "Add_f32",
+            "display_name": "Add f32"
+        },
+        {
+            "category": "Math|Subtraction",
+            "class_name": "Sub_f32",
+            "display_name": "Sub f32"
+        },
+        {
+            "category": "Math|Multiplication",
+            "class_name": "Mul_f32",
+            "display_name": "Mul f32"
+        },
+        {
+            "category": "Math|Division",
+            "class_name": "Div_f32",
+            "display_name": "Div f32"
+        },
+        {
+            "category": "Math|Addition",
+            "class_name": "Add_f64",
+            "display_name": "Add f64"
+        },
+        {
+            "category": "Math|Subtraction",
+            "class_name": "Sub_f64",
+            "display_name": "Sub f64"
+        },
+        {
+            "category": "Math|Multiplication",
+            "class_name": "Mul_f64",
+            "display_name": "Mul f64"
+        },
+        {
+            "category": "Math|Division",
+            "class_name": "Div_f64",
+            "display_name": "Div f64"
+        },
+        {
+            "category": "Math|Addition",
+            "class_name": "Add_u32",
+            "display_name": "Add u32"
+        },
+        {
+            "category": "Math|Subtraction",
+            "class_name": "Sub_u32",
+            "display_name": "Sub u32"
+        },
+        {
+            "category": "Math|Multiplication",
+            "class_name": "Mul_u32",
+            "display_name": "Mul u32"
+        },
+        {
+            "category": "Math|Division",
+            "class_name": "Div_u32",
+            "display_name": "Div u32"
+        },
+        {
+            "category": "Math|Addition",
+            "class_name": "Add_u64",
+            "display_name": "Add u64"
+        },
+        {
+            "category": "Math|Subtraction",
+            "class_name": "Sub_u64",
+            "display_name": "Sub u64"
+        },
+        {
+            "category": "Math|Multiplication",
+            "class_name": "Mul_u64",
+            "display_name": "Mul u64"
+        },
+        {
+            "category": "Math|Division",
+            "class_name": "Div_u64",
+            "display_name": "Div u64"
+        },
+        {
+            "category": "Math|Addition",
+            "class_name": "Add_i32",
+            "display_name": "Add i32"
+        },
+        {
+            "category": "Math|Subtraction",
+            "class_name": "Sub_i32",
+            "display_name": "Sub i32"
+        },
+        {
+            "category": "Math|Multiplication",
+            "class_name": "Mul_i32",
+            "display_name": "Mul i32"
+        },
+        {
+            "category": "Math|Division",
+            "class_name": "Div_i32",
+            "display_name": "Div i32"
+        },
+        {
+            "category": "Math|Addition",
+            "class_name": "Add_i64",
+            "display_name": "Add i64"
+        },
+        {
+            "category": "Math|Subtraction",
+            "class_name": "Sub_i64",
+            "display_name": "Sub i64"
+        },
+        {
+            "category": "Math|Multiplication",
+            "class_name": "Mul_i64",
+            "display_name": "Mul i64"
+        },
+        {
+            "category": "Math|Division",
+            "class_name": "Div_i64",
+            "display_name": "Div i64"
+        },
+        {
+            "category": "Math|Addition",
+            "class_name": "Add_vec2",
+            "display_name": "Add Vec2"
+        },
+        {
+            "category": "Math|Subtraction",
+            "class_name": "Sub_vec2",
+            "display_name": "Sub Vec2"
+        },
+        {
+            "category": "Math|Multiplication",
+            "class_name": "Mul_vec2",
+            "display_name": "Mul Vec2"
+        },
+        {
+            "category": "Math|Division",
+            "class_name": "Div_vec2",
+            "display_name": "Div Vec2"
+        },
+        {
+            "category": "Math|Addition",
+            "class_name": "Add_vec2d",
+            "display_name": "Add Vec2d"
+        },
+        {
+            "category": "Math|Subtraction",
+            "class_name": "Sub_vec2d",
+            "display_name": "Sub Vec2d"
+        },
+        {
+            "category": "Math|Multiplication",
+            "class_name": "Mul_vec2d",
+            "display_name": "Mul Vec2d"
+        },
+        {
+            "category": "Math|Division",
+            "class_name": "Div_vec2d",
+            "display_name": "Div Vec2d"
+        },
+        {
+            "category": "Math|Addition",
+            "class_name": "Add_vec3",
+            "display_name": "Add Vec3"
+        },
+        {
+            "category": "Math|Subtraction",
+            "class_name": "Sub_vec3",
+            "display_name": "Sub Vec3"
+        },
+        {
+            "category": "Math|Multiplication",
+            "class_name": "Mul_vec3",
+            "display_name": "Mul Vec3"
+        },
+        {
+            "category": "Math|Division",
+            "class_name": "Div_vec3",
+            "display_name": "Div Vec3"
+        },
+        {
+            "category": "Math|Addition",
+            "class_name": "Add_vec3d",
+            "display_name": "Add Vec3d"
+        },
+        {
+            "category": "Math|Subtraction",
+            "class_name": "Sub_vec3d",
+            "display_name": "Sub Vec3d"
+        },
+        {
+            "category": "Math|Multiplication",
+            "class_name": "Mul_vec3d",
+            "display_name": "Mul Vec3d"
+        },
+        {
+            "category": "Math|Division",
+            "class_name": "Div_vec3d",
+            "display_name": "Div Vec3d"
+        },
+        {
+            "category": "Math|Addition",
+            "class_name": "Add_vec4",
+            "display_name": "Add Vec4"
+        },
+        {
+            "category": "Math|Subtraction",
+            "class_name": "Sub_vec4",
+            "display_name": "Sub Vec4"
+        },
+        {
+            "category": "Math|Multiplication",
+            "class_name": "Mul_vec4",
+            "display_name": "Mul Vec4"
+        },
+        {
+            "category": "Math|Division",
+            "class_name": "Div_vec4",
+            "display_name": "Div Vec4"
+        },
+        {
+            "category": "Math|Addition",
+            "class_name": "Add_vec4d",
+            "display_name": "Add Vec4d"
+        },
+        {
+            "category": "Math|Subtraction",
+            "class_name": "Sub_vec4d",
+            "display_name": "Sub Vec4d"
+        },
+        {
+            "category": "Math|Multiplication",
+            "class_name": "Mul_vec4d",
+            "display_name": "Mul Vec4d"
+        },
+        {
+            "category": "Math|Division",
+            "class_name": "Div_vec4d",
+            "display_name": "Div Vec4d"
+        },
+        {
+            "category": "Math|Addition",
+            "class_name": "Add_vec2u",
+            "display_name": "Add Vec2u"
+        },
+        {
+            "category": "Math|Subtraction",
+            "class_name": "Sub_vec2u",
+            "display_name": "Sub Vec2u"
+        },
+        {
+            "category": "Math|Multiplication",
+            "class_name": "Mul_vec2u",
+            "display_name": "Mul Vec2u"
+        },
+        {
+            "category": "Math|Division",
+            "class_name": "Div_vec2u",
+            "display_name": "Div Vec2u"
+        },
+        {
+            "category": "Math|Addition",
+            "class_name": "Add_vec3u",
+            "display_name": "Add Vec3u"
+        },
+        {
+            "category": "Math|Subtraction",
+            "class_name": "Sub_vec3u",
+            "display_name": "Sub Vec3u"
+        },
+        {
+            "category": "Math|Multiplication",
+            "class_name": "Mul_vec3u",
+            "display_name": "Mul Vec3u"
+        },
+        {
+            "category": "Math|Division",
+            "class_name": "Div_vec3u",
+            "display_name": "Div Vec3u"
+        },
+        {
+            "category": "Math|Addition",
+            "class_name": "Add_vec4u",
+            "display_name": "Add Vec4u"
+        },
+        {
+            "category": "Math|Subtraction",
+            "class_name": "Sub_vec4u",
+            "display_name": "Sub Vec4u"
+        },
+        {
+            "category": "Math|Multiplication",
+            "class_name": "Mul_vec4u",
+            "display_name": "Mul Vec4u"
+        },
+        {
+            "category": "Math|Division",
+            "class_name": "Div_vec4u",
+            "display_name": "Div Vec4u"
+        },
+        {
+            "category": "Math|Addition",
+            "class_name": "Add_vec2i",
+            "display_name": "Add Vec2i"
+        },
+        {
+            "category": "Math|Subtraction",
+            "class_name": "Sub_vec2i",
+            "display_name": "Sub Vec2i"
+        },
+        {
+            "category": "Math|Multiplication",
+            "class_name": "Mul_vec2i",
+            "display_name": "Mul Vec2i"
+        },
+        {
+            "category": "Math|Division",
+            "class_name": "Div_vec2i",
+            "display_name": "Div Vec2i"
+        },
+        {
+            "category": "Math|Addition",
+            "class_name": "Add_vec3i",
+            "display_name": "Add Vec3i"
+        },
+        {
+            "category": "Math|Subtraction",
+            "class_name": "Sub_vec3i",
+            "display_name": "Sub Vec3i"
+        },
+        {
+            "category": "Math|Multiplication",
+            "class_name": "Mul_vec3i",
+            "display_name": "Mul Vec3i"
+        },
+        {
+            "category": "Math|Division",
+            "class_name": "Div_vec3i",
+            "display_name": "Div Vec3i"
+        },
+        {
+            "category": "Math|Addition",
+            "class_name": "Add_vec4i",
+            "display_name": "Add Vec4i"
+        },
+        {
+            "category": "Math|Subtraction",
+            "class_name": "Sub_vec4i",
+            "display_name": "Sub Vec4i"
+        },
+        {
+            "category": "Math|Multiplication",
+            "class_name": "Mul_vec4i",
+            "display_name": "Mul Vec4i"
+        },
+        {
+            "category": "Math|Division",
+            "class_name": "Div_vec4i",
+            "display_name": "Div Vec4i"
+        }
+    ]
+}

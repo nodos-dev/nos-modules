@@ -1,0 +1,189 @@
+{
+    "nodes": [
+        {
+            "class_name": "Swizzle",
+            "contents_type": "Job",
+            "contents": {
+                "type": "GPU"
+            },
+            "pins": [
+                {
+                    "name": "RedSource",
+                    "type_name": "mz.fb.Source",
+                    "show_as": "PROPERTY",
+                    "can_show_as" : "PROPERTY_ONLY",
+                    "pin_category" : "RED",
+                    "data" : "Input1"
+                },
+                {
+                    "name": "RedChannel",
+                    "type_name": "mz.fb.Channel",
+                    "show_as": "PROPERTY",
+                    "can_show_as" : "PROPERTY_ONLY",
+                    "pin_category" : "RED",
+                    "data" : "Red"
+                },
+                {
+                    "name": "RedMultiplier",
+                    "type_name": "float",
+                    "show_as": "PROPERTY",
+                    "can_show_as" : "INPUT_PIN_OR_PROPERTY",
+                    "pin_category" : "RED",
+                    "data": "1.0",
+                    "step": 0.01
+                },
+                {
+                    "name": "RedOffset",
+                    "type_name": "float",
+                    "show_as": "PROPERTY",
+                    "can_show_as" : "INPUT_PIN_OR_PROPERTY",
+                    "pin_category" : "RED",
+                    "data": "0",
+                    "step": 0.01
+                },
+
+
+                {
+                    "name": "GreenSource",
+                    "type_name": "mz.fb.Source",
+                    "show_as": "PROPERTY",
+                    "can_show_as" : "PROPERTY_ONLY",
+                    "pin_category" : "GREEN",
+                    "data" : "Input1"
+                },
+                {
+                    "name": "GreenChannel",
+                    "type_name": "mz.fb.Channel",
+                    "show_as": "PROPERTY",
+                    "can_show_as" : "PROPERTY_ONLY",
+                    "pin_category" : "GREEN",
+                    "data"  : "Green"
+                },
+                {
+                    "name": "GreenMultiplier",
+                    "type_name": "float",
+                    "show_as": "PROPERTY",
+                    "can_show_as" : "INPUT_PIN_OR_PROPERTY",
+                    "pin_category" : "GREEN",
+                    "data": "1.0",
+                    "step": 0.01
+                },
+                {
+                    "name": "GreenOffset",
+                    "type_name": "float",
+                    "show_as": "PROPERTY",
+                    "can_show_as" : "INPUT_PIN_OR_PROPERTY",
+                    "pin_category" : "GREEN",
+                    "data": "0",
+                    "step": 0.01
+                },
+
+
+                {
+                    "name": "BlueSource",
+                    "type_name": "mz.fb.Source",
+                    "show_as": "PROPERTY",
+                    "can_show_as" : "PROPERTY_ONLY",
+                    "pin_category" : "BLUE",
+                    "data" : "Input1"
+                },
+                {
+                    "name": "BlueChannel",
+                    "type_name": "mz.fb.Channel",
+                    "show_as": "PROPERTY",
+                    "can_show_as" : "PROPERTY_ONLY",
+                    "pin_category" : "BLUE",
+                    "data" : "Blue"
+                },
+                {
+                    "name": "BlueMultiplier",
+                    "type_name": "float",
+                    "show_as": "PROPERTY",
+                    "can_show_as" : "INPUT_PIN_OR_PROPERTY",
+                    "pin_category" : "BLUE",
+                    "data": "1.0",
+                    "step": 0.01
+                },
+                {
+                    "name": "BlueOffset",
+                    "type_name": "float",
+                    "show_as": "PROPERTY",
+                    "can_show_as" : "INPUT_PIN_OR_PROPERTY",
+                    "pin_category" : "BLUE",
+                    "data": "0",
+                    "step": 0.01
+                },
+
+                
+                {
+                    "name": "AlphaSource",
+                    "type_name": "mz.fb.Source",
+                    "show_as": "PROPERTY",
+                    "can_show_as" : "PROPERTY_ONLY",
+                    "pin_category" : "ALPHA",
+                    "data" : "Input2"
+                },
+                {
+                    "name": "AlphaChannel",
+                    "type_name": "mz.fb.Channel",
+                    "show_as": "PROPERTY",
+                    "can_show_as" : "PROPERTY_ONLY",
+                    "pin_category" : "ALPHA",
+                    "data" : "Alpha"
+                },
+                {
+                    "name": "AlphaMultiplier",
+                    "type_name": "float",
+                    "show_as": "PROPERTY",
+                    "can_show_as" : "INPUT_PIN_OR_PROPERTY",
+                    "pin_category" : "ALPHA",
+                    "data": "1.0",
+                    "step": 0.01
+                },
+                {
+                    "name": "AlphaOffset",
+                    "type_name": "float",
+                    "show_as": "PROPERTY",
+                    "can_show_as" : "INPUT_PIN_OR_PROPERTY",
+                    "pin_category" : "ALPHA",
+                    "data": "0",
+                    "step": 0.01
+                },
+
+                {
+                    "name": "Input1",
+                    "type_name": "mz.fb.Texture",
+                    "show_as": "INPUT_PIN",
+                    "can_show_as" : "INPUT_PIN_OR_PROPERTY"
+                },
+                {
+                    "name": "Input2",
+                    "type_name": "mz.fb.Texture",
+                    "show_as": "INPUT_PIN",
+                    "can_show_as" : "INPUT_PIN_OR_PROPERTY"
+                },
+                {
+                    "name": "Input3",
+                    "type_name": "mz.fb.Texture",
+                    "show_as": "INPUT_PIN",
+                    "can_show_as" : "INPUT_PIN_OR_PROPERTY"
+                },
+
+                {
+                    "name": "Input4",
+                    "type_name": "mz.fb.Texture",
+                    "show_as": "INPUT_PIN",
+                    "can_show_as" : "INPUT_PIN_OR_PROPERTY"
+                },
+
+
+                {
+                    "name": "Output",
+                    "type_name": "mz.fb.Texture",
+                    "show_as": "OUTPUT_PIN",
+                    "can_show_as" : "OUTPUT_PIN_ONLY"
+                }
+            ]
+        }
+    ]
+}

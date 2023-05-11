@@ -1,0 +1,14 @@
+{
+    "namespace": "mz",
+    "name": "Color Correct",
+    "node_definitions": [
+        "ColorCorrect.mzdef"
+    ],
+    "menu_items": [
+        {
+            "category": "Filter",
+            "class_name": "ColorCorrect",
+            "display_name": "Color Correct"
+        }
+    ]
+}

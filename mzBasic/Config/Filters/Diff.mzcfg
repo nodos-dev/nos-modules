@@ -1,0 +1,14 @@
+{
+    "namespace": "mz",
+    "name": "Diff",
+    "node_definitions": [
+        "Diff.mzdef"
+    ],
+    "menu_items": [
+        {
+            "category": "Blending",
+            "class_name": "Diff",
+            "display_name": "Difference"
+        }
+    ]
+}

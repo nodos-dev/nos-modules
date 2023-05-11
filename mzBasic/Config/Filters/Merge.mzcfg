@@ -1,0 +1,17 @@
+{
+    "namespace": "mz",
+    "name": "Merge",
+    "node_definitions": [
+        "Merge.mzdef"
+    ],
+    "fb_includes" :[
+      "Merge.fbs"  
+    ],
+    "menu_items": [
+        {
+            "category": "Blending",
+            "class_name": "Merge",
+            "display_name": "Merge"
+        }
+    ]
+}

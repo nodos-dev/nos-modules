@@ -1,0 +1,25 @@
+namespace mz.fb;
+
+enum ThresholderOutputType : uint {
+  OriginalColor = 0,
+  White = 1
+}
+
+enum ResizeMethod: uint
+{
+    NEAREST = 0,
+    BILINEAR = 1,
+    BICUBIC = 2,
+    DIRECTIONAL_BLUR_WITH_UNSHARP_MASK_UPSAMPLE,
+    LANCZOS3,
+    GAUSSIAN_UNSHARP_MASK,
+}
+
+enum GradientKind: uint
+{
+    RADIAL     = 0,
+    HORIZONTAL = 1,
+    VERTICAL   = 2,
+    DIAGONAL   = 3,
+    SKEW_DIAGONAL   = 4,
+}

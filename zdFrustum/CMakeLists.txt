@@ -1,0 +1,52 @@
+cmake_minimum_required(VERSION 3.24.2)
+project("zdFrustum")
+
+# Dependencies
+# ------------
+# boost math
+add_library(boost_math INTERFACE)
+target_include_directories(boost_math INTERFACE ${EXTERNAL_DIR})
+
+# nlohmann
+add_library(nlohmann INTERFACE)
+target_include_directories(nlohmann INTERFACE ${EXTERNAL_DIR}/json/single_include)
+
+# MediaZ Plugin SDK
+list(APPEND CMAKE_MODULE_PATH $ENV{MZ_SDK_DIR}/cmake)
+find_package(mzPluginSDK REQUIRED)
+
+# Plugin
+# ------
+set(CMAKE_CXX_STANDARD 20)
+
+string(REGEX REPLACE "\\\\" "/" MZ_WORK_FOLDER "$ENV{PROGRAMDATA}/mediaz/core")
+set(MZ_WORK_FOLDER "${MZ_WORK_FOLDER}")
+set(MZ_REPO_ROOT "${MZ_WORK_FOLDER}")
+add_compile_definitions(MZ_WORK_FOLDER="${MZ_WORK_FOLDER}")
+add_compile_definitions(MZ_REPO_ROOT="${MZ_REPO_ROOT}")
+
+set(SOURCE_FOLDER "${CMAKE_CURRENT_SOURCE_DIR}/Source")
+
+file(GLOB_RECURSE SOURCES CONFIGURE_DEPENDS ${SOURCE_FOLDER}
+    "${SOURCE_FOLDER}/*.cpp" "${SOURCE_FOLDER}/*.inl" "${SOURCE_FOLDER}/*.glsl"
+    "${SOURCE_FOLDER}/*.comp" "${SOURCE_FOLDER}/*.frag" "${SOURCE_FOLDER}/*.vert")
+file(GLOB_RECURSE HEADERS CONFIGURE_DEPENDS ${SOURCE_FOLDER} "${SOURCE_FOLDER}/*.h" "${SOURCE_FOLDER}/*.hpp")
+file(GLOB_RECURSE RESOURCES CONFIGURE_DEPENDS ${SOURCE_FOLDER} "${SOURCE_FOLDER}/*.rc")
+
+add_library(${PROJECT_NAME} MODULE ${SOURCES} ${HEADERS} ${RESOURCES})
+set_target_properties(${PROJECT_NAME} PROPERTIES
+    LIBRARY_OUTPUT_DIRECTORY_DEBUG "${CMAKE_CURRENT_SOURCE_DIR}/Binaries"
+    LIBRARY_OUTPUT_DIRECTORY_RELEASE "${CMAKE_CURRENT_SOURCE_DIR}/Binaries"
+    LIBRARY_OUTPUT_DIRECTORY_RELWITHDEBINFO "${CMAKE_CURRENT_SOURCE_DIR}/Binaries"
+    LIBRARY_OUTPUT_DIRECTORY_MINSIZEREL "${CMAKE_CURRENT_SOURCE_DIR}/Binaries"
+)
+
+if(WIN32)
+    target_compile_definitions(${PROJECT_NAME} PUBLIC "-DmzPluginSDK_SHARED"
+        "-DmzPluginSDK_EXPORTS")
+endif()
+
+set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_STANDARD 20)
+
+target_link_libraries(${PROJECT_NAME} PRIVATE nlohmann boost_math)
+target_link_libraries(${PROJECT_NAME} PUBLIC mzPluginSDK)

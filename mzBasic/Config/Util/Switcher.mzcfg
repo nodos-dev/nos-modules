@@ -1,0 +1,24 @@
+{
+    "namespace": "mz",
+    "name": "Switcher",
+    "node_definitions": [
+        "Swizzle.mzdef",
+        "TextureSwitcher.mzdef"
+    ],
+    "fb_includes" :[
+      "Swizzle.fbs",
+      "TextureSwitcher.fbs"
+    ],
+    "menu_items": [
+        {
+            "category": "Switcher",
+            "class_name": "Swizzle",
+            "display_name": "Swizzle"
+        },
+        {
+            "category": "Switcher",
+            "class_name": "TextureSwitcher",
+            "display_name": "Texture Switcher"
+        }
+    ]
+}

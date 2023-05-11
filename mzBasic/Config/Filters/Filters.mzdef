@@ -1,0 +1,593 @@
+{
+    "nodes": [
+      {
+        "class_name": "SevenSegment",
+        "contents_type": "Job",
+        "always_execute": "true",
+        "contents": {
+          "type": "GPU"
+        },
+        "pins": [
+          {
+            "name": "Number",
+            "type_name": "uint",
+            "show_as": "INPUT_PIN",
+            "can_show_as": "INPUT_PIN_OR_PROPERTY"
+          },
+          {
+            "name": "RenderFrameNo",
+            "type_name": "bool",
+            "show_as": "INPUT_PIN",
+            "can_show_as": "INPUT_PIN_OR_PROPERTY"
+          },
+          {
+            "name": "SampleInput",
+            "type_name": "bool",
+            "show_as": "INPUT_PIN",
+            "can_show_as": "INPUT_PIN_OR_PROPERTY"
+          },
+          {
+            "name": "Color",
+            "type_name": "mz.fb.vec4",
+            "show_as": "INPUT_PIN",
+            "can_show_as": "INPUT_PIN_OR_PROPERTY",
+            "visualizer": {
+              "type": "COLOR_PICKER"
+            },
+            "data" :{"x" : 1, "y" : 0.5, "z" : 0.5, "w" : 1}
+          },
+          {
+            "name": "Input",
+            "type_name": "mz.fb.Texture",
+            "show_as": "INPUT_PIN",
+            "can_show_as": "INPUT_PIN_OR_PROPERTY"
+          },
+          {
+            "name": "Output",
+            "type_name": "mz.fb.Texture",
+            "show_as": "OUTPUT_PIN",
+            "can_show_as": "OUTPUT_PIN_OR_PROPERTY"
+          }
+        ],
+        "functions": [
+          {
+            "class_name": "ReloadShaders",
+            "contents_type": "Job",
+            "contents": {
+              "type": "CPU"
+            }
+          }
+        ]
+      },
+        {
+            "class_name": "Gradient",
+            "contents_type": "Job",
+            "contents": {
+                "type": "GPU"
+            },
+            "pins": [
+                {
+                    "name": "OddColor",
+                    "type_name": "mz.fb.vec4",
+                    "show_as": "INPUT_PIN",
+                    "can_show_as": "INPUT_PIN_OR_PROPERTY",
+                    "visualizer": {
+                        "type": "COLOR_PICKER"
+                    },
+                    "data": {
+                        "x": 1,
+                        "y": 1,
+                        "z": 1,
+                        "w": 1
+                    }
+                },
+                {
+                    "name": "EvenColor",
+                    "type_name": "mz.fb.vec4",
+                    "show_as": "INPUT_PIN",
+                    "can_show_as": "INPUT_PIN_OR_PROPERTY",
+                    "visualizer": {
+                        "type": "COLOR_PICKER"
+                    },
+                    "data": {
+                        "x": 0,
+                        "y": 0,
+                        "z": 0,
+                        "w": 1
+                    }
+                },
+                {
+                    "name": "Kind",
+                    "type_name": "mz.fb.GradientKind",
+                    "show_as": "PROPERTY",
+                    "can_show_as": "INPUT_PIN_OR_PROPERTY"
+                },
+                {
+                    "name": "Output",
+                    "type_name": "mz.fb.Texture",
+                    "show_as": "OUTPUT_PIN",
+                    "can_show_as": "OUTPUT_PIN_OR_PROPERTY"
+                }
+            ],
+            "functions": [
+                {
+                    "class_name": "ReloadShaders",
+                    "contents_type": "Job",
+                    "contents": {
+                        "type": "CPU"
+                    }
+                }
+            ]
+        },
+        {
+            "class_name": "Checkerboard",
+            "contents_type": "Job",
+            "contents": {
+                "type": "GPU"
+            },
+            "pins": [
+                {
+                    "name": "Squares",
+                    "type_name": "mz.fb.vec2i",
+                    "show_as": "INPUT_PIN",
+                    "can_show_as": "INPUT_PIN_OR_PROPERTY",
+                    "data": {
+                        "x": 160,
+                        "y": 90
+                    },
+                    "min": {
+                        "x": 2,
+                        "y": 2
+                    }
+                },
+                {
+                    "name": "OddColor",
+                    "type_name": "mz.fb.vec4",
+                    "show_as": "INPUT_PIN",
+                    "can_show_as": "INPUT_PIN_OR_PROPERTY",
+                    "visualizer": {
+                        "type": "COLOR_PICKER"
+                    },
+                    "data": {
+                        "x": 1,
+                        "y": 1,
+                        "z": 1,
+                        "w": 1
+                    }
+                },
+                {
+                    "name": "EvenColor",
+                    "type_name": "mz.fb.vec4",
+                    "show_as": "INPUT_PIN",
+                    "can_show_as": "INPUT_PIN_OR_PROPERTY",
+                    "visualizer": {
+                        "type": "COLOR_PICKER"
+                    },
+                    "data": {
+                        "x": 0,
+                        "y": 0,
+                        "z": 0,
+                        "w": 1
+                    }
+                },
+                {
+                    "name": "Output",
+                    "type_name": "mz.fb.Texture",
+                    "show_as": "OUTPUT_PIN",
+                    "can_show_as": "OUTPUT_PIN_OR_PROPERTY"
+                }
+            ],
+            "functions": [
+                {
+                    "class_name": "ReloadShaders",
+                    "contents_type": "Job",
+                    "contents": {
+                        "type": "CPU"
+                    }
+                }
+            ]
+        },
+        {
+            "class_name": "Offset",
+            "contents_type": "Job",
+            "contents": {
+                "type": "GPU"
+            },
+            "pins": [
+                {
+                    "name": "Input",
+                    "type_name": "mz.fb.Texture",
+                    "show_as": "INPUT_PIN",
+                    "can_show_as": "INPUT_PIN_OR_PROPERTY"
+                },
+                {
+                    "name": "Offset",
+                    "type_name": "mz.fb.vec2",
+                    "show_as": "INPUT_PIN",
+                    "can_show_as": "INPUT_PIN_OR_PROPERTY"
+                },
+                {
+                    "name": "Output",
+                    "type_name": "mz.fb.Texture",
+                    "show_as": "OUTPUT_PIN",
+                    "can_show_as": "OUTPUT_PIN_OR_PROPERTY"
+                }
+            ]
+        },
+        {
+            "class_name": "Resize",
+            "contents_type": "Job",
+            "contents": {
+                "type": "CPU"
+            },
+            "functions": [
+                {
+                    "class_name": "ReloadShaders",
+                    "contents_type": "Job",
+                    "contents": {
+                        "type": "CPU"
+                    }
+                }
+            ],
+            "pins": [
+                {
+                    "name": "Input",
+                    "type_name": "mz.fb.Texture",
+                    "show_as": "INPUT_PIN",
+                    "can_show_as": "INPUT_PIN_ONLY"
+                },
+                {
+                    "name": "Output",
+                    "type_name": "mz.fb.Texture",
+                    "show_as": "OUTPUT_PIN",
+                    "can_show_as": "OUTPUT_PIN_ONLY",
+                    "data": {
+                        "unscaled": true
+                    }
+                },
+                {
+                    "name": "Method",
+                    "type_name": "mz.fb.ResizeMethod",
+                    "show_as": "PROPERTY",
+                    "can_show_as": "INPUT_OUTPUT_PROPERTY"
+                },
+                {
+                    "name": "Size",
+                    "type_name": "mz.fb.vec2u",
+                    "show_as": "PROPERTY",
+                    "can_show_as": "INPUT_OUTPUT_PROPERTY",
+                    "data" : { "x": 1920, "y": 1080 }
+                }
+            ]
+        },
+        {
+            "class_name": "QuadMerge",
+            "contents_type": "Job",
+            "contents": {
+                "type": "GPU"
+            },
+            "pins": [
+                {
+                    "name": "Input0",
+                    "type_name": "mz.fb.Texture",
+                    "show_as": "INPUT_PIN",
+                    "can_show_as": "INPUT_PIN_OR_PROPERTY"
+                },
+                {
+                    "name": "Input1",
+                    "type_name": "mz.fb.Texture",
+                    "show_as": "INPUT_PIN",
+                    "can_show_as": "INPUT_PIN_OR_PROPERTY"
+                },
+                {
+                    "name": "Input2",
+                    "type_name": "mz.fb.Texture",
+                    "show_as": "INPUT_PIN",
+                    "can_show_as": "INPUT_PIN_OR_PROPERTY"
+                },
+                {
+                    "name": "Input3",
+                    "type_name": "mz.fb.Texture",
+                    "show_as": "INPUT_PIN",
+                    "can_show_as": "INPUT_PIN_OR_PROPERTY"
+                },
+                {
+                    "name": "Output",
+                    "type_name": "mz.fb.Texture",
+                    "show_as": "OUTPUT_PIN",
+                    "can_show_as": "OUTPUT_PIN_OR_PROPERTY"
+                }
+            ]
+        },
+        {
+            "class_name": "GaussianBlur",
+            "contents_type": "Job",
+            "contents": {
+                "type": "CPU"
+            },
+            "pins": [
+                {
+                    "name": "Input",
+                    "type_name": "mz.fb.Texture",
+                    "show_as": "INPUT_PIN",
+                    "can_show_as": "INPUT_PIN_OR_PROPERTY",
+                    "data": {
+                        "filtering": "LINEAR"
+                    }
+                },
+                {
+                    "name": "Softness",
+                    "type_name": "float",
+                    "show_as": "PROPERTY",
+                    "can_show_as": "INPUT_PIN_OR_PROPERTY",
+                    "data": 0.0,
+                    "min": 0.0,
+                    "max": 1.0
+                },
+                {
+                    "name": "Kernel_Size",
+                    "type_name": "mz.fb.vec2",
+                    "show_as": "PROPERTY",
+                    "can_show_as": "INPUT_PIN_OR_PROPERTY",
+                    "data": {
+                        "x": 6.0,
+                        "y": 6.0
+                    },
+                    "min": {
+                        "x": 0.0,
+                        "y": 0.0
+                    },
+                    "max": {
+                        "x": 100.0,
+                        "y": 100.0
+                    }
+                },
+                {
+                    "name": "Output",
+                    "type_name": "mz.fb.Texture",
+                    "show_as": "OUTPUT_PIN",
+                    "can_show_as": "OUTPUT_PIN_OR_PROPERTY"
+                }
+            ]
+        },
+        {
+            "class_name": "KawaseLightStreak",
+            "contents_type": "Job",
+            "contents": {
+                "type": "GPU"
+            },
+            "pins": [
+                {
+                    "name": "Input",
+                    "type_name": "mz.fb.Texture",
+                    "show_as": "INPUT_PIN",
+                    "can_show_as": "INPUT_PIN_OR_PROPERTY"
+                },
+                {
+                    "name": "Streak_Direction",
+                    "type_name": "mz.fb.vec2",
+                    "show_as": "PROPERTY",
+                    "can_show_as": "INPUT_PIN_OR_PROPERTY",
+                    "data": {
+                        "x": 0.0,
+                        "y": 0.0
+                    }
+                },
+                {
+                    "name": "Samples",
+                    "type_name": "uint",
+                    "show_as": "PROPERTY",
+                    "can_show_as": "INPUT_PIN_OR_PROPERTY",
+                    "data": 3
+                },
+                {
+                    "name": "Iteration",
+                    "type_name": "uint",
+                    "show_as": "PROPERTY",
+                    "can_show_as": "INPUT_PIN_OR_PROPERTY",
+                    "data": 3
+                },
+                {
+                    "name": "Attenuation",
+                    "type_name": "float",
+                    "show_as": "PROPERTY",
+                    "can_show_as": "INPUT_PIN_OR_PROPERTY",
+                    "data": 0.5
+                },
+                {
+                    "name": "Output",
+                    "type_name": "mz.fb.Texture",
+                    "show_as": "OUTPUT_PIN",
+                    "can_show_as": "OUTPUT_PIN_OR_PROPERTY"
+                }
+            ]
+        },
+        {
+            "class_name": "Thresholder",
+            "contents_type": "Job",
+            "contents": {
+                "type": "GPU"
+            },
+            "pins": [
+                {
+                    "name": "Input",
+                    "type_name": "mz.fb.Texture",
+                    "show_as": "INPUT_PIN",
+                    "can_show_as": "INPUT_PIN_OR_PROPERTY"
+                },
+                {
+                    "name": "Minimum_Luminance",
+                    "type_name": "float",
+                    "show_as": "PROPERTY",
+                    "can_show_as": "INPUT_PIN_OR_PROPERTY",
+                    "data": 0.5
+                },
+                {
+                    "name": "Output_Type",
+                    "type_name": "mz.fb.ThresholderOutputType",
+                    "show_as": "PROPERTY",
+                    "can_show_as": "INPUT_PIN_OR_PROPERTY",
+                    "data": "OriginalColor"
+                },
+                {
+                    "name": "Output",
+                    "type_name": "mz.fb.Texture",
+                    "show_as": "OUTPUT_PIN",
+                    "can_show_as": "OUTPUT_PIN_OR_PROPERTY"
+                }
+            ]
+        },
+        {
+            "class_name": "Sampler",
+            "contents_type": "Job",
+            "contents": {
+                "type": "GPU"
+            },
+            "pins": [
+                {
+                    "name": "Input",
+                    "type_name": "mz.fb.Texture",
+                    "show_as": "INPUT_PIN",
+                    "can_show_as": "INPUT_PIN_OR_PROPERTY"
+                },
+                {
+                    "name": "Output",
+                    "type_name": "mz.fb.Texture",
+                    "show_as": "OUTPUT_PIN",
+                    "can_show_as": "OUTPUT_PIN_OR_PROPERTY"
+                }
+            ]
+        },
+        {
+            "class_name": "Sobel",
+            "contents_type": "Job",
+            "contents": {
+                "type": "GPU"
+            },
+            "pins": [
+                {
+                    "name": "Input",
+                    "type_name": "mz.fb.Texture",
+                    "show_as": "INPUT_PIN",
+                    "can_show_as": "INPUT_PIN_OR_PROPERTY"
+                },
+                {
+                    "name": "Output",
+                    "type_name": "mz.fb.Texture",
+                    "show_as": "OUTPUT_PIN",
+                    "can_show_as": "OUTPUT_PIN_OR_PROPERTY"
+                }
+            ]
+        },
+        {
+            "class_name": "Kuwahara",
+            "contents_type": "Job",
+            "contents": {
+                "type": "GPU"
+            },
+            "pins": [
+                {
+                    "name": "Input",
+                    "type_name": "mz.fb.Texture",
+                    "show_as": "INPUT_PIN",
+                    "can_show_as": "INPUT_PIN_OR_PROPERTY",
+                    "data": {
+                        "format": "R8G8B8A8_UNORM"
+                    }
+                },
+                {
+                    "name": "Output",
+                    "type_name": "mz.fb.Texture",
+                    "show_as": "OUTPUT_PIN",
+                    "can_show_as": "OUTPUT_PIN_OR_PROPERTY",
+                    "data": {
+                        "format": "R8G8B8A8_UNORM"
+                    }
+                }
+            ]
+        },
+        {
+            "class_name": "Sharpen",
+            "contents_type": "Job",
+            "contents": {
+                "type": "GPU"
+            },
+            "pins": [
+                {
+                    "name": "Input",
+                    "type_name": "mz.fb.Texture",
+                    "show_as": "INPUT_PIN",
+                    "can_show_as": "INPUT_PIN_ONLY",
+                    "data": {
+                        "filtering": "LINEAR"
+                    }
+                },
+                {
+                    "name": "Radius",
+                    "type_name": "float",
+                    "show_as": "PROPERTY",
+                    "can_show_as": "PROPERTY_ONLY",
+                    "data": 1.0,
+                    "min": 0.0,
+                    "max": 4.0
+                },
+                {
+                    "name": "Sharpness",
+                    "type_name": "float",
+                    "show_as": "PROPERTY",
+                    "can_show_as": "PROPERTY_ONLY",
+                    "data": 1.0,
+                    "min": 0.0,
+                    "max": 4.0
+                },
+                {
+                    "name": "PreMultiplyAlpha",
+                    "type_name": "bool",
+                    "show_as": "PROPERTY",
+                    "can_show_as": "PROPERTY_ONLY",
+                    "data": 0
+                },
+                {
+                    "name": "Output",
+                    "type_name": "mz.fb.Texture",
+                    "show_as": "OUTPUT_PIN",
+                    "can_show_as": "OUTPUT_PIN_ONLY"
+                }
+            ]
+        },
+        {
+            "class_name": "PremultiplyAlpha",
+            "contents_type": "Job",
+            "contents": {
+                "type": "GPU"
+            },
+            "pins": [
+                {
+                    "name": "Input",
+                    "type_name": "mz.fb.Texture",
+                    "show_as": "INPUT_PIN",
+                    "can_show_as": "INPUT_PIN_ONLY",
+                    "data": {
+                        "format": "R8G8B8A8_UNORM"
+                    }
+                },
+                {
+                    "name": "Invert_Alpha",
+                    "type_name": "bool",
+                    "show_as": "PROPERTY",
+                    "can_show_as": "INPUT_PIN_OR_PROPERTY",
+                    "def": false
+                },
+                {
+                    "name": "Output",
+                    "type_name": "mz.fb.Texture",
+                    "show_as": "OUTPUT_PIN",
+                    "can_show_as": "OUTPUT_PIN_OR_PROPERTY",
+                    "data": {
+                        "format": "R8G8B8A8_UNORM"
+                    }
+                }
+            ]
+        }
+    ]
+}

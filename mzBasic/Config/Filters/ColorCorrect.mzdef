@@ -1,0 +1,84 @@
+{
+    "nodes": [
+        {
+            "class_name": "ColorCorrect",
+            "contents_type": "Job",
+            "contents": {
+                "type": "GPU"
+            },
+            "pins": [
+                {
+                    "name": "Source",
+                    "type_name": "mz.fb.Texture",
+                    "show_as": "INPUT_PIN",
+                    "can_show_as" : "INPUT_PIN_OR_PROPERTY"
+                },
+                {
+                    "name": "Output",
+                    "type_name": "mz.fb.Texture",
+                    "show_as": "OUTPUT_PIN",
+                    "can_show_as" : "OUTPUT_PIN_OR_PROPERTY"
+                },
+                {
+                    "name": "Saturation",
+                    "type_name": "mz.fb.vec4",
+                    "show_as": "PROPERTY",
+                    "can_show_as" : "INPUT_PIN_OR_PROPERTY",
+                    "data": { "x" :  1.00, "y" :  1.00, "z" :  1.00, "w" :  1.00 },
+                    "min" : { "x" :-10.00, "y" :-10.00, "z" :-10.00, "w" :-10.00 },
+                    "max" : { "x" : 10.00, "y" : 10.00, "z" : 10.00, "w" : 10.00 },
+                    "step": 0.01
+                },
+                {
+                    "name": "Contrast",
+                    "type_name": "mz.fb.vec4",
+                    "show_as": "PROPERTY",
+                    "can_show_as" : "INPUT_PIN_OR_PROPERTY",
+                    "data": { "x" :  1.00, "y" :  1.00, "z" :  1.00, "w" :  1.00 },
+                    "min" : { "x" :-10.00, "y" :-10.00, "z" :-10.00, "w" :-10.00 },
+                    "max" : { "x" : 10.00, "y" : 10.00, "z" : 10.00, "w" : 10.00 },
+                    "step": 0.01
+                },
+                {
+                    "name": "Gamma",
+                    "type_name": "mz.fb.vec4",
+                    "show_as": "PROPERTY",
+                    "can_show_as" : "INPUT_PIN_OR_PROPERTY",
+                    "data": { "x" :  1.00, "y" :  1.00, "z" :  1.00, "w" :  1.00 },
+                    "min" : { "x" :-10.00, "y" :-10.00, "z" :-10.00, "w" :-10.00 },
+                    "max" : { "x" : 10.00, "y" : 10.00, "z" : 10.00, "w" : 10.00 },
+                    "step": 0.01
+                },
+                {
+                    "name": "Gain",
+                    "type_name": "mz.fb.vec4",
+                    "show_as": "PROPERTY",
+                    "can_show_as" : "INPUT_PIN_OR_PROPERTY",
+                    "data": { "x" :  1.00, "y" :  1.00, "z" :  1.00, "w" :  1.00 },
+                    "min" : { "x" :-10.00, "y" :-10.00, "z" :-10.00, "w" :-10.00 },
+                    "max" : { "x" : 10.00, "y" : 10.00, "z" : 10.00, "w" : 10.00 },
+                    "step": 0.01
+                },
+                {
+                    "name": "Offset",
+                    "type_name": "mz.fb.vec4",
+                    "show_as": "PROPERTY",
+                    "can_show_as" : "INPUT_PIN_OR_PROPERTY",
+                    "data": { "x" :  0.00, "y" :  0.00, "z" :  0.00, "w" :  0.00 },
+                    "min" : { "x" :-10.00, "y" :-10.00, "z" :-10.00, "w" :-10.00 },
+                    "max" : { "x" : 10.00, "y" : 10.00, "z" : 10.00, "w" : 10.00 },
+                    "step": 0.01
+                },
+                {
+                    "name": "ContrastCenter",
+                    "type_name": "mz.fb.vec3",
+                    "show_as": "PROPERTY",
+                    "can_show_as" : "INPUT_PIN_OR_PROPERTY",
+                    "data": { "x" : 0.18, "y" : 0.18, "z" : 0.18},
+                    "min" : { "x" : 0.00, "y" : 0.00, "z" : 0.00},
+                    "max" : { "x" : 1.00, "y" : 1.00, "z" : 1.00}
+                }
+            ]
+        }
+    ]
+}

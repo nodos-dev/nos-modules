@@ -1,0 +1,67 @@
+{
+    "nodes": [
+        {
+            "class_name": "Frustum",
+            "allows_cyclic": true,
+            "always_execute": true,
+            "contents_type": "Job",
+            "contents": {
+                "type": "CPU"
+            },
+            "pins": [
+                {
+                    "name": "JSON",
+                    "type_name": "string",
+                    "show_as": "PROPERTY",
+                    "can_show_as" : "PROPERTY_ONLY",
+                    "visualizer" : {"type": "FILE_PICKER"}
+                },
+                {
+                    "name": "Zoom",
+                    "type_name": "double",
+                    "show_as": "INPUT_PIN",
+                    "can_show_as" : "INPUT_PIN_OR_PROPERTY",
+                    "min" : 0, "max" : 1
+                },
+                {
+                    "name": "Focus",
+                    "type_name": "double",
+                    "show_as": "INPUT_PIN",
+                    "can_show_as" : "INPUT_PIN_OR_PROPERTY",
+                    "min" : 0, "max" : 1
+                },
+                {
+                    "name": "Focal Length Offset",
+                    "type_name": "double",
+                    "show_as": "INPUT_PIN",
+                    "can_show_as" : "INPUT_PIN_OR_PROPERTY",
+                    "min" : 0, "max" : 0.1
+                },
+                {
+                    "name": "FOV",
+                    "type_name": "double",
+                    "show_as": "OUTPUT_PIN",
+                    "can_show_as" : "OUTPUT_PIN_OR_PROPERTY"
+                },
+                {
+                    "name": "k1k2",
+                    "type_name": "mz.fb.vec2",
+                    "show_as": "OUTPUT_PIN",
+                    "can_show_as" : "OUTPUT_PIN_OR_PROPERTY"
+                },
+                {
+                    "name": "Nodal Point",
+                    "type_name": "double",
+                    "show_as": "OUTPUT_PIN",
+                    "can_show_as" : "OUTPUT_PIN_OR_PROPERTY"
+                },
+                {
+                    "name": "Focus Distance Curve",
+                    "type_name": "double",
+                    "show_as": "OUTPUT_PIN",
+                    "can_show_as" : "OUTPUT_PIN_OR_PROPERTY"
+                }
+            ]
+        }
+    ]
+}

@@ -1,0 +1,32 @@
+{
+    "nodes": [
+        {
+            "class_name": "Controller",
+            "contents_type": "Job",
+            "always_execute" : true,
+            "contents": {
+                "type": "CPU"
+            },
+            "pins": [
+                {
+                    "name": "Track",
+                    "type_name": "mz.fb.Track",
+                    "show_as": "OUTPUT_PIN"
+                },
+                {
+                    "name": "Impulse",
+                    "type_name": "double",
+                    "show_as": "PROPERTY",
+                    "data" : 1
+                },
+                {
+                    "name": "Decay",
+                    "type_name": "double",
+                    "show_as": "PROPERTY",
+                    "data" : 1,
+                    "min": 0
+                }
+            ]
+        }
+    ]
+}

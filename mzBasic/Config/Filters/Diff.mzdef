@@ -1,0 +1,51 @@
+{
+    "nodes": [
+        {
+            "class_name": "Diff",
+            "contents_type": "Job",
+            "contents": {
+                "type": "GPU"
+            },
+            "pins": [
+                {
+                    "name": "Texture_0",
+                    "type_name": "mz.fb.Texture",
+                    "show_as": "INPUT_PIN",
+                    "can_show_as" : "INPUT_PIN_ONLY"
+                },
+                {
+                    "name": "Texture_1",
+                    "type_name": "mz.fb.Texture",
+                    "show_as": "INPUT_PIN",
+                    "can_show_as" : "INPUT_PIN_ONLY"
+                },
+                {
+                    "name": "Color_Gain",
+                    "type_name": "mz.fb.vec4",
+                    "show_as": "PROPERTY",
+                    "can_show_as" : "INPUT_PIN_OR_PROPERTY",
+                    "data": { "x": 1.0, "y": 1.0, "z": 1.0, "w": 1.0 },
+                    "step": 0.01
+                },
+                {
+                    "name": "Absolute_Diff",
+                    "type_name": "bool",
+                    "show_as": "PROPERTY",
+                    "can_show_as" : "INPUT_PIN_OR_PROPERTY"
+                },
+                {
+                    "name": "Use_Alpha",
+                    "type_name": "bool",
+                    "show_as": "PROPERTY",
+                    "can_show_as" : "INPUT_PIN_OR_PROPERTY"
+                },
+                {
+                    "name": "Out",
+                    "type_name": "mz.fb.Texture",
+                    "show_as": "OUTPUT_PIN",
+                    "can_show_as" : "OUTPUT_PIN_ONLY"
+                }
+            ]
+        }
+    ]
+}

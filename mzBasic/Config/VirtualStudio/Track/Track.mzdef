@@ -1,0 +1,607 @@
+{
+    "nodes": [
+        {
+            "class_name": "FreeD",
+            "contents_type": "Job",
+            "contents": {
+                "type": "CPU"
+            },
+            "pins": [
+                {
+                    "name": "Enable",
+                    "type_name": "bool",
+                    "show_as": "PROPERTY",
+                    "can_show_as": "INPUT_PIN_OR_PROPERTY"
+                },
+                {
+                    "name": "UDP_Port",
+                    "type_name": "uint",
+                    "show_as": "PROPERTY",
+                    "can_show_as": "INPUT_PIN_OR_PROPERTY",
+                    "data": 8868
+                },
+                {
+                    "name": "Delay",
+                    "type_name": "uint",
+                    "show_as": "PROPERTY",
+                    "can_show_as": "INPUT_PIN_OR_PROPERTY"
+                },
+				{
+                    "name": "Track",
+                    "type_name": "mz.fb.Track",
+                    "show_as": "OUTPUT_PIN",
+                    "can_show_as": "OUTPUT_PIN_ONLY"
+                },
+                {
+                    "name": "Sync",
+                    "type_name": "mz.fb.Texture",
+                    "show_as": "INPUT_PIN",
+                    "can_show_as" : "INPUT_PIN_OR_PROPERTY"
+                },
+                {
+                    "name": "Spare Count",
+                    "type_name": "uint",
+                    "show_as": "PROPERTY",
+                    "can_show_as": "INPUT_PIN_OR_PROPERTY"
+                },
+                {
+                    "name": "NegateX",
+                    "type_name": "bool",
+                    "show_as": "PROPERTY",
+                    "can_show_as": "INPUT_PIN_OR_PROPERTY",
+                    "pin_category": "Transform Mapping"
+                },
+                {
+                    "name": "NegateY",
+                    "type_name": "bool",
+                    "show_as": "PROPERTY",
+                    "can_show_as": "INPUT_PIN_OR_PROPERTY",
+                    "pin_category": "Transform Mapping"
+                },
+                {
+                    "name": "NegateZ",
+                    "type_name": "bool",
+                    "show_as": "PROPERTY",
+                    "can_show_as": "INPUT_PIN_OR_PROPERTY",
+                    "pin_category": "Transform Mapping"
+                },
+                {
+                    "name": "CoordinateSystem",
+                    "type_name": "mz.fb.CoordinateSystem",
+                    "show_as": "PROPERTY",
+                    "can_show_as": "INPUT_PIN_OR_PROPERTY",
+                    "pin_category": "Transform Mapping",
+                    "data": "XYZ"
+                },
+                {
+                    "name": "NegateRoll",
+                    "type_name": "bool",
+                    "show_as": "PROPERTY",
+                    "can_show_as": "INPUT_PIN_OR_PROPERTY",
+                    "pin_category": "Transform Mapping"
+                },
+                {
+                    "name": "NegatePan",
+                    "type_name": "bool",
+                    "show_as": "PROPERTY",
+                    "can_show_as": "INPUT_PIN_OR_PROPERTY",
+                    "pin_category": "Transform Mapping"
+                },
+                {
+                    "name": "NegateTilt",
+                    "type_name": "bool",
+                    "show_as": "PROPERTY",
+                    "can_show_as": "INPUT_PIN_OR_PROPERTY",
+                    "pin_category": "Transform Mapping"
+                },
+                {
+                    "name": "Pan/Tilt/Roll",
+                    "type_name": "mz.fb.RotationSystem",
+                    "show_as": "PROPERTY",
+                    "can_show_as": "INPUT_PIN_OR_PROPERTY",
+                    "pin_category": "Transform Mapping",
+                    "data": "PTR"
+                },
+                {
+                    "name": "TransformScale",
+                    "type_name": "float",
+                    "show_as": "PROPERTY",
+                    "can_show_as": "INPUT_PIN_OR_PROPERTY",
+                    "pin_category": "Transform Mapping",
+                    "data": 1.0,
+                    "min": 0.0,
+                    "max": 100.0
+                },
+                {
+                    "name": "EnableEffectiveFOV",
+                    "type_name": "bool",
+                    "show_as": "PROPERTY",
+                    "can_show_as": "INPUT_PIN_OR_PROPERTY",
+                    "pin_category": "FOV"
+                },
+                {
+                    "name": "DevicePosition",
+                    "type_name": "mz.fb.vec3d",
+                    "show_as": "PROPERTY",
+                    "can_show_as": "INPUT_PIN_OR_PROPERTY",
+                    "pin_category": "Tracking Offsets"
+                },
+                {
+                    "name": "DeviceRotation",
+                    "type_name": "mz.fb.vec3d",
+                    "show_as": "PROPERTY",
+                    "can_show_as": "INPUT_PIN_OR_PROPERTY",
+                    "pin_category": "Tracking Offsets"
+                },
+                {
+                    "name": "CameraPosition",
+                    "type_name": "mz.fb.vec3d",
+                    "show_as": "PROPERTY",
+                    "can_show_as": "INPUT_PIN_OR_PROPERTY",
+                    "pin_category": "Tracking Offsets"
+                },
+                {
+                    "name": "CameraRotation",
+                    "type_name": "mz.fb.vec3d",
+                    "show_as": "PROPERTY",
+                    "can_show_as": "INPUT_PIN_OR_PROPERTY",
+                    "pin_category": "Tracking Offsets"
+                }
+            ]
+        },
+        {
+            "class_name": "Xync",
+            "contents_type": "Job",
+            "contents": {
+                "type": "CPU"
+            },
+            "pins": [
+                {
+                    "name": "Enable",
+                    "type_name": "bool",
+                    "show_as": "PROPERTY",
+                    "can_show_as": "INPUT_PIN_OR_PROPERTY",
+                    "data": 0
+                },
+                {
+                    "name": "UDP_Port",
+                    "type_name": "uint",
+                    "show_as": "PROPERTY",
+                    "can_show_as": "INPUT_PIN_OR_PROPERTY",
+                    "data": 8868
+                },
+                {
+                    "name": "Delay",
+                    "type_name": "uint",
+                    "show_as": "PROPERTY",
+                    "can_show_as": "INPUT_PIN_OR_PROPERTY"
+                },
+                {
+                    "name": "Track",
+                    "type_name": "mz.fb.Track",
+                    "show_as": "OUTPUT_PIN",
+                    "can_show_as": "OUTPUT_PIN_ONLY"
+                },
+                {
+                    "name": "Sync",
+                    "type_name": "mz.fb.Texture",
+                    "show_as": "INPUT_PIN",
+                    "can_show_as" : "INPUT_PIN_OR_PROPERTY"
+                },
+                {
+                    "name": "Spare Count",
+                    "type_name": "uint",
+                    "show_as": "PROPERTY",
+                    "can_show_as": "INPUT_PIN_OR_PROPERTY"
+                },
+                {
+                    "name": "NegateX",
+                    "type_name": "bool",
+                    "show_as": "PROPERTY",
+                    "can_show_as": "INPUT_PIN_OR_PROPERTY",
+                    "pin_category": "Transform Mapping"
+                },
+                {
+                    "name": "NegateY",
+                    "type_name": "bool",
+                    "show_as": "PROPERTY",
+                    "can_show_as": "INPUT_PIN_OR_PROPERTY",
+                    "pin_category": "Transform Mapping"
+                },
+                {
+                    "name": "NegateZ",
+                    "type_name": "bool",
+                    "show_as": "PROPERTY",
+                    "can_show_as": "INPUT_PIN_OR_PROPERTY",
+                    "pin_category": "Transform Mapping"
+                },
+                {
+                    "name": "CoordinateSystem",
+                    "type_name": "mz.fb.CoordinateSystem",
+                    "show_as": "PROPERTY",
+                    "can_show_as": "INPUT_PIN_OR_PROPERTY",
+                    "pin_category": "Transform Mapping",
+                    "data": "XYZ"
+                },
+                {
+                    "name": "NegateRoll",
+                    "type_name": "bool",
+                    "show_as": "PROPERTY",
+                    "can_show_as": "INPUT_PIN_OR_PROPERTY",
+                    "pin_category": "Transform Mapping"
+                },
+                {
+                    "name": "NegatePan",
+                    "type_name": "bool",
+                    "show_as": "PROPERTY",
+                    "can_show_as": "INPUT_PIN_OR_PROPERTY",
+                    "pin_category": "Transform Mapping"
+                },
+                {
+                    "name": "NegateTilt",
+                    "type_name": "bool",
+                    "show_as": "PROPERTY",
+                    "can_show_as": "INPUT_PIN_OR_PROPERTY",
+                    "pin_category": "Transform Mapping"
+                },
+                {
+                    "name": "Pan/Tilt/Roll",
+                    "type_name": "mz.fb.RotationSystem",
+                    "show_as": "PROPERTY",
+                    "can_show_as": "INPUT_PIN_OR_PROPERTY",
+                    "pin_category": "Transform Mapping",
+                    "data": "PTR"
+                },
+                {
+                    "name": "TransformScale",
+                    "type_name": "float",
+                    "show_as": "PROPERTY",
+                    "can_show_as": "INPUT_PIN_OR_PROPERTY",
+                    "pin_category": "Transform Mapping",
+                    "data": 1.0,
+                    "min": 0.0,
+                    "max": 100.0
+                },
+                {
+                    "name": "EnableEffectiveFOV",
+                    "type_name": "bool",
+                    "show_as": "PROPERTY",
+                    "can_show_as": "INPUT_PIN_OR_PROPERTY",
+                    "pin_category": "FOV",
+                    "data": true
+                },
+                {
+                    "name": "DevicePosition",
+                    "type_name": "mz.fb.vec3d",
+                    "show_as": "PROPERTY",
+                    "can_show_as": "INPUT_PIN_OR_PROPERTY",
+                    "pin_category": "Tracking Offsets"
+                },
+                {
+                    "name": "DeviceRotation",
+                    "type_name": "mz.fb.vec3d",
+                    "show_as": "PROPERTY",
+                    "can_show_as": "INPUT_PIN_OR_PROPERTY",
+                    "pin_category": "Tracking Offsets"
+                },
+                {
+                    "name": "CameraPosition",
+                    "type_name": "mz.fb.vec3d",
+                    "show_as": "PROPERTY",
+                    "can_show_as": "INPUT_PIN_OR_PROPERTY",
+                    "pin_category": "Tracking Offsets"
+                },
+                {
+                    "name": "CameraRotation",
+                    "type_name": "mz.fb.vec3d",
+                    "show_as": "PROPERTY",
+                    "can_show_as": "INPUT_PIN_OR_PROPERTY",
+                    "pin_category": "Tracking Offsets"
+                }
+            ]
+        },
+        {
+            "class_name": "Stype",
+            "contents_type": "Job",
+            "contents": {
+                "type": "CPU"
+            },
+            "pins": [
+                {
+                    "name": "Enable",
+                    "type_name": "bool",
+                    "show_as": "PROPERTY",
+                    "can_show_as": "INPUT_PIN_OR_PROPERTY",
+                    "data": 0
+                },
+                {
+                    "name": "UDP_Port",
+                    "type_name": "uint",
+                    "show_as": "PROPERTY",
+                    "can_show_as": "INPUT_PIN_OR_PROPERTY",
+                    "data": 8868
+                },
+                {
+                    "name": "Delay",
+                    "type_name": "uint",
+                    "show_as": "PROPERTY",
+                    "can_show_as": "INPUT_PIN_OR_PROPERTY"
+                },
+                {
+                    "name": "Track",
+                    "type_name": "mz.fb.Track",
+                    "show_as": "OUTPUT_PIN",
+                    "can_show_as": "OUTPUT_PIN_ONLY"
+                },
+                {
+                    "name": "Sync",
+                    "type_name": "mz.fb.Texture",
+                    "show_as": "INPUT_PIN",
+                    "can_show_as" : "INPUT_PIN_OR_PROPERTY"
+                },
+                {
+                    "name": "Spare Count",
+                    "type_name": "uint",
+                    "show_as": "PROPERTY",
+                    "can_show_as": "INPUT_PIN_OR_PROPERTY"
+                },
+                {
+                    "name": "NegateX",
+                    "type_name": "bool",
+                    "show_as": "PROPERTY",
+                    "can_show_as": "INPUT_PIN_OR_PROPERTY",
+                    "pin_category": "Transform Mapping"
+                },
+                {
+                    "name": "NegateY",
+                    "type_name": "bool",
+                    "show_as": "PROPERTY",
+                    "can_show_as": "INPUT_PIN_OR_PROPERTY",
+                    "pin_category": "Transform Mapping"
+                },
+                {
+                    "name": "NegateZ",
+                    "type_name": "bool",
+                    "show_as": "PROPERTY",
+                    "can_show_as": "INPUT_PIN_OR_PROPERTY",
+                    "pin_category": "Transform Mapping"
+                },
+                {
+                    "name": "CoordinateSystem",
+                    "type_name": "mz.fb.CoordinateSystem",
+                    "show_as": "PROPERTY",
+                    "can_show_as": "INPUT_PIN_OR_PROPERTY",
+                    "pin_category": "Transform Mapping",
+                    "data": "XYZ"
+                },
+                {
+                    "name": "NegateRoll",
+                    "type_name": "bool",
+                    "show_as": "PROPERTY",
+                    "can_show_as": "INPUT_PIN_OR_PROPERTY",
+                    "pin_category": "Transform Mapping"
+                },
+                {
+                    "name": "NegatePan",
+                    "type_name": "bool",
+                    "show_as": "PROPERTY",
+                    "can_show_as": "INPUT_PIN_OR_PROPERTY",
+                    "pin_category": "Transform Mapping"
+                },
+                {
+                    "name": "NegateTilt",
+                    "type_name": "bool",
+                    "show_as": "PROPERTY",
+                    "can_show_as": "INPUT_PIN_OR_PROPERTY",
+                    "pin_category": "Transform Mapping"
+                },
+                {
+                    "name": "Pan/Tilt/Roll",
+                    "type_name": "mz.fb.RotationSystem",
+                    "show_as": "PROPERTY",
+                    "can_show_as": "INPUT_PIN_OR_PROPERTY",
+                    "pin_category": "Transform Mapping",
+                    "data": "PTR"
+                },
+                {
+                    "name": "TransformScale",
+                    "type_name": "float",
+                    "show_as": "PROPERTY",
+                    "can_show_as": "INPUT_PIN_OR_PROPERTY",
+                    "pin_category": "Transform Mapping",
+                    "data": 1.0,
+                    "min": 0.0,
+                    "max": 100.0
+                },
+                {
+                    "name": "EnableEffectiveFOV",
+                    "type_name": "bool",
+                    "show_as": "PROPERTY",
+                    "can_show_as": "INPUT_PIN_OR_PROPERTY",
+                    "pin_category": "FOV",
+                    "data": true
+                },
+                {
+                    "name": "DevicePosition",
+                    "type_name": "mz.fb.vec3d",
+                    "show_as": "PROPERTY",
+                    "can_show_as": "INPUT_PIN_OR_PROPERTY",
+                    "pin_category": "Tracking Offsets"
+                },
+                {
+                    "name": "DeviceRotation",
+                    "type_name": "mz.fb.vec3d",
+                    "show_as": "PROPERTY",
+                    "can_show_as": "INPUT_PIN_OR_PROPERTY",
+                    "pin_category": "Tracking Offsets"
+                },
+                {
+                    "name": "CameraPosition",
+                    "type_name": "mz.fb.vec3d",
+                    "show_as": "PROPERTY",
+                    "can_show_as": "INPUT_PIN_OR_PROPERTY",
+                    "pin_category": "Tracking Offsets"
+                },
+                {
+                    "name": "CameraRotation",
+                    "type_name": "mz.fb.vec3d",
+                    "show_as": "PROPERTY",
+                    "can_show_as": "INPUT_PIN_OR_PROPERTY",
+                    "pin_category": "Tracking Offsets"
+                }
+            ]
+        },
+        {
+            "class_name": "MoSys",
+            "contents_type": "Job",
+            "contents": {
+                "type": "CPU"
+            },
+            "pins": [
+                {
+                    "name": "Enable",
+                    "type_name": "bool",
+                    "show_as": "PROPERTY",
+                    "can_show_as": "INPUT_PIN_OR_PROPERTY",
+                    "data": 0
+                },
+                {
+                    "name": "UDP_Port",
+                    "type_name": "uint",
+                    "show_as": "PROPERTY",
+                    "can_show_as": "INPUT_PIN_OR_PROPERTY",
+                    "data": 8868
+                },
+                {
+                    "name": "Delay",
+                    "type_name": "uint",
+                    "show_as": "PROPERTY",
+                    "can_show_as": "INPUT_PIN_OR_PROPERTY",
+                    "data": 123
+                },
+                {
+                    "name": "Track",
+                    "type_name": "mz.fb.Track",
+                    "show_as": "OUTPUT_PIN",
+                    "can_show_as": "OUTPUT_PIN_ONLY"
+                },
+                {
+                    "name": "Sync",
+                    "type_name": "mz.fb.Texture",
+                    "show_as": "INPUT_PIN",
+                    "can_show_as" : "INPUT_PIN_OR_PROPERTY"
+                },
+                {
+                    "name": "Spare Count",
+                    "type_name": "uint",
+                    "show_as": "PROPERTY",
+                    "can_show_as": "INPUT_PIN_OR_PROPERTY"
+                },
+                {
+                    "name": "NegateX",
+                    "type_name": "bool",
+                    "show_as": "PROPERTY",
+                    "can_show_as": "INPUT_PIN_OR_PROPERTY",
+                    "pin_category": "Transform Mapping"
+                },
+                {
+                    "name": "NegateY",
+                    "type_name": "bool",
+                    "show_as": "PROPERTY",
+                    "can_show_as": "INPUT_PIN_OR_PROPERTY",
+                    "pin_category": "Transform Mapping"
+                },
+                {
+                    "name": "NegateZ",
+                    "type_name": "bool",
+                    "show_as": "PROPERTY",
+                    "can_show_as": "INPUT_PIN_OR_PROPERTY",
+                    "pin_category": "Transform Mapping"
+                },
+                {
+                    "name": "CoordinateSystem",
+                    "type_name": "mz.fb.CoordinateSystem",
+                    "show_as": "PROPERTY",
+                    "can_show_as": "INPUT_PIN_OR_PROPERTY",
+                    "pin_category": "Transform Mapping",
+                    "data": "XYZ"
+                },
+                {
+                    "name": "NegateRoll",
+                    "type_name": "bool",
+                    "show_as": "PROPERTY",
+                    "can_show_as": "INPUT_PIN_OR_PROPERTY",
+                    "pin_category": "Transform Mapping"
+                },
+                {
+                    "name": "NegatePan",
+                    "type_name": "bool",
+                    "show_as": "PROPERTY",
+                    "can_show_as": "INPUT_PIN_OR_PROPERTY",
+                    "pin_category": "Transform Mapping"
+                },
+                {
+                    "name": "NegateTilt",
+                    "type_name": "bool",
+                    "show_as": "PROPERTY",
+                    "can_show_as": "INPUT_PIN_OR_PROPERTY",
+                    "pin_category": "Transform Mapping"
+                },
+                {
+                    "name": "Pan/Tilt/Roll",
+                    "type_name": "mz.fb.RotationSystem",
+                    "show_as": "PROPERTY",
+                    "can_show_as": "INPUT_PIN_OR_PROPERTY",
+                    "pin_category": "Transform Mapping",
+                    "data": "PTR"
+                },
+                {
+                    "name": "TransformScale",
+                    "type_name": "float",
+                    "show_as": "PROPERTY",
+                    "can_show_as": "INPUT_PIN_OR_PROPERTY",
+                    "pin_category": "Transform Mapping",
+                    "data": 1.0,
+                    "min": 0.0,
+                    "max": 100.0
+                },
+                {
+                    "name": "EnableEffectiveFOV",
+                    "type_name": "bool",
+                    "show_as": "PROPERTY",
+                    "can_show_as": "INPUT_PIN_OR_PROPERTY",
+                    "pin_category": "FOV",
+                    "data": true
+                },
+                {
+                    "name": "DevicePosition",
+                    "type_name": "mz.fb.vec3d",
+                    "show_as": "PROPERTY",
+                    "can_show_as": "INPUT_PIN_OR_PROPERTY",
+                    "pin_category": "Tracking Offsets"
+                },
+                {
+                    "name": "DeviceRotation",
+                    "type_name": "mz.fb.vec3d",
+                    "show_as": "PROPERTY",
+                    "can_show_as": "INPUT_PIN_OR_PROPERTY",
+                    "pin_category": "Tracking Offsets"
+                },
+                {
+                    "name": "CameraPosition",
+                    "type_name": "mz.fb.vec3d",
+                    "show_as": "PROPERTY",
+                    "can_show_as": "INPUT_PIN_OR_PROPERTY",
+                    "pin_category": "Tracking Offsets"
+                },
+                {
+                    "name": "CameraRotation",
+                    "type_name": "mz.fb.vec3d",
+                    "show_as": "PROPERTY",
+                    "can_show_as": "INPUT_PIN_OR_PROPERTY",
+                    "pin_category": "Tracking Offsets"
+                }
+            ]
+        }
+    ]
+}

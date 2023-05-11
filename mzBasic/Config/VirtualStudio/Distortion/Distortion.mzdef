@@ -1,0 +1,168 @@
+    {
+        "nodes": [
+            {
+                "class_name": "Distort",
+                "contents_type": "Job",
+                "contents": {
+                    "type": "GPU"
+                },
+                "pins": [
+                    {
+                        "name": "In",
+                        "type_name": "mz.fb.Texture",
+                        "show_as": "INPUT_PIN",
+                        "can_show_as": "INPUT_PIN_ONLY",
+                        "data": {
+                            "filtering": "LINEAR"
+                        }
+                    },
+                    {
+                        "name": "k1k2",
+                        "type_name": "mz.fb.vec2",
+                        "show_as": "PROPERTY",
+                        "can_show_as": "INPUT_PIN_OR_PROPERTY",
+                        "data": {
+                            "x": 0.0,
+                            "y": 0.0
+                        },
+                        "step": 0.01
+                    },
+                    {
+                        "name": "Center",
+                        "type_name": "mz.fb.vec2",
+                        "show_as": "PROPERTY",
+                        "can_show_as": "INPUT_PIN_OR_PROPERTY",
+                        "data": {
+                            "x": 0.0,
+                            "y": 0.0
+                        },
+                        "step": 0.01
+                    },
+                    {
+                        "name": "Distortion_Scale",
+                        "type_name": "float",
+                        "show_as": "PROPERTY",
+                        "can_show_as": "INPUT_PIN_OR_PROPERTY",
+                        "data": 1.0,
+                        "step": 0.01
+                    },
+                    {
+                        "name": "Distort_Mode",
+                        "type_name": "mz.fb.DistortMode",
+                        "show_as": "PROPERTY",
+                        "can_show_as": "INPUT_PIN_OR_PROPERTY",
+                        "data": "Default"
+                    },
+                    {
+                        "name": "Out",
+                        "type_name": "mz.fb.Texture",
+                        "show_as": "OUTPUT_PIN",
+                        "can_show_as": "OUTPUT_PIN_ONLY"
+                    }
+                ]
+            },
+            {
+                "class_name": "Undistort",
+                "contents_type": "Job",
+                "contents": {
+                    "type": "GPU"
+                },
+                "pins": [
+                    {
+                        "name": "In",
+                        "type_name": "mz.fb.Texture",
+                        "show_as": "INPUT_PIN",
+                        "can_show_as": "INPUT_PIN_ONLY",
+                        "data": {
+                            "filtering": "LINEAR"
+                        }
+                    },
+                    {
+                        "name": "k1k2",
+                        "type_name": "mz.fb.vec2",
+                        "show_as": "PROPERTY",
+                        "can_show_as": "INPUT_PIN_OR_PROPERTY",
+                        "data": {
+                            "x": 0.0,
+                            "y": 0.0
+                        },
+                        "step": 0.01
+                    },
+                    {
+                        "name": "Center",
+                        "type_name": "mz.fb.vec2",
+                        "show_as": "PROPERTY",
+                        "can_show_as": "INPUT_PIN_OR_PROPERTY",
+                        "data": {
+                            "x": 0.0,
+                            "y": 0.0
+                        },
+                        "step": 0.01
+                    },
+                    {
+                        "name": "Distortion_Scale",
+                        "type_name": "float",
+                        "show_as": "PROPERTY",
+                        "can_show_as": "INPUT_PIN_OR_PROPERTY",
+                        "data": 1.0,
+                        "step": 0.01
+                    },
+                    {
+                        "name": "Iteration_Count",
+                        "type_name": "uint",
+                        "show_as": "PROPERTY",
+                        "can_show_as": "INPUT_PIN_OR_PROPERTY",
+                        "data": 5,
+                        "min": 1,
+                        "max": 10
+                    },
+                    {
+                        "name": "Enable_Chromatic_Aberration",
+                        "type_name": "bool",
+                        "show_as": "PROPERTY",
+                        "can_show_as": "INPUT_PIN_OR_PROPERTY",
+                        "pin_category": "Chromatic Aberration"
+                    },
+                    {
+                        "name": "Red_Offset_k1k2",
+                        "type_name": "mz.fb.vec2",
+                        "show_as": "PROPERTY",
+                        "can_show_as": "INPUT_PIN_OR_PROPERTY",
+                        "pin_category": "Chromatic Aberration",
+                        "data": {
+                            "x": 0.0,
+                            "y": 0.0
+                        },
+                        "step": 0.01
+                    },
+                    {
+                        "name": "Blue_Offset_k1k2",
+                        "type_name": "mz.fb.vec2",
+                        "show_as": "PROPERTY",
+                        "can_show_as": "INPUT_PIN_OR_PROPERTY",
+                        "pin_category": "Chromatic Aberration",
+                        "data": {
+                            "x": 0.0,
+                            "y": 0.0
+                        },
+                        "step": 0.01
+                    },
+                    {
+                        "name": "Out",
+                        "type_name": "mz.fb.Texture",
+                        "show_as": "OUTPUT_PIN",
+                        "can_show_as": "OUTPUT_PIN_ONLY"
+                    }
+                ],
+                "functions": [
+                    {
+                        "class_name": "ReloadShaders",
+                        "contents_type": "Job",
+                        "contents": {
+                            "type": "CPU"
+                        }
+                    }
+                ]
+            }
+        ]
+    }

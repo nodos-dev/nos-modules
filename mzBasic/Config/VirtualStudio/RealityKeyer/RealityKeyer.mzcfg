@@ -1,0 +1,17 @@
+{
+    "namespace": "mz",
+    "name": "RealityKeyer",
+    "node_definitions": [
+        "RealityKeyer.mzdef"
+    ],
+    "fb_includes" :[
+      "RealityKeyer.fbs"  
+    ],
+    "menu_items": [
+        {
+            "category": "Keying",
+            "class_name": "RealityKeyer",
+            "display_name": "Reality Keyer"
+        }
+    ]
+}
