@@ -1,6 +1,6 @@
-[submodule "External/asio"]
-	path = External/asio
-	url = https://github.com/chriskohlhoff/asio.git
 [submodule "External/json"]
 	path = External/json
 	url = https://github.com/nlohmann/json.git
+[submodule "External/asio"]
+	path = External/asio
+	url = https://github.com/chriskohlhoff/asio.git
