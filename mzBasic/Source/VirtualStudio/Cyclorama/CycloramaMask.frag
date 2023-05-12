@@ -134,7 +134,7 @@ float SmoothnessLine(
 
 float DiagSmoothness(vec2 X, vec2 Y, vec2 O, vec3 P)
 {
-    const vec2 Diag  = 4*ubo.Diag;
+    const vec2 Diag = ubo.Diag;
     X = normalize(X-O);
     Y = normalize(Y-O);
     const float A = dot(X, Y);
@@ -201,7 +201,7 @@ void main()
     }
     
     float Coeff[5] = float[5](0,0,0,0,0);
-    Coeff[0] = SmoothnessLine(BR, OR, BL, OL, ubo.SmoothnessCrop.wy, ubo.Smoothness.wy, POS.xy);
+    Coeff[0] = SmoothnessLine(BR, OR, BL, OL, C.wy, C.wy, POS.xy);
     Coeff[1] = (POS.z + C.z + s.z - S.z) / s.z;
     Coeff[2] = int(!HasLeftWing) * (1 - clamp((Distance(OL, BL, POS.xy) - C.y) / s.y, 0, 1)); 
     Coeff[3] = int(!HasRightWing) * (1 - clamp((Distance(OR, BR, POS.xy) - C.w) / s.w, 0, 1));
