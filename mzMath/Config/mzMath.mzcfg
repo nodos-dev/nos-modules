@@ -3,7 +3,7 @@
     "name": "op",
     "fb_includes": [],
     "node_definitions": [
-        "Math.mzdef"
+        "mzMath.mzdef"
     ],
     "menu_items": [
         {

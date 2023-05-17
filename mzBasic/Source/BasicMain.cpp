@@ -2,7 +2,6 @@
 
 #include "AJA/AJAMain.h"
 #include "Filters/FiltersMain.h"
-#include "Math/MathMain.h"
 #include "Util/UtilMain.h"
 #include "VirtualStudio/VirtualStudioMain.h"
 
@@ -19,7 +18,6 @@ void mzPluginSDK_API Register(NodeActionsMap& functions, EngineNodeServices serv
     GServices = services;
     RegisterAJA(functions);
     RegisterFilters(functions);
-    RegisterMath(functions);
     RegisterUtil(functions, types);
     RegisterTrack(functions);
     RegisterRealityKeyer(functions);
