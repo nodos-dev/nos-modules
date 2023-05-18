@@ -8,12 +8,16 @@ add_library(boost_math INTERFACE)
 target_include_directories(boost_math INTERFACE ${EXTERNAL_DIR})
 
 # nlohmann
-add_library(nlohmann INTERFACE)
-target_include_directories(nlohmann INTERFACE ${EXTERNAL_DIR}/json/single_include)
+if (NOT WITH_MEDIAZ)
+    add_library(nlohmann INTERFACE)
+    target_include_directories(nlohmann INTERFACE ${EXTERNAL_DIR}/json/single_include)
+endif()
 
 # MediaZ Plugin SDK
-list(APPEND CMAKE_MODULE_PATH $ENV{MZ_SDK_DIR}/cmake)
-find_package(mzPluginSDK REQUIRED)
+if (NOT WITH_MEDIAZ)
+    list(APPEND CMAKE_MODULE_PATH $ENV{MZ_SDK_DIR}/cmake)
+    find_package(mzPluginSDK REQUIRED)
+endif()
 
 # Plugin
 # ------

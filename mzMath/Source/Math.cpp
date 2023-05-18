@@ -14,12 +14,14 @@ namespace mz::math
 extern "C"
 {
 
-mzPluginSDK_API void mzPluginSDK_CALL mzGetNodeTypeCount(int* outCount)
+
+
+mzPluginSDK_API int mzPluginSDK_CALL mzGetNodeTypeCount()
 {
-	*outCount = 1;
+	return 1;
 }
 
-mzPluginSDK_API void mzPluginSDK_CALL mzExportNodeFunctions(int nodeTypeIndex, MzNodeFunctions* outFunctions)
+mzPluginSDK_API MzResult mzPluginSDK_CALL mzExportNodeFunctions(int nodeTypeIndex, MzNodeFunctions* outFunctions)
 {
 	switch (nodeTypeIndex) {
 		case 0:
@@ -28,11 +30,15 @@ mzPluginSDK_API void mzPluginSDK_CALL mzExportNodeFunctions(int nodeTypeIndex, M
 				float* x = args->PinData[0]->Data.As<float>();
 				float* y = args->PinData[1]->Data.As<float>();
 				float z = *x + *y;
-				args->PinData[2]->Data = mz::Buffer::From(z);
+				mzEngine.ReallocBuffer(&args->PinData[2]->Data, 16);
+				
 				return true;
 			};
 			break;
+		default:
+			return MzResult::InvalidArgument;
 	}
+	return MzResult::Success;
 }
 
 }

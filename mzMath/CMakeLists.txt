@@ -4,8 +4,10 @@ project("mzMath")
 # Dependencies
 # ------------
 # MediaZ Plugin SDK
-list(APPEND CMAKE_MODULE_PATH $ENV{MZ_SDK_DIR}/cmake)
-find_package(mzPluginSDK REQUIRED)
+if (NOT WITH_MEDIAZ)
+    list(APPEND CMAKE_MODULE_PATH $ENV{MZ_SDK_DIR}/cmake)
+    find_package(mzPluginSDK REQUIRED)
+endif()
 
 # Plugin
 # ------
@@ -26,11 +28,6 @@ set_target_properties(${PROJECT_NAME} PROPERTIES
     LIBRARY_OUTPUT_DIRECTORY_RELWITHDEBINFO "${CMAKE_CURRENT_SOURCE_DIR}/Binaries"
     LIBRARY_OUTPUT_DIRECTORY_MINSIZEREL "${CMAKE_CURRENT_SOURCE_DIR}/Binaries"
 )
-
-if(WIN32)
-    target_compile_definitions(${PROJECT_NAME} PUBLIC "-DmzPluginSDK_SHARED"
-        "-DmzPluginSDK_EXPORTS")
-endif()
 
 set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_STANDARD 20)
 
