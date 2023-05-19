@@ -9,7 +9,7 @@
         {
             "category": "Math",
             "class_name": "U32ToString",
-            "display_name": "ToString"
+            "display_name": "To String (u32)"
         },
         {
             "category": "Math",

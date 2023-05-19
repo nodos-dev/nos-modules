@@ -6,56 +6,23 @@
 #include <glm/glm.hpp>
 #include <glm/gtx/euler_angles.hpp>
 
+#include <chrono>
+
 MZ_INIT();
 
 namespace mz::math
 {
 
-extern "C"
-{
-
-
-
-mzPluginSDK_API int mzPluginSDK_CALL mzGetNodeTypeCount()
-{
-	return 1;
-}
-
-mzPluginSDK_API MzResult mzPluginSDK_CALL mzExportNodeFunctions(int nodeTypeIndex, MzNodeFunctions* outFunctions)
-{
-	switch (nodeTypeIndex) {
-		case 0:
-			outFunctions->TypeName = "mz.math.Add_f32";
-			outFunctions->ExecuteNode = [](void* ctx, MzExecuteNodeArgs const* args) -> bool {
-				float* x = args->PinData[0]->Data.As<float>();
-				float* y = args->PinData[1]->Data.As<float>();
-				float z = *x + *y;
-				mzEngine.ReallocBuffer(&args->PinData[2]->Data, 16);
-				
-				return true;
-			};
-			break;
-		default:
-			return MzResult::InvalidArgument;
-	}
-	return MzResult::Success;
-}
-
-}
-
-}
-
-/*
-#include <MediaZ/Plugin.h>
-#include "BasicMain.h"
-#include "Args.h"
-#include "Builtins_generated.h"
-#include "flatbuffers/flatbuffers.h"
-
-#include <glm/glm.hpp>
-#include <glm/gtx/euler_angles.hpp>
-#include <chrono>
-#include <type_traits>
+using i8 = int8_t;
+using i16 = int16_t;
+using i32 = int32_t;
+using i64 = int64_t;
+using u8 = uint8_t;
+using u16 = uint16_t;
+using u32 = uint32_t;
+using u64 = uint64_t;
+using f32 = float;
+using f64 = double;
 
 #define NO_ARG
 
@@ -68,82 +35,225 @@ DEF_OP(i);
 DEF_OP(d);
 DEF_OP(NO_ARG);
 
-namespace mz
+template<class T> T Add(T x, T y) { return x + y; }
+template<class T> T Sub(T x, T y) { return x - y; }
+template<class T> T Mul(T x, T y) { return x * y; }
+template<class T> T Div(T x, T y) { return x / y; }
+
+template<class T, T F(T, T)>
+bool ScalarBinopExecute(void* ctx, const MzNodeExecuteArgs* args)
 {
-
-template<class T, T F(T,T)>
-bool BinopEntryGenerator(mz::Args& args, void*)
-{
-	 auto X = args.Get<T>("X");
-	 auto Y = args.Get<T>("Y");
-	 auto Z = args.Get<T>("Z");
-	 *Z = F(*X,*Y);
-	 return true;
-}
-
-template<class T> T Add(T x, T y) { return x+y;}
-template<class T> T Sub(T x, T y) { return x-y;}
-template<class T> T Mul(T x, T y) { return x*y;}
-template<class T> T Div(T x, T y) { return x/y;}
-
-template<class T, int n>
-struct vec {
-	T v[n];
-
-	vec() = default;
-
-	template<class P>
-	vec(const P* p)  : v{}
-	{
-		v[0] = p->x();
-		v[1] = p->y();
-		if constexpr(n > 2) v[2] = p->z();
-		if constexpr(n > 3) v[3] = p->w();
-	}
-	
-	template<T F(T,T)>
-	vec binop(vec r) const
-	{
-		vec result;
-		for(int i = 0; i < n; i++)
-			result.v[i] = F(v[i], r.v[i]);
-		return result;  
-	}
-	
-	vec operator +(vec v) const {return binop<Add>(v);}
-	vec operator -(vec v) const {return binop<Sub>(v);}
-	vec operator *(vec v) const {return binop<Mul>(v);}
-	vec operator /(vec v) const {return binop<Div>(v);}
-};
-
-template<class T, int Dim, vec<T,Dim>F(vec<T,Dim>,vec<T,Dim>)>
-bool VecBinopEntryGenerator(mz::Args& args, void*)
-{
-	auto X = args.Get<vec<T, Dim>>("X");
-	auto Y = args.Get<vec<T, Dim>>("Y");
-	auto Z = args.Get<vec<T, Dim>>("Z");
+	auto X = reinterpret_cast<T*>(args->PinValues[0].Data);
+	auto Y = reinterpret_cast<T*>(args->PinValues[1].Data);
+	auto Z = reinterpret_cast<T*>(args->PinValues[2].Data);
 	*Z = F(*X, *Y);
 	return true;
 }
 
-template<class T>
-bool ToString(mz::Args& args, void* ctx)
-{
-	auto s = std::to_string(*args.Get<T>("in"));
+template<class T, int N>
+struct Vec {
+	T C[N] = {};
+
+	Vec() = default;
+
+	template<class P>
+	Vec(const P* p)  : C{}
+	{
+		C[0] = p->x();
+		C[1] = p->y();
+		if constexpr(N > 2) C[2] = p->z();
+		if constexpr(N > 3) C[3] = p->w();
+	}
 	
-	*args.GetBuffer("out") = mz::Buffer((u8*)s.data(), s.size()+1);
-	return true;
-}
+	template<T F(T,T)>
+	Vec Binop(Vec r) const
+	{
+		Vec<T, N> result = {};
+		for(int i = 0; i < N; i++)
+			result.C[i] = F(C[i], r.C[i]);
+		return result;  
+	}
+	
+	Vec operator +(Vec r) const { return Binop<Add>(r); }
+	Vec operator -(Vec r) const { return Binop<Sub>(r); }
+	Vec operator *(Vec r) const { return Binop<Mul>(r); }
+	Vec operator /(Vec r) const { return Binop<Div>(r); }
+};
 
-bool SampleNodeAddFunc(mz::Args& pins, mz::Args& funcParams, void* ctx)
+template<class T, int Dim, Vec<T,Dim>F(Vec<T,Dim>,Vec<T,Dim>)>
+bool VecBinopExecute(void* ctx, const MzNodeExecuteArgs* args)
 {
-	auto X = funcParams.Get<f64>("X");
-	auto Y = funcParams.Get<f64>("Y");
-	auto Z = funcParams.Get<f64>("Z");
-	*Z = *X + *Y;
+	auto X = reinterpret_cast<Vec<T, Dim>*>(args->PinValues[0].Data);
+	auto Y = reinterpret_cast<Vec<T, Dim>*>(args->PinValues[1].Data);
+	auto Z = reinterpret_cast<Vec<T, Dim>*>(args->PinValues[2].Data);
+	*Z = F(*X, *Y);
 	return true;
 }
 
+#define NODE_NAME(op, t, sz, postfix) \
+	op ##_ ##t ##sz ##postfix
+
+#define ENUM_GEN_INTEGER_NODE_NAMES(op, t) \
+	NODE_NAME(op, t, 8, ) , \
+	NODE_NAME(op, t, 16, ) , \
+	NODE_NAME(op, t, 32, ) , \
+	NODE_NAME(op, t, 64, ) ,
+
+#define ENUM_GEN_FLOAT_NODE_NAMES(op) \
+	NODE_NAME(op, f, 32, ) , \
+	NODE_NAME(op, f, 64, ) ,
+
+#define ENUM_GEN_VEC_NODE_NAMES_DIM(op, dim) \
+	NODE_NAME(op, vec, dim, u), \
+	NODE_NAME(op, vec, dim, i), \
+	NODE_NAME(op, vec, dim, d), \
+	NODE_NAME(op, vec, dim, ),
+
+#define ENUM_GEN_VEC_NODE_NAMES(op) \
+	ENUM_GEN_VEC_NODE_NAMES_DIM(op, 2) \
+	ENUM_GEN_VEC_NODE_NAMES_DIM(op, 3) \
+	ENUM_GEN_VEC_NODE_NAMES_DIM(op, 4)
+
+#define ENUM_GEN_NODE_NAMES(op) \
+	ENUM_GEN_INTEGER_NODE_NAMES(op, u) \
+	ENUM_GEN_INTEGER_NODE_NAMES(op, i) \
+	ENUM_GEN_FLOAT_NODE_NAMES(op) \
+	ENUM_GEN_VEC_NODE_NAMES(op)
+
+#define ENUM_GEN_NODE_NAMES_ALL_OPS() \
+	ENUM_GEN_NODE_NAMES(Add) \
+	ENUM_GEN_NODE_NAMES(Sub) \
+	ENUM_GEN_NODE_NAMES(Mul) \
+	ENUM_GEN_NODE_NAMES(Div)
+
+#define GEN_CASE_SCALAR(op, t, sz) \
+	case MathNodeTypes::NODE_NAME(op, t, sz, ): { \
+		outFunctions->TypeName = "mz.math." #op "_" #t #sz; \
+		outFunctions->ExecuteNode = ScalarBinopExecute<t ##sz, op<t ##sz>>; \
+		break; \
+	}
+
+#define GEN_CASE_INTEGER(op, t) \
+	GEN_CASE_SCALAR(op, t, 8) \
+	GEN_CASE_SCALAR(op, t, 16) \
+	GEN_CASE_SCALAR(op, t, 32) \
+	GEN_CASE_SCALAR(op, t, 64)
+
+#define GEN_CASE_INTEGERS(op) \
+	GEN_CASE_INTEGER(op, u) \
+	GEN_CASE_INTEGER(op, i)
+
+#define GEN_CASE_FLOAT(op) \
+	GEN_CASE_SCALAR(op, f, 32) \
+	GEN_CASE_SCALAR(op, f, 64)
+
+#define GEN_CASE_VEC(op, namePostfix, t, dim) \
+	case MathNodeTypes::NODE_NAME(op, vec, dim, namePostfix): { \
+		outFunctions->TypeName = "mz.math." #op "_vec" #dim #namePostfix; \
+		outFunctions->ExecuteNode = VecBinopExecute<t, dim, op>; \
+		break; \
+	}
+
+#define GEN_CASE_VEC_ALL_DIMS(op, namePostfix, t) \
+	GEN_CASE_VEC(op, namePostfix, t, 2) \
+	GEN_CASE_VEC(op, namePostfix, t, 3) \
+	GEN_CASE_VEC(op, namePostfix, t, 4)
+
+#define GEN_CASE_VEC_ALL_TYPES(op) \
+	GEN_CASE_VEC_ALL_DIMS(op, u, u32) \
+	GEN_CASE_VEC_ALL_DIMS(op, i, i32) \
+	GEN_CASE_VEC_ALL_DIMS(op, d, f64) \
+	GEN_CASE_VEC_ALL_DIMS(op, , f32)
+
+#define GEN_CASES(op) \
+	GEN_CASE_INTEGERS(op) \
+	GEN_CASE_FLOAT(op) \
+	GEN_CASE_VEC_ALL_TYPES(op)
+
+#define GEN_ALL_CASES() \
+	GEN_CASES(Add) \
+	GEN_CASES(Sub) \
+	GEN_CASES(Mul) \
+	GEN_CASES(Div)
+
+enum class MathNodeTypes {
+	ENUM_GEN_NODE_NAMES_ALL_OPS()
+	U32ToString, // TODO: Generate other ToString nodes too.
+	SineWave,
+	Clamp,
+	Absolute,
+	Count
+};
+
+template<class T>
+bool ToString(void* ctx, const MzNodeExecuteArgs* args)
+{
+	auto* in = reinterpret_cast<u32*>(args->PinValues[0].Data);
+	auto s = std::to_string(*in);
+	MzBuffer* out = &args->PinValues[1];
+	if (out->Size != s.size() + 1)
+	{
+		void* buffer = mzEngine.AllocateMemory(s.size() + 1);
+		if (!buffer)
+			return false;
+		out->Data = buffer;
+		out->Size = s.size() + 1;
+	}
+	strncpy((char*)out->Data, s.c_str(), out->Size);
+	return true;
+}
+
+extern "C"
+{
+mzPluginSDK_API int mzPluginSDK_CALL mzGetNodeTypeCount()
+{
+	return (int)(MathNodeTypes::Count);
+}
+
+mzPluginSDK_API MzResult mzPluginSDK_CALL mzExportNodeFunctions(int nodeTypeIndex, MzNodeFunctions* outFunctions)
+{
+	switch ((MathNodeTypes)nodeTypeIndex)
+	{
+	GEN_ALL_CASES()
+	case MathNodeTypes::U32ToString: {
+		outFunctions->TypeName = "mz.math.U32ToString";
+		outFunctions->ExecuteNode = ToString<u32>;
+		break;
+	}
+	case MathNodeTypes::SineWave: {
+		outFunctions->TypeName = "mz.math.SineWave";
+		outFunctions->ExecuteNode = [](void* ctx, const MzNodeExecuteArgs* args) {
+			MzBuffer* ampBuf = &args->PinValues[0];
+			MzBuffer* freqBuf = &args->PinValues[1];
+			MzBuffer* outBuf = &args->PinValues[2];
+			// for (int i = 0; i < args->PinCount; ++i) {
+			// 	auto* name = args->PinNames[i];
+			// 	if (strcmp(name, "Frequency") == 0)
+			// 		freqBuf = &args->PinValues[i];
+			// 	else if (strcmp(name, "Amplitude") == 0)
+			// 		ampBuf = &args->PinValues[i];
+			// 	else if (strcmp(name, "Out") == 0)
+			// 		outBuf = &args->PinValues[i];
+			// }
+			float frequency = *reinterpret_cast<float*>(freqBuf->Data);
+			float amplitude = *reinterpret_cast<float*>(ampBuf->Data);
+			auto millis = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count();
+			float sec = millis / 1000.f;
+			*(reinterpret_cast<float*>(outBuf->Data)) = amplitude * sin(frequency * sec);
+			return true;
+		};
+		break;
+	}
+	default:
+		return MzResult::InvalidArgument;
+	}
+	return MzResult::Success;
+}
+}
+
+}
+
+/*
 
 template<class T, u32 I, u32 F = I*2 + 4>
 inline auto AddTrackField(flatbuffers::FlatBufferBuilder& fbb, flatbuffers::Table* X, flatbuffers::Table* Y)
@@ -203,79 +313,6 @@ void RegisterMath(NodeActionsMap& functions)
 	functions["mz.math.U32ToString"].EntryPoint = ToString<u32>;
 	functions["mz.math.NodeWithFunction"].NodeFunctions["NodeAsFunctionAddF64"] = SampleNodeAddFunc;
 	functions["mz.math.NodeWithFunction"].NodeFunctions["NodeAsFunctionSubF64"] = SampleNodeAddFunc;
-	functions["mz.math.Add_f32"].EntryPoint = BinopEntryGenerator<f32, Add>;
-	functions["mz.math.Add_f64"].EntryPoint = BinopEntryGenerator<f64, Add>;
-	functions["mz.math.Add_i32"].EntryPoint = BinopEntryGenerator<i32, Add>;
-	functions["mz.math.Add_u32"].EntryPoint = BinopEntryGenerator<u32, Add>;
-	functions["mz.math.Add_i64"].EntryPoint = BinopEntryGenerator<i64, Add>;
-	functions["mz.math.Add_u64"].EntryPoint = BinopEntryGenerator<u64, Add>;
-	functions["mz.math.Sub_f32"].EntryPoint = BinopEntryGenerator<f32, Sub>;
-	functions["mz.math.Sub_f64"].EntryPoint = BinopEntryGenerator<f64, Sub>;
-	functions["mz.math.Sub_i32"].EntryPoint = BinopEntryGenerator<i32, Sub>;
-	functions["mz.math.Sub_u32"].EntryPoint = BinopEntryGenerator<u32, Sub>;
-	functions["mz.math.Sub_i64"].EntryPoint = BinopEntryGenerator<i64, Sub>;
-	functions["mz.math.Sub_u64"].EntryPoint = BinopEntryGenerator<u64, Sub>;
-	functions["mz.math.Mul_f32"].EntryPoint = BinopEntryGenerator<f32, Mul>;
-	functions["mz.math.Mul_f64"].EntryPoint = BinopEntryGenerator<f64, Mul>;
-	functions["mz.math.Mul_i32"].EntryPoint = BinopEntryGenerator<i32, Mul>;
-	functions["mz.math.Mul_u32"].EntryPoint = BinopEntryGenerator<u32, Mul>;
-	functions["mz.math.Mul_i64"].EntryPoint = BinopEntryGenerator<i64, Mul>;
-	functions["mz.math.Mul_u64"].EntryPoint = BinopEntryGenerator<u64, Mul>;
-	functions["mz.math.Div_f32"].EntryPoint = BinopEntryGenerator<f32, Div>;
-	functions["mz.math.Div_f64"].EntryPoint = BinopEntryGenerator<f64, Div>;
-	functions["mz.math.Div_i32"].EntryPoint = BinopEntryGenerator<i32, Div>;
-	functions["mz.math.Div_u32"].EntryPoint = BinopEntryGenerator<u32, Div>;
-	functions["mz.math.Div_i64"].EntryPoint = BinopEntryGenerator<i64, Div>;
-	functions["mz.math.Div_u64"].EntryPoint = BinopEntryGenerator<u64, Div>;
-
-	functions["mz.math.Add_vec2"]. EntryPoint = VecBinopEntryGenerator<f32, 2, Add>;
-	functions["mz.math.Add_vec2d"].EntryPoint = VecBinopEntryGenerator<f64, 2, Add>;
-	functions["mz.math.Add_vec2i"].EntryPoint = VecBinopEntryGenerator<i32, 2, Add>;
-	functions["mz.math.Add_vec2u"].EntryPoint = VecBinopEntryGenerator<u32, 2, Add>;
-	functions["mz.math.Add_vec3"]. EntryPoint = VecBinopEntryGenerator<f32, 3, Add>;
-	functions["mz.math.Add_vec3d"].EntryPoint = VecBinopEntryGenerator<f64, 3, Add>;
-	functions["mz.math.Add_vec3i"].EntryPoint = VecBinopEntryGenerator<i32, 3, Add>;
-	functions["mz.math.Add_vec3u"].EntryPoint = VecBinopEntryGenerator<u32, 3, Add>;
-	functions["mz.math.Add_vec4"]. EntryPoint = VecBinopEntryGenerator<f32, 4, Add>;
-	functions["mz.math.Add_vec4d"].EntryPoint = VecBinopEntryGenerator<f64, 4, Add>;
-	functions["mz.math.Add_vec4i"].EntryPoint = VecBinopEntryGenerator<i32, 4, Add>;
-	functions["mz.math.Add_vec4u"].EntryPoint = VecBinopEntryGenerator<u32, 4, Add>;
-	functions["mz.math.Sub_vec2"]. EntryPoint = VecBinopEntryGenerator<f32, 2, Sub>;
-	functions["mz.math.Sub_vec2d"].EntryPoint = VecBinopEntryGenerator<f64, 2, Sub>;
-	functions["mz.math.Sub_vec2i"].EntryPoint = VecBinopEntryGenerator<i32, 2, Sub>;
-	functions["mz.math.Sub_vec2u"].EntryPoint = VecBinopEntryGenerator<u32, 2, Sub>;
-	functions["mz.math.Sub_vec3"]. EntryPoint = VecBinopEntryGenerator<f32, 3, Sub>;
-	functions["mz.math.Sub_vec3d"].EntryPoint = VecBinopEntryGenerator<f64, 3, Sub>;
-	functions["mz.math.Sub_vec3i"].EntryPoint = VecBinopEntryGenerator<i32, 3, Sub>;
-	functions["mz.math.Sub_vec3u"].EntryPoint = VecBinopEntryGenerator<u32, 3, Sub>;
-	functions["mz.math.Sub_vec4"]. EntryPoint = VecBinopEntryGenerator<f32, 4, Sub>;
-	functions["mz.math.Sub_vec4d"].EntryPoint = VecBinopEntryGenerator<f64, 4, Sub>;
-	functions["mz.math.Sub_vec4i"].EntryPoint = VecBinopEntryGenerator<i32, 4, Sub>;
-	functions["mz.math.Sub_vec4u"].EntryPoint = VecBinopEntryGenerator<u32, 4, Sub>;
-	functions["mz.math.Mul_vec2"]. EntryPoint = VecBinopEntryGenerator<f32, 2, Mul>;
-	functions["mz.math.Mul_vec2d"].EntryPoint = VecBinopEntryGenerator<f64, 2, Mul>;
-	functions["mz.math.Mul_vec2i"].EntryPoint = VecBinopEntryGenerator<i32, 2, Mul>;
-	functions["mz.math.Mul_vec2u"].EntryPoint = VecBinopEntryGenerator<u32, 2, Mul>;
-	functions["mz.math.Mul_vec3"]. EntryPoint = VecBinopEntryGenerator<f32, 3, Mul>;
-	functions["mz.math.Mul_vec3d"].EntryPoint = VecBinopEntryGenerator<f64, 3, Mul>;
-	functions["mz.math.Mul_vec3i"].EntryPoint = VecBinopEntryGenerator<i32, 3, Mul>;
-	functions["mz.math.Mul_vec3u"].EntryPoint = VecBinopEntryGenerator<u32, 3, Mul>;
-	functions["mz.math.Mul_vec4"]. EntryPoint = VecBinopEntryGenerator<f32, 4, Mul>;
-	functions["mz.math.Mul_vec4d"].EntryPoint = VecBinopEntryGenerator<f64, 4, Mul>;
-	functions["mz.math.Mul_vec4i"].EntryPoint = VecBinopEntryGenerator<i32, 4, Mul>;
-	functions["mz.math.Mul_vec4u"].EntryPoint = VecBinopEntryGenerator<u32, 4, Mul>;
-	functions["mz.math.Div_vec2"]. EntryPoint = VecBinopEntryGenerator<f32, 2, Div>;
-	functions["mz.math.Div_vec2d"].EntryPoint = VecBinopEntryGenerator<f64, 2, Div>;
-	functions["mz.math.Div_vec2i"].EntryPoint = VecBinopEntryGenerator<i32, 2, Div>;
-	functions["mz.math.Div_vec2u"].EntryPoint = VecBinopEntryGenerator<u32, 2, Div>;
-	functions["mz.math.Div_vec3"]. EntryPoint = VecBinopEntryGenerator<f32, 3, Div>;
-	functions["mz.math.Div_vec3d"].EntryPoint = VecBinopEntryGenerator<f64, 3, Div>;
-	functions["mz.math.Div_vec3i"].EntryPoint = VecBinopEntryGenerator<i32, 3, Div>;
-	functions["mz.math.Div_vec3u"].EntryPoint = VecBinopEntryGenerator<u32, 3, Div>;
-	functions["mz.math.Div_vec4"]. EntryPoint = VecBinopEntryGenerator<f32, 4, Div>;
-	functions["mz.math.Div_vec4d"].EntryPoint = VecBinopEntryGenerator<f64, 4, Div>;
-	functions["mz.math.Div_vec4i"].EntryPoint = VecBinopEntryGenerator<i32, 4, Div>;
-	functions["mz.math.Div_vec4u"].EntryPoint = VecBinopEntryGenerator<u32, 4, Div>;
 	
 	functions["mz.math.Add_Track"].EntryPoint = AddTrack;
 	functions["mz.math.Add_Transform"].EntryPoint = AddTransform;
