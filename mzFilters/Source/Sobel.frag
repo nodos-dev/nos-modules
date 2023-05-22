@@ -5,7 +5,7 @@ layout(binding = 0) uniform sampler2D Input;
 layout(location = 0) out vec4 rt;
 layout(location = 0) in vec2 uv;
 
-#include "../Shaders/ShaderCommon.glsl"
+#include "../../mzBasic/Source/Shaders/ShaderCommon.glsl"
 
 const float SobelHorz[9] = {
     -1, 0, 1,

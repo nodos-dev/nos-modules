@@ -9,7 +9,8 @@
 // Shaders
 #include "Color.frag.spv.dat"
 #include "ColorCorrect.frag.spv.dat"
-#include "Diff_frag_spv.frag.spv.dat"
+#include "Diff.frag.spv.dat"
+#include "Gradient.frag.spv.dat"
 
 MZ_INIT();
 
@@ -21,6 +22,8 @@ enum Filters
     Color = 0,
     ColorCorrect,
     Diff,
+    Gradient,
+    Kuwahara,
     Count
 };
 
@@ -64,6 +67,20 @@ MZAPI_ATTR MzResult MZAPI_CALL mzExportNodeFunctions(int nodeTypeIndex, MzNodeFu
                 outSpirvBuf->Size = sizeof(Diff_frag_spv);
                 return MzResult::Success;
             }
+        }
+        case Filters::Gradient:
+        {
+			outFunctions->TypeName = "mz.Gradient";
+            outFunctions->GetShaderSource = [](MzBuffer* outSpirvBuf) -> MzResult
+            {
+				outSpirvBuf->Data = Gradient_frag_spv;
+				outSpirvBuf->Size = sizeof(Gradient_frag_spv);
+				return MzResult::Success;
+			}
+		}
+        case Filters::Kuwahara:
+        {
+            outFunctions->TypeName = "mz.Kuwahara";
         }
         default:
             return MzResult::InvalidArgument;

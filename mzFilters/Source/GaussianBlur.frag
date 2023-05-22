@@ -14,7 +14,7 @@ Params;
 layout(location = 0) out vec4 rt;
 layout(location = 0) in vec2 uv;
 
-#include "../Shaders/ShaderCommon.glsl"
+#include "../../mzBasic/Source/Shaders/ShaderCommon.glsl"
 
 float GaussCoeff1D(int i, float Sigma)
 {

@@ -10,7 +10,7 @@ layout(binding = 1) uniform ThresholderParams
 layout(location = 0) out vec4 rt;
 layout(location = 0) in vec2 uv;
 
-#include "../Shaders/ShaderCommon.glsl"
+#include "../../mzBasic/Source/Shaders/ShaderCommon.glsl"
 
 void main()
 {
