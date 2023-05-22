@@ -128,8 +128,8 @@ bool VecBinopExecute(void* ctx, const MzNodeExecuteArgs* args)
 
 #define GEN_CASE_SCALAR(op, t, sz) \
 	case MathNodeTypes::NODE_NAME(op, t, sz, ): { \
-		outFunctions->TypeName = "mz.math." #op "_" #t #sz; \
-		outFunctions->ExecuteNode = ScalarBinopExecute<t ##sz, op<t ##sz>>; \
+		functions->TypeName = "mz.math." #op "_" #t #sz; \
+		functions->ExecuteNode = ScalarBinopExecute<t ##sz, op<t ##sz>>; \
 		break; \
 	}
 
@@ -149,8 +149,8 @@ bool VecBinopExecute(void* ctx, const MzNodeExecuteArgs* args)
 
 #define GEN_CASE_VEC(op, namePostfix, t, dim) \
 	case MathNodeTypes::NODE_NAME(op, vec, dim, namePostfix): { \
-		outFunctions->TypeName = "mz.math." #op "_vec" #dim #namePostfix; \
-		outFunctions->ExecuteNode = VecBinopExecute<t, dim, op>; \
+		functions->TypeName = "mz.math." #op "_vec" #dim #namePostfix; \
+		functions->ExecuteNode = VecBinopExecute<t, dim, op>; \
 		break; \
 	}
 
@@ -205,73 +205,77 @@ bool ToString(void* ctx, const MzNodeExecuteArgs* args)
 
 extern "C"
 {
-MZAPI_ATTR int MZAPI_CALL mzGetNodeTypeCount()
-{
-	return (int)(MathNodeTypes::Count);
-}
 
-MZAPI_ATTR MzResult MZAPI_CALL mzExportNodeFunctions(int nodeTypeIndex, MzNodeFunctions* outFunctions)
+MZAPI_ATTR MzResult MZAPI_CALL mzExportNodeFunctions(size_t* outCount, MzNodeFunctions* outFunctions)
 {
-	switch ((MathNodeTypes)nodeTypeIndex)
+	*outCount = (size_t)(MathNodeTypes::Count);
+	if (!outFunctions)
+		return MzResult::Success;
+
+	for (int nodeTypeIndex = 0; nodeTypeIndex < (int)(MathNodeTypes::Count); ++nodeTypeIndex)
 	{
-	GEN_ALL_CASES()
-	case MathNodeTypes::U32ToString: {
-		outFunctions->TypeName = "mz.math.U32ToString";
-		outFunctions->ExecuteNode = ToString<u32>;
-		break;
-	}
-	case MathNodeTypes::SineWave: {
-		outFunctions->TypeName = "mz.math.SineWave";
-		outFunctions->ExecuteNode = [](void* ctx, const MzNodeExecuteArgs* args) {
-			constexpr uint32_t PIN_AMPLITUDE = 0;
-			constexpr uint32_t PIN_FREQUENCY = 1;
-			constexpr uint32_t PIN_OUT = 2;
-			MzBuffer* ampBuf = &args->PinValues[PIN_AMPLITUDE];
-			MzBuffer* freqBuf = &args->PinValues[PIN_FREQUENCY];
-			MzBuffer* outBuf = &args->PinValues[PIN_OUT];
-			float frequency = *static_cast<float*>(freqBuf->Data);
-			float amplitude = *static_cast<float*>(ampBuf->Data);
-			auto millis = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count();
-			float sec = millis / 1000.f;
-			*(static_cast<float*>(outBuf->Data)) = amplitude * sin(frequency * sec);
-			return true;
-		};
-		break;
-	}
-	case MathNodeTypes::Clamp: {
-		outFunctions->TypeName = "mz.math.Clamp";
-		outFunctions->ExecuteNode = [](void* ctx, const MzNodeExecuteArgs* args) {
-			constexpr uint32_t PIN_IN = 0;
-			constexpr uint32_t PIN_MIN = 1;
-			constexpr uint32_t PIN_MAX = 2;
-			constexpr uint32_t PIN_OUT = 3;
-			MzBuffer* valueBuf = &args->PinValues[PIN_IN];
-			MzBuffer* minBuf = &args->PinValues[PIN_MIN];
-			MzBuffer* maxBuf = &args->PinValues[PIN_MAX];
-			MzBuffer* outBuf = &args->PinValues[PIN_OUT];
-			float value = *static_cast<float*>(valueBuf->Data);
-			float min = *static_cast<float*>(minBuf->Data);
-			float max = *static_cast<float*>(maxBuf->Data);
-			*(static_cast<float*>(outBuf->Data)) = std::clamp(value, min, max);
-			return true;
-		};
-		break;
-	}
-	case MathNodeTypes::Absolute: {
-		outFunctions->TypeName = "mz.math.Absolute";
-		outFunctions->ExecuteNode = [](void* ctx, const MzNodeExecuteArgs* args) {
-			constexpr uint32_t PIN_IN = 0;
-			constexpr uint32_t PIN_OUT = 1;
-			MzBuffer* valueBuf = &args->PinValues[PIN_IN];
-			MzBuffer* outBuf = &args->PinValues[PIN_OUT];
-			float value = *static_cast<float*>(valueBuf->Data);
-			*(static_cast<float*>(outBuf->Data)) = std::abs(value);
-			return true;
-		};
-		break;
-	}
-	default:
-		return MzResult::InvalidArgument;
+		auto* functions = &outFunctions[nodeTypeIndex];
+		switch ((MathNodeTypes)nodeTypeIndex)
+		{
+		GEN_ALL_CASES()
+		case MathNodeTypes::U32ToString: {
+			functions->TypeName = "mz.math.U32ToString";
+			functions->ExecuteNode = ToString<u32>;
+			break;
+		}
+		case MathNodeTypes::SineWave: {
+			functions->TypeName = "mz.math.SineWave";
+			functions->ExecuteNode = [](void* ctx, const MzNodeExecuteArgs* args) {
+				constexpr uint32_t PIN_AMPLITUDE = 0;
+				constexpr uint32_t PIN_FREQUENCY = 1;
+				constexpr uint32_t PIN_OUT = 2;
+				MzBuffer* ampBuf = &args->PinValues[PIN_AMPLITUDE];
+				MzBuffer* freqBuf = &args->PinValues[PIN_FREQUENCY];
+				MzBuffer* outBuf = &args->PinValues[PIN_OUT];
+				float frequency = *static_cast<float*>(freqBuf->Data);
+				float amplitude = *static_cast<float*>(ampBuf->Data);
+				auto millis = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count();
+				float sec = millis / 1000.f;
+				*(static_cast<float*>(outBuf->Data)) = amplitude * sin(frequency * sec);
+				return true;
+			};
+			break;
+		}
+		case MathNodeTypes::Clamp: {
+			functions->TypeName = "mz.math.Clamp";
+			functions->ExecuteNode = [](void* ctx, const MzNodeExecuteArgs* args) {
+				constexpr uint32_t PIN_IN = 0;
+				constexpr uint32_t PIN_MIN = 1;
+				constexpr uint32_t PIN_MAX = 2;
+				constexpr uint32_t PIN_OUT = 3;
+				MzBuffer* valueBuf = &args->PinValues[PIN_IN];
+				MzBuffer* minBuf = &args->PinValues[PIN_MIN];
+				MzBuffer* maxBuf = &args->PinValues[PIN_MAX];
+				MzBuffer* outBuf = &args->PinValues[PIN_OUT];
+				float value = *static_cast<float*>(valueBuf->Data);
+				float min = *static_cast<float*>(minBuf->Data);
+				float max = *static_cast<float*>(maxBuf->Data);
+				*(static_cast<float*>(outBuf->Data)) = std::clamp(value, min, max);
+				return true;
+			};
+			break;
+		}
+		case MathNodeTypes::Absolute: {
+			functions->TypeName = "mz.math.Absolute";
+			functions->ExecuteNode = [](void* ctx, const MzNodeExecuteArgs* args) {
+				constexpr uint32_t PIN_IN = 0;
+				constexpr uint32_t PIN_OUT = 1;
+				MzBuffer* valueBuf = &args->PinValues[PIN_IN];
+				MzBuffer* outBuf = &args->PinValues[PIN_OUT];
+				float value = *static_cast<float*>(valueBuf->Data);
+				*(static_cast<float*>(outBuf->Data)) = std::abs(value);
+				return true;
+			};
+			break;
+		}
+		default:
+			break;
+		}
 	}
 	return MzResult::Success;
 }
