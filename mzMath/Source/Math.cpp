@@ -205,12 +205,12 @@ bool ToString(void* ctx, const MzNodeExecuteArgs* args)
 
 extern "C"
 {
-mzPluginSDK_API int mzPluginSDK_CALL mzGetNodeTypeCount()
+MZAPI_ATTR int MZAPI_CALL mzGetNodeTypeCount()
 {
 	return (int)(MathNodeTypes::Count);
 }
 
-mzPluginSDK_API MzResult mzPluginSDK_CALL mzExportNodeFunctions(int nodeTypeIndex, MzNodeFunctions* outFunctions)
+MZAPI_ATTR MzResult MZAPI_CALL mzExportNodeFunctions(int nodeTypeIndex, MzNodeFunctions* outFunctions)
 {
 	switch ((MathNodeTypes)nodeTypeIndex)
 	{

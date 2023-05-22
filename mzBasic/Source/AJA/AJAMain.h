@@ -5,6 +5,6 @@
 namespace mz
 {
 
-void mzPluginSDK_API RegisterAJA(NodeActionsMap& functions);
+void MZAPI_ATTR RegisterAJA(NodeActionsMap& functions);
 
 }

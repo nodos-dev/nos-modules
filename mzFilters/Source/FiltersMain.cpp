@@ -30,12 +30,12 @@ enum Filters
 extern "C"
 {
 
-mzPluginSDK_API int mzPluginSDK_CALL mzGetNodeTypeCount()
+MZAPI_ATTR int MZAPI_CALL mzGetNodeTypeCount()
 {
     return Filters::Count;
 }
 
-mzPluginSDK_API MzResult mzPluginSDK_CALL mzExportNodeFunctions(int nodeTypeIndex, MzNodeFunctions* outFunctions)
+MZAPI_ATTR MzResult MZAPI_CALL mzExportNodeFunctions(int nodeTypeIndex, MzNodeFunctions* outFunctions)
 {
     switch (nodeTypeIndex){
         case Filters::Color:

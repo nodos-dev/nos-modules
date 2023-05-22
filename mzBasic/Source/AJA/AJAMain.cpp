@@ -22,7 +22,7 @@ static mz::fb::String256 Str256(std::string const &str)
     return re;
 }
 
-void mzPluginSDK_API RegisterAJA(NodeActionsMap& functions)
+void MZAPI_ATTR RegisterAJA(NodeActionsMap& functions)
 {
     auto &actions = functions["AJA.AJAIn"];
 

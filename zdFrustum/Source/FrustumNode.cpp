@@ -78,7 +78,7 @@ struct Frustum: PinMapping
 
 extern "C"
 {
-void mzPluginSDK_API Register(NodeActionsMap& functions, EngineNodeServices services, std::set<flatbuffers::Type const*> const& types)
+void MZAPI_ATTR Register(NodeActionsMap& functions, EngineNodeServices services, std::set<flatbuffers::Type const*> const& types)
 {
     GServices = services;
     auto &actions = functions["ZD.Frustum"];
