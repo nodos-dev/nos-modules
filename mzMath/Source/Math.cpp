@@ -223,23 +223,49 @@ mzPluginSDK_API MzResult mzPluginSDK_CALL mzExportNodeFunctions(int nodeTypeInde
 	case MathNodeTypes::SineWave: {
 		outFunctions->TypeName = "mz.math.SineWave";
 		outFunctions->ExecuteNode = [](void* ctx, const MzNodeExecuteArgs* args) {
-			MzBuffer* ampBuf = &args->PinValues[0];
-			MzBuffer* freqBuf = &args->PinValues[1];
-			MzBuffer* outBuf = &args->PinValues[2];
-			// for (int i = 0; i < args->PinCount; ++i) {
-			// 	auto* name = args->PinNames[i];
-			// 	if (strcmp(name, "Frequency") == 0)
-			// 		freqBuf = &args->PinValues[i];
-			// 	else if (strcmp(name, "Amplitude") == 0)
-			// 		ampBuf = &args->PinValues[i];
-			// 	else if (strcmp(name, "Out") == 0)
-			// 		outBuf = &args->PinValues[i];
-			// }
-			float frequency = *reinterpret_cast<float*>(freqBuf->Data);
-			float amplitude = *reinterpret_cast<float*>(ampBuf->Data);
+			constexpr uint32_t PIN_AMPLITUDE = 0;
+			constexpr uint32_t PIN_FREQUENCY = 1;
+			constexpr uint32_t PIN_OUT = 2;
+			MzBuffer* ampBuf = &args->PinValues[PIN_AMPLITUDE];
+			MzBuffer* freqBuf = &args->PinValues[PIN_FREQUENCY];
+			MzBuffer* outBuf = &args->PinValues[PIN_OUT];
+			float frequency = *static_cast<float*>(freqBuf->Data);
+			float amplitude = *static_cast<float*>(ampBuf->Data);
 			auto millis = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count();
 			float sec = millis / 1000.f;
-			*(reinterpret_cast<float*>(outBuf->Data)) = amplitude * sin(frequency * sec);
+			*(static_cast<float*>(outBuf->Data)) = amplitude * sin(frequency * sec);
+			return true;
+		};
+		break;
+	}
+	case MathNodeTypes::Clamp: {
+		outFunctions->TypeName = "mz.math.Clamp";
+		outFunctions->ExecuteNode = [](void* ctx, const MzNodeExecuteArgs* args) {
+			constexpr uint32_t PIN_IN = 0;
+			constexpr uint32_t PIN_MIN = 1;
+			constexpr uint32_t PIN_MAX = 2;
+			constexpr uint32_t PIN_OUT = 3;
+			MzBuffer* valueBuf = &args->PinValues[PIN_IN];
+			MzBuffer* minBuf = &args->PinValues[PIN_MIN];
+			MzBuffer* maxBuf = &args->PinValues[PIN_MAX];
+			MzBuffer* outBuf = &args->PinValues[PIN_OUT];
+			float value = *static_cast<float*>(valueBuf->Data);
+			float min = *static_cast<float*>(minBuf->Data);
+			float max = *static_cast<float*>(maxBuf->Data);
+			*(static_cast<float*>(outBuf->Data)) = std::clamp(value, min, max);
+			return true;
+		};
+		break;
+	}
+	case MathNodeTypes::Absolute: {
+		outFunctions->TypeName = "mz.math.Absolute";
+		outFunctions->ExecuteNode = [](void* ctx, const MzNodeExecuteArgs* args) {
+			constexpr uint32_t PIN_IN = 0;
+			constexpr uint32_t PIN_OUT = 1;
+			MzBuffer* valueBuf = &args->PinValues[PIN_IN];
+			MzBuffer* outBuf = &args->PinValues[PIN_OUT];
+			float value = *static_cast<float*>(valueBuf->Data);
+			*(static_cast<float*>(outBuf->Data)) = std::abs(value);
 			return true;
 		};
 		break;
@@ -332,30 +358,6 @@ void RegisterMath(NodeActionsMap& functions)
 		auto perspective = glm::perspective(fov, 16.0/9.0, 10.0, 10000.0);
 		auto view = glm::eulerAngleXYZ(rot.x, rot.y, rot.z);
 		*args.Get<glm::dmat4>("Transformation") = perspective * view;
-		return true;
-	};
-
-	functions["mz.math.SineWave"].EntryPoint = [](mz::Args& args, void*) {
-		float frequency = *args.Get<float>("Frequency");
-		float amplitude = *args.Get<float>("Amplitude");
-		auto millis = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count();
-		float sec = millis / 1000.f;
-		*args.Get<float>("Out") = amplitude * sin(frequency * sec);
-		return true;
-	};
-
-	functions["mz.math.Clamp"].EntryPoint = [](mz::Args& args, void*) {
-		auto value = *args.Get<float>("In");
-		auto min = *args.Get<float>("Min");
-		auto max = *args.Get<float>("Max");
-		max = std::max(min, max);
-		*args.Get<float>("Out") = std::clamp(value, min, max);
-		return true;
-	};
-
-	functions["mz.math.Absolute"].EntryPoint = [](mz::Args& args, void*) {
-		auto value = *args.Get<float>("In");
-		*args.Get<float>("Out") = std::abs(value);
 		return true;
 	};
 }
