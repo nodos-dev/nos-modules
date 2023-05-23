@@ -1,0 +1,22 @@
+{
+    "namespace": "AJA",
+    "name": "AJA",
+    "node_definitions": [
+        "AJA.mzdef"
+    ],
+    "fb_includes" :[
+      "AJA.fbs"
+    ],
+    "menu_items": [
+        {
+            "category": "Device",
+            "class_name": "AJAIn",
+            "display_name": "AJAIn"
+        },
+        {
+            "category": "Device",
+            "class_name": "AJAOut",
+            "display_name": "AJAOut"
+        }
+    ]
+}

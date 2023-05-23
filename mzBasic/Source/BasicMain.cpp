@@ -7,7 +7,7 @@
 
 namespace mz
 {
-EngineNodeServices GServices;
+EngineNodeServices mzEngine;
 
 extern "C"
 {
@@ -15,7 +15,7 @@ extern "C"
 void MZAPI_ATTR Register(NodeActionsMap& functions, EngineNodeServices services, std::set<flatbuffers::Type const*> const& types)
 {
     // TODO: Breakup mzBasic into multiple plugins
-    GServices = services;
+    mzEngine = services;
     RegisterAJA(functions);
     RegisterFilters(functions);
     RegisterUtil(functions, types);

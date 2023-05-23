@@ -2,3 +2,4 @@
 *Build
 *.spv
 *.spv.dat
+.vscode

@@ -269,7 +269,7 @@ namespace mz
 				}
 				if (!constantserrorhandler && !parameterserrorhandler)
 				{
-					GServices.LogE("cant parse the bytes sent with size of " + std::to_string(NumBytes) + " at xync track node");
+					mzEngine.LogE("cant parse the bytes sent with size of " + std::to_string(NumBytes) + " at xync track node");
 				}
 				if (constantserrorhandler)
 				{

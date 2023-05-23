@@ -20,7 +20,7 @@ auto ShaderReloader = [](std::string const &className, std::string const &path) 
     auto spirv = ReadSpirv(out.c_str());
     std::string shaderName = "Shader_mz.Resize";
     std::string passName = "Pass_mz.Resize";
-    GServices.MakeAPICalls(true, app::TRegisterShader{.key = shaderName, .spirv = spirv},
+    mzEngine.MakeAPICalls(true, app::TRegisterShader{.key = shaderName, .spirv = spirv},
                             app::TRegisterPass{.key = passName, .shader = shaderName});
 };
 
@@ -33,7 +33,7 @@ void RegisterResize(NodeActionsMap& functions)
             static bool reg = false;
             if(reg) return;
             reg = true;
-            GServices.MakeAPICalls(true, 
+            mzEngine.MakeAPICalls(true, 
                 app::TRegisterShader { .key = "Shader_mz.Resize", .spirv = ShaderSrc<sizeof(Resize_frag_spv)>(Resize_frag_spv) }, 
                 app::TRegisterPass { .key = "Pass_mz.Resize", .shader = "Shader_mz.Resize" });
         },
@@ -51,8 +51,8 @@ void RegisterResize(NodeActionsMap& functions)
                 Out.width  = Size.x();
                 Out.height = Size.y();
                 Out.unscaled = true;
-                GServices.Destroy(Out);
-                GServices.Create(Out);
+                mzEngine.Destroy(Out);
+                mzEngine.Create(Out);
                 *args.GetBuffer("Output") = mz::Buffer::From(Out);
             }
             
@@ -62,7 +62,7 @@ void RegisterResize(NodeActionsMap& functions)
             pass.draws.emplace_back(new app::TDrawCall{});
             pass.draws.back()->inputs.emplace_back(new app::TShaderBinding { .var = "Method", .val = *args.GetBuffer("Method") });
             pass.draws.back()->inputs.emplace_back(new app::TShaderBinding { .var = "Input" , .val = *args.GetBuffer("Input")});
-            GServices.MakeAPICall(pass, true);
+            mzEngine.MakeAPICall(pass, true);
             return true; 
         },
         .NodeFunctions = {{"ReloadShaders" , [](auto&, auto&, auto) { ShaderReloader("mz.Resize", MZ_REPO_ROOT "/Plugins/mzBasic/Source/Filters/Resize.frag"); }}}

@@ -31,7 +31,7 @@ struct GaussBlurContext : public NodeContext
         static bool registered = false;
         if (registered)
             return;
-        GServices.MakeAPICalls(true,
+        mzEngine.MakeAPICalls(true,
                               app::TRegisterShader{
                                   .key = "Gaussian_Blur",
                                   .spirv = ShaderSrc<sizeof(GaussianBlur_frag_spv)>(GaussianBlur_frag_spv)});
@@ -40,7 +40,7 @@ struct GaussBlurContext : public NodeContext
 
     void RegisterPasses()
     {
-        GServices.MakeAPICalls(true,
+        mzEngine.MakeAPICalls(true,
                               app::TRegisterPass{
                                   .key = "Gaussian_Blur_Pass_" + UUID2STR(NodeId),
                                   .shader = "Gaussian_Blur",
@@ -50,8 +50,8 @@ struct GaussBlurContext : public NodeContext
     void DestroyResources()
     {
         if (IntermediateTexture.handle)
-            GServices.Destroy(IntermediateTexture);
-        GServices.MakeAPICalls(true, app::TUnregisterPass{
+            mzEngine.Destroy(IntermediateTexture);
+        mzEngine.MakeAPICalls(true, app::TUnregisterPass{
                                         .key = "Gaussian_Blur_Pass_" + UUID2STR(NodeId)});
     }
 
@@ -62,11 +62,11 @@ struct GaussBlurContext : public NodeContext
             IntermediateTexture.format == outputTexture->format)
             return;
 
-        GServices.Destroy(IntermediateTexture);
+        mzEngine.Destroy(IntermediateTexture);
         IntermediateTexture.width = outputTexture->width;
         IntermediateTexture.height = outputTexture->height;
         IntermediateTexture.format = outputTexture->format;
-        GServices.Create(IntermediateTexture);
+        mzEngine.Create(IntermediateTexture);
     }
 
     void Run(mz::Args& pins)
@@ -101,7 +101,7 @@ struct GaussBlurContext : public NodeContext
         vertPass.output.reset(&outputTexture);
         // Pass 2 end
         // Run passes
-        GServices.MakeAPICalls(false, horzPass, vertPass);
+        mzEngine.MakeAPICalls(false, horzPass, vertPass);
         vertPass.output.release();
         horzPass.output.release();
     }

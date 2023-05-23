@@ -5,6 +5,6 @@
 namespace mz
 {
 
-extern EngineNodeServices GServices;
+extern EngineNodeServices mzEngine;
 
 }

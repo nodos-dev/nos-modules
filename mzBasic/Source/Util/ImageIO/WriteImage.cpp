@@ -45,12 +45,12 @@ void RegisterWriteImageNode(NodeActionsMap& functions)
                 .usage = mz::fb::ImageUsage::RENDER_TARGET | mz::fb::ImageUsage::TRANSFER_DST | mz::fb::ImageUsage::TRANSFER_SRC,
             };
 
-			GServices.Create(srgbTexture);
+			mzEngine.Create(srgbTexture);
             app::TRunPass srgbPass;
             srgbPass.pass = "WriteImage_Linear2SRGB_Pass_" + UUID2STR(NodeId);
 			AddUniform(srgbPass, "Input", mz::Buffer::From(texture));
             srgbPass.output.reset(&srgbTexture);
-            GServices.MakeAPICall(srgbPass, true);
+            mzEngine.MakeAPICall(srgbPass, true);
             srgbPass.output.release();
             return srgbTexture;
         }
@@ -59,25 +59,25 @@ void RegisterWriteImageNode(NodeActionsMap& functions)
         {
             mz::fb::Buffer buf;
             buf.mutate_usage((mz::fb::BufferUsage)(mz::fb::BufferUsage::TRANSFER_DST | mz::fb::BufferUsage::TRANSFER_SRC));
-            buf.mutate_size(GServices.GetAllocatedSize(EngineNodeServices::ResBorrow(texture)));
+            buf.mutate_size(mzEngine.GetAllocatedSize(EngineNodeServices::ResBorrow(texture)));
             bool success = false;
-            GServices.Create<mz::fb::Buffer>(buf);
-            if (auto buf2write = GServices.Map(buf))
+            mzEngine.Create<mz::fb::Buffer>(buf);
+            if (auto buf2write = mzEngine.Map(buf))
             {
-                GServices.Copy(texture, buf);
+                mzEngine.Copy(texture, buf);
                 if (stbi_write_png(Path.string().c_str(), texture.width, texture.height, 4, buf2write, texture.width * 4))
                 {
                     success = true;
                 }
                 else
                 {
-                    GServices.LogE("WriteImage: Unable to write frame to file", "");
+                    mzEngine.LogE("WriteImage: Unable to write frame to file", "");
                 }
             }
-            GServices.Destroy(buf);
+            mzEngine.Destroy(buf);
             if (ownsTexture)
             {
-                GServices.Destroy(texture);
+                mzEngine.Destroy(texture);
             }
             return success;
         }
@@ -91,12 +91,12 @@ void RegisterWriteImageNode(NodeActionsMap& functions)
                 if (newPath != Path)
                 {
                     Path = newPath;
-                    GServices.Log("WriteImage: New path: " + Path.generic_string());
+                    mzEngine.Log("WriteImage: New path: " + Path.generic_string());
                 }
             }
             else if (GetPinName(id) == "In")
             {
-                GServices.Log("WriteImage: New input texture", "");
+                mzEngine.Log("WriteImage: New input texture", "");
                 this->InputTexture = TableBufferToNativeTable<mz::fb::Texture>(value);
             }
         }
@@ -106,12 +106,12 @@ void RegisterWriteImageNode(NodeActionsMap& functions)
             auto srgbTexture = ConvertLinearToSrgb(InputTexture);
             if (SaveTextureToFile(srgbTexture, true))
             {
-                GServices.Log("WriteImage: Texture saved to " + Path.generic_string());
+                mzEngine.Log("WriteImage: Texture saved to " + Path.generic_string());
                 return true;
             }
             else
             {
-                GServices.LogE("WriteImage: Failed to save texture");
+                mzEngine.LogE("WriteImage: Failed to save texture");
                 return false;
             }
         }
@@ -123,7 +123,7 @@ void RegisterWriteImageNode(NodeActionsMap& functions)
             {
                 return;
             }
-            GServices.MakeAPICalls(true,
+            mzEngine.MakeAPICalls(true,
                                   app::TRegisterShader{
                                       .key = "WriteImage_Linear2SRGB",
                                       .spirv = ShaderSrc<sizeof(Linear2SRGB_frag_spv)>(Linear2SRGB_frag_spv)});
@@ -132,7 +132,7 @@ void RegisterWriteImageNode(NodeActionsMap& functions)
 
         void RegisterPasses()
         {
-            GServices.MakeAPICalls(true,
+            mzEngine.MakeAPICalls(true,
                                   app::TRegisterPass{
                                       .key = "WriteImage_Linear2SRGB_Pass_" + UUID2STR(NodeId),
                                       .shader = "WriteImage_Linear2SRGB",
@@ -141,7 +141,7 @@ void RegisterWriteImageNode(NodeActionsMap& functions)
 
         void DestroyResources()
         {
-            GServices.MakeAPICalls(true,
+            mzEngine.MakeAPICalls(true,
                                   app::TUnregisterPass{
                                       .key = "WriteImage_Linear2SRGB_Pass_" + UUID2STR(NodeId)});
         }

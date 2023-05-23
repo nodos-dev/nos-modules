@@ -132,7 +132,7 @@ void CopyThread::StartThread()
     threadName += IsInput() ? "In" : "Out";
     threadName += ": " + Name();
 
-    GServices.HandleEvent(
+    mzEngine.HandleEvent(
         CreateAppEvent(fbb, mz::app::CreateSetThreadNameDirect(fbb, (u64)th.native_handle(), threadName.c_str())));
 }
 
@@ -181,7 +181,7 @@ void CopyThread::UpdateCurve(enum GammaCurve curve)
 {
     GammaCurve = curve;
     auto data = GetGammaLUT(IsInput(), GammaCurve, SSBO_SIZE);
-    auto ptr = GServices.Map(SSBO);
+    auto ptr = mzEngine.Map(SSBO);
     memcpy(ptr, data.data(), data.size() * sizeof(data[0]));
 }
 
@@ -270,7 +270,7 @@ void CopyThread::CreateRings(u32 size)
 {
 	const auto ext = Extent();
     if (CompressedTex.handle)
-        GServices.Destroy(CompressedTex);
+        mzEngine.Destroy(CompressedTex);
 	gpuRing = MakeShared<GPURing>(ext, size);
 	fb::vec2u compressedExt((10 == BitWidth()) ? ((ext.x() + (48 - ext.x() % 48) % 48) / 3) << 1 : ext.x() >> 1, ext.y() >> u32(Interlaced()));
 	cpuRing = MakeShared<CPURing>(compressedExt, size);
@@ -279,7 +279,7 @@ void CopyThread::CreateRings(u32 size)
     CompressedTex.format = fb::Format::R8G8B8A8_UINT;
     CompressedTex.unscaled = true;
     CompressedTex.unmanaged = true;
-    GServices.Create(CompressedTex);
+    mzEngine.Create(CompressedTex);
 }
 
 void CopyThread::InputUpdate(AJADevice::Mode &prevMode)
@@ -327,7 +327,7 @@ void CopyThread::AJAInputProc()
     {
         std::stringstream ss;
         ss << "AJAIn Thread: " << std::this_thread::get_id();
-        GServices.Log(ss.str(), "");
+        mzEngine.Log(ss.str(), "");
     }
 
     auto prevMode = client->Device->GetMode(Channel);
@@ -374,7 +374,7 @@ void CopyThread::AJAInputProc()
 
         const u32 Pitch = CompressedTex.width * 4;
         const u32 Segments = CompressedTex.height;
-        ULWord *Buf = (ULWord *)GServices.Map(slot->Res);
+        ULWord *Buf = (ULWord *)mzEngine.Map(slot->Res);
         const u32 Size = slot->Res.size();
         const u32 ReadFB = 2 * Channel + FB;
         params.T0 = Clock::now();
@@ -398,7 +398,7 @@ void CopyThread::AJAInputProc()
             flatbuffers::FlatBufferBuilder fbb;
             auto id = client->GetPinId(Name());
             UByteSequence byteBuffer = Buffer::From(gpuRing->Size);
-            GServices.HandleEvent(CreateAppEvent(fbb, app::CreateExecutePathCommandDirect(fbb, &id, app::PathCommand::NOTIFY_DROP, app::PathCommandType::NOTIFY_ALL_CONNECTIONS,  &byteBuffer)));
+            mzEngine.HandleEvent(CreateAppEvent(fbb, app::CreateExecutePathCommandDirect(fbb, &id, app::PathCommand::NOTIFY_DROP, app::PathCommandType::NOTIFY_ALL_CONNECTIONS,  &byteBuffer)));
         }
             
         NTV2RegisterReads Regs = { NTV2RegInfo(kRegRXSDI1FrameCountLow + Channel * (kRegRXSDI2FrameCountLow - kRegRXSDI1FrameCountLow)) };
@@ -453,14 +453,14 @@ void CopyThread::AJAOutputProc()
 	flatbuffers::FlatBufferBuilder fbb;
 	auto frameDuration = GetFrameDurationFromFrameRate(GetNTV2FrameRateFromVideoFormat(Format));
 	auto hungerSignal = CreateAppEvent(fbb, mz::app::CreateScheduleRequest(fbb, mz::app::ScheduleRequestKind::PIN, &id, false, frameDuration));
-    GServices.HandleEvent(hungerSignal);
+    mzEngine.HandleEvent(hungerSignal);
 
     Orphan(false);
     auto id = client->GetPinId(Name());
     {
         std::stringstream ss;
         ss << "AJAOut Thread: " << std::this_thread::get_id();
-        GServices.Log(ss.str(), "");
+        mzEngine.Log(ss.str(), "");
     }
 
     u32 readyFrames = cpuRing->ReadyFrames();
@@ -480,7 +480,7 @@ void CopyThread::AJAOutputProc()
 
     while (run && !cpuRing->Exit)
     {
-        GServices.LogFast(Name() + " ring count", std::to_string(cpuRing->ReadyFrames()));
+        mzEngine.LogFast(Name() + " ring count", std::to_string(cpuRing->ReadyFrames()));
 
 		if (!(client->Device->WaitForOutputVerticalInterrupt(Channel)))
 			break;
@@ -495,7 +495,7 @@ void CopyThread::AJAOutputProc()
                 field = NTV2FieldID(field ^ 1);
                 FieldIdx = field + 1;
             }
-            const ULWord *Buf = (ULWord *)GServices.Map(res->Res);
+            const ULWord *Buf = (ULWord *)mzEngine.Map(res->Res);
 
             const u32 OutFrame = 2 * Channel + FB;
 
@@ -515,7 +515,7 @@ void CopyThread::AJAOutputProc()
             }
 
             cpuRing->EndPop(res);
-			GServices.HandleEvent(hungerSignal);
+			mzEngine.HandleEvent(hungerSignal);
 
             if (!Interlaced())
             {
@@ -525,13 +525,13 @@ void CopyThread::AJAOutputProc()
         }
         else
         {
-            GServices.LogW(Name() + " dropped 1 frame", "");
+            mzEngine.LogW(Name() + " dropped 1 frame", "");
         }
     }
     gpuRing->Stop();
     cpuRing->Stop();
 
-    GServices.HandleEvent(CreateAppEvent(fbb, 
+    mzEngine.HandleEvent(CreateAppEvent(fbb, 
         mz::app::CreateScheduleRequest(fbb, mz::app::ScheduleRequestKind::PIN, &id, true)));
 
     if (run)
@@ -542,7 +542,7 @@ void CopyThread::SendDeleteRequest()
 {
     flatbuffers::FlatBufferBuilder fbb;
     auto ids = client->GeneratePinIDSet(Name(), mode);
-    GServices.HandleEvent(
+    mzEngine.HandleEvent(
         CreateAppEvent(fbb, mz::CreatePartialNodeUpdateDirect(fbb, &client->Mapping.NodeId, ClearFlags::NONE, &ids)));
 }
 
@@ -585,9 +585,9 @@ void CopyThread::InputConversionThread::Consume(CopyThread::Parameters const& pa
         ss << "(AJATransfer)" << MsgKey << " took: " << t << " (" << std::chrono::duration_cast<Micro>(t) << ")"
            << " (" << std::chrono::duration_cast<Milli>(t) << ")"
            << "\n";
-        GServices.Log(ss.str(), "");
+        mzEngine.Log(ss.str(), "");
     }
-    GServices.MakeAPICall((app::TCopyResource&)cpy, true);
+    mzEngine.MakeAPICall((app::TCopyResource&)cpy, true);
     if (Cpy->client->Shader != ShaderType::Frag8)
     {
         inputs.emplace_back(new mz::app::TShaderBinding{.var = "Output", .val = mz::Buffer::From(res->Res)});
@@ -596,7 +596,7 @@ void CopyThread::InputConversionThread::Consume(CopyThread::Parameters const& pa
         pass.dispatch_size = Cpy->GetSuitableDispatchSize();
         pass.inputs = std::move(inputs);
         pass.benchmark = Cpy->client->Debug;
-        GServices.MakeAPICall(pass, true);
+        mzEngine.MakeAPICall(pass, true);
     }
     else
     {
@@ -606,13 +606,13 @@ void CopyThread::InputConversionThread::Consume(CopyThread::Parameters const& pa
         pass.draws.push_back(std::make_unique<mz::app::TDrawCall>());
         pass.draws.back()->inputs = std::move(inputs);
         pass.benchmark = Cpy->client->Debug;
-        GServices.MakeAPICall(pass, true);
+        mzEngine.MakeAPICall(pass, true);
     }
 
     if(Cpy->client->Debug)
     {
         auto tmp = res->Res;
-        GServices.Create(tmp);
+        mzEngine.Create(tmp);
         app::TCopyResource cpy;
         cpy.src.Set(res->Res);
         cpy.dst.Set(tmp);
@@ -626,8 +626,8 @@ void CopyThread::InputConversionThread::Consume(CopyThread::Parameters const& pa
         pass.draws.back()->inputs.emplace_back(new app::TShaderBinding { .var = "Number", .val = mz::Buffer::From(params.FrameNumber)});
         pass.draws.back()->inputs.emplace_back(new app::TShaderBinding { .var = "Input", .val = mz::Buffer::From(tmp)});
         pass.output = std::make_unique<mz::fb::TTexture>(res->Res);
-        GServices.MakeAPICalls(true, cpy, pass);
-        GServices.Destroy(tmp);
+        mzEngine.MakeAPICalls(true, cpy, pass);
+        mzEngine.Destroy(tmp);
     }
 
     res->Res.field_type = fb::FieldType::ANY ^ fb::FieldType(params.FieldIdx ^ 3);
@@ -635,7 +635,7 @@ void CopyThread::InputConversionThread::Consume(CopyThread::Parameters const& pa
     res->FrameNumber = params.FrameNumber;
     Cpy->gpuRing->EndPush(res);
     Cpy->cpuRing->EndPop(slot);
-    GServices.LogFast(Cpy->Name() + " ring count", std::to_string(Cpy->gpuRing->ReadyFrames()));
+    mzEngine.LogFast(Cpy->Name() + " ring count", std::to_string(Cpy->gpuRing->ReadyFrames()));
 }
 
 CopyThread::ConversionThread::~ConversionThread()
@@ -683,7 +683,7 @@ void CopyThread::OutputConversionThread::Consume(const Parameters& item)
         pass.dispatch_size = Cpy->GetSuitableDispatchSize();
         pass.inputs = std::move(inputs);
         pass.benchmark = Cpy->client->Debug;
-        GServices.MakeAPICalls(true, pass, (app::TCopyResource&)cpy);
+        mzEngine.MakeAPICalls(true, pass, (app::TCopyResource&)cpy);
     }
     else
     {
@@ -693,7 +693,7 @@ void CopyThread::OutputConversionThread::Consume(const Parameters& item)
         pass.output = std::make_unique<mz::fb::TTexture>(Cpy->CompressedTex);
         pass.draws.push_back(std::make_unique<mz::app::TDrawCall>());
         pass.draws.back()->inputs = std::move(inputs);
-        GServices.MakeAPICalls(true, pass, (app::TCopyResource&)cpy);
+        mzEngine.MakeAPICalls(true, pass, (app::TCopyResource&)cpy);
     }
 
     Cpy->cpuRing->EndPush(outgoing);
@@ -711,7 +711,7 @@ CopyThread::CopyThread(mz::fb::UUID id, struct AJAClient *client, u32 ringSize, 
     {
         SSBO.mutate_size((1<<(SSBO_SIZE)) * sizeof(u16));
         SSBO.mutate_usage(fb::BufferUsage::STORAGE_BUFFER | fb::BufferUsage::DEVICE_MEMORY);
-        GServices.Create(SSBO);
+        mzEngine.Create(SSBO);
         UpdateCurve(GammaCurve);
     }
 
@@ -730,9 +730,9 @@ CopyThread::~CopyThread()
 {
     Stop();
     client->Device->CloseChannel(Channel, IsInput(), IsQuad());
-    GServices.Destroy(SSBO);
+    mzEngine.Destroy(SSBO);
     if (CompressedTex.handle)
-        GServices.Destroy(CompressedTex);
+        mzEngine.Destroy(CompressedTex);
 }
 
 void CopyThread::Orphan(bool b)
@@ -752,7 +752,7 @@ void CopyThread::PinUpdate(Action orphan, mz::Action live)
     std::vector<flatbuffers::Offset<PartialPinUpdate>> updates;
     std::transform(ids.begin(), ids.end(), std::back_inserter(updates),
                    [&fbb, orphan, live](auto id) { return mz::CreatePartialPinUpdate(fbb, &id, 0, orphan, live); });
-    GServices.HandleEvent(
+    mzEngine.HandleEvent(
         CreateAppEvent(fbb, mz::CreatePartialNodeUpdateDirect(fbb, &client->Mapping.NodeId, ClearFlags::NONE, 0, 0, 0,
                                                               0, 0, 0, 0, &updates)));
 }

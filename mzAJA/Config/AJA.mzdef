@@ -1,0 +1,73 @@
+{
+    "nodes": [
+        {
+            "class_name": "AJAIn",
+            "allows_cyclic": true,
+            "contents_type": "Job",
+            "contents": {
+                "type": "CPU"
+            },
+            "functions": [
+                {
+                    "class_name": "DumpInfo",
+                    "contents_type": "Job",
+                    "contents": {
+                        "type": "CPU"
+                    }
+                },
+                {
+                    "class_name": "StartLog",
+                    "contents_type": "Job",
+                    "contents": {
+                        "type": "CPU"
+                    }
+                },
+                {
+                    "class_name": "StopLog",
+                    "contents_type": "Job",
+                    "contents": {
+                        "type": "CPU"
+                    }
+                },
+                {
+                    "class_name": "ReloadShaders",
+                    "contents_type": "Job",
+                    "contents": {
+                        "type": "CPU"
+                    }
+                }
+            ]
+        },
+        {
+            "class_name": "AJAOut",
+            "allows_cyclic": true,
+            "contents_type": "Job",
+            "contents": {
+                "type": "CPU"
+            },
+            "functions": [
+                {
+                    "class_name": "StartLog",
+                    "contents_type": "Job",
+                    "contents": {
+                        "type": "CPU"
+                    }
+                },
+                {
+                    "class_name": "StopLog",
+                    "contents_type": "Job",
+                    "contents": {
+                        "type": "CPU"
+                    }
+                },
+                {
+                    "class_name": "ReloadShaders",
+                    "contents_type": "Job",
+                    "contents": {
+                        "type": "CPU"
+                    }
+                }
+            ]
+        }
+    ]
+}

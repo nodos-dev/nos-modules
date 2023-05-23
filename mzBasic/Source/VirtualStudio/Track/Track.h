@@ -93,7 +93,7 @@ namespace mz
 			case app::PathCommand::NOTIFY_DROP:
 			{
 				ShouldRestart = true;
-				GServices.LogW("Track queue will be reset", "");
+				mzEngine.LogW("Track queue will be reset", "");
 				break;
 			}
 			}
@@ -114,7 +114,7 @@ namespace mz
 			if (DataQueue.size() <= Delay)
 			{
 				if (IsRunning())
-					GServices.Log("Thread active but no data in track queue", "");
+					mzEngine.Log("Thread active but no data in track queue", "");
 				return false;
 			}
 
@@ -314,7 +314,7 @@ namespace mz
 		virtual void Run() override
 		{
 			flatbuffers::FlatBufferBuilder fbb;
-			GServices.HandleEvent(
+			mzEngine.HandleEvent(
 				CreateAppEvent(fbb, mz::app::CreateSetThreadNameDirect(fbb, (u64)StdThread.native_handle(), "Track")));
 
 			asio::io_service io_serv;
@@ -327,13 +327,13 @@ namespace mz
 				}
 				catch (const  asio::system_error& e)
 				{
-					GServices.LogW("could not open UDP socket" + std::to_string(Port), e.what());
+					mzEngine.LogW("could not open UDP socket" + std::to_string(Port), e.what());
 
 					std::this_thread::sleep_for(std::chrono::seconds(2));
 					return;
 				}
 				u8 buf[4096];
-                const auto DefaultTrackData = GServices.GetDefaultDataOfType("mz.fb.Track")->As<fb::TTrack>();
+                const auto DefaultTrackData = mzEngine.GetDefaultDataOfType("mz.fb.Track")->As<fb::TTrack>();
 				while (!ShouldStop)
 				{
 					try
@@ -349,7 +349,7 @@ namespace mz
 
                                 // Queue sisiyo mu?
                                 // while (DataQueue.size() > Delay) DataQueue.pop();
-                                GServices.LogFast("Track Queue Size", std::to_string(DataQueue.size()));
+                                mzEngine.LogFast("Track Queue Size", std::to_string(DataQueue.size()));
 
                                 if (YetFillingSpares && DataQueue.size() >= SpareCount)
                                     YetFillingSpares = false;
@@ -358,7 +358,7 @@ namespace mz
 					}
 					catch (const  asio::system_error& e)
 					{
-						GServices.LogW("timeout when listening on port " + std::to_string(Port), e.what());
+						mzEngine.LogW("timeout when listening on port " + std::to_string(Port), e.what());
 					}
 				}
 			}

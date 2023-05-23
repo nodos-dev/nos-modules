@@ -134,7 +134,7 @@ struct DelayTexture : DelayContext
         else
         {
             tmp = Base;
-            GServices.Create(tmp);
+            mzEngine.Create(tmp);
         }
         
         return tmp;
@@ -150,7 +150,7 @@ struct DelayTexture : DelayContext
             app::TBlitTexture blit;
             blit.src = std::make_unique<mz::fb::TTexture>(src);
             blit.dst = std::make_unique<mz::fb::TTexture>(dst);
-            GServices.MakeAPICalls(true, blit);
+            mzEngine.MakeAPICalls(true, blit);
         //});
     }
     
@@ -171,7 +171,7 @@ struct DelayTexture : DelayContext
 
 void RegisterDelay(NodeActionsMap& functions, std::set<flatbuffers::Type const*> const& types)
 {
-    mz::GServices = GServices;
+    mz::mzEngine = mzEngine;
 
     for(auto const& type : types)
     {

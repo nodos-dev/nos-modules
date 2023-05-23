@@ -293,7 +293,7 @@ struct Cyclorama : PinMapping
 			i32 w, h, n;
 			if (auto raw = stbi_load(dat.path.c_str(), &w, &h, &n, 4))
             {
-				auto tex = GServices.LoadImage(raw, fb::vec2u(w, h), fb::Format::R8G8B8A8_SRGB, fb::vec2u(w, h), fb::Format::R8G8B8A8_UNORM);
+				auto tex = mzEngine.LoadImage(raw, fb::vec2u(w, h), fb::Format::R8G8B8A8_SRGB, fb::vec2u(w, h), fb::Format::R8G8B8A8_UNORM);
                 free(raw);
                 out = {
                     .Path = std::move(dat.path),
@@ -334,14 +334,14 @@ struct Cyclorama : PinMapping
         clear1.texture.reset(&rt);
         clear2.texture.reset(&lhs);
         clear1.color = clear2.color = fb::vec4(0,0,0,1);
-        GServices.MakeAPICalls(true, clear1, clear2);
+        mzEngine.MakeAPICalls(true, clear1, clear2);
         clear1.texture.release();
         clear2.texture.release();
     }
 
     void CleanCleanPlates()
     {
-        for (auto &cp : CleanPlates) GServices.Destroy(cp.Texture);
+        for (auto &cp : CleanPlates) mzEngine.Destroy(cp.Texture);
         CleanPlates.clear();
     }
 
@@ -373,7 +373,7 @@ struct Cyclorama : PinMapping
     {
         fb::TCaptureDataArray arr;
         std::transform(CleanPlates.begin(), CleanPlates.end(), std::back_inserter(arr.data), [](auto& cp) { return cp; });
-        GServices.TEvent(TPinValueChanged{ 
+        mzEngine.TEvent(TPinValueChanged{ 
             .pin_id = GetPinId("CleanPlates"),
             .value = mz::Buffer::From(arr)
         });
@@ -384,7 +384,7 @@ struct Cyclorama : PinMapping
     {
         if(Verts.buf().pid())
         {
-            GServices.Destroy(Verts.buf());
+            mzEngine.Destroy(Verts.buf());
         }
 
         std::vector<Vertex> vertices;
@@ -403,8 +403,8 @@ struct Cyclorama : PinMapping
         // Verts.mutate_depth_test(true);
         // Verts.mutate_depth_write(true);
 
-        GServices.Create(Verts.mutable_buf());
-        u8 *mapping = GServices.Map(Verts.mutable_buf());
+        mzEngine.Create(Verts.mutable_buf());
+        u8 *mapping = mzEngine.Map(Verts.mutable_buf());
         memcpy(mapping, vertices.data(), vsz);
         memcpy(mapping + vsz, indices.data(), isz);
     }
@@ -443,8 +443,8 @@ struct Cyclorama : PinMapping
 			lhs.usage  = mz::fb::ImageUsage::SAMPLED | mz::fb::ImageUsage::RENDER_TARGET | mz::fb::ImageUsage::TRANSFER_SRC | mz::fb::ImageUsage::TRANSFER_DST;
             lhs.format = mz::fb::Format::R16G16B16A16_UNORM;
             rt = lhs;
-            GServices.Create(lhs);
-            GServices.Create(rt);
+            mzEngine.Create(lhs);
+            mzEngine.Create(rt);
         }
         GetValue(name2pin, "EdgeRoundness",  EdgeRoundness);
         GetValue(name2pin, "HasLeftWing",    HasLeftWing);
@@ -462,7 +462,7 @@ struct Cyclorama : PinMapping
 
     void RegisterPasses()
     {
-        GServices.MakeAPICalls(true,
+        mzEngine.MakeAPICalls(true,
                               app::TRegisterPass{
                                   .key = "Cyclorama_CleanPlateAccumulator" + UUID2STR(NodeId),
                                   .shader = "Cyclorama_CleanPlateAccumulator",
@@ -485,29 +485,29 @@ struct Cyclorama : PinMapping
     {
         if (lhs.pid)
         {
-            GServices.Destroy(lhs);
+            mzEngine.Destroy(lhs);
             lhs = {};
         }
         if (rt.pid)
         {
-            GServices.Destroy(rt);
+            mzEngine.Destroy(rt);
             rt = {};
         }
     }
 
     Cyclorama() 
     {
-        auto defaultTrackBuf = GServices.GetDefaultDataOfType("mz.fb.Track");
+        auto defaultTrackBuf = mzEngine.GetDefaultDataOfType("mz.fb.Track");
         defaultTrackBuf->As<mz::fb::Track>()->UnPackTo(&Track);
     }
 
     ~Cyclorama()
     {
         DestroyTransientResources();
-        GServices.Destroy(Verts.buf());
+        mzEngine.Destroy(Verts.buf());
         for (auto& c : CleanPlates)
         {
-            GServices.Destroy(c.Texture);
+            mzEngine.Destroy(c.Texture);
         }
     }
 };
@@ -545,7 +545,7 @@ void RegisterCyclorama(NodeActionsMap& functions)
         static bool registered = false;
         if (!registered)
         {
-            GServices.MakeAPICalls(
+            mzEngine.MakeAPICalls(
                 true,
                 app::TRegisterShader{.key = "Cyclorama_Frag",
                                      .spirv = ShaderSrc<sizeof(Cyclorama_frag_spv)>(Cyclorama_frag_spv)},
@@ -629,7 +629,7 @@ void RegisterCyclorama(NodeActionsMap& functions)
                 pass.output = std::make_unique<mz::fb::TTexture>(c->rt);
                 pass.inputs.emplace_back(new mz::app::TShaderBinding{.var = "lhs", .val = mz::Buffer::From(c->lhs)});
                 pass.inputs.emplace_back(new mz::app::TShaderBinding{.var = "rhs", .val = mz::Buffer::From(video)});
-                GServices.MakeAPICall(pass, true);
+                mzEngine.MakeAPICall(pass, true);
                 std::swap(c->rt, c->lhs);
                 auto id = c->GetPinId("Video");
             }
@@ -642,15 +642,15 @@ void RegisterCyclorama(NodeActionsMap& functions)
                 fb::TTexture srgb = c->lhs;
                 tex.format  = fb::Format::R8G8B8A8_UNORM;
                 srgb.format = fb::Format::R8G8B8A8_SRGB;
-                GServices.Create(tex);
-                GServices.Create(srgb);
-                GServices.Create(c->lhs);
+                mzEngine.Create(tex);
+                mzEngine.Create(srgb);
+                mzEngine.Create(c->lhs);
                 c->CleanPlates.push_back({  .Path = path,
                                             .Texture = tex,
                                             .Track = c->Track,
                                             .Pos = c->Position,
                                             .Rot = c->Rotation,});
-                std::thread([services=GServices, tmp, tex, srgb, path=std::move(path)] 
+                std::thread([services=mzEngine, tmp, tex, srgb, path=std::move(path)] 
                 {
                     services.Blit(tmp, tex);
                     services.Blit(tmp, srgb);
@@ -664,7 +664,7 @@ void RegisterCyclorama(NodeActionsMap& functions)
                 c->CapturedFrameCount = 0;
                 c->UpdateCleanPlatesValue();
 				flatbuffers::FlatBufferBuilder fbb;
-				GServices.HandleEvent(CreateAppEvent(fbb, mz::app::CreateScheduleRequest(fbb, mz::app::ScheduleRequestKind::PIN, &id, true)));
+				mzEngine.HandleEvent(CreateAppEvent(fbb, mz::app::CreateScheduleRequest(fbb, mz::app::ScheduleRequestKind::PIN, &id, true)));
             }
         }
     };
@@ -716,7 +716,7 @@ void RegisterCyclorama(NodeActionsMap& functions)
             call->inputs = std::move(inputs);
             call->inputs.emplace_back(new app::TShaderBinding{ .var = "UVSmoothness", .val = mz::Buffer::From(0.f) });
             call->inputs.emplace_back(new app::TShaderBinding{ .var = "CP_MVP", .val = MVP_val });
-            call->inputs.emplace_back(new app::TShaderBinding{ .var = "Source", .val = mz::Buffer::From(GServices.Color(*pins.Get<mz::fb::vec4>("CycloramaColor"))) });
+            call->inputs.emplace_back(new app::TShaderBinding{ .var = "Source", .val = mz::Buffer::From(mzEngine.Color(*pins.Get<mz::fb::vec4>("CycloramaColor"))) });
             pass.draws.emplace_back(std::move(call));
         }
         
@@ -740,7 +740,7 @@ void RegisterCyclorama(NodeActionsMap& functions)
             pass.draws.emplace_back(std::move(call));
         }
         
-        GServices.MakeAPICall(pass, true);
+        mzEngine.MakeAPICall(pass, true);
 
         {
             glm::vec4 smoothness(*pins.Get<f32>("BottomSmoothness"),
@@ -782,7 +782,7 @@ void RegisterCyclorama(NodeActionsMap& functions)
             AddParam(maskPass.inputs, "Diag", diag / 100.f);
             
             
-            GServices.MakeAPICall(maskPass, true);
+            mzEngine.MakeAPICall(maskPass, true);
         }
         return true;
     };
@@ -796,7 +796,7 @@ void RegisterCyclorama(NodeActionsMap& functions)
         c->CapturedFrameCount = 0;
         flatbuffers::FlatBufferBuilder fbb;
         auto id = c->GetPinId("Video");
-        GServices.HandleEvent(CreateAppEvent(fbb, mz::app::CreateScheduleRequest(fbb, mz::app::ScheduleRequestKind::PIN, &id)));
+        mzEngine.HandleEvent(CreateAppEvent(fbb, mz::app::CreateScheduleRequest(fbb, mz::app::ScheduleRequestKind::PIN, &id)));
     };
 
     actions.NodeFunctions["ClearProjection"] = [](mz::Args &pins, mz::Args &functionParams, void *ctx) {
@@ -822,7 +822,7 @@ void RegisterCyclorama(NodeActionsMap& functions)
         auto mask_vert = ReadSpirv(MZ_REPO_ROOT "/cyclo_mask.vert");
         auto cp_frag = ReadSpirv(MZ_REPO_ROOT "/cp.frag");
 
-        GServices.MakeAPICalls(
+        mzEngine.MakeAPICalls(
             true,
             app::TRegisterShader{.key = "Cyclorama_Frag", .spirv = frag },
             app::TRegisterShader{.key = "Cyclorama_Vert", .spirv = vert},

@@ -31,7 +31,7 @@ struct MergeContext
 
     ~MergeContext() 
     {
-        GServices.Destroy(DummyTex);
+        mzEngine.Destroy(DummyTex);
     }
 
     void Run(mz::Args& pins)
@@ -60,7 +60,7 @@ struct MergeContext
         u32 tex = TextureCount;
         AddUniform(mergePass, "Texture_Count", &tex, sizeof(u32));
         mergePass.output.reset(pins.Get<mz::fb::Texture>("Out")->UnPack());
-        GServices.MakeAPICall(mergePass, true);
+        mzEngine.MakeAPICall(mergePass, true);
     }
 
     fb::UUID id;
@@ -73,7 +73,7 @@ struct MergeContext
            mz::CreateContextMenuItemDirect(fbb, "Add Input Texture", 1)
         };
 
-        GServices.HandleEvent(CreateAppEvent(fbb, mz::CreateContextMenuUpdateDirect(fbb, node.id(), &request.pos, &request.instigator, &items)));
+        mzEngine.HandleEvent(CreateAppEvent(fbb, mz::CreateContextMenuUpdateDirect(fbb, node.id(), &request.pos, &request.instigator, &items)));
     }
 
     void OnCommandFired(u32 cmd)
@@ -84,7 +84,7 @@ struct MergeContext
         }
         TextureCount++;
 
-        auto defaultTexBuf = GServices.GetDefaultDataOfType("mz.fb.Texture");
+        auto defaultTexBuf = mzEngine.GetDefaultDataOfType("mz.fb.Texture");
         auto tex = defaultTexBuf->As<mz::fb::TTexture>();
 
         std::string         texturePinName = "Texture_" + std::to_string(TextureCount.load());
@@ -108,7 +108,7 @@ struct MergeContext
             mz::fb::CreatePinDirect(fbb, &blendModeId, blendModePinName.c_str(), "mz.fb.BlendMode", mz::fb::ShowAs::PROPERTY, mz::fb::CanShowAs::INPUT_PIN_OR_PROPERTY, pinCategory.c_str(), 0 , &blendModeData),
         };
 
-        GServices.HandleEvent(CreateAppEvent(fbb, mz::CreatePartialNodeUpdateDirect(fbb, &id, ClearFlags::NONE, 0, &pins)));
+        mzEngine.HandleEvent(CreateAppEvent(fbb, mz::CreatePartialNodeUpdateDirect(fbb, &id, ClearFlags::NONE, 0, &pins)));
     }
 };
 
@@ -123,7 +123,7 @@ void RegisterMerge(NodeActionsMap& functions)
         mergeCtx->DummyTex.width = 1;
         mergeCtx->DummyTex.height = 1;
         mergeCtx->DummyTex.format = mz::fb::Format::R8_UNORM;
-        GServices.Create(mergeCtx->DummyTex);
+        mzEngine.Create(mergeCtx->DummyTex);
     };
 
     actions.Shaders = []() { return ShaderLibrary{ { "Merge_Shader", ShaderSrc<sizeof(Merge_frag_spv)>(Merge_frag_spv) }}; };

@@ -14,7 +14,7 @@ using namespace ZD::Curve;
 namespace mz
 {
 
-EngineNodeServices GServices;
+EngineNodeServices mzEngine;
 
 struct Frustum: PinMapping
 {
@@ -27,7 +27,7 @@ struct Frustum: PinMapping
         std::vector<flatbuffers::Offset<mz::fb::NodeStatusMessage>> msg = { 
             fb::CreateNodeStatusMessageDirect(fbb, str, fb::NodeStatusMessageType::WARNING) 
         };
-        GServices.HandleEvent(CreateAppEvent(fbb, mz::CreatePartialNodeUpdateDirect(fbb, &NodeId, ClearFlags::NONE, 0, 0, 0, 0, 0, 0, &msg)));
+        mzEngine.HandleEvent(CreateAppEvent(fbb, mz::CreatePartialNodeUpdateDirect(fbb, &NodeId, ClearFlags::NONE, 0, 0, 0, 0, 0, 0, &msg)));
     }
 
     void Deser(const char* val)
@@ -43,7 +43,7 @@ struct Frustum: PinMapping
         catch (std::exception& e)
         {
             auto what = e.what();
-            GServices.LogE("Failed to parse lens file", what);
+            mzEngine.LogE("Failed to parse lens file", what);
             UpdateStatus(lastVal.empty() ? "No Lens File" : "Invalid Lens File");
         }
     }
@@ -80,7 +80,7 @@ extern "C"
 {
 void MZAPI_ATTR Register(NodeActionsMap& functions, EngineNodeServices services, std::set<flatbuffers::Type const*> const& types)
 {
-    GServices = services;
+    mzEngine = services;
     auto &actions = functions["ZD.Frustum"];
     actions.NodeCreated = [](auto &node, Args &args, void **ctx) 
     { 

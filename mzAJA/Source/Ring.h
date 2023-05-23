@@ -15,12 +15,13 @@ struct TRing
 
         Resource(T r) : Res(r)
         {
-            mz::GServices.Create(Res);
+            
+            mzEngine.Create(Res);
         }
         
         ~Resource()
         {
-            mz::GServices.Destroy(Res);
+            mzEngine.Destroy(Res);
         }
 
         std::atomic_uint32_t FrameNumber;

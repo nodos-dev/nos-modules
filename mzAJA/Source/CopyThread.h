@@ -41,7 +41,7 @@ struct TrackSync
 
 		//if (true)
 		{
-			GServices.Log("Resetting aja " + Name(), "");
+			mzEngine.Log(("Resetting aja " + Name()).c_str(), "");
 		}
 	}
 	void UpdateDropCount() // called from scheduler thread
@@ -58,7 +58,7 @@ struct TrackSync
 				totalDrops += dropCount;
 			}
 
-			GServices.Log("Drop on " + Name() + " : " + std::to_string(totalDrops), "");
+			mzEngine.Log(("Drop on " + Name() + " : " + std::to_string(totalDrops)).c_str(), "");
 		}
 		else
 		{

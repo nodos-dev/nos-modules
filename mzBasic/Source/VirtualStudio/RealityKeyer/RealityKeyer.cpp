@@ -27,7 +27,7 @@ struct RealityKeyerContext : public NodeContext
         {
             return;
         }
-        GServices.MakeAPICalls(true,
+        mzEngine.MakeAPICalls(true,
                               app::TRegisterShader{
                                   .key = "IBK_Pass_1_Shader",
                                   .spirv = ShaderSrc<sizeof(IBKPass1_frag_spv)>(IBKPass1_frag_spv)},
@@ -43,7 +43,7 @@ struct RealityKeyerContext : public NodeContext
 
     void RegisterPasses()
     {
-        GServices.MakeAPICalls(true,
+        mzEngine.MakeAPICalls(true,
                               app::TRegisterPass{
                                   .key = "IBK_Pass_1_" + UUID2STR(NodeId),
                                   .shader = "IBK_Pass_1_Shader",
@@ -64,7 +64,7 @@ struct RealityKeyerContext : public NodeContext
 
     void DestroyResources()
     {
-        GServices.MakeAPICalls(true,
+        mzEngine.MakeAPICalls(true,
                               app::TUnregisterPass{
                                   .key = "IBK_Pass_1_" + UUID2STR(NodeId),
                               },
@@ -97,7 +97,7 @@ struct RealityKeyerContext : public NodeContext
         CopyUniformFromPin(ibkPass1, pins, "Core_Matte_White_Point");
         ibkPass1.output = std::make_unique<mz::fb::TTexture>();
         hardMaskPinData->UnPackTo(ibkPass1.output.get());
-        GServices.MakeAPICall(ibkPass1, true);
+        mzEngine.MakeAPICall(ibkPass1, true);
         // Pass 1 end
         // Horz blur begin
         app::TRunPass ibkHorzBlurPass;
@@ -110,7 +110,7 @@ struct RealityKeyerContext : public NodeContext
         AddUniform(ibkHorzBlurPass, "Input_Texture_Size", &blurInputSize, sizeof(mz::fb::vec2));
         ibkHorzBlurPass.output = std::make_unique<mz::fb::TTexture>();
 		hardMaskHorzBlurPinData->UnPackTo(ibkHorzBlurPass.output.get());
-        GServices.MakeAPICall(ibkHorzBlurPass, true);
+        mzEngine.MakeAPICall(ibkHorzBlurPass, true);
         // Horz blur end
         // Pass 2 begin
         app::TRunPass ibkPass2;
@@ -242,7 +242,7 @@ struct RealityKeyerContext : public NodeContext
         CopyUniformFromPin(ibkPass2, pins, "Output_Type");
         ibkPass2.output = std::make_unique<mz::fb::TTexture>();
         outputPinData->UnPackTo(ibkPass2.output.get());
-        GServices.MakeAPICall(ibkPass2, true);
+        mzEngine.MakeAPICall(ibkPass2, true);
         // Pass 2 end
     }
 };

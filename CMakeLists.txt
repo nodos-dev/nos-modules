@@ -3,7 +3,8 @@ project("Plugins")
 
 set(EXTERNAL_DIR ${CMAKE_CURRENT_SOURCE_DIR}/External)
 
-# add_subdirectory("mzBasic")
-# add_subdirectory("zdFrustum")
-add_subdirectory("mzMath")
-add_subdirectory("mzFilters")
+
+# set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/../CMakeBuild/Debug/install/SDK/cmake")
+add_subdirectory(mzMath)
+add_subdirectory(mzAJA)
+add_subdirectory(mzFilters)

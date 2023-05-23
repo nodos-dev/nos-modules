@@ -12,6 +12,25 @@
 
 using namespace mz;
 
+
+MZ_INIT();
+
+extern "C"
+{
+
+
+MZAPI_ATTR MzResult MZAPI_CALL mzExportNodeFunctions(size_t* outSize, MzNodeFunctions* outFunctions)
+{
+    *outSize = 2;
+	if (!outFunctions)
+		return MZ_RESULT_SUCCESS;
+
+	return MZ_RESULT_SUCCESS;
+}
+
+
+}
+
 namespace mz
 {
 
@@ -93,7 +112,7 @@ void MZAPI_ATTR RegisterAJA(NodeActionsMap& functions)
                 list.push_back(Str256("SDI In " + std::to_string(i)));
             }
 
-            GServices.HandleEvent(CreateAppEvent(
+            mzEngine.HandleEvent(CreateAppEvent(
                 fbb, mz::app::CreateUpdateStringList(fbb, mz::fb::CreateString256ListDirect(fbb, &str256, &list))));
         }
 
@@ -153,7 +172,7 @@ void MZAPI_ATTR RegisterAJA(NodeActionsMap& functions)
         std::vector<mz::fb::UUID> pinsToDel;
         c->OnNodeUpdate(std::move(mapping), loadedPins, pinsToDel);
         c->UpdateStatus(fbb, msg);
-        GServices.HandleEvent(
+        mzEngine.HandleEvent(
             CreateAppEvent(fbb, mz::CreatePartialNodeUpdateDirect(fbb, &c->Mapping.NodeId, ClearFlags::NONE, &pinsToDel,
                                                                   &pinsToAdd, 0, 0, 0, 0, &msg)));
     };
@@ -194,7 +213,8 @@ void MZAPI_ATTR RegisterAJA(NodeActionsMap& functions)
                 ss << k << " : " << v << "\n";
             }
 
-            GServices.Log(aja->Device->GetDisplayName() + " SingleLink " + std::to_string(i + 1) + " info", ss.str());
+            mzEngine.Log((aja->Device->GetDisplayName() + " SingleLink " + std::to_string(i + 1) + " info").c_str(),
+						 ss.str().c_str());
         }
     };
 
@@ -229,15 +249,20 @@ void MZAPI_ATTR RegisterAJA(NodeActionsMap& functions)
             for (auto& p : c->Pins)
                 p->Stop();
 
-        GServices.MakeAPICalls(
-            true, app::TRegisterShader{.key = "AJA_YCbCr2RGB_Shader", .spirv = YCbCr2RGB},
-            app::TRegisterShader{.key = "AJA_RGB2YCbCr_Shader", .spirv = RGB2YCbCr},
-            app::TRegisterShader{.key = "AJA_RGB2YCbCr_Compute_Shader", .spirv = RGB2YCbCr2},
-            app::TRegisterShader{.key = "AJA_YCbCr2RGB_Compute_Shader", .spirv = YCbCr2RGB2},
-            app::TRegisterPass{.key = "AJA_RGB2YCbCr_Compute_Pass", .shader = "AJA_RGB2YCbCr_Compute_Shader"},
-            app::TRegisterPass{.key = "AJA_YCbCr2RGB_Compute_Pass", .shader = "AJA_YCbCr2RGB_Compute_Shader"},
-            app::TRegisterPass{.key = "AJA_YCbCr2RGB_Pass", .shader = "AJA_YCbCr2RGB_Shader"},
-            app::TRegisterPass{.key = "AJA_RGB2YCbCr_Pass", .shader = "AJA_RGB2YCbCr_Shader"});
+        auto cvt = [](std::vector<u8> const& v) -> MzBuffer { return {(void*)v.data(), v.size()}; };
+
+        mzEngine.RegisterShader("AJA_YCbCr2RGB_Shader", cvt(YCbCr2RGB));
+
+        
+            mzEngine.RegisterShader("AJA_YCbCr2RGB_Shader", cvt(YCbCr2RGB));
+            mzEngine.RegisterShader("AJA_RGB2YCbCr_Shader", cvt(RGB2YCbCr));
+            mzEngine.RegisterShader("AJA_RGB2YCbCr_Compute_Shader", cvt(RGB2YCbCr2));
+            mzEngine.RegisterShader("AJA_YCbCr2RGB_Compute_Shader", cvt(YCbCr2RGB2));
+
+            mzEngine.RegisterPass2({.Key = "AJA_RGB2YCbCr_Compute_Pass",.Shader="AJA_RGB2YCbCr_Compute_Shader"});
+            mzEngine.RegisterPass2({.Key = "AJA_YCbCr2RGB_Compute_Pass",.Shader="AJA_YCbCr2RGB_Compute_Shader"});
+            mzEngine.RegisterPass2({.Key = "AJA_YCbCr2RGB_Pass",.Shader="AJA_YCbCr2RGB_Shader"});
+            mzEngine.RegisterPass2({.Key = "AJA_RGB2YCbCr_Pass",.Shader="AJA_RGB2YCbCr_Shader"});
         
         for (auto c : AJAClient::Ctx.Clients)
             for (auto& p : c->Pins)

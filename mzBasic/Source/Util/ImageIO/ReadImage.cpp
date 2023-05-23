@@ -43,15 +43,15 @@ void RegisterReadImageNode(NodeActionsMap& functions)
             mz::fb::Buffer buf;
             buf.mutate_usage((mz::fb::BufferUsage)(mz::fb::BufferUsage::TRANSFER_DST | mz::fb::BufferUsage::TRANSFER_SRC));
             buf.mutate_size(size);
-            GServices.Log("ReadImage: Requesting to create a buffer");
-            GServices.Create(buf);
-            auto buf2write = GServices.Map(buf);
+            mzEngine.Log("ReadImage: Requesting to create a buffer");
+            mzEngine.Create(buf);
+            auto buf2write = mzEngine.Map(buf);
             if (!buf2write)
             {
-                GServices.Log("ReadImage: Failed to map buffer");
+                mzEngine.Log("ReadImage: Failed to map buffer");
                 return false;
             }
-            GServices.Log("ReadImage: Writing to buffer");
+            mzEngine.Log("ReadImage: Writing to buffer");
             memcpy(buf2write, img, size);
             mz::fb::TTexture srgbTexture = {
                 .width  = (u32)width,
@@ -60,18 +60,18 @@ void RegisterReadImageNode(NodeActionsMap& functions)
                 .usage = mz::fb::ImageUsage::SAMPLED | mz::fb::ImageUsage::TRANSFER_DST | mz::fb::ImageUsage::TRANSFER_SRC,
             };
             
-            GServices.Create(srgbTexture);
-            GServices.Copy(buf, srgbTexture);
+            mzEngine.Create(srgbTexture);
+            mzEngine.Copy(buf, srgbTexture);
 
             // renew out pin if size does not match
             auto outTex = OutPin->As<mz::fb::TTexture>();
             if (outTex.width != width || 
                 outTex.height != height)
             {
-                GServices.Destroy(outTex);
+                mzEngine.Destroy(outTex);
                 outTex.width = width;
                 outTex.height = height;
-                GServices.Create(outTex);
+                mzEngine.Create(outTex);
                 *OutPin = mz::Buffer::From(outTex);
             }
 
@@ -80,11 +80,11 @@ void RegisterReadImageNode(NodeActionsMap& functions)
             linearPass.output.reset(&outTex); // set pass output to out texture pin
 			
 			AddUniform(linearPass, "Input", Buffer::From(srgbTexture));
-			GServices.MakeAPICall(linearPass, true);
+			mzEngine.MakeAPICall(linearPass, true);
             linearPass.output.release(); // do not try to delete our stack object
 
-            GServices.Destroy(buf);
-            GServices.Destroy(srgbTexture);
+            mzEngine.Destroy(buf);
+            mzEngine.Destroy(srgbTexture);
             return true;
         }
 
@@ -95,7 +95,7 @@ void RegisterReadImageNode(NodeActionsMap& functions)
             {
                 return;
             }
-            GServices.MakeAPICalls(true,
+            mzEngine.MakeAPICalls(true,
                                   app::TRegisterShader{
                                       .key = "ReadImage_SRGB2Linear",
                                       .spirv = ShaderSrc<sizeof(SRGB2Linear_frag_spv)>(SRGB2Linear_frag_spv)});
@@ -104,7 +104,7 @@ void RegisterReadImageNode(NodeActionsMap& functions)
 
         void RegisterPasses()
         {
-            GServices.MakeAPICalls(true,
+            mzEngine.MakeAPICalls(true,
                                   app::TRegisterPass{
                                       .key = "ReadImage_SRGB2Linear_Pass_" + UUID2STR(NodeId),
                                       .shader = "ReadImage_SRGB2Linear",
@@ -113,7 +113,7 @@ void RegisterReadImageNode(NodeActionsMap& functions)
 
         void DestroyResources()
         {
-            GServices.MakeAPICalls(
+            mzEngine.MakeAPICalls(
                 true,
                 app::TUnregisterPass{
                     .key = "ReadImage_SRGB2Linear_Pass_" + UUID2STR(NodeId)});
@@ -137,11 +137,11 @@ void RegisterReadImageNode(NodeActionsMap& functions)
         bool ret = !!img && ctx->Upload(img, width, height, args.GetBuffer("Out"));
 		if (!ret)
 		{
-			GServices.LogE("ReadImage: Failed to load image");
+			mzEngine.LogE("ReadImage: Failed to load image");
 			flatbuffers::FlatBufferBuilder fbb;
 			std::vector<flatbuffers::Offset<mz::fb::NodeStatusMessage>> messages 
                 { mz::fb::CreateNodeStatusMessageDirect(fbb, "Failed to load image", mz::fb::NodeStatusMessageType::FAILURE)};
-            GServices.HandleEvent(CreateAppEvent(fbb, mz::CreatePartialNodeUpdateDirect(fbb, &ctx->NodeId, ClearFlags::NONE, 0, 0, 0, 0, 0, 0, &messages)));
+            mzEngine.HandleEvent(CreateAppEvent(fbb, mz::CreatePartialNodeUpdateDirect(fbb, &ctx->NodeId, ClearFlags::NONE, 0, 0, 0, 0, 0, 0, &messages)));
 		}
         if (img)
 		    stbi_image_free(img);

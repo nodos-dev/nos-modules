@@ -228,7 +228,7 @@ void AJAClient::UpdateDeviceValue()
     flatbuffers::FlatBufferBuilder fbb;
     auto pinId = GetPinId("Device");
     std::vector<u8> value = StringValue(Device->GetDisplayName());
-    GServices.HandleEvent(CreateAppEvent(fbb, mz::CreatePinValueChangedDirect(fbb, &pinId, &value)));
+	mzEngine.HandleEvent(CreateAppEvent(fbb, mz::CreatePinValueChangedDirect(fbb, &pinId, &value)));
     UpdateReferenceValue();
 }
 
@@ -250,7 +250,7 @@ void AJAClient::UpdateReferenceValue()
         return;
 
     std::vector<u8> value = StringValue(NTV2ReferenceSourceToString(Ref, true));
-    GServices.HandleEvent(CreateAppEvent(fbb, mz::CreatePinValueChangedDirect(fbb, &pinId, &value)));
+    mzEngine.HandleEvent(CreateAppEvent(fbb, mz::CreatePinValueChangedDirect(fbb, &pinId, &value)));
     UpdateStatus();
 }
 
@@ -259,7 +259,7 @@ void AJAClient::UpdateStatus()
     std::vector<flatbuffers::Offset<mz::fb::NodeStatusMessage>> msg;
     flatbuffers::FlatBufferBuilder fbb;
     UpdateStatus(fbb, msg);
-    GServices.HandleEvent(CreateAppEvent(
+    mzEngine.HandleEvent(CreateAppEvent(
         fbb, mz::CreatePartialNodeUpdateDirect(fbb, &Mapping.NodeId, ClearFlags::NONE, 0, 0, 0, 0, 0, 0, &msg)));
 }
 
@@ -312,7 +312,7 @@ void AJAClient::OnNodeUpdate(mz::fb::Node const &event)
     if (!pinsToDelete.empty())
     {
         flatbuffers::FlatBufferBuilder fbb;
-        GServices.HandleEvent(
+        mzEngine.HandleEvent(
             CreateAppEvent(fbb, mz::CreatePartialNodeUpdateDirect(fbb, &mapping.NodeId, ClearFlags::NONE, &pinsToDelete,
                                                                   0, 0, 0, 0, 0, 0)));
     }
@@ -408,15 +408,16 @@ void AJAClient::OnNodeUpdate(PinMapping &&newMapping, std::map<std::string, cons
                 if (pr.frame_rate && flatbuffers::IsFieldPresent(pr.frame_rate, mz::fb::Pin::VT_DATA))
                 {
                     fmt = (NTV2VideoFormat)(*pr.frame_rate->data()->Data());
-                    GServices.Log("AJA: Route output " + NTV2ChannelToString(channel, true) + " with framerate " +
-                                     NTV2VideoFormatToString(fmt, true),
+                    mzEngine.Log(("AJA: Route output " + NTV2ChannelToString(channel, true) + " with framerate " +
+								  NTV2VideoFormatToString(fmt, true))
+									 .c_str(),
                                  "");
                 }
                 break;
             }
 
             case mz::fb::ShowAs::OUTPUT_PIN:
-                GServices.Log("AJA: Route input " + NTV2ChannelToString(channel, true), "");
+				mzEngine.Log(("AJA: Route input " + NTV2ChannelToString(channel, true)).c_str(), "");
                 break;
             }
             auto mode = pr.quad_mode ? *(AJADevice::Mode *)pr.quad_mode->data()->Data() : AJADevice::SL;
@@ -455,7 +456,7 @@ void AJAClient::OnPinMenuFired(mz::TContextMenuRequest const &request)
                                                 .Channel = pin->Channel,
                                             })};
 
-        GServices.HandleEvent(CreateAppEvent(
+        mzEngine.HandleEvent(CreateAppEvent(
             fbb, mz::CreateContextMenuUpdateDirect(fbb, &request.item_id, &request.pos, &request.instigator, &remove)));
     }
 }
@@ -564,7 +565,7 @@ void AJAClient::OnMenuFired(mz::fb::Node const &node, mz::TContextMenuRequest co
     {
         return;
     }
-    GServices.HandleEvent(CreateAppEvent(
+    mzEngine.HandleEvent(CreateAppEvent(
         fbb, mz::CreateContextMenuUpdateDirect(fbb, node.id(), &request.pos, &request.instigator, &items)));
 }
 
@@ -621,8 +622,6 @@ void AJAClient::OnCommandFired(u32 cmd)
         bool validates = !IsProgressiveTransport(format); // interlaced input and output both validate
 
         mz::fb::TTexture tex;
-        auto defaultTex = GServices.GetDefaultDataOfType("mz.fb.Texture");
-        defaultTex->As<mz::fb::Texture>()->UnPackTo(&tex);
         tex.size = mz::fb::SizePreset::CUSTOM;
         tex.width = width;
         tex.height = height;
@@ -674,7 +673,7 @@ void AJAClient::OnCommandFired(u32 cmd)
                 mz::fb::ShowAs::PROPERTY, mz::fb::CanShowAs::PROPERTY_ONLY, 0, 0, &data));
         }
 
-        GServices.HandleEvent(
+        mzEngine.HandleEvent(
             CreateAppEvent(fbb, mz::CreatePartialNodeUpdateDirect(fbb, &Mapping.NodeId, ClearFlags::NONE, 0, &pins)));
         break;
     }
@@ -711,7 +710,7 @@ void AJAClient::OnPathCommand(mz::fb::UUID pinID, app::PathCommand command, Buff
 	auto result = Pins.find(mz::UUID(pinID));
 	if (result == Pins.end())
 	{
-        GServices.Log("path command on unknown pin: %s", UUID2STR(pinID));
+        mzEngine.Log("path command on unknown pin: %s", UUID2STR(pinID).c_str());
 		return;
 	}
     auto ringThread = *result;
@@ -738,7 +737,7 @@ void AJAClient::OnPathCommand(mz::fb::UUID pinID, app::PathCommand command, Buff
             restartParams.RingSize = ringThread->gpuRing->Size;
             restartParams.UpdateFlags = AjaRestartCommandParams::UpdateRingSize;
 		    UByteSequence byteBuffer = Buffer::From(restartParams);
-		    GServices.HandleEvent(CreateAppEvent(fbb, app::CreateExecutePathCommandDirect(fbb, &id, app::PathCommand::RESTART, app::PathCommandType::WALKBACK,  &byteBuffer)));
+		    mzEngine.HandleEvent(CreateAppEvent(fbb, app::CreateExecutePathCommandDirect(fbb, &id, app::PathCommand::RESTART, app::PathCommandType::WALKBACK,  &byteBuffer)));
             break;
         }
     }
@@ -825,7 +824,7 @@ void AJAClient::OnPinValueChanged(mz::fb::UUID id, void *value)
         restartParams.UpdateFlags = AjaRestartCommandParams::UpdateRingSize;
         UByteSequence byteBuffer = Buffer::From(restartParams);
         auto id = GetPinId(std::string(pinName.begin(), pinName.end() - sizeof("Ring Size")));
-        GServices.HandleEvent(CreateAppEvent(fbb, app::CreateExecutePathCommandDirect(fbb, &id, app::PathCommand::RESTART, app::PathCommandType::WALKBACK, &byteBuffer)));
+        mzEngine.HandleEvent(CreateAppEvent(fbb, app::CreateExecutePathCommandDirect(fbb, &id, app::PathCommand::RESTART, app::PathCommandType::WALKBACK, &byteBuffer)));
     }
     if (pinName.ends_with("Ring Spare Count"))
     {

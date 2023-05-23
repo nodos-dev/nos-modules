@@ -96,7 +96,7 @@ void RegisterController(NodeActionsMap& functions)
             c->yaw   = 180;
             c->p = glm::vec3{600, 50, 100};
             flatbuffers::FlatBufferBuilder fbb;
-            GServices.HandleEvent(CreateAppEvent(fbb, mz::app::CreatePinDirtied(fbb, &c->id)));
+            mzEngine.HandleEvent(CreateAppEvent(fbb, mz::app::CreatePinDirtied(fbb, &c->id)));
         }
 
         glm::dvec2 ANG = glm::dvec2(c->yaw, c->pitch);
@@ -122,7 +122,7 @@ void RegisterController(NodeActionsMap& functions)
         // c->pitch = glm::clamp(c->pitch, glm::radians(-80.), glm::radians(80.));
         
         flatbuffers::FlatBufferBuilder fbb;
-        GServices.HandleEvent(CreateAppEvent(fbb, mz::app::CreatePinDirtied(fbb, &c->id)));
+        mzEngine.HandleEvent(CreateAppEvent(fbb, mz::app::CreatePinDirtied(fbb, &c->id)));
     };
 
     actions.EntryPoint = [](mz::Args& args, void* ctx){

@@ -23,7 +23,7 @@ void RegisterDistortion(NodeActionsMap& functions)
         auto spirv = ReadSpirv(out.c_str());
         std::string shaderName = "$$GPUJOBSHADER$$" + nodeId;
         std::string passName = "$$GPUJOBPASS$$" + nodeId;
-        GServices.MakeAPICalls(true, app::TRegisterShader{.key = shaderName, .spirv = spirv},
+        mzEngine.MakeAPICalls(true, app::TRegisterShader{.key = shaderName, .spirv = spirv},
                               app::TRegisterPass{.key = passName, .shader = shaderName});
     };
 
