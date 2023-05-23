@@ -15,24 +15,14 @@ using namespace mz;
 
 MZ_INIT();
 
-extern "C"
-{
-
-
-MZAPI_ATTR MzResult MZAPI_CALL mzExportNodeFunctions(size_t* outSize, MzNodeFunctions* outFunctions)
-{
-    *outSize = 2;
-	if (!outFunctions)
-		return MZ_RESULT_SUCCESS;
-
-	return MZ_RESULT_SUCCESS;
-}
-
-
-}
 
 namespace mz
 {
+
+static MzBuffer Blob2Buf(std::vector<u8> const& v) 
+{ 
+    return { (void*)v.data(), v.size() }; 
+};
 
 static mz::fb::String256 Str256(std::string const &str)
 {
@@ -40,6 +30,50 @@ static mz::fb::String256 Str256(std::string const &str)
     memcpy(re.mutable_val()->data(), str.data(), str.size());
     return re;
 }
+
+struct AJA
+{
+    static MzResult GetShaders(size_t* outCount, MzBuffer* outSpirvBufs)
+    {
+        MzBuffer shaders[] = 
+        {
+            {(void*)YCbCr2RGB_frag_spv, sizeof(YCbCr2RGB_frag_spv) & ~3},
+            {(void*)RGB2YCbCr_frag_spv, sizeof(RGB2YCbCr_frag_spv) & ~3},
+            {(void*)RGB2YCbCr_comp_spv, sizeof(RGB2YCbCr_comp_spv) & ~3},
+            {(void*)YCbCr2RGB_comp_spv, sizeof(YCbCr2RGB_comp_spv) & ~3},
+        };
+
+        *outCount = sizeof(shaders)/sizeof(shaders[0]);
+        if(!outSpirvBufs) 
+            return MZ_RESULT_SUCCESS;
+
+        for(auto s : shaders)
+            *outSpirvBufs++ = s;
+
+        return MZ_RESULT_SUCCESS;
+    };
+
+    static MzResult GetPasses(size_t* outCount, MzPassInfo* outMzPassInfos)
+    {
+        MzPassInfo passes[] = 
+        {
+            {.Key = "AJA_RGB2YCbCr_Compute_Pass", .Shader = "AJA_RGB2YCbCr_Compute_Shader", .MS = 1},
+            {.Key = "AJA_YCbCr2RGB_Compute_Pass", .Shader = "AJA_YCbCr2RGB_Compute_Shader", .MS = 1},
+            {.Key = "AJA_YCbCr2RGB_Pass", .Shader = "AJA_YCbCr2RGB_Shader", .MS = 1},
+            {.Key = "AJA_RGB2YCbCr_Pass", .Shader = "AJA_RGB2YCbCr_Shader", .MS = 1}
+        };
+
+        *outCount = sizeof(passes) / sizeof(passes[0]);
+
+        if (!outMzPassInfos)
+            return MZ_RESULT_SUCCESS;
+
+        for (auto s : passes)
+            *outMzPassInfos++ = s;
+
+        return MZ_RESULT_SUCCESS;
+    }
+};
 
 void MZAPI_ATTR RegisterAJA(NodeActionsMap& functions)
 {
@@ -249,20 +283,17 @@ void MZAPI_ATTR RegisterAJA(NodeActionsMap& functions)
             for (auto& p : c->Pins)
                 p->Stop();
 
-        auto cvt = [](std::vector<u8> const& v) -> MzBuffer { return {(void*)v.data(), v.size()}; };
+    
+        mzEngine.RegisterShader("AJA_YCbCr2RGB_Shader", Blob2Buf(YCbCr2RGB));
+        mzEngine.RegisterShader("AJA_YCbCr2RGB_Shader", Blob2Buf(YCbCr2RGB));
+        mzEngine.RegisterShader("AJA_RGB2YCbCr_Shader", Blob2Buf(RGB2YCbCr));
+        mzEngine.RegisterShader("AJA_RGB2YCbCr_Compute_Shader", Blob2Buf(RGB2YCbCr2));
+        mzEngine.RegisterShader("AJA_YCbCr2RGB_Compute_Shader", Blob2Buf(YCbCr2RGB2));
 
-        mzEngine.RegisterShader("AJA_YCbCr2RGB_Shader", cvt(YCbCr2RGB));
-
-        
-            mzEngine.RegisterShader("AJA_YCbCr2RGB_Shader", cvt(YCbCr2RGB));
-            mzEngine.RegisterShader("AJA_RGB2YCbCr_Shader", cvt(RGB2YCbCr));
-            mzEngine.RegisterShader("AJA_RGB2YCbCr_Compute_Shader", cvt(RGB2YCbCr2));
-            mzEngine.RegisterShader("AJA_YCbCr2RGB_Compute_Shader", cvt(YCbCr2RGB2));
-
-            mzEngine.RegisterPass2({.Key = "AJA_RGB2YCbCr_Compute_Pass",.Shader="AJA_RGB2YCbCr_Compute_Shader"});
-            mzEngine.RegisterPass2({.Key = "AJA_YCbCr2RGB_Compute_Pass",.Shader="AJA_YCbCr2RGB_Compute_Shader"});
-            mzEngine.RegisterPass2({.Key = "AJA_YCbCr2RGB_Pass",.Shader="AJA_YCbCr2RGB_Shader"});
-            mzEngine.RegisterPass2({.Key = "AJA_RGB2YCbCr_Pass",.Shader="AJA_RGB2YCbCr_Shader"});
+        mzEngine.RegisterPass2({.Key = "AJA_RGB2YCbCr_Compute_Pass",.Shader="AJA_RGB2YCbCr_Compute_Shader"});
+        mzEngine.RegisterPass2({.Key = "AJA_YCbCr2RGB_Compute_Pass",.Shader="AJA_YCbCr2RGB_Compute_Shader"});
+        mzEngine.RegisterPass2({.Key = "AJA_YCbCr2RGB_Pass",.Shader="AJA_YCbCr2RGB_Shader"});
+        mzEngine.RegisterPass2({.Key = "AJA_RGB2YCbCr_Pass",.Shader="AJA_RGB2YCbCr_Shader"});
         
         for (auto c : AJAClient::Ctx.Clients)
             for (auto& p : c->Pins)
@@ -270,6 +301,20 @@ void MZAPI_ATTR RegisterAJA(NodeActionsMap& functions)
     };
 
     functions["AJA.AJAOut"] = actions;
+}
+
+extern "C"
+{
+
+    MZAPI_ATTR MzResult MZAPI_CALL mzExportNodeFunctions(size_t* outSize, MzNodeFunctions* outFunctions)
+    {
+        *outSize = 2;
+        if (!outFunctions)
+            return MZ_RESULT_SUCCESS;
+
+        return MZ_RESULT_SUCCESS;
+    }
+
 }
 
 } // namespace mz
