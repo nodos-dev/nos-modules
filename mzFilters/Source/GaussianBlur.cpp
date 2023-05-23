@@ -110,13 +110,14 @@ struct GaussBlurContext
 
 }
 
-void MZAPI_CALL GaussianBlur_OnNodeCreated(const MzFbNode* node, void** outCtxPtr)
+void RegisterGaussianBlur(MzNodeFunctions* out)
 {
-    *outCtxPtr = new mz::filters::GaussBlurContext(*node);
-}
-
-bool MZAPI_CALL GaussianBlur_ExecuteNode(void* ctx, const MzNodeExecuteArgs* args)
-{   
-    (mz::filters::GaussBlurContext*)ctx->Run(args);
-    return true;
+    out->TypeName = "mz.GaussianBlur";
+    out->OnNodeCreated = [](const MzFbNode* node, void** outCtxPtr) {
+        *outCtxPtr = new mz::filters::GaussBlurContext(*node);
+    };
+    out->ExecuteNode = [](void* ctx, const MzNodeExecuteArgs* args) {
+        // (mz::filters::GaussBlurContext*)ctx->Run(args);
+        return true;
+    };
 }

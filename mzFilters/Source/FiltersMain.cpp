@@ -101,15 +101,7 @@ MZAPI_ATTR MzResult MZAPI_CALL mzExportNodeFunctions(size_t* outSize, MzNodeFunc
                 break;
             }
             case Filters::GaussianBlur: {
-                funcs->TypeName = "mz.GaussianBlur";
-                funcs->GetShaderSource = [](MzBuffer* outSpirvBuf) -> MzResult
-                {
-                    outSpirvBuf->Data = (void*)(GaussianBlur_frag_spv);
-                    outSpirvBuf->Size = sizeof(GaussianBlur_frag_spv);
-                    return MZ_RESULT_SUCCESS;
-                };
-                funcs->ExecuteNode = GaussianBlur_ExecuteNode;
-                funcs->OnNodeCreated = GaussianBlur_OnNodeCreated;
+                RegisterGaussianBlur(funcs);
                 break;
             }
             default:
