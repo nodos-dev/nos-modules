@@ -11,7 +11,7 @@ struct TRing
     
     struct Resource
     {
-        T Res;
+        mz::Table<T> Res;
 
         Resource(T r) : Res(r)
         {
@@ -205,6 +205,6 @@ struct TRing
 };
 
 typedef TRing<mz::fb::Buffer> CPURing;
-typedef TRing<mz::fb::TTexture> GPURing;
+typedef TRing<mz::fb::Texture> GPURing;
 
 } // namespace mz

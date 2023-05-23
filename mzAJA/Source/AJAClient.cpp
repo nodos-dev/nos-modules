@@ -441,10 +441,10 @@ void AJAClient::OnNodeUpdate(PinMapping &&newMapping, std::map<std::string, cons
     }
 }
 
-void AJAClient::OnPinMenuFired(mz::TContextMenuRequest const &request)
+void AJAClient::OnPinMenuFired(MzContextMenuRequest const &request)
 {
     flatbuffers::FlatBufferBuilder fbb;
-    auto name = Mapping.GetPinName(request.item_id);
+    auto name = Mapping.GetPinName(request.ItemId);
 
     if (auto pin = FindChannel(ParseChannel(name)))
     {
@@ -456,14 +456,15 @@ void AJAClient::OnPinMenuFired(mz::TContextMenuRequest const &request)
                                                 .Channel = pin->Channel,
                                             })};
 
+        RequestInfo instigator = { request.ClientId, request.RequestId };
         mzEngine.HandleEvent(CreateAppEvent(
-            fbb, mz::CreateContextMenuUpdateDirect(fbb, &request.item_id, &request.pos, &request.instigator, &remove)));
+            fbb, mz::CreateContextMenuUpdateDirect(fbb, &request.ItemId, (fb::vec2*)&request.Position, &instigator, &remove)));
     }
 }
 
-void AJAClient::OnMenuFired(mz::fb::Node const &node, mz::TContextMenuRequest const &request)
+void AJAClient::OnMenuFired(MzContextMenuRequest const&request)
 {
-    if (0 != memcmp(&request.item_id, &Mapping.NodeId, 16))
+    if (0 != memcmp(&request.ItemId, &Mapping.NodeId, 16))
     {
         return OnPinMenuFired(request);
     }
@@ -565,8 +566,11 @@ void AJAClient::OnMenuFired(mz::fb::Node const &node, mz::TContextMenuRequest co
     {
         return;
     }
+
+    RequestInfo instigator = { request.ClientId, request.RequestId };
+
     mzEngine.HandleEvent(CreateAppEvent(
-        fbb, mz::CreateContextMenuUpdateDirect(fbb, node.id(), &request.pos, &request.instigator, &items)));
+        fbb, mz::CreateContextMenuUpdateDirect(fbb, &Mapping.NodeId, (fb::vec2*) & request.Position, &instigator, &items)));
 }
 
 void AJAClient::OnCommandFired(u32 cmd)
@@ -691,10 +695,6 @@ void AJAClient::OnNodeRemoved()
     (Input ? Device->HasInput : Device->HasOutput) = false;
 }
 
-void AJAClient::OnPinShowAsChanged(mz::fb::UUID const &id, int showAs)
-{
-}
-
 struct AjaRestartCommandParams {
     enum Flags : u32 {
         UpdateRingSize = 1 << 0,
@@ -705,7 +705,7 @@ struct AjaRestartCommandParams {
     u32 SpareCount;
 };
 
-void AJAClient::OnPathCommand(mz::fb::UUID pinID, app::PathCommand command, Buffer *params)
+void AJAClient::OnPathCommand(mz::fb::UUID pinID, app::PathCommand command, Buffer params)
 {
 	auto result = Pins.find(mz::UUID(pinID));
 	if (result == Pins.end())
@@ -718,7 +718,7 @@ void AJAClient::OnPathCommand(mz::fb::UUID pinID, app::PathCommand command, Buff
     switch (command)
     {
     case app::PathCommand::RESTART: {
-        auto* res = params->As<AjaRestartCommandParams>();
+        auto* res = params.As<AjaRestartCommandParams>();
         if (res->UpdateFlags & AjaRestartCommandParams::UpdateRingSize) 
             ringThread->Resize(res->RingSize);
         break;
@@ -838,7 +838,7 @@ void AJAClient::OnExecute()
 {
 }
 
-bool AJAClient::BeginCopyFrom(CopyInfo &cpy)
+bool AJAClient::BeginCopyFrom(MzCopyInfo &cpy)
 {
     GPURing::Resource *slot = 0;
     auto it = Pins.find(cpy.ID); 
@@ -849,21 +849,23 @@ bool AJAClient::BeginCopyFrom(CopyInfo &cpy)
 	if ((slot = th->gpuRing->TryPop(cpy.FrameNumber, th->SpareCount)))
 	{
 		cpy.CopyTextureTo = cpy.SrcPinData;
-		cpy.CopyTextureFrom = Buffer::From(slot->Res);
+		cpy.CopyTextureFrom.Data = slot->Res.data();
+		cpy.CopyTextureFrom.Size = slot->Res.size();
+
+        slot->Res;
         cpy.ShouldSetSourceFrameNumber = true;
 
-		if (cpy.PathState->IsEmpty())
-			*cpy.PathState = cpy.CopyTextureFrom;
+		if (-1 == *cpy.PathState)
+			*cpy.PathState = (uint32_t)flatbuffers::GetRoot<fb::Texture>(cpy.CopyTextureFrom.Data)->field_type();
 		else
 		{
-			auto pathState = cpy.PathState->As<fb::Texture>();
-			pathState->mutate_field_type(pathState->field_type() & slot->Res.field_type);
+			*cpy.PathState &= (uint32_t)slot->Res->field_type();
 		}
 	}
     return cpy.ShouldCopyTexture = !!(cpy.Data = slot);
 }
 
-bool AJAClient::BeginCopyTo(CopyInfo &cpy)
+bool AJAClient::BeginCopyTo(MzCopyInfo &cpy)
 {
     GPURing::Resource *slot = 0;
     auto it = Pins.find(cpy.ID); 
@@ -874,19 +876,19 @@ bool AJAClient::BeginCopyTo(CopyInfo &cpy)
 	if ((slot = th->gpuRing->BeginPush()))
 	{
 		slot->FrameNumber = cpy.FrameNumber;
-		if (!cpy.PathState->IsEmpty())
+		if (-1 != *cpy.PathState)
 		{
-			auto pathState = cpy.PathState->As<fb::Texture>();
-			slot->Res.field_type = pathState->field_type();
+            slot->Res->mutate_field_type(fb::FieldType(*cpy.PathState));
 		}
 
 		cpy.CopyTextureFrom = cpy.SrcPinData;
-		cpy.CopyTextureTo = Buffer::From(slot->Res);
+        cpy.CopyTextureTo.Data = slot->Res.data();
+        cpy.CopyTextureTo.Size = slot->Res.size();
 	}
     return cpy.ShouldCopyTexture = !!(cpy.Data = slot);
 }
 
-void AJAClient::EndCopyFrom(CopyInfo &cpy)
+void AJAClient::EndCopyFrom(MzCopyInfo &cpy)
 {
     if(!cpy.Data) 
         return;
@@ -899,7 +901,7 @@ void AJAClient::EndCopyFrom(CopyInfo &cpy)
     th->gpuRing->EndPop(res);
 }
 
-void AJAClient::EndCopyTo(CopyInfo &cpy)
+void AJAClient::EndCopyTo(MzCopyInfo &cpy)
 {
     if(!cpy.Data) 
         return;
@@ -909,8 +911,8 @@ void AJAClient::EndCopyTo(CopyInfo &cpy)
 
     auto th = *it;
     auto res = (GPURing::Resource *)cpy.Data;
-	if (!cpy.PathState->IsEmpty())
-		res->Res.field_type = cpy.PathState->As<fb::TTexture>().field_type;
+	if (-1 != *cpy.PathState)
+		res->Res->mutate_field_type((mz::fb::FieldType)*cpy.PathState);
     th->gpuRing->EndPush(res);
     cpy.Stop = th->cpuRing->IsFull();
     th->Worker->Enqueue({});

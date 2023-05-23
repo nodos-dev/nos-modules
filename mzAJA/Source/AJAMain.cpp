@@ -12,9 +12,7 @@
 
 using namespace mz;
 
-
 MZ_INIT();
-
 
 namespace mz
 {
@@ -57,10 +55,10 @@ struct AJA
     {
         MzPassInfo passes[] = 
         {
-            {.Key = "AJA_RGB2YCbCr_Compute_Pass", .Shader = "AJA_RGB2YCbCr_Compute_Shader", .MS = 1},
-            {.Key = "AJA_YCbCr2RGB_Compute_Pass", .Shader = "AJA_YCbCr2RGB_Compute_Shader", .MS = 1},
-            {.Key = "AJA_YCbCr2RGB_Pass", .Shader = "AJA_YCbCr2RGB_Shader", .MS = 1},
-            {.Key = "AJA_RGB2YCbCr_Pass", .Shader = "AJA_RGB2YCbCr_Shader", .MS = 1}
+            {.Key = "AJA_RGB2YCbCr_Compute_Pass", .Shader = "AJA_RGB2YCbCr_Compute_Shader", .MultiSample = 1},
+            {.Key = "AJA_YCbCr2RGB_Compute_Pass", .Shader = "AJA_YCbCr2RGB_Compute_Shader", .MultiSample = 1},
+            {.Key = "AJA_YCbCr2RGB_Pass", .Shader = "AJA_YCbCr2RGB_Shader", .MultiSample = 1},
+            {.Key = "AJA_RGB2YCbCr_Pass", .Shader = "AJA_RGB2YCbCr_Shader", .MultiSample = 1}
         };
 
         *outCount = sizeof(passes) / sizeof(passes[0]);
@@ -73,45 +71,30 @@ struct AJA
 
         return MZ_RESULT_SUCCESS;
     }
-};
 
-void MZAPI_ATTR RegisterAJA(NodeActionsMap& functions)
-{
-    auto &actions = functions["AJA.AJAIn"];
+    static MzResult GetShaderSource(MzBuffer * outSpirvBuf) 
+    { 
+        return MZ_RESULT_SUCCESS;
+    }
 
-    actions.Shaders = []() {
-        return ShaderLibrary {
-                {"AJA_YCbCr2RGB_Shader", ShaderSrc<sizeof(YCbCr2RGB_frag_spv)>(YCbCr2RGB_frag_spv)},
-                {"AJA_RGB2YCbCr_Shader", ShaderSrc<sizeof(RGB2YCbCr_frag_spv)>(RGB2YCbCr_frag_spv)},
-                {"AJA_RGB2YCbCr_Compute_Shader", ShaderSrc<sizeof(RGB2YCbCr_comp_spv)>(RGB2YCbCr_comp_spv)},
-                {"AJA_YCbCr2RGB_Compute_Shader", ShaderSrc<sizeof(YCbCr2RGB_comp_spv)>(YCbCr2RGB_comp_spv)},
-        };
-    };
-
-    actions.Passes = []() {
-        return PassLibrary {
-            app::TRegisterPass{.key = "AJA_RGB2YCbCr_Compute_Pass", .shader = "AJA_RGB2YCbCr_Compute_Shader"},
-            app::TRegisterPass{.key = "AJA_YCbCr2RGB_Compute_Pass", .shader = "AJA_YCbCr2RGB_Compute_Shader"},
-            app::TRegisterPass{.key = "AJA_YCbCr2RGB_Pass", .shader = "AJA_YCbCr2RGB_Shader"},
-            app::TRegisterPass{.key = "AJA_RGB2YCbCr_Pass", .shader = "AJA_RGB2YCbCr_Shader"}
-        };
-    };
-
-    actions.CanCreate = [](fb::Node const &node) {
-        for (auto pin : *node.pins())
+    static bool CanCreateNode(const MzFbNode * node) 
+    { 
+        for (auto pin : *node->pins())
         {
             if (pin->name()->str() == "Device")
             {
                 if (flatbuffers::IsFieldPresent(pin, mz::fb::Pin::VT_DATA))
                     return AJADevice::DeviceAvailable((char *)pin->data()->Data(),
-                                                      node.class_name()->str() == "AJA.AJAIn");
+                                                      node->class_name()->str() == "AJA.AJAIn");
                 break;
             }
         }
-        return AJADevice::GetAvailableDevice(node.class_name()->str() == "AJA.AJAIn");
-    };
-
-    actions.NodeCreated = [](fb::Node const &node, Args &args, void **ctx) {
+        return AJADevice::GetAvailableDevice(node->class_name()->str() == "AJA.AJAIn");
+    }
+    
+    static void OnNodeCreated(const MzFbNode * inNode, void** ctx) 
+    { 
+        auto& node = *inNode;
         AJADevice::Init();
         const bool isIn = node.class_name()->str() == "AJA.AJAIn";
         AJADevice *dev = 0;
@@ -209,31 +192,81 @@ void MZAPI_ATTR RegisterAJA(NodeActionsMap& functions)
         mzEngine.HandleEvent(
             CreateAppEvent(fbb, mz::CreatePartialNodeUpdateDirect(fbb, &c->Mapping.NodeId, ClearFlags::NONE, &pinsToDel,
                                                                   &pinsToAdd, 0, 0, 0, 0, &msg)));
-    };
+    }
 
-    actions.NodeUpdate = [](auto &node, auto ctx) { ((AJAClient *)ctx)->OnNodeUpdate(node); };
-    actions.MenuFired = [](auto &node, auto ctx, auto &request) { ((AJAClient *)ctx)->OnMenuFired(node, request); };
-    actions.CommandFired = [](auto &node, auto ctx, u32 cmd) { ((AJAClient *)ctx)->OnCommandFired(cmd); };
-    actions.NodeRemoved = [](auto ctx, auto &id) {
+
+    static void OnNodeUpdated(void* ctx, const MzFbNode * node) 
+    {
+        ((AJAClient *)ctx)->OnNodeUpdate(*node);
+    }
+    
+    static void OnNodeDeleted(void* ctx, const MzUUID nodeId) 
+    { 
         auto c = ((AJAClient *)ctx);
         c->OnNodeRemoved();
         delete c;
-    };
-    actions.PinValueChanged = [](auto ctx, auto &id, mz::Buffer *value) {
-        return ((AJAClient *)ctx)->OnPinValueChanged(id, value->data());
-    };
-    actions.PinShowAsChanged = [](auto ctx, auto &id, int value) {
-        return ((AJAClient *)ctx)->OnPinShowAsChanged(id, value);
-    };
-    actions.BeginCopyTo = [](auto ctx, CopyInfo &cpy) { return ((AJAClient *)ctx)->BeginCopyTo(cpy); };
-    actions.BeginCopyFrom = [](auto ctx, CopyInfo &cpy) { return ((AJAClient *)ctx)->BeginCopyFrom(cpy); };
-    actions.EndCopyFrom = [](auto ctx, CopyInfo &cpy) { ((AJAClient *)ctx)->EndCopyFrom(cpy); };
-    actions.EndCopyTo = [](auto ctx, CopyInfo &cpy) { ((AJAClient *)ctx)->EndCopyTo(cpy); };
-    actions.EntryPoint = [](mz::Args &pins, auto ctx) { return true; };
-    actions.OnPathCommand = [](fb::UUID pinID, app::PathCommand command, mz::Buffer *params, void *ctx) {
+    }
+    static void OnPinValueChanged(void* ctx, const MzUUID id, MzBuffer * value)
+    { 
+        return ((AJAClient *)ctx)->OnPinValueChanged(id, value->Data);
+    }
+
+    static void OnPinConnected(void* ctx, const MzUUID pinId) { }
+    static void OnPinDisconnected(void* ctx, const MzUUID pinId) { }
+
+    static void OnPinShowAsChanged(void* ctx, const MzUUID id, MzFbShowAs showAs) 
+    { 
+    }
+
+    static void OnNodeSelected(const MzUUID graphId, const MzUUID selectedNodeId) { }
+
+    static void OnPathCommand(void* ctx, const MzPathCommandExecuteParams * params) 
+    { 
         auto aja = ((AJAClient *)ctx);
-        aja->OnPathCommand(pinID, command, params);
-    };
+        aja->OnPathCommand(params->Id, (app::PathCommand)params->CommandType, mz::Buffer((u8*)params->Params.Data, params->Params.Size));
+    }
+
+    static MzResult GetFunctions(size_t * outCount, const char** pName, PFN_NodeFunctionExecute * outFunction) { }
+    static bool  ExecuteNode(void* ctx, const MzNodeExecuteArgs * args) { }
+    static bool  CanCopy(void* ctx, MzCopyInfo * copyInfo) { }
+
+    static bool  BeginCopyFrom(void* ctx, MzCopyInfo * cpy)
+    { 
+        return ((AJAClient *)ctx)->BeginCopyTo(*cpy); 
+    }
+
+    static bool  BeginCopyTo(void* ctx, MzCopyInfo * cpy)
+    { 
+        return ((AJAClient *)ctx)->BeginCopyTo(*cpy); 
+    }
+
+    static void  EndCopyFrom(void* ctx, MzCopyInfo * cpy)
+    { 
+        return ((AJAClient *)ctx)->EndCopyFrom(*cpy);
+    }
+
+    static void  EndCopyTo(void* ctx, MzCopyInfo * cpy)
+    { 
+        return ((AJAClient *)ctx)->EndCopyTo(*cpy);
+    }
+
+    static void OnMenuRequested(void* ctx, const MzContextMenuRequest * request) 
+    { 
+        ((AJAClient *)ctx)->OnMenuFired(*request);
+    }
+
+    static void OnMenuCommand(void* ctx, uint32_t cmd) 
+    { 
+        ((AJAClient *)ctx)->OnCommandFired(cmd); 
+    }
+
+    static void OnKeyEvent(void* ctx, const MzKeyEvent * keyEvent) { }
+};
+
+void MZAPI_ATTR RegisterAJA(NodeActionsMap& functions)
+{
+    auto &actions = functions["AJA.AJAIn"];
+
     actions.NodeFunctions["DumpInfo"] = [](mz::Args &pins, mz::Args &functionParams, void *ctx) {
         auto aja = ((AJAClient *)ctx);
 
@@ -306,14 +339,43 @@ void MZAPI_ATTR RegisterAJA(NodeActionsMap& functions)
 extern "C"
 {
 
-    MZAPI_ATTR MzResult MZAPI_CALL mzExportNodeFunctions(size_t* outSize, MzNodeFunctions* outFunctions)
-    {
-        *outSize = 2;
-        if (!outFunctions)
-            return MZ_RESULT_SUCCESS;
-
+MZAPI_ATTR MzResult MZAPI_CALL mzExportNodeFunctions(size_t* outSize, MzNodeFunctions* outFunctions)
+{
+    *outSize = 2;
+    if (!outFunctions)
         return MZ_RESULT_SUCCESS;
-    }
+   
+    outFunctions[0] = outFunctions[1] = {
+        .CanCreateNode = AJA::CanCreateNode,
+        .OnNodeCreated = AJA::OnNodeCreated,
+        .OnNodeUpdated = AJA::OnNodeUpdated,
+        .OnNodeDeleted = AJA::OnNodeDeleted,
+        .OnPinValueChanged = AJA::OnPinValueChanged,
+        .OnPinConnected = AJA::OnPinConnected,
+        .OnPinDisconnected = AJA::OnPinDisconnected,
+        .OnPinShowAsChanged = AJA::OnPinShowAsChanged,
+        .OnNodeSelected = AJA::OnNodeSelected,
+        .OnPathCommand = AJA::OnPathCommand,
+        .GetFunctions = AJA::GetFunctions,
+        .ExecuteNode = AJA::ExecuteNode,
+        .CanCopy = AJA::CanCopy,
+        .BeginCopyFrom = AJA::BeginCopyFrom,
+        .BeginCopyTo = AJA::BeginCopyTo,
+        .EndCopyFrom = AJA::EndCopyFrom,
+        .EndCopyTo = AJA::EndCopyTo,
+        .GetShaderSource = AJA::GetShaderSource,
+        .GetShaders = AJA::GetShaders,
+        .GetPasses = AJA::GetPasses,
+        .OnMenuRequested = AJA::OnMenuRequested,
+        .OnMenuCommand = AJA::OnMenuCommand,
+        .OnKeyEvent = AJA::OnKeyEvent,
+    };
+
+    outFunctions[0].TypeName = "AJA.AJAIn";
+    outFunctions[1].TypeName = "AJA.AJAOut";
+
+    return MZ_RESULT_SUCCESS;
+}
 
 }
 

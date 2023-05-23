@@ -181,7 +181,7 @@ void CopyThread::UpdateCurve(enum GammaCurve curve)
 {
     GammaCurve = curve;
     auto data = GetGammaLUT(IsInput(), GammaCurve, SSBO_SIZE);
-    auto ptr = mzEngine.Map(SSBO);
+    auto ptr = mzEngine.Map(&SSBO);
     memcpy(ptr, data.data(), data.size() * sizeof(data[0]));
 }
 
@@ -269,8 +269,10 @@ void CopyThread::Refresh()
 void CopyThread::CreateRings(u32 size)
 {
 	const auto ext = Extent();
+    
     if (CompressedTex.handle)
         mzEngine.Destroy(CompressedTex);
+
 	gpuRing = MakeShared<GPURing>(ext, size);
 	fb::vec2u compressedExt((10 == BitWidth()) ? ((ext.x() + (48 - ext.x() % 48) % 48) / 3) << 1 : ext.x() >> 1, ext.y() >> u32(Interlaced()));
 	cpuRing = MakeShared<CPURing>(compressedExt, size);
@@ -327,7 +329,7 @@ void CopyThread::AJAInputProc()
     {
         std::stringstream ss;
         ss << "AJAIn Thread: " << std::this_thread::get_id();
-        mzEngine.Log(ss.str(), "");
+        mzEngine.Log(ss.str().c_str(), "");
     }
 
     auto prevMode = client->Device->GetMode(Channel);
