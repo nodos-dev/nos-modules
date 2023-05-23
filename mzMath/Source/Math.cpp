@@ -210,7 +210,7 @@ MZAPI_ATTR MzResult MZAPI_CALL mzExportNodeFunctions(size_t* outCount, MzNodeFun
 {
 	*outCount = (size_t)(MathNodeTypes::Count);
 	if (!outFunctions)
-		return MzResult::Success;
+		return MZ_RESULT_SUCCESS;
 
 	for (int nodeTypeIndex = 0; nodeTypeIndex < (int)(MathNodeTypes::Count); ++nodeTypeIndex)
 	{
@@ -277,7 +277,7 @@ MZAPI_ATTR MzResult MZAPI_CALL mzExportNodeFunctions(size_t* outCount, MzNodeFun
 			break;
 		}
 	}
-	return MzResult::Success;
+	return MZ_RESULT_SUCCESS;
 }
 }
 
