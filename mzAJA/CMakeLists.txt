@@ -24,15 +24,19 @@ include(GNUInstallDirs)
 add_subdirectory(${EXTERNAL_DIR}/ntv2/ajalibraries "${CMAKE_CURRENT_BINARY_DIR}/ajalibraries")
 
 # stb
-add_subdirectory(${EXTERNAL_DIR}/stb "${CMAKE_CURRENT_BINARY_DIR}/stb")
+if (NOT WITH_MEDIAZ)
+    add_subdirectory(${EXTERNAL_DIR}/stb "${CMAKE_CURRENT_BINARY_DIR}/stb")
+endif()
 
 # asio
 add_library(asio INTERFACE)
 target_include_directories(asio INTERFACE ${EXTERNAL_DIR}/asio/asio/include)
 
 # MediaZ Plugin SDK
-list(APPEND CMAKE_MODULE_PATH $ENV{MZ_SDK_DIR}/cmake)
-find_package(mzPluginSDK REQUIRED)
+if (NOT WITH_MEDIAZ)
+    list(APPEND CMAKE_MODULE_PATH $ENV{MZ_SDK_DIR}/cmake)
+    find_package(mzPluginSDK REQUIRED)
+endif()
 
 # Plugin
 # ------
@@ -59,11 +63,6 @@ set_target_properties(${PROJECT_NAME} PROPERTIES
     LIBRARY_OUTPUT_DIRECTORY_RELWITHDEBINFO "${CMAKE_CURRENT_SOURCE_DIR}/Binaries"
     LIBRARY_OUTPUT_DIRECTORY_MINSIZEREL "${CMAKE_CURRENT_SOURCE_DIR}/Binaries"
 )
-
-if(WIN32)
-    target_compile_definitions(${PROJECT_NAME} PUBLIC "-DmzPluginSDK_SHARED"
-        "-DmzPluginSDK_EXPORTS")
-endif()
 
 set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_STANDARD 20)
 

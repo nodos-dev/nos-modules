@@ -64,11 +64,6 @@ set_target_properties(${PROJECT_NAME} PROPERTIES
     LIBRARY_OUTPUT_DIRECTORY_MINSIZEREL "${CMAKE_CURRENT_SOURCE_DIR}/Binaries"
 )
 
-if(WIN32)
-    target_compile_definitions(${PROJECT_NAME} PUBLIC "-DmzPluginSDK_SHARED"
-        "-DmzPluginSDK_EXPORTS")
-endif()
-
 set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_STANDARD 20)
 
 target_include_directories(${PROJECT_NAME} PUBLIC $ENV{MZ_SDK_DIR}/include)
