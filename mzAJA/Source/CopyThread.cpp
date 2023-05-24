@@ -558,60 +558,62 @@ void CopyThread::InputConversionThread::Consume(CopyThread::Parameters const& pa
     auto* res = Cpy->gpuRing->BeginPush();
     if (!res)
         return;
-    std::vector<std::unique_ptr<mz::app::TShaderBinding>> inputs;
 
-    auto invColorspace = Cpy->GetMatrix<f64>();
-    auto colorspace = glm::inverse(invColorspace);
-    inputs.emplace_back(
-        new mz::app::TShaderBinding{.var = "Colorspace", .val = mz::Buffer::From((glm::mat4)colorspace)});
-    inputs.emplace_back(new mz::app::TShaderBinding{.var = "Source", .val = mz::Buffer::From(Cpy->CompressedTex)});
-    inputs.emplace_back(new mz::app::TShaderBinding{
-        .var = "Interlaced",
-        .val = mz::Buffer::From(params.FieldIdx | ((Cpy->client->Shader == ShaderType::Comp10) << 2))});
-    inputs.emplace_back(new mz::app::TShaderBinding{.var = "ssbo", .val = mz::Buffer::From(Cpy->SSBO)});
+    std::vector<MzShaderBinding> inputs;
+
+    glm::mat4 colorspace = glm::inverse(Cpy->GetMatrix<f64>());
+
+    uint32_t iflags = params.FieldIdx | ((Cpy->client->Shader == ShaderType::Comp10) << 2);
+
+    inputs.emplace_back(MzShaderBinding{"Colorspace", {&colorspace, sizeof(colorspace)}});
+    inputs.emplace_back(MzShaderBinding{"Source", {&Cpy->CompressedTex, sizeof(Cpy->CompressedTex)}});
+    inputs.emplace_back(MzShaderBinding{"Interlaced", {&iflags, sizeof(iflags)}});
+    inputs.emplace_back(MzShaderBinding{"ssbo", {&Cpy->SSBO, sizeof(Cpy->SSBO)}});
+
     auto MsgKey = "Input " + Cpy->Name() + " DMA";
-    //struct
-    //{
-    //    EngineNodeServices::ResBorrow src, dst;
-    //    std::string key;
-    //} cpy = {slot->Res, Cpy->CompressedTex, Cpy->client->Debug ? ("(GPUTransfer)" + MsgKey + ":" + std::to_string(Cpy->client->Debug)) : ""};
-    //static_assert(sizeof(cpy) == sizeof(app::TCopyResource));
 
-    //auto& [time, counter] = Cpy->DebugInfo;
-    //
-    //if (Cpy->client->Debug && ++counter >= Cpy->client->Debug)
-    //{
-    //    time += params.T1 - params.T0;
-    //    auto t = time / counter;
-    //    counter = 0;
-    //    time = std::chrono::nanoseconds(0);
-    //    std::stringstream ss;
-    //    ss << "(AJATransfer)" << MsgKey << " took: " << t << " (" << std::chrono::duration_cast<Micro>(t) << ")"
-    //       << " (" << std::chrono::duration_cast<Milli>(t) << ")"
-    //       << "\n";
-    //    mzEngine.Log(ss.str(), "");
-    //}
-    //mzEngine.MakeAPICall((app::TCopyResource&)cpy, true);
-    //if (Cpy->client->Shader != ShaderType::Frag8)
-    //{
-    //    inputs.emplace_back(new mz::app::TShaderBinding{.var = "Output", .val = mz::Buffer::From(res->Res)});
-    //    app::TRunComputePass pass;
-    //    pass.pass = "AJA_YCbCr2RGB_Compute_Pass";
-    //    pass.dispatch_size = Cpy->GetSuitableDispatchSize();
-    //    pass.inputs = std::move(inputs);
-    //    pass.benchmark = Cpy->client->Debug;
-    //    mzEngine.MakeAPICall(pass, true);
-    //}
-    //else
-    //{
-    //    app::TRunPass2 pass;
-    //    pass.pass = "AJA_YCbCr2RGB_Pass";
-    //    pass.output = std::make_unique<mz::fb::TTexture>(res->Res);
-    //    pass.draws.push_back(std::make_unique<mz::app::TDrawCall>());
-    //    pass.draws.back()->inputs = std::move(inputs);
-    //    pass.benchmark = Cpy->client->Debug;
-    //    mzEngine.MakeAPICall(pass, true);
-    //}
+    MzCmd cmd;
+    mzEngine.Begin(&cmd);
+
+    mzEngine.Copy(cmd, &slot->Res, &Cpy->CompressedTex, Cpy->client->Debug ? ("(GPUTransfer)" + MsgKey + ":" + std::to_string(Cpy->client->Debug)).c_str() : 0);
+
+    if (Cpy->client->Shader != ShaderType::Frag8)
+    {
+        inputs.emplace_back(MzShaderBinding{"Output", {&res->Res, sizeof(res->Res)} });
+        MzRunComputePassParams pass;
+        pass.PassKey = "AJA_YCbCr2RGB_Compute_Pass";
+        pass.DispatchSize = Cpy->GetSuitableDispatchSize();
+        pass.Bindings = inputs.data();
+        pass.BindingCount = inputs.size();
+        pass.Benchmark = Cpy->client->Debug;
+        mzEngine.RunComputePass(cmd, &pass);
+    }
+    else
+    {
+        MzRunPassParams pass;
+        pass.PassKey = "AJA_YCbCr2RGB_Pass";
+        pass.Output = res->Res;
+        pass.Bindings = inputs.data();
+        pass.BindingCount = inputs.size();
+        pass.Benchmark = Cpy->client->Debug;
+        mzEngine.RunPass(cmd, &pass);
+    }
+
+    mzEngine.End(cmd);
+
+    auto& [time, counter] = Cpy->DebugInfo;
+    if (Cpy->client->Debug && ++counter >= Cpy->client->Debug)
+    {
+        time += params.T1 - params.T0;
+        auto t = time / counter;
+        counter = 0;
+        time = std::chrono::nanoseconds(0);
+        std::stringstream ss;
+        ss << "(AJATransfer)" << MsgKey << " took: " << t << " (" << std::chrono::duration_cast<Micro>(t) << ")"
+            << " (" << std::chrono::duration_cast<Milli>(t) << ")"
+            << "\n";
+        mzEngine.Log(ss.str().c_str(), "");
+    }
 
     //if(Cpy->client->Debug)
     //{
@@ -661,43 +663,43 @@ void CopyThread::OutputConversionThread::Consume(const Parameters& item)
     if (!outgoing || !incoming)
         return;
 
-    std::vector<std::unique_ptr<mz::app::TShaderBinding>> inputs;
 
-    inputs.emplace_back(new mz::app::TShaderBinding{ .var = "Colorspace", .val = mz::Buffer::From((glm::mat4)Cpy->GetMatrix<f64>()) });
-    inputs.emplace_back(new mz::app::TShaderBinding{ .var = "Source", .val = mz::Buffer::From(incoming->Res) });
-    inputs.emplace_back(new mz::app::TShaderBinding{
-        .var = "Interlaced",
-        .val = mz::Buffer::From((Cpy->client->Shader == ShaderType::Comp10) << 2) });
-    inputs.emplace_back(new mz::app::TShaderBinding{ .var = "ssbo", .val = mz::Buffer::From(Cpy->SSBO) });
+    glm::mat4 colorspace = glm::inverse(Cpy->GetMatrix<f64>());
+    uint32_t iflags = (Cpy->client->Shader == ShaderType::Comp10) << 2;
 
-    //struct
-    //{
-    //    EngineNodeServices::ResBorrow src, dst;
-    //    std::string key;
-    //} cpy = { Cpy->CompressedTex, outgoing->Res, "" };
-    //static_assert(sizeof(cpy) == sizeof(app::TCopyResource));
-	
-    //// watch out for th members, they are not synced
-    //if (Cpy->client->Shader != ShaderType::Frag8)
-    //{
-    //    inputs.emplace_back(new mz::app::TShaderBinding{ .var = "Output", .val = mz::Buffer::From(Cpy->CompressedTex) });
-    //    app::TRunComputePass pass;
-    //    pass.pass = "AJA_RGB2YCbCr_Compute_Pass";
-    //    pass.dispatch_size = Cpy->GetSuitableDispatchSize();
-    //    pass.inputs = std::move(inputs);
-    //    pass.benchmark = Cpy->client->Debug;
-    //    mzEngine.MakeAPICalls(true, pass, (app::TCopyResource&)cpy);
-    //}
-    //else
-    //{
-    //    app::TRunPass2 pass;
-    //    pass.pass = "AJA_RGB2YCbCr_Pass";
-    //    pass.benchmark = Cpy->client->Debug;
-    //    pass.output = std::make_unique<mz::fb::TTexture>(Cpy->CompressedTex);
-    //    pass.draws.push_back(std::make_unique<mz::app::TDrawCall>());
-    //    pass.draws.back()->inputs = std::move(inputs);
-    //    mzEngine.MakeAPICalls(true, pass, (app::TCopyResource&)cpy);
-    //}
+    std::vector<MzShaderBinding> inputs;
+    inputs.emplace_back(MzShaderBinding{ "Colorspace", {&colorspace, sizeof(colorspace)} });
+    inputs.emplace_back(MzShaderBinding{ "Source", {&incoming->Res, sizeof(incoming->Res)} });
+    inputs.emplace_back(MzShaderBinding{ "Interlaced", {&iflags, sizeof(iflags)} });
+    inputs.emplace_back(MzShaderBinding{ "ssbo", {&Cpy->SSBO, sizeof(Cpy->SSBO)} });
+
+    MzCmd cmd;
+    mzEngine.Begin(&cmd);
+
+    // watch out for th members, they are not synced
+    if (Cpy->client->Shader != ShaderType::Frag8)
+    {
+        inputs.emplace_back(MzShaderBinding{"Output", {&Cpy->CompressedTex, sizeof(Cpy->CompressedTex)} });
+        MzRunComputePassParams pass;
+        pass.PassKey = "AJA_RGB2YCbCr_Compute_Pass";
+        pass.DispatchSize = Cpy->GetSuitableDispatchSize();
+        pass.Bindings = inputs.data();
+        pass.BindingCount = inputs.size();
+        pass.Benchmark = Cpy->client->Debug;
+        mzEngine.RunComputePass(cmd, &pass);
+    }
+    else
+    {
+        MzRunPassParams pass;
+        pass.PassKey = "AJA_RGB2YCbCr_Pass";
+        pass.Output = Cpy->CompressedTex;
+        pass.Bindings = inputs.data();
+        pass.BindingCount = inputs.size();
+        pass.Benchmark = Cpy->client->Debug;
+        mzEngine.RunPass(cmd, &pass);
+    }
+
+    mzEngine.End(cmd);
 
     Cpy->cpuRing->EndPush(outgoing);
     Cpy->gpuRing->EndPop(incoming);
