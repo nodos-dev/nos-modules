@@ -105,21 +105,22 @@ struct GaussBlurContext
 
 	void Run(MzNodeExecuteArgs* pins)
 	{
-		float* softnessPinValue;
+		//Create AllPinValues
+		float* softnessPinValue = nullptr;
 		MzVec2* kernelPinValue;
 		mz::fb::TTexture outputTexture;
-
+		//Check and set all of them
 		for(size_t i{}; i < pins->PinCount; i++)
 		{
 			if(strcmp(pins->PinNames[i], "Softness") == 0)
 			{
-				softnessPinValue =  static_cast<float*>(pins->PinValues[i].Data);
+				softnessPinValue = (float*)(pins->PinValues[i].Data);
 				*softnessPinValue += 1.0f;
 			}
 			
 			if(strcmp(pins->PinNames[i], "Kernel_Size") == 0)
 			{
-				kernelPinValue = static_cast<MzVec2*>(pins->PinValues[i].Data);
+				kernelPinValue = (MzVec2*)(pins->PinValues[i].Data);
 			}
 			if(strcmp(pins->PinNames[i], "Output") == 0)
 			{
@@ -128,8 +129,19 @@ struct GaussBlurContext
 		}
 
 		SetupIntermediateTexture(&outputTexture);
+		
+        auto key = "Gaussian_Blur_Pass_" + mz::Uuid2String(NodeId);
+		MzShaderBinding{
+			.VariableName = "Softness",
+			.Value = (void*)softnessPinValue,
+		};
+		MzRunPassParams horizontalPass;
+		horizontalPass.PassKey = key.c_str();
+		horizontalPass.Bindings = 
+		horizontalPass.Wireframe = false;
 
-		MzPassInfo horzPass;
+		mzEngine.RunPass()
+
 		
 	 //    // Pass 1 begin
 	 //    app::TRunPass horzPass;
@@ -167,7 +179,7 @@ void RegisterGaussianBlur(MzNodeFunctions* out)
 		*outCtxPtr = new mz::filters::GaussBlurContext(*node);
 	};
 	out->ExecuteNode = [](void* ctx, const MzNodeExecuteArgs* args) {
-		// (mz::filters::GaussBlurContext*)ctx->Run(args);
+		//(mz::filters::GaussBlurContext*)ctx->Run(args);
 		return true;
 	};
 }
