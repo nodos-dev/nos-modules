@@ -12,6 +12,14 @@
 #include "Gradient.frag.spv.dat"
 #include "GaussianBlur.frag.spv.dat"
 #include "Kuwahara.frag.spv.dat"
+#include "Offset.frag.spv.dat"
+#include "KawaseLightStreak.frag.spv.dat"
+#include "PremultiplyAlpha.frag.spv.dat"
+#include "SevenSegment.frag.spv.dat"
+#include "Sharpen.frag.spv.dat"
+#include "Sobel.frag.spv.dat"
+#include "Thresholder.frag.spv.dat"
+#include "QuadMerge.frag.spv.dat"
 
 // Nodes
 #include "GaussianBlur.hpp"
@@ -23,12 +31,22 @@ namespace mz::filters
 
 enum Filters
 {
-	Color = 0,
-	ColorCorrect,
-	Diff,
-	Gradient,
-	Kuwahara,
-	GaussianBlur,
+	Color = 0,						// Done
+	ColorCorrect,					// Done
+	Diff,							// Done
+	Gradient,						// Done
+	Kuwahara,						// Done
+	GaussianBlur,					// Done
+	Offset,							// Done
+	Merge,
+	KawaseLightStreak,				// Done
+	PremultiplyAlpha,				// Done
+	Resize,
+	SevenSegment,					// Done
+	Sharpen,						// Done
+	Sobel,							// Done
+	Thresholder,					// Done
+	QuadMerge,						// Done
 	Count
 };
 
@@ -50,6 +68,7 @@ MZAPI_ATTR MzResult MZAPI_CALL mzExportNodeFunctions(size_t* outSize, MzNodeFunc
 		auto* funcs = &outFunctions[i];
 		switch ((Filters)i)
 		{
+		// COLOR FILTER
 		case Filters::Color: {
 			funcs->TypeName = "mz.Color";
 			funcs->GetShaderSource = [](MzBuffer* outSpirvBuf) -> MzResult {
@@ -59,6 +78,7 @@ MZAPI_ATTR MzResult MZAPI_CALL mzExportNodeFunctions(size_t* outSize, MzNodeFunc
 			};
 			break;
 		}
+		// COLOR CORRECT FILTER
 		case Filters::ColorCorrect: {
 			funcs->TypeName = "mz.ColorCorrect";
 			funcs->GetShaderSource = [](MzBuffer* outSpirvBuf) -> MzResult {
@@ -68,6 +88,7 @@ MZAPI_ATTR MzResult MZAPI_CALL mzExportNodeFunctions(size_t* outSize, MzNodeFunc
 			};
 			break;
 		}
+		// DIFF FILTER
 		case Filters::Diff: {
 			funcs->TypeName = "mz.Diff";
 			funcs->GetShaderSource = [](MzBuffer* outSpirvBuf) -> MzResult {
@@ -77,6 +98,7 @@ MZAPI_ATTR MzResult MZAPI_CALL mzExportNodeFunctions(size_t* outSize, MzNodeFunc
 			};
 			break;
 		}
+		// GRADIENT FILTER
 		case Filters::Gradient: {
 			funcs->TypeName = "mz.Gradient";
 			funcs->GetShaderSource = [](MzBuffer* outSpirvBuf) -> MzResult {
@@ -86,6 +108,7 @@ MZAPI_ATTR MzResult MZAPI_CALL mzExportNodeFunctions(size_t* outSize, MzNodeFunc
 			};
 			break;
 		}
+		// KUWAHARA FILTER
 		case Filters::Kuwahara: {
 			funcs->TypeName = "mz.Kuwahara";
 			funcs->GetShaderSource = [](MzBuffer* outSpirvBuf) -> MzResult {
@@ -95,8 +118,79 @@ MZAPI_ATTR MzResult MZAPI_CALL mzExportNodeFunctions(size_t* outSize, MzNodeFunc
 			};
 			break;
 		}
+		// GAUSSIAN BLUR FILTER
 		case Filters::GaussianBlur: {
 			RegisterGaussianBlur(funcs);
+			break;
+		}
+		// OFFSET FILTER
+		case Filters::Offset: {
+			funcs->TypeName = "mz.Offset";
+			funcs->GetShaderSource = [](MzBuffer* outSpirvBuf)-> MzResult {
+				outSpirvBuf->Data = (void*)(Offset_frag_spv);
+				outSpirvBuf->Size = sizeof(Offset_frag_spv);
+				return MZ_RESULT_SUCCESS;
+			};
+			break;
+		}
+		// MERGE FILTER
+		case Filters::KawaseLightStreak:{
+			funcs->TypeName = "mz.KawaseLightStreak";
+			funcs->GetShaderSource = [](MzBuffer* outSpirvBuf)-> MzResult {
+				outSpirvBuf->Data = (void*)(KawaseLightStreak_frag_spv);
+				outSpirvBuf->Size = sizeof(KawaseLightStreak_frag_spv);
+				return MZ_RESULT_SUCCESS;
+			};
+			break;
+		}
+		// PREMULTIPLY ALPHA FILTER
+		case Filters::PremultiplyAlpha: {
+			funcs->TypeName = "mz.PremultiplyAlpha";
+			funcs->GetShaderSource = [](MzBuffer* outSpirvBuf)-> MzResult {
+				outSpirvBuf->Data = (void*)(PremultiplyAlpha_frag_spv);
+				outSpirvBuf->Size = sizeof(PremultiplyAlpha_frag_spv);
+				return MZ_RESULT_SUCCESS;
+			};
+			break;
+		}
+		// SEVENSEGMENT FILTER
+		case Filters::SevenSegment: {
+			funcs->TypeName = "mz.SevenSegment";
+			funcs->GetShaderSource = [](MzBuffer* outSpirvBuf)-> MzResult {
+				outSpirvBuf->Data = (void*)(SevenSegment_frag_spv);
+				outSpirvBuf->Size = sizeof(SevenSegment_frag_spv);
+				return MZ_RESULT_SUCCESS;
+			};
+			break;
+		}
+		// SHARPEN FILTER
+		case Filters::Sharpen: {
+			funcs->TypeName = "mz.Sharpen";
+			funcs->GetShaderSource = [](MzBuffer* outSpirvBuf)-> MzResult {
+				outSpirvBuf->Data = (void*)(Sharpen_frag_spv);
+				outSpirvBuf->Size = sizeof(Sharpen_frag_spv);
+				return MZ_RESULT_SUCCESS;
+			};
+			break;
+		}
+		// SOBEL FILTER
+		case Filters::Sobel: {
+			funcs->TypeName = "mz.Sobel";
+			funcs->GetShaderSource = [](MzBuffer* outSpirvBuf)-> MzResult {
+				outSpirvBuf->Data = (void*)(Sobel_frag_spv);
+				outSpirvBuf->Size = sizeof(Sobel_frag_spv);
+				return MZ_RESULT_SUCCESS;
+			};
+			break;
+		}
+		// THRESHOLDER FILTER
+		case Filters::Thresholder: {
+			funcs->TypeName = "mz.Thresholder";
+			funcs->GetShaderSource = [](MzBuffer* outSpirvBuf)-> MzResult {
+				outSpirvBuf->Data = (void*)(Thresholder_frag_spv);
+				outSpirvBuf->Size = sizeof(Thresholder_frag_spv);
+				return MZ_RESULT_SUCCESS;
+			};
 			break;
 		}
 		default: return MZ_RESULT_INVALID_ARGUMENT;

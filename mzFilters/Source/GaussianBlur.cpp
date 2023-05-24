@@ -30,7 +30,7 @@ struct GaussBlurContext
 	GaussBlurContext(fb::Node const& node)
 	{
 		NodeId = *node.id();
-		// RegisterShaders();
+		RegisterShaders();
 		RegisterPasses();
 
 		IntermediateTexture.filtering = mz::fb::Filtering::LINEAR;
