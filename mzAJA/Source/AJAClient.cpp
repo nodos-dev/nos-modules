@@ -444,7 +444,7 @@ void AJAClient::OnNodeUpdate(PinMapping &&newMapping, std::map<std::string, cons
 void AJAClient::OnPinMenuFired(MzContextMenuRequest const &request)
 {
     flatbuffers::FlatBufferBuilder fbb;
-    auto name = Mapping.GetPinName(request.ItemId);
+    auto name = Mapping.GetPinName(*request.item_id());
 
     if (auto pin = FindChannel(ParseChannel(name)))
     {
@@ -456,15 +456,14 @@ void AJAClient::OnPinMenuFired(MzContextMenuRequest const &request)
                                                 .Channel = pin->Channel,
                                             })};
 
-        RequestInfo instigator = { request.ClientId, request.RequestId };
         mzEngine.HandleEvent(CreateAppEvent(
-            fbb, mz::CreateContextMenuUpdateDirect(fbb, &request.ItemId, (fb::vec2*)&request.Position, &instigator, &remove)));
+            fbb, mz::CreateContextMenuUpdateDirect(fbb, request.item_id(), request.pos(), request.instigator(), &remove)));
     }
 }
 
 void AJAClient::OnMenuFired(MzContextMenuRequest const&request)
 {
-    if (0 != memcmp(&request.ItemId, &Mapping.NodeId, 16))
+    if (0 != memcmp(request.item_id(), &Mapping.NodeId, 16))
     {
         return OnPinMenuFired(request);
     }
@@ -567,10 +566,8 @@ void AJAClient::OnMenuFired(MzContextMenuRequest const&request)
         return;
     }
 
-    RequestInfo instigator = { request.ClientId, request.RequestId };
-
     mzEngine.HandleEvent(CreateAppEvent(
-        fbb, mz::CreateContextMenuUpdateDirect(fbb, &Mapping.NodeId, (fb::vec2*) & request.Position, &instigator, &items)));
+        fbb, mz::CreateContextMenuUpdateDirect(fbb, &Mapping.NodeId, request.pos(), request.instigator(), &items)));
 }
 
 void AJAClient::OnCommandFired(u32 cmd)
@@ -848,19 +845,17 @@ bool AJAClient::BeginCopyFrom(MzCopyInfo &cpy)
     auto th = *it;
 	if ((slot = th->gpuRing->TryPop(cpy.FrameNumber, th->SpareCount)))
 	{
-		cpy.CopyTextureTo = cpy.SrcPinData;
-		cpy.CopyTextureFrom.Data = slot->Res.data();
-		cpy.CopyTextureFrom.Size = slot->Res.size();
+		cpy.CopyTextureFrom = slot->Res;
 
         slot->Res;
         cpy.ShouldSetSourceFrameNumber = true;
 
-		if (-1 == *cpy.PathState)
-			*cpy.PathState = (uint32_t)flatbuffers::GetRoot<fb::Texture>(cpy.CopyTextureFrom.Data)->field_type();
-		else
-		{
-			*cpy.PathState &= (uint32_t)slot->Res->field_type();
-		}
+		//if (-1 == *cpy.PathState)
+		//	*cpy.PathState = (uint32_t)flatbuffers::GetRoot<fb::Texture>(cpy.CopyTextureFrom.Data)->field_type();
+		//else
+		//{
+		//	*cpy.PathState &= (uint32_t)slot->Res->field_type();
+		//}
 	}
     return cpy.ShouldCopyTexture = !!(cpy.Data = slot);
 }
@@ -878,12 +873,10 @@ bool AJAClient::BeginCopyTo(MzCopyInfo &cpy)
 		slot->FrameNumber = cpy.FrameNumber;
 		if (-1 != *cpy.PathState)
 		{
-            slot->Res->mutate_field_type(fb::FieldType(*cpy.PathState));
+            // slot->Res->mutate_field_type(fb::FieldType(*cpy.PathState));
 		}
 
-		cpy.CopyTextureFrom = cpy.SrcPinData;
-        cpy.CopyTextureTo.Data = slot->Res.data();
-        cpy.CopyTextureTo.Size = slot->Res.size();
+        cpy.CopyTextureTo = slot->Res;
 	}
     return cpy.ShouldCopyTexture = !!(cpy.Data = slot);
 }
@@ -911,8 +904,7 @@ void AJAClient::EndCopyTo(MzCopyInfo &cpy)
 
     auto th = *it;
     auto res = (GPURing::Resource *)cpy.Data;
-	if (-1 != *cpy.PathState)
-		res->Res->mutate_field_type((mz::fb::FieldType)*cpy.PathState);
+	// if (-1 != *cpy.PathState) res->Res->mutate_field_type((mz::fb::FieldType)*cpy.PathState);
     th->gpuRing->EndPush(res);
     cpy.Stop = th->cpuRing->IsFull();
     th->Worker->Enqueue({});

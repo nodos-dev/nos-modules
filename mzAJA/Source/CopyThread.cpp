@@ -136,11 +136,11 @@ void CopyThread::StartThread()
         CreateAppEvent(fbb, mz::app::CreateSetThreadNameDirect(fbb, (u64)th.native_handle(), threadName.c_str())));
 }
 
-mz::fb::vec2u CopyThread::Extent() const
+MzVec2u CopyThread::Extent() const
 {
     u32 width, height;
     client->Device->GetExtent(Format, mode, width, height);
-    return fb::vec2u(width, height);
+    return MzVec2u(width, height);
 }
 
 void CopyThread::Stop()
@@ -270,18 +270,20 @@ void CopyThread::CreateRings(u32 size)
 {
 	const auto ext = Extent();
     
-    if (CompressedTex.handle)
-        mzEngine.Destroy(CompressedTex);
+    if (CompressedTex.memory.handle)
+        mzEngine.Destroy(&CompressedTex);
+    
+    TRing<MzTextureInfo>(ext, size);;
 
 	gpuRing = MakeShared<GPURing>(ext, size);
-	fb::vec2u compressedExt((10 == BitWidth()) ? ((ext.x() + (48 - ext.x() % 48) % 48) / 3) << 1 : ext.x() >> 1, ext.y() >> u32(Interlaced()));
+	MzVec2u compressedExt((10 == BitWidth()) ? ((ext.x + (48 - ext.x % 48) % 48) / 3) << 1 : ext.x >> 1, ext.y >> u32(Interlaced()));
 	cpuRing = MakeShared<CPURing>(compressedExt, size);
-    CompressedTex.width = compressedExt.x();
-    CompressedTex.height = compressedExt.y();
-    CompressedTex.format = fb::Format::R8G8B8A8_UINT;
-    CompressedTex.unscaled = true;
-    CompressedTex.unmanaged = true;
-    mzEngine.Create(CompressedTex);
+    CompressedTex.info.texture.width = compressedExt.x;
+    CompressedTex.info.texture.height = compressedExt.y;
+    CompressedTex.info.texture.format = MZ_FORMAT_R8G8B8A8_UINT;
+    //CompressedTex.unscaled = true;
+    //CompressedTex.unmanaged = true;
+    mzEngine.Create(&CompressedTex);
 }
 
 void CopyThread::InputUpdate(AJADevice::Mode &prevMode)
@@ -374,10 +376,10 @@ void CopyThread::AJAInputProc()
             continue;
         }
 
-        const u32 Pitch = CompressedTex.width * 4;
-        const u32 Segments = CompressedTex.height;
-        ULWord *Buf = (ULWord *)mzEngine.Map(slot->Res);
-        const u32 Size = slot->Res.size();
+        const u32 Pitch = CompressedTex.info.texture.width * 4;
+        const u32 Segments = CompressedTex.info.texture.height;
+        ULWord *Buf = (ULWord *)mzEngine.Map(&slot->Res);
+        const u32 Size = slot->Res.info.buffer.size;
         const u32 ReadFB = 2 * Channel + FB;
         params.T0 = Clock::now();
         if (Interlaced())
@@ -428,7 +430,7 @@ EXIT:
     }
 }
 
-fb::vec2u CopyThread::GetSuitableDispatchSize() const
+MzVec2u CopyThread::GetSuitableDispatchSize() const
 {
     constexpr auto BestFit = [](i64 val, i64 res) -> u32 {
         auto d = FindDivisors(res);
@@ -443,11 +445,11 @@ fb::vec2u CopyThread::GetSuitableDispatchSize() const
     };
 
     const u32 q = IsQuad();
-    f32 x = glm::clamp<u32>(client->DispatchSizeX.load(), 1, CompressedTex.width) * (1 + q) * (.25 * BitWidth() - 1);
-    f32 y = glm::clamp<u32>(client->DispatchSizeY.load(), 1, CompressedTex.height) * (1. + q) * (1 - .5 * Interlaced());
+    f32 x = glm::clamp<u32>(client->DispatchSizeX.load(), 1, CompressedTex.info.texture.width) * (1 + q) * (.25 * BitWidth() - 1);
+    f32 y = glm::clamp<u32>(client->DispatchSizeY.load(), 1, CompressedTex.info.texture.height) * (1. + q) * (1 - .5 * Interlaced());
 
-    return fb::vec2u(BestFit(x + .5, CompressedTex.width >> (BitWidth() - 5)),
-                     BestFit(y + .5, CompressedTex.height / 9));
+    return MzVec2u(BestFit(x + .5, CompressedTex.info.texture.width >> (BitWidth() - 5)),
+                     BestFit(y + .5, CompressedTex.info.texture.height / 9));
 }
 
 void CopyThread::AJAOutputProc()
@@ -462,7 +464,7 @@ void CopyThread::AJAOutputProc()
     {
         std::stringstream ss;
         ss << "AJAOut Thread: " << std::this_thread::get_id();
-        mzEngine.Log(ss.str(), "");
+        mzEngine.Log(ss.str().c_str(), "");
     }
 
     u32 readyFrames = cpuRing->ReadyFrames();
@@ -482,7 +484,7 @@ void CopyThread::AJAOutputProc()
 
     while (run && !cpuRing->Exit)
     {
-        mzEngine.LogFast(Name() + " ring count", std::to_string(cpuRing->ReadyFrames()));
+        mzEngine.Log((Name() + " ring count", std::to_string(cpuRing->ReadyFrames())).c_str(), "");
 
 		if (!(client->Device->WaitForOutputVerticalInterrupt(Channel)))
 			break;
@@ -497,13 +499,13 @@ void CopyThread::AJAOutputProc()
                 field = NTV2FieldID(field ^ 1);
                 FieldIdx = field + 1;
             }
-            const ULWord *Buf = (ULWord *)mzEngine.Map(res->Res);
+            const ULWord *Buf = (ULWord *)mzEngine.Map(&res->Res);
 
             const u32 OutFrame = 2 * Channel + FB;
 
-			const u32 Pitch = CompressedTex.width * 4;
-			const u32 Segments = CompressedTex.height;
-			const u32 Size = cpuRing->Sample.size();
+			const u32 Pitch = CompressedTex.info.texture.width * 4;
+			const u32 Segments = CompressedTex.info.texture.height;
+			const u32 Size = cpuRing->Sample.size;
 
             if (Interlaced())
             {
@@ -527,7 +529,7 @@ void CopyThread::AJAOutputProc()
         }
         else
         {
-            mzEngine.LogW(Name() + " dropped 1 frame", "");
+            mzEngine.LogW((Name() + " dropped 1 frame").c_str(), "");
         }
     }
     gpuRing->Stop();
@@ -568,83 +570,82 @@ void CopyThread::InputConversionThread::Consume(CopyThread::Parameters const& pa
         .val = mz::Buffer::From(params.FieldIdx | ((Cpy->client->Shader == ShaderType::Comp10) << 2))});
     inputs.emplace_back(new mz::app::TShaderBinding{.var = "ssbo", .val = mz::Buffer::From(Cpy->SSBO)});
     auto MsgKey = "Input " + Cpy->Name() + " DMA";
-    struct
-    {
-        EngineNodeServices::ResBorrow src, dst;
-        std::string key;
-    } cpy = {slot->Res, Cpy->CompressedTex, Cpy->client->Debug ? ("(GPUTransfer)" + MsgKey + ":" + std::to_string(Cpy->client->Debug)) : ""};
-    static_assert(sizeof(cpy) == sizeof(app::TCopyResource));
+    //struct
+    //{
+    //    EngineNodeServices::ResBorrow src, dst;
+    //    std::string key;
+    //} cpy = {slot->Res, Cpy->CompressedTex, Cpy->client->Debug ? ("(GPUTransfer)" + MsgKey + ":" + std::to_string(Cpy->client->Debug)) : ""};
+    //static_assert(sizeof(cpy) == sizeof(app::TCopyResource));
 
-    auto& [time, counter] = Cpy->DebugInfo;
-    
-    if (Cpy->client->Debug && ++counter >= Cpy->client->Debug)
-    {
-        time += params.T1 - params.T0;
-        auto t = time / counter;
-        counter = 0;
-        time = std::chrono::nanoseconds(0);
-        std::stringstream ss;
-        ss << "(AJATransfer)" << MsgKey << " took: " << t << " (" << std::chrono::duration_cast<Micro>(t) << ")"
-           << " (" << std::chrono::duration_cast<Milli>(t) << ")"
-           << "\n";
-        mzEngine.Log(ss.str(), "");
-    }
-    mzEngine.MakeAPICall((app::TCopyResource&)cpy, true);
-    if (Cpy->client->Shader != ShaderType::Frag8)
-    {
-        inputs.emplace_back(new mz::app::TShaderBinding{.var = "Output", .val = mz::Buffer::From(res->Res)});
-        app::TRunComputePass pass;
-        pass.pass = "AJA_YCbCr2RGB_Compute_Pass";
-        pass.dispatch_size = Cpy->GetSuitableDispatchSize();
-        pass.inputs = std::move(inputs);
-        pass.benchmark = Cpy->client->Debug;
-        mzEngine.MakeAPICall(pass, true);
-    }
-    else
-    {
-        app::TRunPass2 pass;
-        pass.pass = "AJA_YCbCr2RGB_Pass";
-        pass.output = std::make_unique<mz::fb::TTexture>(res->Res);
-        pass.draws.push_back(std::make_unique<mz::app::TDrawCall>());
-        pass.draws.back()->inputs = std::move(inputs);
-        pass.benchmark = Cpy->client->Debug;
-        mzEngine.MakeAPICall(pass, true);
-    }
+    //auto& [time, counter] = Cpy->DebugInfo;
+    //
+    //if (Cpy->client->Debug && ++counter >= Cpy->client->Debug)
+    //{
+    //    time += params.T1 - params.T0;
+    //    auto t = time / counter;
+    //    counter = 0;
+    //    time = std::chrono::nanoseconds(0);
+    //    std::stringstream ss;
+    //    ss << "(AJATransfer)" << MsgKey << " took: " << t << " (" << std::chrono::duration_cast<Micro>(t) << ")"
+    //       << " (" << std::chrono::duration_cast<Milli>(t) << ")"
+    //       << "\n";
+    //    mzEngine.Log(ss.str(), "");
+    //}
+    //mzEngine.MakeAPICall((app::TCopyResource&)cpy, true);
+    //if (Cpy->client->Shader != ShaderType::Frag8)
+    //{
+    //    inputs.emplace_back(new mz::app::TShaderBinding{.var = "Output", .val = mz::Buffer::From(res->Res)});
+    //    app::TRunComputePass pass;
+    //    pass.pass = "AJA_YCbCr2RGB_Compute_Pass";
+    //    pass.dispatch_size = Cpy->GetSuitableDispatchSize();
+    //    pass.inputs = std::move(inputs);
+    //    pass.benchmark = Cpy->client->Debug;
+    //    mzEngine.MakeAPICall(pass, true);
+    //}
+    //else
+    //{
+    //    app::TRunPass2 pass;
+    //    pass.pass = "AJA_YCbCr2RGB_Pass";
+    //    pass.output = std::make_unique<mz::fb::TTexture>(res->Res);
+    //    pass.draws.push_back(std::make_unique<mz::app::TDrawCall>());
+    //    pass.draws.back()->inputs = std::move(inputs);
+    //    pass.benchmark = Cpy->client->Debug;
+    //    mzEngine.MakeAPICall(pass, true);
+    //}
 
-    if(Cpy->client->Debug)
-    {
-        auto tmp = res->Res;
-        mzEngine.Create(tmp);
-        app::TCopyResource cpy;
-        cpy.src.Set(res->Res);
-        cpy.dst.Set(tmp);
-        app::TRunPass2 pass;
-        pass.pass = "$$GPUJOBPASS$$mz.SevenSegment";
-        pass.draws.push_back(std::make_unique<mz::app::TDrawCall>());
-        pass.draws.back()->inputs.emplace_back(new app::TShaderBinding { .var = "Color", .val = mz::Buffer::From(glm::vec4(1))});
-        pass.draws.back()->inputs.emplace_back(new app::TShaderBinding { .var = "SampleInput", .val = mz::Buffer::From(1)});
-        pass.draws.back()->inputs.emplace_back(new app::TShaderBinding { .var = "RenderFrameNo", .val = mz::Buffer::From(0)});
-    
-        pass.draws.back()->inputs.emplace_back(new app::TShaderBinding { .var = "Number", .val = mz::Buffer::From(params.FrameNumber)});
-        pass.draws.back()->inputs.emplace_back(new app::TShaderBinding { .var = "Input", .val = mz::Buffer::From(tmp)});
-        pass.output = std::make_unique<mz::fb::TTexture>(res->Res);
-        mzEngine.MakeAPICalls(true, cpy, pass);
-        mzEngine.Destroy(tmp);
-    }
+    //if(Cpy->client->Debug)
+    //{
+    //    auto tmp = res->Res;
+    //    mzEngine.Create(tmp);
+    //    app::TCopyResource cpy;
+    //    cpy.src.Set(res->Res);
+    //    cpy.dst.Set(tmp);
+    //    app::TRunPass2 pass;
+    //    pass.pass = "$$GPUJOBPASS$$mz.SevenSegment";
+    //    pass.draws.push_back(std::make_unique<mz::app::TDrawCall>());
+    //    pass.draws.back()->inputs.emplace_back(new app::TShaderBinding { .var = "Color", .val = mz::Buffer::From(glm::vec4(1))});
+    //    pass.draws.back()->inputs.emplace_back(new app::TShaderBinding { .var = "SampleInput", .val = mz::Buffer::From(1)});
+    //    pass.draws.back()->inputs.emplace_back(new app::TShaderBinding { .var = "RenderFrameNo", .val = mz::Buffer::From(0)});
+    //
+    //    pass.draws.back()->inputs.emplace_back(new app::TShaderBinding { .var = "Number", .val = mz::Buffer::From(params.FrameNumber)});
+    //    pass.draws.back()->inputs.emplace_back(new app::TShaderBinding { .var = "Input", .val = mz::Buffer::From(tmp)});
+    //    pass.output = std::make_unique<mz::fb::TTexture>(res->Res);
+    //    mzEngine.MakeAPICalls(true, cpy, pass);
+    //    mzEngine.Destroy(tmp);
+    //}
 
-    res->Res.field_type = fb::FieldType::ANY ^ fb::FieldType(params.FieldIdx ^ 3);
+    // res->Res.field_type = fb::FieldType::ANY ^ fb::FieldType(params.FieldIdx ^ 3);
     // std::this_thread::sleep_for(std::chrono::milliseconds(1));
     res->FrameNumber = params.FrameNumber;
     Cpy->gpuRing->EndPush(res);
     Cpy->cpuRing->EndPop(slot);
-    mzEngine.LogFast(Cpy->Name() + " ring count", std::to_string(Cpy->gpuRing->ReadyFrames()));
+    mzEngine.Log((Cpy->Name() + " ring count", std::to_string(Cpy->gpuRing->ReadyFrames())).c_str(), "");
 }
 
 CopyThread::ConversionThread::~ConversionThread()
 {
     Stop();
 }
-
 
 void CopyThread::OutputConversionThread::Consume(const Parameters& item)
 {
@@ -669,34 +670,34 @@ void CopyThread::OutputConversionThread::Consume(const Parameters& item)
         .val = mz::Buffer::From((Cpy->client->Shader == ShaderType::Comp10) << 2) });
     inputs.emplace_back(new mz::app::TShaderBinding{ .var = "ssbo", .val = mz::Buffer::From(Cpy->SSBO) });
 
-    struct
-    {
-        EngineNodeServices::ResBorrow src, dst;
-        std::string key;
-    } cpy = { Cpy->CompressedTex, outgoing->Res, "" };
-    static_assert(sizeof(cpy) == sizeof(app::TCopyResource));
+    //struct
+    //{
+    //    EngineNodeServices::ResBorrow src, dst;
+    //    std::string key;
+    //} cpy = { Cpy->CompressedTex, outgoing->Res, "" };
+    //static_assert(sizeof(cpy) == sizeof(app::TCopyResource));
 	
-    // watch out for th members, they are not synced
-    if (Cpy->client->Shader != ShaderType::Frag8)
-    {
-        inputs.emplace_back(new mz::app::TShaderBinding{ .var = "Output", .val = mz::Buffer::From(Cpy->CompressedTex) });
-        app::TRunComputePass pass;
-        pass.pass = "AJA_RGB2YCbCr_Compute_Pass";
-        pass.dispatch_size = Cpy->GetSuitableDispatchSize();
-        pass.inputs = std::move(inputs);
-        pass.benchmark = Cpy->client->Debug;
-        mzEngine.MakeAPICalls(true, pass, (app::TCopyResource&)cpy);
-    }
-    else
-    {
-        app::TRunPass2 pass;
-        pass.pass = "AJA_RGB2YCbCr_Pass";
-        pass.benchmark = Cpy->client->Debug;
-        pass.output = std::make_unique<mz::fb::TTexture>(Cpy->CompressedTex);
-        pass.draws.push_back(std::make_unique<mz::app::TDrawCall>());
-        pass.draws.back()->inputs = std::move(inputs);
-        mzEngine.MakeAPICalls(true, pass, (app::TCopyResource&)cpy);
-    }
+    //// watch out for th members, they are not synced
+    //if (Cpy->client->Shader != ShaderType::Frag8)
+    //{
+    //    inputs.emplace_back(new mz::app::TShaderBinding{ .var = "Output", .val = mz::Buffer::From(Cpy->CompressedTex) });
+    //    app::TRunComputePass pass;
+    //    pass.pass = "AJA_RGB2YCbCr_Compute_Pass";
+    //    pass.dispatch_size = Cpy->GetSuitableDispatchSize();
+    //    pass.inputs = std::move(inputs);
+    //    pass.benchmark = Cpy->client->Debug;
+    //    mzEngine.MakeAPICalls(true, pass, (app::TCopyResource&)cpy);
+    //}
+    //else
+    //{
+    //    app::TRunPass2 pass;
+    //    pass.pass = "AJA_RGB2YCbCr_Pass";
+    //    pass.benchmark = Cpy->client->Debug;
+    //    pass.output = std::make_unique<mz::fb::TTexture>(Cpy->CompressedTex);
+    //    pass.draws.push_back(std::make_unique<mz::app::TDrawCall>());
+    //    pass.draws.back()->inputs = std::move(inputs);
+    //    mzEngine.MakeAPICalls(true, pass, (app::TCopyResource&)cpy);
+    //}
 
     Cpy->cpuRing->EndPush(outgoing);
     Cpy->gpuRing->EndPop(incoming);
@@ -711,9 +712,9 @@ CopyThread::CopyThread(mz::fb::UUID id, struct AJAClient *client, u32 ringSize, 
 {
 
     {
-        SSBO.mutate_size((1<<(SSBO_SIZE)) * sizeof(u16));
-        SSBO.mutate_usage(fb::BufferUsage::STORAGE_BUFFER | fb::BufferUsage::DEVICE_MEMORY);
-        mzEngine.Create(SSBO);
+        SSBO.info.buffer.size = (1<<(SSBO_SIZE)) * sizeof(u16);
+        SSBO.info.buffer.usage = MZ_BUFFER_USAGE_STORAGE_BUFFER; // | MZ_BUFFER_USAGE_DEVICE_MEMORY;
+        mzEngine.Create(&SSBO);
         UpdateCurve(GammaCurve);
     }
 
@@ -732,9 +733,9 @@ CopyThread::~CopyThread()
 {
     Stop();
     client->Device->CloseChannel(Channel, IsInput(), IsQuad());
-    mzEngine.Destroy(SSBO);
-    if (CompressedTex.handle)
-        mzEngine.Destroy(CompressedTex);
+    mzEngine.Destroy(&SSBO);
+    if (CompressedTex.memory.handle)
+        mzEngine.Destroy(&CompressedTex);
 }
 
 void CopyThread::Orphan(bool b)

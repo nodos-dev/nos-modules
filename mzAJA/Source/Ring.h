@@ -11,17 +11,26 @@ struct TRing
     
     struct Resource
     {
-        mz::Table<T> Res;
+        MzResourceShareInfo Res;
 
-        Resource(T r) : Res(r)
+        Resource(T r) : Res{}
         {
-            
-            mzEngine.Create(Res);
+            if constexpr (std::is_same_v<T, MzBufferInfo>)
+            {
+                Res.info.type = MZ_RESOURCE_TYPE_BUFFER;
+                Res.info.buffer = r;
+            }
+            else
+            {
+                Res.info.type = MZ_RESOURCE_TYPE_TEXTURE;
+                Res.info.texture = r;
+            }
+            mzEngine.Create(&Res);
         }
         
         ~Resource()
         {
-            mzEngine.Destroy(Res);
+            mzEngine.Destroy(&Res);
         }
 
         std::atomic_uint32_t FrameNumber;
@@ -41,24 +50,21 @@ struct TRing
         Size = size;
     }
     
-    TRing(fb::vec2u extent, u32 Size) 
-        requires(std::is_same_v<T, mz::fb::Buffer>)
-        : Extent(extent)
+    TRing(MzVec2u extent, u32 Size) 
+        requires(std::is_same_v<T, MzBufferInfo>)
+        : Extent(extent), Sample()
     {
-        Sample.mutate_size(Extent.x() * Extent.y() * 4);
-        Sample.mutate_usage(fb::BufferUsage::NONE);
+        Sample.size = Extent.x * Extent.y * 4;
         Resizex(Size);
     }
     
-    TRing(fb::vec2u extent, u32 Size, mz::fb::Format format = fb::Format::R16G16B16A16_UNORM)
-        requires(std::is_same_v<T, mz::fb::TTexture>)
-        : Extent(extent)
+    TRing(MzVec2u extent, u32 Size, MzFormat format = MZ_FORMAT_R16G16B16A16_UNORM)
+        requires(std::is_same_v<T, MzTextureInfo>)
+        : Extent(extent), Sample()
     {
-        Sample.width = Extent.x();
-        Sample.height = Extent.y();
+        Sample.width = Extent.x;
+        Sample.height = Extent.y;
         Sample.format = format;
-        Sample.unscaled = true;
-        Sample.unmanaged = true;
         Resizex(Size);
     }
 
@@ -72,7 +78,7 @@ struct TRing
     std::vector<rc<Resource>> Glob;
 
     u32 Size = 0;
-    fb::vec2u Extent;
+    MzVec2u Extent;
     std::atomic_bool Exit = false;
     std::atomic_bool ResetFrameCount = true;
 
@@ -204,7 +210,7 @@ struct TRing
     }
 };
 
-typedef TRing<mz::fb::Buffer> CPURing;
-typedef TRing<mz::fb::Texture> GPURing;
+typedef TRing<MzBufferInfo> CPURing;
+typedef TRing<MzTextureInfo> GPURing;
 
 } // namespace mz

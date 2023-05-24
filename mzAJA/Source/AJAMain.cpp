@@ -220,15 +220,21 @@ struct AJA
 
     static void OnNodeSelected(const MzUUID graphId, const MzUUID selectedNodeId) { }
 
-    static void OnPathCommand(void* ctx, const MzPathCommandExecuteParams * params) 
+    static void OnPathCommand(void* ctx, const MzPathCommand* params)
     { 
         auto aja = ((AJAClient *)ctx);
-        aja->OnPathCommand(params->Id, (app::PathCommand)params->CommandType, mz::Buffer((u8*)params->Params.Data, params->Params.Size));
+        aja->OnPathCommand(params->Id, (app::PathCommand)params->CommandType, mz::Buffer((u8*)params->Args.Data, params->Args.Size));
     }
 
-    static MzResult GetFunctions(size_t * outCount, const char** pName, PFN_NodeFunctionExecute * outFunction) { }
-    static bool  ExecuteNode(void* ctx, const MzNodeExecuteArgs * args) { }
-    static bool  CanCopy(void* ctx, MzCopyInfo * copyInfo) { }
+    static MzResult GetFunctions(size_t * outCount, const char** pName, PFN_NodeFunctionExecute * outFunction) 
+    {
+        return MZ_RESULT_SUCCESS;
+    }
+    static bool  ExecuteNode(void* ctx, const MzNodeExecuteArgs * args) { return MZ_RESULT_SUCCESS; }
+    static bool  CanCopy(void* ctx, MzCopyInfo * copyInfo) 
+    { 
+        return MZ_RESULT_SUCCESS;
+    }
 
     static bool  BeginCopyFrom(void* ctx, MzCopyInfo * cpy)
     { 
