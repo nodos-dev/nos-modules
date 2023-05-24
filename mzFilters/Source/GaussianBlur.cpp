@@ -152,9 +152,17 @@ struct GaussBlurContext
 
 		SetupIntermediateTexture(&outputTexture);
 
+		auto out = mz::Buffer::From(outputTexture);
+		auto intermediate = mz::Buffer::From(IntermediateTexture);
+
+		MzBuffer intermediateBuf = {
+			.Data = intermediate.data(),
+			.Size = intermediate.size()
+		};
 		std::string key = "Gaussian_Blur_Pass_" + mz::Uuid2String(NodeId);
 
 		SHADER_BUFFER_BINDING(InputBinding, "Input", inputTexture);
+		SHADER_BUFFER_BINDING(IntermediateBinding, "Input", intermediateBuf);
 		SHADER_BINDING(SoftnessBinding, "Softness", *softnessPinValue);
 		SHADER_BINDING(KernelSizeXBinding, "Kernel_Size", kernelPinValue->x);
 		SHADER_BINDING(KernelSizeYBinding, "Kernel_Size", kernelPinValue->y);
@@ -166,21 +174,24 @@ struct GaussBlurContext
 		bindings[2] = KernelSizeXBinding;
 		bindings[3] = PassTypeBinding;
 
-		auto out = mz::Buffer::From(outputTexture);
-		
-		MzRunPassParams passParams;
+		// Horz pass
+		MzRunPassParams passParams = {};
 		passParams.PassKey = key.c_str();
 		passParams.Bindings = bindings;
+		passParams.BindingCount = 4;
 		passParams.Wireframe = false;
-		passParams.Benchmark = 0;
-		passParams.Output = out.As<MzFbTexture>();
-		passParams.BindingCount = 3;
+		passParams.Output = intermediate.As<MzFbTexture>();
 		passParams.Vertices = nullptr;
 		
 		mzEngine.RunPass(&passParams);
 
+		passTypeValue = 1;
+
+		// Vert pass
+		bindings[0] = IntermediateBinding;
 		bindings[3] = KernelSizeYBinding;
 		passParams.Bindings = bindings;
+		passParams.Output = out.As<MzFbTexture>();
 		
 		mzEngine.RunPass(&passParams);
 	}
