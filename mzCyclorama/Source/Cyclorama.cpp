@@ -4,7 +4,8 @@
 #include "glm/common.hpp"
 #include <type_traits>
 
-#include "BasicMain.h"
+#include <MediaZ/Plugin.h>
+
 #include <mzCommon.h>
 
 #include <atomic>
@@ -261,19 +262,19 @@ bool GetValue(std::map<std::string, const mz::fb::Pin*>& pins, std::string const
 
 struct Cyclorama : PinMapping
 {
-    mz::app::VertexData Verts;
+    MzVertexData Verts;
 
     std::atomic_bool Capturing = false;
 
     std::atomic_uint CapturedFrameCount = 0;
 
-    mz::fb::TTexture lhs = {};
-    mz::fb::TTexture rt = {};
+    MzResourceShareInfo lhs = {};
+    MzResourceShareInfo rt = {};
     
     struct FrameData
     {
         std::string Path;
-        mz::fb::TTexture Texture;
+        MzResourceShareInfo Texture;
         mz::fb::TTrack Track;
         glm::vec3 Pos;
         glm::vec3 Rot;
@@ -293,7 +294,11 @@ struct Cyclorama : PinMapping
 			i32 w, h, n;
 			if (auto raw = stbi_load(dat.path.c_str(), &w, &h, &n, 4))
             {
-				auto tex = mzEngine.LoadImage(raw, fb::vec2u(w, h), fb::Format::R8G8B8A8_SRGB, fb::vec2u(w, h), fb::Format::R8G8B8A8_UNORM);
+                MzResourceShareInfo tex = {};
+                tex.info.texture.width = w;
+                tex.info.texture.height = h;
+                tex.info.texture.format = MZ_FORMAT_R8G8B8A8_UNORM;
+				mzEngine.ImageLoad(raw, MzVec2u(w, h), MZ_FORMAT_R8G8B8A8_SRGB, &tex);
                 free(raw);
                 out = {
                     .Path = std::move(dat.path),
@@ -330,18 +335,16 @@ struct Cyclorama : PinMapping
 
     void Clear()
     {
-        app::TClearTexture clear1, clear2;
-        clear1.texture.reset(&rt);
-        clear2.texture.reset(&lhs);
-        clear1.color = clear2.color = fb::vec4(0,0,0,1);
-        mzEngine.MakeAPICalls(true, clear1, clear2);
-        clear1.texture.release();
-        clear2.texture.release();
+        MzCmd cmd;
+        mzEngine.Begin(&cmd);
+        mzEngine.ClearTexture(cmd, &rt, MzVec4(0,0,0,1));
+        mzEngine.ClearTexture(cmd, &lhs, MzVec4(0,0,0,1));
+        mzEngine.End(cmd);
     }
 
     void CleanCleanPlates()
     {
-        for (auto &cp : CleanPlates) mzEngine.Destroy(cp.Texture);
+        for (auto &cp : CleanPlates) mzEngine.Destroy(&cp.Texture);
         CleanPlates.clear();
     }
 
@@ -373,18 +376,19 @@ struct Cyclorama : PinMapping
     {
         fb::TCaptureDataArray arr;
         std::transform(CleanPlates.begin(), CleanPlates.end(), std::back_inserter(arr.data), [](auto& cp) { return cp; });
-        mzEngine.TEvent(TPinValueChanged{ 
-            .pin_id = GetPinId("CleanPlates"),
-            .value = mz::Buffer::From(arr)
-        });
+        
+        std::vector<u8> buf = mz::Buffer::From(arr);
+        auto id = GetPinId("CleanPlates");
+        flatbuffers::FlatBufferBuilder fbb;
+        mzEngine.HandleEvent(CreateAppEvent(fbb, mz::CreatePinValueChangedDirect(fbb, &id, &buf)));
     }
 
     void GenerateVertices2(std::vector<Vertex>& vertices, std::vector<glm::uvec3>& indices);
     void LoadVertices()
     {
-        if(Verts.buf().pid())
+        if(Verts.Buffer.memory.pid)
         {
-            mzEngine.Destroy(Verts.buf());
+            mzEngine.Destroy(&Verts.Buffer);
         }
 
         std::vector<Vertex> vertices;
@@ -394,17 +398,18 @@ struct Cyclorama : PinMapping
 
         u32 vsz = vertices.size() * sizeof(vertices[0]);
         u32 isz = indices.size() * sizeof(indices[0]);
-        Verts.mutable_buf().mutate_size(vsz + isz);
-        Verts.mutable_buf().mutate_usage(mz::fb::BufferUsage::VERTEX_BUFFER | mz::fb::BufferUsage::INDEX_BUFFER);
-        Verts.mutate_vertex_offset(0);
-        Verts.mutate_index_offset(vsz);
-        Verts.mutate_num_indices(indices.size() * 3);
+        Verts.Buffer.info.type = MZ_RESOURCE_TYPE_BUFFER;
+        Verts.Buffer.info.buffer.size= vsz + isz;
+        Verts.Buffer.info.buffer.size = MZ_BUFFER_USAGE_VERTEX_BUFFER | MZ_BUFFER_USAGE_INDEX_BUFFER;
+        Verts.VertexOffset= 0;
+        Verts.IndexOffset = vsz;
+        Verts.IndexCount = indices.size() * 3;
         // Verts.mutate_depth_func(mz::app::DepthFunction::LESS);
         // Verts.mutate_depth_test(true);
         // Verts.mutate_depth_write(true);
 
-        mzEngine.Create(Verts.mutable_buf());
-        u8 *mapping = mzEngine.Map(Verts.mutable_buf());
+        mzEngine.Create(&Verts.Buffer);
+        u8 *mapping = mzEngine.Map(&Verts.Buffer);
         memcpy(mapping, vertices.data(), vsz);
         memcpy(mapping + vsz, indices.data(), isz);
     }
@@ -434,17 +439,17 @@ struct Cyclorama : PinMapping
             LoadCleanPlates(*flatbuffers::GetRoot<mz::fb::CaptureDataArray>(captures));
         });
 
-        mz::fb::TTexture src;
+        MzResourceShareInfo src;
         if (GetValue<void>(name2pin, "Video", 
             [&src](auto* bufStart) { flatbuffers::GetRoot<mz::fb::Texture>(bufStart)->UnPackTo(&src); }))
         {
-            lhs.height = src.height;
-            lhs.width  = src.width;
-			lhs.usage  = mz::fb::ImageUsage::SAMPLED | mz::fb::ImageUsage::RENDER_TARGET | mz::fb::ImageUsage::TRANSFER_SRC | mz::fb::ImageUsage::TRANSFER_DST;
-            lhs.format = mz::fb::Format::R16G16B16A16_UNORM;
+            lhs.info.texture.height = src.info.texture.height;
+            lhs.info.texture.width  = src.info.texture.width;
+			lhs.info.texture.usage  = MzImageUsage(MZ_IMAGE_USAGE_SAMPLED | MZ_IMAGE_USAGE_RENDER_TARGET | MZ_IMAGE_USAGE_TRANSFER_SRC | MZ_IMAGE_USAGE_TRANSFER_DST);
+            lhs.info.texture.format = MZ_FORMAT_R16G16B16A16_UNORM;
             rt = lhs;
-            mzEngine.Create(lhs);
-            mzEngine.Create(rt);
+            mzEngine.Create(&lhs);
+            mzEngine.Create(&rt);
         }
         GetValue(name2pin, "EdgeRoundness",  EdgeRoundness);
         GetValue(name2pin, "HasLeftWing",    HasLeftWing);
@@ -621,12 +626,12 @@ void RegisterCyclorama(NodeActionsMap& functions)
         
         if ("Video" == c->GetPinName(id))
         {
-            auto video = value->As<mz::fb::TTexture>();
+            auto video = value->As<MzResourceShareInfo>();
             if (c->CapturedFrameCount++ < 50)
             {
                 app::TRunPass pass;
                 pass.pass = "Cyclorama_CleanPlateAccumulator" + UUID2STR(c->NodeId);
-                pass.output = std::make_unique<mz::fb::TTexture>(c->rt);
+                pass.output = std::make_unique<MzResourceShareInfo>(c->rt);
                 pass.inputs.emplace_back(new mz::app::TShaderBinding{.var = "lhs", .val = mz::Buffer::From(c->lhs)});
                 pass.inputs.emplace_back(new mz::app::TShaderBinding{.var = "rhs", .val = mz::Buffer::From(video)});
                 mzEngine.MakeAPICall(pass, true);
@@ -640,8 +645,8 @@ void RegisterCyclorama(NodeActionsMap& functions)
                 fb::TTexture tex = c->lhs;
                 fb::TTexture tmp = c->lhs;
                 fb::TTexture srgb = c->lhs;
-                tex.format  = fb::Format::R8G8B8A8_UNORM;
-                srgb.format = fb::Format::R8G8B8A8_SRGB;
+                tex.format  = MZ_FORMAT_R8G8B8A8_UNORM;
+                srgb.format = MZ_FORMAT_R8G8B8A8_SRGB;
                 mzEngine.Create(tex);
                 mzEngine.Create(srgb);
                 mzEngine.Create(c->lhs);
@@ -677,7 +682,7 @@ void RegisterCyclorama(NodeActionsMap& functions)
         std::vector<std::unique_ptr<app::TShaderBinding>> inputs;
         pass.wireframe = *pins.Get<bool>("Wireframe");
         pass.pass = "Cyclorama_" + UUID2STR(c->NodeId);
-        pass.output = std::make_unique<mz::fb::TTexture>();
+        pass.output = std::make_unique<MzResourceShareInfo>();
         
         auto trackBuffer = pins.GetBuffer("Track");
         auto trackTbl = trackBuffer->As<mz::fb::Track>();
@@ -765,7 +770,7 @@ void RegisterCyclorama(NodeActionsMap& functions)
             app::TRunPass maskPass;
             maskPass.pass = "Cyclorama_Mask_" + UUID2STR(c->NodeId);
             auto maskPinData = pins.Get<mz::fb::Texture>("Mask");
-            maskPass.output = std::make_unique<mz::fb::TTexture>();
+            maskPass.output = std::make_unique<MzResourceShareInfo>();
             maskPinData->UnPackTo(maskPass.output.get());
             maskPass.verts = std::make_unique<mz::app::VertexData>(c->Verts);
             maskPass.inputs.emplace_back(new app::TShaderBinding { .var = "MVP", .val = MVP_val });

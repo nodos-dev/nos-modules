@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.24.2)
-project(mzAJA)
+project(mzCyclorama)
 
 # Dependencies
 # ------------
@@ -8,22 +8,12 @@ if(WIN32)
     add_compile_definitions(NOMINMAX)
 endif()
 
-# TODO: Make External/ajalibraries a submodule (https://github.com/aja-video/ntv2)?
-list(APPEND CMAKE_MODULE_PATH ${EXTERNAL_DIR}/ntv2/cmake)
 
-# Caution: AJA wants C++11 standard. Change it back to our's after processing AJA
-include(AJAHelpers)
-include(AJABuildOptions)
-include(AJACommonDefines)
-include(AJACommonFlags)
-include(AJACommonPaths)
-include(AJACommonVars)
-include(AJAVersionConfig)
-# CMake includes
-include(GNUInstallDirs)
-add_subdirectory(${EXTERNAL_DIR}/ntv2/ajalibraries "${CMAKE_CURRENT_BINARY_DIR}/ajalibraries")
-
-
+# MediaZ Plugin SDK
+if (NOT WITH_MEDIAZ)
+    list(APPEND CMAKE_MODULE_PATH $ENV{MZ_SDK_DIR}/cmake)
+    find_package(mzPluginSDK REQUIRED)
+endif()
 
 # Plugin
 # ------
@@ -55,10 +45,7 @@ set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_STANDARD 20)
 
 target_include_directories(${PROJECT_NAME} PUBLIC $ENV{MZ_SDK_DIR}/include)
 target_include_directories(${PROJECT_NAME} PRIVATE ${EXTERNAL_DIR}
-    ${EXTERNAL_DIR}/ntv2
-    ${EXTERNAL_DIR}/ntv2/ajalibraries/ajantv2/src/win
-    ${EXTERNAL_DIR}/ntv2/ajalibraries/ajantv2/includes
     ${SOURCE_FOLDER})
 
-target_link_libraries(${PROJECT_NAME} PRIVATE ajantv2 stb asio)
+target_link_libraries(${PROJECT_NAME} PRIVATE stb)
 target_link_libraries(${PROJECT_NAME} PUBLIC mzPluginSDK)
