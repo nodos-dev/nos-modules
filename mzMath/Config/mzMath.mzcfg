@@ -1,10 +1,11 @@
 {
     "namespace": "mz.math",
-    "name": "op",
+    "name": "Math",
     "fb_includes": [],
     "node_definitions": [
         "mzMath.mzdef"
     ],
+    "binary_path": "../Binaries/mzMath.dll",
     "menu_items": [
         {
             "category": "Math",

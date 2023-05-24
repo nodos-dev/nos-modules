@@ -41,13 +41,13 @@ template<class T> T Mul(T x, T y) { return x * y; }
 template<class T> T Div(T x, T y) { return x / y; }
 
 template<class T, T F(T, T)>
-bool ScalarBinopExecute(void* ctx, const MzNodeExecuteArgs* args)
+MzResult ScalarBinopExecute(void* ctx, const MzNodeExecuteArgs* args)
 {
 	auto X = reinterpret_cast<T*>(args->PinValues[0].Data);
 	auto Y = reinterpret_cast<T*>(args->PinValues[1].Data);
 	auto Z = reinterpret_cast<T*>(args->PinValues[2].Data);
 	*Z = F(*X, *Y);
-	return true;
+	return MZ_RESULT_SUCCESS;
 }
 
 template<class T, int N>
@@ -81,13 +81,13 @@ struct Vec {
 };
 
 template<class T, int Dim, Vec<T,Dim>F(Vec<T,Dim>,Vec<T,Dim>)>
-bool VecBinopExecute(void* ctx, const MzNodeExecuteArgs* args)
+MzResult VecBinopExecute(void* ctx, const MzNodeExecuteArgs* args)
 {
 	auto X = reinterpret_cast<Vec<T, Dim>*>(args->PinValues[0].Data);
 	auto Y = reinterpret_cast<Vec<T, Dim>*>(args->PinValues[1].Data);
 	auto Z = reinterpret_cast<Vec<T, Dim>*>(args->PinValues[2].Data);
 	*Z = F(*X, *Y);
-	return true;
+	return MZ_RESULT_SUCCESS;
 }
 
 #define NODE_NAME(op, t, sz, postfix) \
@@ -186,7 +186,7 @@ enum class MathNodeTypes {
 };
 
 template<class T>
-bool ToString(void* ctx, const MzNodeExecuteArgs* args)
+MzResult ToString(void* ctx, const MzNodeExecuteArgs* args)
 {
 	auto* in = reinterpret_cast<u32*>(args->PinValues[0].Data);
 	auto s = std::to_string(*in);
@@ -195,12 +195,12 @@ bool ToString(void* ctx, const MzNodeExecuteArgs* args)
 	{
 		void* buffer = mzEngine.AllocateMemory(s.size() + 1);
 		if (!buffer)
-			return false;
+			return MZ_RESULT_OUT_OF_MEMORY;
 		out->Data = buffer;
 		out->Size = s.size() + 1;
 	}
 	strncpy((char*)out->Data, s.c_str(), out->Size);
-	return true;
+	return MZ_RESULT_SUCCESS;
 }
 
 extern "C"
@@ -237,7 +237,7 @@ MZAPI_ATTR MzResult MZAPI_CALL mzExportNodeFunctions(size_t* outCount, MzNodeFun
 				auto millis = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count();
 				float sec = millis / 1000.f;
 				*(static_cast<float*>(outBuf->Data)) = amplitude * sin(frequency * sec);
-				return true;
+				return MZ_RESULT_SUCCESS;
 			};
 			break;
 		}
@@ -256,7 +256,7 @@ MZAPI_ATTR MzResult MZAPI_CALL mzExportNodeFunctions(size_t* outCount, MzNodeFun
 				float min = *static_cast<float*>(minBuf->Data);
 				float max = *static_cast<float*>(maxBuf->Data);
 				*(static_cast<float*>(outBuf->Data)) = std::clamp(value, min, max);
-				return true;
+				return MZ_RESULT_SUCCESS;
 			};
 			break;
 		}
@@ -269,7 +269,7 @@ MZAPI_ATTR MzResult MZAPI_CALL mzExportNodeFunctions(size_t* outCount, MzNodeFun
 				MzBuffer* outBuf = &args->PinValues[PIN_OUT];
 				float value = *static_cast<float*>(valueBuf->Data);
 				*(static_cast<float*>(outBuf->Data)) = std::abs(value);
-				return true;
+				return MZ_RESULT_SUCCESS;
 			};
 			break;
 		}
