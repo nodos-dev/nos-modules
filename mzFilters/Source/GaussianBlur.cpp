@@ -1,10 +1,7 @@
 #include "GaussianBlur.hpp"
-
-#include "MediaZ/Helpers.hpp"
-
 #include "GaussianBlur.frag.spv.dat"
 
-#define SHADER_BINDING(name, varName, variable, indexValue)			\
+#define SHADER_BINDING(name, varName, variable)						\
 					MzShaderBinding name = {						\
 							.VariableName = varName,				\
 							.Value = {								\
@@ -24,7 +21,7 @@ namespace mz::filters
 
 struct GaussBlurContext
 {
-	mz::fb::TTexture IntermediateTexture;
+	MzResourceShareInfo IntermediateTexture;
 	mz::fb::UUID NodeId;
 
 	GaussBlurContext(fb::Node const& node)
@@ -57,7 +54,7 @@ struct GaussBlurContext
 
 	void RegisterPasses()
 	{
-		auto key = "Gaussian_Blur_Pass_" + mz::Uuid2String(NodeId);
+		auto key = "Gaussian_Blur_Pass_" + mz::UUID2STR(NodeId);
 		MzPassInfo info = {};
 		info.Key = key.c_str();
 		info.Shader = "Gaussian_Blur";
@@ -80,22 +77,39 @@ struct GaussBlurContext
 			// get the buffer data as fb::Texture
 			auto* tex = flatbuffers::GetMutableRoot<mz::fb::Texture>(buf.data());
 			// Init a resource to remove it to root
-			MzResource res = {
-				.Type = MZ_RESOURCE_TYPE_TEXTURE,
-				.Texture = tex
+			
+			MzResourceShareInfo resource = {
+				.info = {
+					.type = MZ_RESOURCE_TYPE_TEXTURE,
+					.texture = {
+					.width = tex->width(),
+					.height = tex->height(),
+					.format = (MzFormat)tex->format(),
+					.usage = (MzImageUsage)tex->usage()}
+				},
+				.memory = {
+					.handle = tex->handle(),
+					.memory = tex->memory(),
+					.offset = tex->offset(),
+					.type = tex->type(),
+					.pid = tex->pid()
+				},
 			};
+			
 			// Destroy it to root
-			mzEngine.Destroy(&res);
-			res.Texture->UnPackTo(&IntermediateTexture);
+			mzEngine.Destroy(&resource);
+			
+			// TODO There will be an equivalent for the function below.
+			//res.Texture->UnPackTo(&IntermediateTexture);
 		}
 
-		auto key = "Gaussian_Blur_Pass_" + mz::Uuid2String(NodeId);
+		auto key = "Gaussian_Blur_Pass_" + mz::UUID2STR(NodeId);
 		mzEngine.UnregisterPass(key.c_str()); // TODO Check result
 	}
 
-	void SetupIntermediateTexture(mz::fb::TTexture* outputTexture)
+	void SetupIntermediateTexture(MzResourceShareInfo* outputTexture)
 	{
-		if (IntermediateTexture.width == outputTexture->width &&
+		if (IntermediateTexture. == outputTexture->width &&
 		    IntermediateTexture.height == outputTexture->height &&
 		    IntermediateTexture.format == outputTexture->format)
 			return;

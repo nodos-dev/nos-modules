@@ -1,5 +1,5 @@
 #pragma once
 
-#include <MediaZ/PluginAPI.h>
+#include <MediaZ/Helpers.hpp>
 
 void RegisterGaussianBlur(MzNodeFunctions* out);
