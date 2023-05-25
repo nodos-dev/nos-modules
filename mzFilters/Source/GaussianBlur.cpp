@@ -30,13 +30,14 @@ struct GaussBlurContext
 		RegisterShaders();
 		RegisterPasses();
 
-		IntermediateTexture.filtering = mz::fb::Filtering::LINEAR;
-		IntermediateTexture.usage = mz::fb::ImageUsage::RENDER_TARGET | mz::fb::ImageUsage::SAMPLED;
+		IntermediateTexture.info.texture.filter = MZ_TEXTURE_FILTER_LINEAR;
+		// There was ImageUsage Sampled once but it cause an error right now.
+		IntermediateTexture.info.texture.usage = MZ_IMAGE_USAGE_RENDER_TARGET; 
 	}
 
 	~GaussBlurContext()
 	{
-		// DestroyResources();
+		DestroyResources();
 	}
 
 	void RegisterShaders()
@@ -63,73 +64,25 @@ struct GaussBlurContext
 
 	void DestroyResources()
 	{
-		// If handle is not null
-		if (IntermediateTexture.handle)
+		if (IntermediateTexture.memory.handle)
 		{
-			// create a builder
-			flatbuffers::FlatBufferBuilder fbb;
-			// create a texture via already existed IntermediateTexture;
-			const auto offset = mz::fb::CreateTexture(fbb, &IntermediateTexture);
-			// serialize it
-			fbb.Finish(offset);
-			// get detached buffer
-			flatbuffers::DetachedBuffer buf = fbb.Release();
-			// get the buffer data as fb::Texture
-			auto* tex = flatbuffers::GetMutableRoot<mz::fb::Texture>(buf.data());
-			// Init a resource to remove it to root
-			
-			MzResourceShareInfo resource = {
-				.info = {
-					.type = MZ_RESOURCE_TYPE_TEXTURE,
-					.texture = {
-					.width = tex->width(),
-					.height = tex->height(),
-					.format = (MzFormat)tex->format(),
-					.usage = (MzImageUsage)tex->usage()}
-				},
-				.memory = {
-					.handle = tex->handle(),
-					.memory = tex->memory(),
-					.offset = tex->offset(),
-					.type = tex->type(),
-					.pid = tex->pid()
-				},
-			};
-			
-			// Destroy it to root
-			mzEngine.Destroy(&resource);
-			
-			// TODO There will be an equivalent for the function below.
-			//res.Texture->UnPackTo(&IntermediateTexture);
+			mzEngine.Destroy(&IntermediateTexture);
 		}
-
-		auto key = "Gaussian_Blur_Pass_" + mz::UUID2STR(NodeId);
-		mzEngine.UnregisterPass(key.c_str()); // TODO Check result
 	}
 
 	void SetupIntermediateTexture(MzResourceShareInfo* outputTexture)
 	{
-		if (IntermediateTexture. == outputTexture->width &&
-		    IntermediateTexture.height == outputTexture->height &&
-		    IntermediateTexture.format == outputTexture->format)
+		
+		if (IntermediateTexture.info.texture.width == outputTexture->info.texture.width &&
+		    IntermediateTexture.info.texture.height == outputTexture->info.texture.height &&
+		    IntermediateTexture.info.texture.format == outputTexture->info.texture.format)
 			return;
 
-		IntermediateTexture.width = outputTexture->width;
-		IntermediateTexture.height = outputTexture->height;
-		IntermediateTexture.format = outputTexture->format;
-
-		flatbuffers::FlatBufferBuilder fbb;
-		const auto offset = mz::fb::CreateTexture(fbb, &IntermediateTexture);
-		fbb.Finish(offset);
-		flatbuffers::DetachedBuffer buf = fbb.Release();
-		auto* tex = flatbuffers::GetMutableRoot<mz::fb::Texture>(buf.data());
-		MzResource res = {
-			.Type = MZ_RESOURCE_TYPE_TEXTURE,
-			.Texture = tex
-		};
-		mzEngine.Create(&res); // TODO Check result
-		res.Texture->UnPackTo(&IntermediateTexture);
-
+		IntermediateTexture.info.texture.width = outputTexture->info.texture.width;
+		IntermediateTexture.info.texture.height = outputTexture->info.texture.height;
+		IntermediateTexture.info.texture.format = outputTexture->info.texture.format;
+		
+		mzEngine.Create(outputTexture); // TODO Check result
 	}
 
 	void Run(const MzNodeExecuteArgs* pins)
@@ -140,7 +93,7 @@ struct GaussBlurContext
 		MzVec2* kernelPinValue = nullptr;
 		uint32_t passTypeValue = 0;
 		
-		mz::fb::TTexture outputTexture;
+		MzResourceShareInfo outputTexture;
 
 		// Check and set all of them
 		for (size_t i{}; i < pins->PinCount; i++)
@@ -160,23 +113,16 @@ struct GaussBlurContext
 			}
 			if (strcmp(pins->PinNames[i], "Output") == 0)
 			{
-				flatbuffers::GetRoot<MzFbTexture>(pins->PinValues[i].Data)->UnPackTo(&outputTexture);
+				outputTexture = *(MzResourceShareInfo*)pins->PinValues[i].Data;
 			}
 		}
 
 		SetupIntermediateTexture(&outputTexture);
-
-		auto out = mz::Buffer::From(outputTexture);
-		auto intermediate = mz::Buffer::From(IntermediateTexture);
-
-		MzBuffer intermediateBuf = {
-			.Data = intermediate.data(),
-			.Size = intermediate.size()
-		};
-		std::string key = "Gaussian_Blur_Pass_" + mz::Uuid2String(NodeId);
+		
+		std::string key = "Gaussian_Blur_Pass_" + mz::UUID2STR(NodeId);
 
 		SHADER_BUFFER_BINDING(InputBinding, "Input", inputTexture);
-		SHADER_BUFFER_BINDING(IntermediateBinding, "Input", intermediateBuf);
+		SHADER_BUFFER_BINDING(IntermediateBinding, "Input", &IntermediateTexture);
 		SHADER_BINDING(SoftnessBinding, "Softness", *softnessPinValue);
 		SHADER_BINDING(KernelSizeXBinding, "Kernel_Size", kernelPinValue->x);
 		SHADER_BINDING(KernelSizeYBinding, "Kernel_Size", kernelPinValue->y);
@@ -194,10 +140,9 @@ struct GaussBlurContext
 		passParams.Bindings = bindings;
 		passParams.BindingCount = 4;
 		passParams.Wireframe = false;
-		passParams.Output = intermediate.As<MzFbTexture>();
-		passParams.Vertices = nullptr;
+		passParams.Output = IntermediateTexture;
 		
-		mzEngine.RunPass(&passParams);
+		mzEngine.RunPass(nullptr, &passParams);
 
 		passTypeValue = 1;
 
@@ -205,9 +150,9 @@ struct GaussBlurContext
 		bindings[0] = IntermediateBinding;
 		bindings[3] = KernelSizeYBinding;
 		passParams.Bindings = bindings;
-		passParams.Output = out.As<MzFbTexture>();
+		passParams.Output = outputTexture;
 		
-		mzEngine.RunPass(&passParams);
+		mzEngine.RunPass(nullptr, &passParams);
 	}
 };
 
@@ -221,6 +166,6 @@ void RegisterGaussianBlur(MzNodeFunctions* out)
 	};
 	out->ExecuteNode = [](void* ctx, const MzNodeExecuteArgs* args) {
 		((mz::filters::GaussBlurContext*)ctx)->Run(args);
-		return true;
+		return MZ_RESULT_SUCCESS;
 	};
 }
