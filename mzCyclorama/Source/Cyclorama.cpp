@@ -5,6 +5,7 @@
 #include <type_traits>
 
 #include <MediaZ/Plugin.h>
+#include <MediaZ/Helpers.hpp>
 
 #include <mzCommon.h>
 
@@ -337,8 +338,8 @@ struct Cyclorama : PinMapping
     {
         MzCmd cmd;
         mzEngine.Begin(&cmd);
-        mzEngine.ClearTexture(cmd, &rt, MzVec4(0,0,0,1));
-        mzEngine.ClearTexture(cmd, &lhs, MzVec4(0,0,0,1));
+        mzEngine.Clear(cmd, &rt, MzVec4(0,0,0,1));
+        mzEngine.Clear(cmd, &lhs, MzVec4(0,0,0,1));
         mzEngine.End(cmd);
     }
 
@@ -439,12 +440,12 @@ struct Cyclorama : PinMapping
             LoadCleanPlates(*flatbuffers::GetRoot<mz::fb::CaptureDataArray>(captures));
         });
 
-        MzResourceShareInfo src;
+        fb::TTexture src;
         if (GetValue<void>(name2pin, "Video", 
             [&src](auto* bufStart) { flatbuffers::GetRoot<mz::fb::Texture>(bufStart)->UnPackTo(&src); }))
         {
-            lhs.info.texture.height = src.info.texture.height;
-            lhs.info.texture.width  = src.info.texture.width;
+            lhs.info.texture.height = src.height;
+            lhs.info.texture.width  = src.width;
 			lhs.info.texture.usage  = MzImageUsage(MZ_IMAGE_USAGE_SAMPLED | MZ_IMAGE_USAGE_RENDER_TARGET | MZ_IMAGE_USAGE_TRANSFER_SRC | MZ_IMAGE_USAGE_TRANSFER_DST);
             lhs.info.texture.format = MZ_FORMAT_R16G16B16A16_UNORM;
             rt = lhs;
@@ -462,57 +463,83 @@ struct Cyclorama : PinMapping
         GetValue(name2pin, "Height",  Height);
 
         LoadVertices();
-        RegisterPasses();
     }
 
-    void RegisterPasses()
+
+    inline static MzBuffer shaders[] =
     {
-        mzEngine.MakeAPICalls(true,
-                              app::TRegisterPass{
-                                  .key = "Cyclorama_CleanPlateAccumulator" + UUID2STR(NodeId),
-                                  .shader = "Cyclorama_CleanPlateAccumulator",
-                                  .blend = false,
-                              },
-                              app::TRegisterPass{
-                                  .key = "Cyclorama_" + UUID2STR(NodeId),
-                                  .shader = "Cyclorama_Frag",
-                                  .vertex_shader = "Cyclorama_Vert",
-                                  .blend = true,
-                              },
-                              app::TRegisterPass{
-                                  .key = "Cyclorama_Mask_" + UUID2STR(NodeId),
-                                  .shader = "Cyclorama_Mask_Frag",
-                                  .vertex_shader = "Cyclorama_Mask_Vert",
-                                  .blend = false,
-                              });
+        {(void*)Cyclorama_frag_spv, sizeof(Cyclorama_frag_spv) & ~3},
+        {(void*)Cyclorama_vert_spv, sizeof(Cyclorama_vert_spv) & ~3},
+        {(void*)CycloramaMask_frag_spv, sizeof(CycloramaMask_frag_spv) & ~3},
+        {(void*)CycloramaMask_vert_spv, sizeof(CycloramaMask_vert_spv) & ~3},
+        {(void*)CleanPlateAcc_frag_spv, sizeof(CleanPlateAcc_frag_spv) & ~3},
+    };
+
+    inline static MzPassInfo passes[] =
+    {
+        {.Key = "Cyclorama_CleanPlateAccumulator_Pass", .Shader = "Cyclorama_CleanPlateAccumulator", .MultiSample = 1},
+        {.Key = "Cyclorama_Main_Pass", .Shader = "Cyclorama_Frag", .VertexShader = "Cyclorama_Vert", .Blend = true, .MultiSample = 8, },
+        {.Key = "Cyclorama_Mask_Pass", .Shader = "Cyclorama_Mask_Frag", .VertexShader = "Cyclorama_Mask_Vert", .MultiSample = 1},
+    };
+
+    static MzResult GetShaders(size_t* outCount, MzBuffer* outSpirvBufs)
+    {
+        *outCount = sizeof(shaders) / sizeof(shaders[0]);
+        if (!outSpirvBufs)
+            return MZ_RESULT_SUCCESS;
+
+        for (auto s : shaders)
+            *outSpirvBufs++ = s;
+
+        return MZ_RESULT_SUCCESS;
+    };
+
+    static MzResult GetPasses(size_t* outCount, MzPassInfo* outMzPassInfos)
+    {
+        *outCount = sizeof(passes) / sizeof(passes[0]);
+
+        if (!outMzPassInfos)
+            return MZ_RESULT_SUCCESS;
+
+        for (auto s : passes)
+            *outMzPassInfos++ = s;
+
+        return MZ_RESULT_SUCCESS;
     }
+
     void DestroyTransientResources()
     {
-        if (lhs.pid)
+        if (lhs.memory.pid)
         {
-            mzEngine.Destroy(lhs);
+            mzEngine.Destroy(&lhs);
             lhs = {};
         }
-        if (rt.pid)
+        if (rt.memory.pid)
         {
-            mzEngine.Destroy(rt);
+            mzEngine.Destroy(&rt);
             rt = {};
         }
     }
 
     Cyclorama() 
     {
-        auto defaultTrackBuf = mzEngine.GetDefaultDataOfType("mz.fb.Track");
-        defaultTrackBuf->As<mz::fb::Track>()->UnPackTo(&Track);
+        MzBuffer val;
+        switch (mzEngine.GetDefaultValueOfType("mz.fb.Track", &val))
+        {
+        case MZ_RESULT_SUCCESS:
+            flatbuffers::GetRoot<fb::Track>(val.Data)->UnPackTo(&Track);
+            break;
+        default: break;
+        }
     }
 
     ~Cyclorama()
     {
         DestroyTransientResources();
-        mzEngine.Destroy(Verts.buf());
+        mzEngine.Destroy(&Verts.Buffer);
         for (auto& c : CleanPlates)
         {
-            mzEngine.Destroy(c.Texture);
+            mzEngine.Destroy(&c.Texture);
         }
     }
 };
@@ -547,23 +574,6 @@ void RegisterCyclorama(NodeActionsMap& functions)
 {
     auto &actions = functions["Cyclorama.Cyclorama"];
     actions.NodeCreated = [](fb::Node const &node, mz::Args &args, void **ctx) {
-        static bool registered = false;
-        if (!registered)
-        {
-            mzEngine.MakeAPICalls(
-                true,
-                app::TRegisterShader{.key = "Cyclorama_Frag",
-                                     .spirv = ShaderSrc<sizeof(Cyclorama_frag_spv)>(Cyclorama_frag_spv)},
-                app::TRegisterShader{.key = "Cyclorama_Vert",
-                                     .spirv = ShaderSrc<sizeof(Cyclorama_vert_spv)>(Cyclorama_vert_spv)},
-                app::TRegisterShader{.key = "Cyclorama_Mask_Frag",
-                                     .spirv = ShaderSrc<sizeof(CycloramaMask_frag_spv)>(CycloramaMask_frag_spv)},
-                app::TRegisterShader{.key = "Cyclorama_Mask_Vert",
-                                     .spirv = ShaderSrc<sizeof(CycloramaMask_vert_spv)>(CycloramaMask_vert_spv)},
-                app::TRegisterShader{.key = "Cyclorama_CleanPlateAccumulator",
-                                     .spirv = ShaderSrc<sizeof(CleanPlateAcc_frag_spv)>(CleanPlateAcc_frag_spv)});
-            registered = true;
-        }
         Cyclorama *c = new Cyclorama();
         c->Load(node);
         *ctx = c;
@@ -629,12 +639,18 @@ void RegisterCyclorama(NodeActionsMap& functions)
             auto video = value->As<MzResourceShareInfo>();
             if (c->CapturedFrameCount++ < 50)
             {
-                app::TRunPass pass;
-                pass.pass = "Cyclorama_CleanPlateAccumulator" + UUID2STR(c->NodeId);
-                pass.output = std::make_unique<MzResourceShareInfo>(c->rt);
-                pass.inputs.emplace_back(new mz::app::TShaderBinding{.var = "lhs", .val = mz::Buffer::From(c->lhs)});
-                pass.inputs.emplace_back(new mz::app::TShaderBinding{.var = "rhs", .val = mz::Buffer::From(video)});
-                mzEngine.MakeAPICall(pass, true);
+                MzShaderBinding bindings[] = 
+                {
+                    {"lhs", {&c->lhs, sizeof(c->lhs)}},
+                    {"rhs", {&video, sizeof(video)}},
+                };
+
+                MzRunPassParams pass;
+                pass.PassKey = "Cyclorama_CleanPlateAccumulator";
+                pass.Output = c->rt;
+                pass.BindingCount = sizeof(bindings)/sizeof(bindings[0]);
+                pass.Bindings = bindings;
+                mzEngine.RunPass(0, &pass);
                 std::swap(c->rt, c->lhs);
                 auto id = c->GetPinId("Video");
             }
@@ -642,28 +658,32 @@ void RegisterCyclorama(NodeActionsMap& functions)
             {
                 const u32 idx = c->CleanPlates.size();
                 std::string path = "R:/Reality/Assets/CleanPlates/" + std::to_string(idx) + UUID2STR(c->NodeId) + ".png";
-                fb::TTexture tex = c->lhs;
-                fb::TTexture tmp = c->lhs;
-                fb::TTexture srgb = c->lhs;
-                tex.format  = MZ_FORMAT_R8G8B8A8_UNORM;
-                srgb.format = MZ_FORMAT_R8G8B8A8_SRGB;
-                mzEngine.Create(tex);
-                mzEngine.Create(srgb);
-                mzEngine.Create(c->lhs);
+                MzResourceShareInfo tex  = c->lhs;
+                MzResourceShareInfo tmp  = c->lhs;
+                MzResourceShareInfo srgb = c->lhs;
+                tex.info.texture.format  = MZ_FORMAT_R8G8B8A8_UNORM;
+                srgb.info.texture.format = MZ_FORMAT_R8G8B8A8_SRGB;
+                mzEngine.Create(&tex);
+                mzEngine.Create(&srgb);
+                mzEngine.Create(&c->lhs);
                 c->CleanPlates.push_back({  .Path = path,
                                             .Texture = tex,
                                             .Track = c->Track,
                                             .Pos = c->Position,
                                             .Rot = c->Rotation,});
-                std::thread([services=mzEngine, tmp, tex, srgb, path=std::move(path)] 
+                std::thread([ tmp, tex, srgb, path=std::move(path)] 
                 {
-                    services.Blit(tmp, tex);
-                    services.Blit(tmp, srgb);
-                    auto buf = services.Download(srgb);
-                    auto re = stbi_write_png(path.c_str(), tex.width, tex.height, 4, services.Map(buf), tex.width * 4);
-                    services.Destroy(buf);
-                    services.Destroy(tmp);
-                    services.Destroy(srgb);
+                    MzResourceShareInfo buf;
+                    MzCmd cmd;
+                    mzEngine.Begin(&cmd);
+                    mzEngine.Blit(cmd, &tmp, &tex);
+                    mzEngine.Blit(cmd, &tmp, &srgb);
+                    mzEngine.Download(cmd, &srgb, &buf);
+                    mzEngine.End(cmd);
+                    auto re = stbi_write_png(path.c_str(), tex.info.texture.width, tex.info.texture.height, 4, mzEngine.Map(&buf), tex.info.texture.width * 4);
+                    mzEngine.Destroy(&buf);
+                    mzEngine.Destroy(&tmp);
+                    mzEngine.Destroy(&srgb);
                 }).detach();
                 c->Capturing = false;
                 c->CapturedFrameCount = 0;
@@ -682,8 +702,7 @@ void RegisterCyclorama(NodeActionsMap& functions)
         std::vector<std::unique_ptr<app::TShaderBinding>> inputs;
         pass.wireframe = *pins.Get<bool>("Wireframe");
         pass.pass = "Cyclorama_" + UUID2STR(c->NodeId);
-        pass.output = std::make_unique<MzResourceShareInfo>();
-        
+    
         auto trackBuffer = pins.GetBuffer("Track");
         auto trackTbl = trackBuffer->As<mz::fb::Track>();
         mz::fb::TTrack track;
@@ -721,7 +740,7 @@ void RegisterCyclorama(NodeActionsMap& functions)
             call->inputs = std::move(inputs);
             call->inputs.emplace_back(new app::TShaderBinding{ .var = "UVSmoothness", .val = mz::Buffer::From(0.f) });
             call->inputs.emplace_back(new app::TShaderBinding{ .var = "CP_MVP", .val = MVP_val });
-            call->inputs.emplace_back(new app::TShaderBinding{ .var = "Source", .val = mz::Buffer::From(mzEngine.Color(*pins.Get<mz::fb::vec4>("CycloramaColor"))) });
+            call->inputs.emplace_back(new app::TShaderBinding{ .var = "Source", .val = mz::Buffer::From(mzEngine.GetColorTexture(*pins.Get<mz::fb::vec4>("CycloramaColor"))) });
             pass.draws.emplace_back(std::move(call));
         }
         

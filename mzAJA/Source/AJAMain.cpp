@@ -29,18 +29,26 @@ static mz::fb::String256 Str256(std::string const &str)
     return re;
 }
 
+MzBuffer shaders[] = 
+{
+    {(void*)YCbCr2RGB_frag_spv, sizeof(YCbCr2RGB_frag_spv) & ~3},
+    {(void*)RGB2YCbCr_frag_spv, sizeof(RGB2YCbCr_frag_spv) & ~3},
+    {(void*)RGB2YCbCr_comp_spv, sizeof(RGB2YCbCr_comp_spv) & ~3},
+    {(void*)YCbCr2RGB_comp_spv, sizeof(YCbCr2RGB_comp_spv) & ~3},
+};
+
+MzPassInfo passes[] = 
+{
+    {.Key = "AJA_RGB2YCbCr_Compute_Pass", .Shader = "AJA_RGB2YCbCr_Compute_Shader", .MultiSample = 1},
+    {.Key = "AJA_YCbCr2RGB_Compute_Pass", .Shader = "AJA_YCbCr2RGB_Compute_Shader", .MultiSample = 1},
+    {.Key = "AJA_YCbCr2RGB_Pass", .Shader = "AJA_YCbCr2RGB_Shader", .MultiSample = 1},
+    {.Key = "AJA_RGB2YCbCr_Pass", .Shader = "AJA_RGB2YCbCr_Shader", .MultiSample = 1}
+};
+
 struct AJA
 {
     static MzResult GetShaders(size_t* outCount, MzBuffer* outSpirvBufs)
     {
-        MzBuffer shaders[] = 
-        {
-            {(void*)YCbCr2RGB_frag_spv, sizeof(YCbCr2RGB_frag_spv) & ~3},
-            {(void*)RGB2YCbCr_frag_spv, sizeof(RGB2YCbCr_frag_spv) & ~3},
-            {(void*)RGB2YCbCr_comp_spv, sizeof(RGB2YCbCr_comp_spv) & ~3},
-            {(void*)YCbCr2RGB_comp_spv, sizeof(YCbCr2RGB_comp_spv) & ~3},
-        };
-
         *outCount = sizeof(shaders)/sizeof(shaders[0]);
         if(!outSpirvBufs) 
             return MZ_RESULT_SUCCESS;
@@ -53,14 +61,6 @@ struct AJA
 
     static MzResult GetPasses(size_t* outCount, MzPassInfo* outMzPassInfos)
     {
-        MzPassInfo passes[] = 
-        {
-            {.Key = "AJA_RGB2YCbCr_Compute_Pass", .Shader = "AJA_RGB2YCbCr_Compute_Shader", .MultiSample = 1},
-            {.Key = "AJA_YCbCr2RGB_Compute_Pass", .Shader = "AJA_YCbCr2RGB_Compute_Shader", .MultiSample = 1},
-            {.Key = "AJA_YCbCr2RGB_Pass", .Shader = "AJA_YCbCr2RGB_Shader", .MultiSample = 1},
-            {.Key = "AJA_RGB2YCbCr_Pass", .Shader = "AJA_RGB2YCbCr_Shader", .MultiSample = 1}
-        };
-
         *outCount = sizeof(passes) / sizeof(passes[0]);
 
         if (!outMzPassInfos)
@@ -77,7 +77,7 @@ struct AJA
         return MZ_RESULT_SUCCESS;
     }
 
-    static bool CanCreateNode(const MzFbNode * node) 
+    static MzResult CanCreateNode(const MzFbNode * node) 
     { 
         for (auto pin : *node->pins())
         {
@@ -85,11 +85,15 @@ struct AJA
             {
                 if (flatbuffers::IsFieldPresent(pin, mz::fb::Pin::VT_DATA))
                     return AJADevice::DeviceAvailable((char *)pin->data()->Data(),
-                                                      node->class_name()->str() == "AJA.AJAIn");
+                                                      node->class_name()->str() == "AJA.AJAIn") ? MZ_RESULT_SUCCESS : MZ_RESULT_FAILED;
                 break;
             }
         }
-        return AJADevice::GetAvailableDevice(node->class_name()->str() == "AJA.AJAIn");
+        if (AJADevice::GetAvailableDevice(node->class_name()->str() == "AJA.AJAIn"))
+        {
+            return MZ_RESULT_SUCCESS;
+        }
+        return MZ_RESULT_FAILED;
     }
     
     static void OnNodeCreated(const MzFbNode * inNode, void** ctx) 
@@ -230,20 +234,28 @@ struct AJA
     {
         return MZ_RESULT_SUCCESS;
     }
-    static bool  ExecuteNode(void* ctx, const MzNodeExecuteArgs * args) { return MZ_RESULT_SUCCESS; }
-    static bool  CanCopy(void* ctx, MzCopyInfo * copyInfo) 
+    static MzResult  ExecuteNode(void* ctx, const MzNodeExecuteArgs * args) { return MZ_RESULT_SUCCESS; }
+    static MzResult  CanCopy(void* ctx, MzCopyInfo * copyInfo)
     { 
         return MZ_RESULT_SUCCESS;
     }
 
-    static bool  BeginCopyFrom(void* ctx, MzCopyInfo * cpy)
+    static MzResult  BeginCopyFrom(void* ctx, MzCopyInfo * cpy)
     { 
-        return ((AJAClient *)ctx)->BeginCopyTo(*cpy); 
+        if (((AJAClient*)ctx)->BeginCopyFrom(*cpy))
+        {
+            return MZ_RESULT_SUCCESS;
+        }
+        return MZ_RESULT_FAILED;
     }
 
-    static bool  BeginCopyTo(void* ctx, MzCopyInfo * cpy)
+    static MzResult  BeginCopyTo(void* ctx, MzCopyInfo * cpy)
     { 
-        return ((AJAClient *)ctx)->BeginCopyTo(*cpy); 
+        if (((AJAClient*)ctx)->BeginCopyTo(*cpy))
+        {
+            return MZ_RESULT_SUCCESS;
+        }
+        return MZ_RESULT_FAILED;
     }
 
     static void  EndCopyFrom(void* ctx, MzCopyInfo * cpy)
