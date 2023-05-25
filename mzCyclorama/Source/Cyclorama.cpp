@@ -4,7 +4,6 @@
 #include "glm/common.hpp"
 #include <type_traits>
 
-#include <MediaZ/Plugin.h>
 #include <MediaZ/Helpers.hpp>
 
 #include <mzCommon.h>
@@ -181,33 +180,28 @@ static glm::mat4 MakeTransform(glm::vec3 pos, glm::vec3 rot)
     return glm::lookAtLH(pos, pos + mat[0], mat[2]);
 }
 
-template<class T, class U = T>
-void AddParam(std::vector<std::unique_ptr<mz::app::TShaderBinding>>& inputs, mz::Args& pins, const char* name)
+template<class T>
+void AddParam(std::vector<MzShaderBinding>& inputs, const MzNodeExecuteArgs* pins, const char* name)
 {
-    if(auto val = pins.Get<T>(name))
+    if(auto val = GetPinValue<T>(name))
     {
-        inputs.push_back(
-            std::make_unique<mz::app::TShaderBinding>(
-            mz::app::TShaderBinding{
-                .var = name,
-                .val = mz::Buffer::From<U>(*val)
-            }));
+        inputs.push_back({name, {val, sizeof(T)}});
     }
 }
 
-template<class T>
-void AddParamXF(std::vector<std::unique_ptr<mz::app::TShaderBinding>>& inputs, mz::Args& pins, const char* name, std::function<T(T const&)>&& xf = [](T const& t) { return U(t); })
-{
-    if(auto val = pins.Get<T>(name))
-    {
-        inputs.push_back(
-            std::make_unique<mz::app::TShaderBinding>(
-            mz::app::TShaderBinding{
-                .var = name,
-                .val = mz::Buffer::From<T>(xf(*val))
-            }));
-    }
-}
+//template<class T>
+//void AddParamXF(std::vector<std::unique_ptr<mz::app::TShaderBinding>>& inputs, const MzNodeExecuteArgs* pins, const char* name, std::function<T(T const&)>&& xf = [](T const& t) { return U(t); })
+//{
+//    if(auto val = pins.Get<T>(name))
+//    {
+//        inputs.push_back(
+//            std::make_unique<mz::app::TShaderBinding>(
+//            mz::app::TShaderBinding{
+//                .var = name,
+//                .val = mz::Buffer::From<T>(xf(*val))
+//            }));
+//    }
+//}
 
 template<class T>
 void ChangeVal(std::vector<std::unique_ptr<mz::app::TShaderBinding>>& inputs, std::string const& name, T val )
@@ -222,16 +216,16 @@ void ChangeVal(std::vector<std::unique_ptr<mz::app::TShaderBinding>>& inputs, st
     }
 }
 
-template<class T>
-void AddParam(std::vector<std::unique_ptr<mz::app::TShaderBinding>>& inputs,  const char* name, T val)
-{
-    inputs.push_back(
-        std::make_unique<mz::app::TShaderBinding>(
-            mz::app::TShaderBinding{
-                .var = name,
-                .val = mz::Buffer::From(val)
-            }));
-}
+//template<class T>
+//void AddParam(std::vector<std::unique_ptr<mz::app::TShaderBinding>>& inputs,  const char* name, T val)
+//{
+//    inputs.push_back(
+//        std::make_unique<mz::app::TShaderBinding>(
+//            mz::app::TShaderBinding{
+//                .var = name,
+//                .val = mz::Buffer::From(val)
+//            }));
+//}
 
 template<class T>
 bool GetValue(std::map<std::string, const mz::fb::Pin*>& pins, std::string const& name, T& dst)
@@ -465,6 +459,44 @@ struct Cyclorama : PinMapping
         LoadVertices();
     }
 
+    void DestroyTransientResources()
+    {
+        if (lhs.memory.pid)
+        {
+            mzEngine.Destroy(&lhs);
+            lhs = {};
+        }
+        if (rt.memory.pid)
+        {
+            mzEngine.Destroy(&rt);
+            rt = {};
+        }
+    }
+
+    Cyclorama() 
+    {
+        MzBuffer val;
+        switch (mzEngine.GetDefaultValueOfType("mz.fb.Track", &val))
+        {
+        case MZ_RESULT_SUCCESS:
+            flatbuffers::GetRoot<fb::Track>(val.Data)->UnPackTo(&Track);
+            break;
+        default: break;
+        }
+    }
+
+    ~Cyclorama()
+    {
+        DestroyTransientResources();
+        mzEngine.Destroy(&Verts.Buffer);
+        for (auto& c : CleanPlates)
+        {
+            mzEngine.Destroy(&c.Texture);
+        }
+    }
+
+
+
 
     inline static MzBuffer shaders[] =
     {
@@ -507,86 +539,24 @@ struct Cyclorama : PinMapping
         return MZ_RESULT_SUCCESS;
     }
 
-    void DestroyTransientResources()
+    // Node graph event callbacks
+    static MzResult CanCreateNode(const MzFbNode* node) { return MZ_RESULT_SUCCESS; }
+    static void OnNodeCreated(const MzFbNode* node, void** ctx) 
     {
-        if (lhs.memory.pid)
-        {
-            mzEngine.Destroy(&lhs);
-            lhs = {};
-        }
-        if (rt.memory.pid)
-        {
-            mzEngine.Destroy(&rt);
-            rt = {};
-        }
-    }
-
-    Cyclorama() 
-    {
-        MzBuffer val;
-        switch (mzEngine.GetDefaultValueOfType("mz.fb.Track", &val))
-        {
-        case MZ_RESULT_SUCCESS:
-            flatbuffers::GetRoot<fb::Track>(val.Data)->UnPackTo(&Track);
-            break;
-        default: break;
-        }
-    }
-
-    ~Cyclorama()
-    {
-        DestroyTransientResources();
-        mzEngine.Destroy(&Verts.Buffer);
-        for (auto& c : CleanPlates)
-        {
-            mzEngine.Destroy(&c.Texture);
-        }
-    }
-};
-
-template<class T>
-bool NotSame(T a, T b)  {
-    if constexpr(std::is_floating_point_v<T>)
-    {
-        return glm::abs(a-b) > glm::epsilon<T>();
-    }
-    else
-    {
-        return a != b;
-    }
-}
-
-
-template<class...T>
-u32 MakeFlags(mz::Args &pins, const char* var, u32 idx, T&&... tail)
-{
-    return MakeFlags(pins, var, idx) | MakeFlags(pins, tail...);
-}
-
-template<>
-u32 MakeFlags<>(mz::Args &pins, const char* var, u32 idx)
-{
-    auto val = pins.Get<bool>(var);
-    return val ? (*val << idx) : 0;
-}
-
-void RegisterCyclorama(NodeActionsMap& functions)
-{
-    auto &actions = functions["Cyclorama.Cyclorama"];
-    actions.NodeCreated = [](fb::Node const &node, mz::Args &args, void **ctx) {
-        Cyclorama *c = new Cyclorama();
-        c->Load(node);
+        Cyclorama* c = new Cyclorama();
+        c->Load(*node);
         *ctx = c;
-        auto id = c->GetPinId("Video");
-    };
-
-    actions.PinValueChanged = [](void *ctx, mz::fb::UUID const &id, mz::Buffer* value) {
+    }
+    static void OnNodeUpdated(void* ctx, const MzFbNode* updatedNode) { }
+    static void OnNodeDeleted(void* ctx, MzUUID nodeId) { }
+    static void OnPinValueChanged(void* ctx, MzUUID id, MzBuffer* value) 
+    { 
         auto c = static_cast<Cyclorama*>(ctx);
         auto PinName = c->GetPinName(id);
 
-        #define CHECK_DIFF_AND_LOAD_VERTS(name) \
+#define CHECK_DIFF_AND_LOAD_VERTS(name) \
         if(#name == PinName) { \
-            auto& val = *(std::remove_reference_t<decltype(c->name)>*)(value->data());\
+            auto& val = *(std::remove_reference_t<decltype(c->name)>*)(value->Data);\
             if(NotSame(c->name, val)) { \
                 c->name = val; \
                 c->LoadVertices(); \
@@ -594,16 +564,15 @@ void RegisterCyclorama(NodeActionsMap& functions)
             return; \
         }
 
-        #define CHECK_AND_SET(name) \
+#define CHECK_AND_SET(name) \
         if(#name == PinName) { \
-            c->name = *(std::remove_reference_t<decltype(c->name)>*)(value->data());\
+            c->name = *(std::remove_reference_t<decltype(c->name)>*)(value->Data);\
             return;\
         }
 
-        #define CHECK_AND_SET_TABLE(name, type) \
+#define CHECK_AND_SET_TABLE(name, type) \
         if(#name == PinName) { \
-            auto root = value->As<type>();\
-            root->UnPackTo(&c->name);\
+            flatbuffers::GetRoot<type>(value->Data)->UnPackTo(&c->name);\
             return;\
         }
 
@@ -633,13 +602,14 @@ void RegisterCyclorama(NodeActionsMap& functions)
         {
             return;
         }
-        
+
         if ("Video" == c->GetPinName(id))
         {
-            auto video = value->As<MzResourceShareInfo>();
+            auto video = ValAsTex(value->Data);
+            
             if (c->CapturedFrameCount++ < 50)
             {
-                MzShaderBinding bindings[] = 
+                MzShaderBinding bindings[] =
                 {
                     {"lhs", {&c->lhs, sizeof(c->lhs)}},
                     {"rhs", {&video, sizeof(video)}},
@@ -648,30 +618,29 @@ void RegisterCyclorama(NodeActionsMap& functions)
                 MzRunPassParams pass;
                 pass.PassKey = "Cyclorama_CleanPlateAccumulator";
                 pass.Output = c->rt;
-                pass.BindingCount = sizeof(bindings)/sizeof(bindings[0]);
+                pass.BindingCount = sizeof(bindings) / sizeof(bindings[0]);
                 pass.Bindings = bindings;
                 mzEngine.RunPass(0, &pass);
                 std::swap(c->rt, c->lhs);
-                auto id = c->GetPinId("Video");
             }
             else
             {
                 const u32 idx = c->CleanPlates.size();
                 std::string path = "R:/Reality/Assets/CleanPlates/" + std::to_string(idx) + UUID2STR(c->NodeId) + ".png";
-                MzResourceShareInfo tex  = c->lhs;
-                MzResourceShareInfo tmp  = c->lhs;
+                MzResourceShareInfo tex = c->lhs;
+                MzResourceShareInfo tmp = c->lhs;
                 MzResourceShareInfo srgb = c->lhs;
-                tex.info.texture.format  = MZ_FORMAT_R8G8B8A8_UNORM;
+                tex.info.texture.format = MZ_FORMAT_R8G8B8A8_UNORM;
                 srgb.info.texture.format = MZ_FORMAT_R8G8B8A8_SRGB;
                 mzEngine.Create(&tex);
                 mzEngine.Create(&srgb);
                 mzEngine.Create(&c->lhs);
-                c->CleanPlates.push_back({  .Path = path,
+                c->CleanPlates.push_back({ .Path = path,
                                             .Texture = tex,
                                             .Track = c->Track,
                                             .Pos = c->Position,
-                                            .Rot = c->Rotation,});
-                std::thread([ tmp, tex, srgb, path=std::move(path)] 
+                                            .Rot = c->Rotation, });
+                std::thread([tmp, tex, srgb, path = std::move(path)]
                 {
                     MzResourceShareInfo buf;
                     MzCmd cmd;
@@ -688,32 +657,40 @@ void RegisterCyclorama(NodeActionsMap& functions)
                 c->Capturing = false;
                 c->CapturedFrameCount = 0;
                 c->UpdateCleanPlatesValue();
-				flatbuffers::FlatBufferBuilder fbb;
-				mzEngine.HandleEvent(CreateAppEvent(fbb, mz::app::CreateScheduleRequest(fbb, mz::app::ScheduleRequestKind::PIN, &id, true)));
+                flatbuffers::FlatBufferBuilder fbb;
+                mzEngine.HandleEvent(CreateAppEvent(fbb, mz::app::CreateScheduleRequest(fbb, mz::app::ScheduleRequestKind::PIN, &id, true)));
             }
         }
-    };
+    }
+    static void OnPinConnected(void* ctx, MzUUID pinId) { }
+    static void OnPinDisconnected(void* ctx, MzUUID pinId) { }
+    static void OnPinShowAsChanged(void* ctx, MzUUID pinId, MzFbShowAs showAs) { }
+    static void OnNodeSelected(MzUUID graphId, MzUUID selectedNodeId) { }
+    static void OnPathCommand(void* ctx, const MzPathCommand* command) { }
 
-    actions.EntryPoint = [](mz::Args &pins, void *ctx) {
-        auto c = (Cyclorama *)ctx;
-        auto renderPinData = pins.Get<mz::fb::Texture>("Render");
+    // Function Nodes
+    static MzResult GetFunctions(size_t* outCount, const char** pName, PFN_NodeFunctionExecute* outFunction) { return MZ_RESULT_SUCCESS; }
+    
+    // Execution
+    static MzResult ExecuteNode(void* ctx, const MzNodeExecuteArgs* args) \
+    { 
+        auto c = (Cyclorama*)ctx;
+        auto renderPinData = ValAsTex(GetPinValue<void>(args, "Render"));
 
         app::TRunPass2 pass;
-        std::vector<std::unique_ptr<app::TShaderBinding>> inputs;
-        pass.wireframe = *pins.Get<bool>("Wireframe");
+        std::vector<MzShaderBinding> inputs;
+        pass.wireframe = *GetPinValue<bool>(args, "Wireframe");
         pass.pass = "Cyclorama_" + UUID2STR(c->NodeId);
-    
-        auto trackBuffer = pins.GetBuffer("Track");
-        auto trackTbl = trackBuffer->As<mz::fb::Track>();
-        mz::fb::TTrack track;
-        trackTbl->UnPackTo(&track);
-        glm::dvec3 pos = (glm::dvec3 &)track.location;
-        glm::dvec3 rot = (glm::dvec3 &)track.rotation;
+
+        auto track = GetPinValue<fb::TTrack>(args, "Track");
+      
+        glm::dvec3 pos = (glm::dvec3&)track.location;
+        glm::dvec3 rot = (glm::dvec3&)track.rotation;
         auto view = MakeTransform(pos, rot);
         auto prj = Perspective((f32)track.fov, (f32)track.pixel_aspect_ratio, (glm::dvec2&)track.sensor_size, (glm::dvec2&)track.center_shift);
         // glm::vec3 msize = *pins.Get<glm::dvec3>("Size");
-        glm::vec3 mpos = *pins.Get<glm::dvec3>("Position");
-        glm::vec3 mrot = glm::radians(*pins.Get<glm::dvec3>("Rotation"));
+        glm::vec3 mpos = *GetPinValue<glm::dvec3>(args, "Position");
+        glm::vec3 mrot = glm::radians(*GetPinValue<glm::dvec3>(args, "Rotation"));
 
         // c->Size = msize;
         c->Position = mpos;
@@ -723,15 +700,15 @@ void RegisterCyclorama(NodeActionsMap& functions)
         glm::mat4 model = glm::eulerAngleZYX(mrot.z, mrot.y, mrot.x) * glm::mat4(100.f);
         model[3] = glm::vec4(mpos, 1.f);
 
-        std::vector<u8> MVP_val  = mz::Buffer::From(prj* view * model);
-        
-        auto Offset =  c->GetOrigin(*pins.Get<u32>("OriginPreset"));
-        inputs.emplace_back(new app::TShaderBinding{.var = "VOffset", .val = mz::Buffer::From(Offset) });
-        inputs.emplace_back(new app::TShaderBinding{.var = "MVP", .val = MVP_val});
+        std::vector<u8> MVP_val = mz::Buffer::From(prj * view * model);
 
-        AddParam<f32>(inputs, pins, "SmoothnessCurve");
+        auto Offset = c->GetOrigin(*GetPinValue<u32>(args, "OriginPreset"));
+        inputs.emplace_back(new app::TShaderBinding{ .var = "VOffset", .val = mz::Buffer::From(Offset) });
+        inputs.emplace_back(new app::TShaderBinding{ .var = "MVP", .val = MVP_val });
 
-    
+        AddParam<f32>(inputs, args, "SmoothnessCurve");
+
+
         renderPinData->UnPackTo(pass.output.get());
 
         {
@@ -743,8 +720,8 @@ void RegisterCyclorama(NodeActionsMap& functions)
             call->inputs.emplace_back(new app::TShaderBinding{ .var = "Source", .val = mz::Buffer::From(mzEngine.GetColorTexture(*pins.Get<mz::fb::vec4>("CycloramaColor"))) });
             pass.draws.emplace_back(std::move(call));
         }
-        
-        for(auto& last : c->CleanPlates)
+
+        for (auto& last : c->CleanPlates)
         {
             std::unique_ptr<mz::app::TDrawCall> call(new app::TDrawCall());
             call->verts = std::make_unique<mz::app::VertexData>(c->Verts);
@@ -756,43 +733,43 @@ void RegisterCyclorama(NodeActionsMap& functions)
             glm::vec3 rot = (glm::dvec3&)last.Track.rotation;
             glm::mat4 model = glm::eulerAngleZYX(last.Rot.z, last.Rot.y, last.Rot.x) * glm::mat4(100.f);
             model[3] = glm::vec4(last.Pos, 1.f);
-            
+
             call->inputs.emplace_back(new app::TShaderBinding{ .var = "UVSmoothness", .val = mz::Buffer::From(.05f) });
-            std::vector<u8> CP_MVP_val = mz::Buffer::From(Perspective((f32)last.Track.fov, (f32) last.Track.pixel_aspect_ratio, (glm::dvec2&)last.Track.sensor_size, (glm::dvec2&)last.Track.center_shift) * MakeTransform(pos, rot) * model);
+            std::vector<u8> CP_MVP_val = mz::Buffer::From(Perspective((f32)last.Track.fov, (f32)last.Track.pixel_aspect_ratio, (glm::dvec2&)last.Track.sensor_size, (glm::dvec2&)last.Track.center_shift) * MakeTransform(pos, rot) * model);
             call->inputs.emplace_back(new app::TShaderBinding{ .var = "CP_MVP", .val = CP_MVP_val });
             call->inputs.emplace_back(new app::TShaderBinding{ .var = "Source", .val = mz::Buffer::From(last.Texture) });
             pass.draws.emplace_back(std::move(call));
         }
-        
+
         mzEngine.MakeAPICall(pass, true);
 
         {
             glm::vec4 smoothness(*pins.Get<f32>("BottomSmoothness"),
-                                 *pins.Get<f32>("LeftSmoothness"), 
-                                 *pins.Get<f32>("TopSmoothness"),
-                                 *pins.Get<f32>("RightSmoothness"));
-            glm::vec4 crop      (*pins.Get<f32>("BottomCrop"),
-                                 *pins.Get<f32>("LeftCrop"), 
-                                 *pins.Get<f32>("TopCrop"),
-                                 *pins.Get<f32>("RightCrop"));
-            glm::vec2 diag      (*pins.Get<f32>("DiagonalCrop"),
-                                 *pins.Get<f32>("DiagonalSmoothness"));
+                *pins.Get<f32>("LeftSmoothness"),
+                *pins.Get<f32>("TopSmoothness"),
+                *pins.Get<f32>("RightSmoothness"));
+            glm::vec4 crop(*pins.Get<f32>("BottomCrop"),
+                *pins.Get<f32>("LeftCrop"),
+                *pins.Get<f32>("TopCrop"),
+                *pins.Get<f32>("RightCrop"));
+            glm::vec2 diag(*pins.Get<f32>("DiagonalCrop"),
+                *pins.Get<f32>("DiagonalSmoothness"));
             auto scale = glm::vec4(c->Width, c->LeftWingLength, c->Height, c->RightWingLength) / 100.f;
             // smoothness = glm::clamp(smoothness / scale, glm::vec4(0), glm::vec4(1));
             // crop = glm::clamp(crop / scale, glm::vec4(0), glm::vec4(1));
 
-            u32 flags = MakeFlags(pins, 
-                "SharpEdges", SHARP_EDGES_BIT, 
-                "HasLeftWing", HAS_LEFT_WING_BIT, 
+            u32 flags = MakeFlags(pins,
+                "SharpEdges", SHARP_EDGES_BIT,
+                "HasLeftWing", HAS_LEFT_WING_BIT,
                 "HasRightWing", HAS_RIGHT_WING_BIT);
-            
+
             app::TRunPass maskPass;
             maskPass.pass = "Cyclorama_Mask_" + UUID2STR(c->NodeId);
             auto maskPinData = pins.Get<mz::fb::Texture>("Mask");
             maskPass.output = std::make_unique<MzResourceShareInfo>();
             maskPinData->UnPackTo(maskPass.output.get());
             maskPass.verts = std::make_unique<mz::app::VertexData>(c->Verts);
-            maskPass.inputs.emplace_back(new app::TShaderBinding { .var = "MVP", .val = MVP_val });
+            maskPass.inputs.emplace_back(new app::TShaderBinding{ .var = "MVP", .val = MVP_val });
 
             AddParam(maskPass.inputs, "VOffset", Offset);
             AddParam(maskPass.inputs, "Flags", flags);;
@@ -804,11 +781,57 @@ void RegisterCyclorama(NodeActionsMap& functions)
             AddParam(maskPass.inputs, "Roundness", (f32)c->EdgeRoundness / 100.F);
             AddParam(maskPass.inputs, "Angle", glm::radians(glm::vec2(c->LeftWingAngle, c->RightWingAngle)));
             AddParam(maskPass.inputs, "Diag", diag / 100.f);
-            
-            
+
+
             mzEngine.MakeAPICall(maskPass, true);
         }
-        return true;
+        return MZ_RESULT_SUCCESS;
+    }
+
+    static MzResult CanCopy(void* ctx, MzCopyInfo* copyInfo) { return MZ_RESULT_SUCCESS; }
+    static MzResult BeginCopyFrom(void* ctx, MzCopyInfo* cospyInfo) { return MZ_RESULT_SUCCESS; }
+    static MzResult BeginCopyTo(void* ctx, MzCopyInfo* copyInfo) { return MZ_RESULT_SUCCESS; }
+    static void EndCopyFrom(void* ctx, MzCopyInfo* copyInfo) {  }
+    static void EndCopyTo(void* ctx, MzCopyInfo* copyInfo) { }
+    // Menu & key events
+    static void OnMenuRequested(void* ctx, const MzContextMenuRequest* request) { }
+    static void OnMenuCommand(void* ctx, uint32_t cmd) { }
+    static void OnKeyEvent(void* ctx, const MzKeyEvent* keyEvent) { }
+};
+
+template<class T>
+bool NotSame(T a, T b)  {
+    if constexpr(std::is_floating_point_v<T>)
+    {
+        return glm::abs(a-b) > glm::epsilon<T>();
+    }
+    else
+    {
+        return a != b;
+    }
+}
+
+
+template<class...T>
+u32 MakeFlags(MzNodeExecuteArgs* pins, const char* var, u32 idx, T&&... tail)
+{
+    return MakeFlags(pins, var, idx) | MakeFlags(pins, tail...);
+}
+
+template<>
+u32 MakeFlags<>(MzNodeExecuteArgs* pins, const char* var, u32 idx)
+{
+    auto val = GetPinValue<bool>(pins, var);
+    return val ? (*val << idx) : 0;
+}
+
+void RegisterCyclorama()
+{
+    auto &actions = functions["Cyclorama.Cyclorama"];
+
+
+    actions.EntryPoint = [](mz::Args &pins, void *ctx) {
+       
     };
 
     actions.NodeRemoved = [](void *ctx, mz::fb::UUID const &id) { delete (Cyclorama *)ctx; };
@@ -1048,3 +1071,46 @@ void Cyclorama::GenerateVertices2(std::vector<Vertex> &vertices, std::vector<glm
 }
 
 } // namespace mz
+
+
+
+extern "C"
+{
+
+    MZAPI_ATTR MzResult MZAPI_CALL mzExportNodeFunctions(size_t* outSize, MzNodeFunctions* outFunctions)
+    {
+        *outSize = 1;
+        if (!outFunctions)
+            return MZ_RESULT_SUCCESS;
+
+        using namespace mz;
+        *outFunctions = {
+            .TypeName = "Cyclorama.Cyclorama",
+            .CanCreateNode = Cyclorama::CanCreateNode,
+            .OnNodeCreated = Cyclorama::OnNodeCreated,
+            .OnNodeUpdated = Cyclorama::OnNodeUpdated,
+            .OnNodeDeleted = Cyclorama::OnNodeDeleted,
+            .OnPinValueChanged = Cyclorama::OnPinValueChanged,
+            .OnPinConnected = Cyclorama::OnPinConnected,
+            .OnPinDisconnected = Cyclorama::OnPinDisconnected,
+            .OnPinShowAsChanged = Cyclorama::OnPinShowAsChanged,
+            .OnNodeSelected = Cyclorama::OnNodeSelected,
+            .OnPathCommand = Cyclorama::OnPathCommand,
+            .GetFunctions = Cyclorama::GetFunctions,
+            .ExecuteNode = Cyclorama::ExecuteNode,
+            .CanCopy = Cyclorama::CanCopy,
+            .BeginCopyFrom = Cyclorama::BeginCopyFrom,
+            .BeginCopyTo = Cyclorama::BeginCopyTo,
+            .EndCopyFrom = Cyclorama::EndCopyFrom,
+            .EndCopyTo = Cyclorama::EndCopyTo,
+            .GetShaders = Cyclorama::GetShaders,
+            .GetPasses = Cyclorama::GetPasses,
+            .OnMenuRequested = Cyclorama::OnMenuRequested,
+            .OnMenuCommand = Cyclorama::OnMenuCommand,
+            .OnKeyEvent = Cyclorama::OnKeyEvent,
+        };
+
+        return MZ_RESULT_SUCCESS;
+    }
+
+}

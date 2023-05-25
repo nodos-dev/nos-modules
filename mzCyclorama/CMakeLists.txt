@@ -8,13 +8,6 @@ if(WIN32)
     add_compile_definitions(NOMINMAX)
 endif()
 
-
-# MediaZ Plugin SDK
-if (NOT WITH_MEDIAZ)
-    list(APPEND CMAKE_MODULE_PATH $ENV{MZ_SDK_DIR}/cmake)
-    find_package(mzPluginSDK REQUIRED)
-endif()
-
 # Plugin
 # ------
 set(CMAKE_CXX_STANDARD 20)
