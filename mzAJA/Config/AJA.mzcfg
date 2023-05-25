@@ -7,6 +7,7 @@
     "fb_includes" :[
       "AJA.fbs"
     ],
+    "binary_path": "../Binaries/mzAJA",
     "menu_items": [
         {
             "category": "Device",
