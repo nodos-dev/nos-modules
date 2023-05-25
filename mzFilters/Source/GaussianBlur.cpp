@@ -21,7 +21,7 @@ namespace mz::filters
 
 struct GaussBlurContext
 {
-	MzResourceShareInfo IntermediateTexture;
+	MzResourceShareInfo IntermediateTexture = {};
 	mz::fb::UUID NodeId;
 
 	GaussBlurContext(fb::Node const& node)
@@ -81,25 +81,7 @@ struct GaussBlurContext
 		IntermediateTexture.info.texture.height = outputTexture->info.texture.height;
 		IntermediateTexture.info.texture.format = outputTexture->info.texture.format;
 		
-		mzEngine.Create(outputTexture); // TODO Check result
-	}
-
-	static MzResourceShareInfo ConvertToMzResourceShareInfo(MzBuffer* buf)
-	{
-		auto tex = flatbuffers::GetRoot<mz::fb::Texture>(buf->Data);
-		MzResourceShareInfo res = {};
-		res.info.type = MZ_RESOURCE_TYPE_TEXTURE;
-		res.info.texture.width = tex->width();
-		res.info.texture.height = tex->height();
-		res.info.texture.format = (MzFormat)tex->format();
-		res.info.texture.filter = (MzTextureFilter)tex->filtering();
-		res.info.texture.usage = (MzImageUsage)tex->usage();
-		res.memory.handle = tex->handle();
-		res.memory.memory = tex->memory();
-		res.memory.offset = tex->offset();
-		res.memory.pid = tex->pid();
-		res.memory.type = tex->type();
-		return res;
+		mzEngine.Create(&IntermediateTexture); // TODO Check result
 	}
 
 	void Run(const MzNodeExecuteArgs* pins)
@@ -130,7 +112,7 @@ struct GaussBlurContext
 			}
 			if (strcmp(pins->PinNames[i], "Output") == 0)
 			{
-				outputTexture = ConvertToMzResourceShareInfo(&pins->PinValues[i]);
+				outputTexture = mz::ValAsTex(pins->PinValues[i].Data);
 			}
 		}
 
@@ -138,18 +120,20 @@ struct GaussBlurContext
 		
 		std::string key = "Gaussian_Blur_Pass_" + mz::UUID2STR(NodeId);
 
-		SHADER_BUFFER_BINDING(InputBinding, "Input", inputTexture);
-		SHADER_BUFFER_BINDING(IntermediateBinding, "Input", &IntermediateTexture);
-		SHADER_BINDING(SoftnessBinding, "Softness", *softnessPinValue);
-		SHADER_BINDING(KernelSizeXBinding, "Kernel_Size", kernelPinValue->x);
-		SHADER_BINDING(KernelSizeYBinding, "Kernel_Size", kernelPinValue->y);
-		SHADER_BINDING(PassTypeBinding, "Pass_Type", passTypeValue);
+		auto intermTexData = SerializeResourceInfo(IntermediateTexture);
+		auto intermTexBuf = MzBuffer {.Data = intermTexData.data(), .Size = intermTexData.size()};
+		SHADER_BUFFER_BINDING(inputBinding, "Input", inputTexture);
+		SHADER_BUFFER_BINDING(intermediateBinding, "Input", intermTexBuf);
+		SHADER_BINDING(softnessBinding, "Softness", *softnessPinValue);
+		SHADER_BINDING(kernelSizeXBinding, "Kernel_Size", kernelPinValue->x);
+		SHADER_BINDING(kernelSizeYBinding, "Kernel_Size", kernelPinValue->y);
+		SHADER_BINDING(passTypeBinding, "Pass_Type", passTypeValue);
 
 		MzShaderBinding bindings[4];
-		bindings[0] = InputBinding;
-		bindings[1] = SoftnessBinding;
-		bindings[2] = KernelSizeXBinding;
-		bindings[3] = PassTypeBinding;
+		bindings[0] = inputBinding;
+		bindings[1] = softnessBinding;
+		bindings[2] = kernelSizeXBinding;
+		bindings[3] = passTypeBinding;
 
 		// Horz pass
 		MzRunPassParams passParams = {};
@@ -167,8 +151,8 @@ struct GaussBlurContext
 		passTypeValue = 1;
 
 		// Vert pass
-		bindings[0] = IntermediateBinding;
-		bindings[3] = KernelSizeYBinding;
+		bindings[0] = intermediateBinding;
+		bindings[3] = kernelSizeYBinding;
 		passParams.Bindings = bindings;
 		passParams.Output = outputTexture;
 
