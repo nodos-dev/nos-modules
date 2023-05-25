@@ -38,10 +38,10 @@ enum Filters
 	Kuwahara,						// Done
 	GaussianBlur,					// Done
 	Offset,							// Done
-	Merge,
+	// Merge,
 	KawaseLightStreak,				// Done
 	PremultiplyAlpha,				// Done
-	Resize,
+	// Resize,
 	SevenSegment,					// Done
 	Sharpen,						// Done
 	Sobel,							// Done
@@ -193,7 +193,17 @@ MZAPI_ATTR MzResult MZAPI_CALL mzExportNodeFunctions(size_t* outSize, MzNodeFunc
 			};
 			break;
 		}
-		default: return MZ_RESULT_INVALID_ARGUMENT;
+		// QUADMERGE FILTER
+		case Filters::QuadMerge: {
+			funcs->TypeName = "mz.QuadMerge";
+			funcs->GetShaderSource = [](MzBuffer* outSpirvBuf)-> MzResult {
+				outSpirvBuf->Data = (void*)(QuadMerge_frag_spv);
+				outSpirvBuf->Size = sizeof(QuadMerge_frag_spv);
+				return MZ_RESULT_SUCCESS;
+			};
+			break;
+		}
+		default: break;
 		}
 	}
 	return MZ_RESULT_SUCCESS;

@@ -6,7 +6,7 @@
 							.VariableName = varName,				\
 							.Value = {								\
 								.Data = &variable,					\
-								.Size = sizeof(variable)			\ 
+								.Size = sizeof(variable)			\
 							}										\
 					}
 
@@ -31,8 +31,7 @@ struct GaussBlurContext
 		RegisterPasses();
 
 		IntermediateTexture.info.texture.filter = MZ_TEXTURE_FILTER_LINEAR;
-		// There was ImageUsage Sampled once but it cause an error right now.
-		IntermediateTexture.info.texture.usage = MZ_IMAGE_USAGE_RENDER_TARGET; 
+		IntermediateTexture.info.texture.usage = MzImageUsage(MZ_IMAGE_USAGE_RENDER_TARGET | MZ_IMAGE_USAGE_SAMPLED); 
 	}
 
 	~GaussBlurContext()
@@ -85,6 +84,24 @@ struct GaussBlurContext
 		mzEngine.Create(outputTexture); // TODO Check result
 	}
 
+	static MzResourceShareInfo ConvertToMzResourceShareInfo(MzBuffer* buf)
+	{
+		auto tex = flatbuffers::GetRoot<mz::fb::Texture>(buf->Data);
+		MzResourceShareInfo res = {};
+		res.info.type = MZ_RESOURCE_TYPE_TEXTURE;
+		res.info.texture.width = tex->width();
+		res.info.texture.height = tex->height();
+		res.info.texture.format = (MzFormat)tex->format();
+		res.info.texture.filter = (MzTextureFilter)tex->filtering();
+		res.info.texture.usage = (MzImageUsage)tex->usage();
+		res.memory.handle = tex->handle();
+		res.memory.memory = tex->memory();
+		res.memory.offset = tex->offset();
+		res.memory.pid = tex->pid();
+		res.memory.type = tex->type();
+		return res;
+	}
+
 	void Run(const MzNodeExecuteArgs* pins)
 	{
 		// Create AllPinValues
@@ -113,7 +130,7 @@ struct GaussBlurContext
 			}
 			if (strcmp(pins->PinNames[i], "Output") == 0)
 			{
-				outputTexture = *(MzResourceShareInfo*)pins->PinValues[i].Data;
+				outputTexture = ConvertToMzResourceShareInfo(&pins->PinValues[i]);
 			}
 		}
 
@@ -141,8 +158,11 @@ struct GaussBlurContext
 		passParams.BindingCount = 4;
 		passParams.Wireframe = false;
 		passParams.Output = IntermediateTexture;
+
+		MzCmd cmd;
+		mzEngine.Begin(&cmd);
 		
-		mzEngine.RunPass(nullptr, &passParams);
+		mzEngine.RunPass(cmd, &passParams);
 
 		passTypeValue = 1;
 
@@ -151,8 +171,10 @@ struct GaussBlurContext
 		bindings[3] = KernelSizeYBinding;
 		passParams.Bindings = bindings;
 		passParams.Output = outputTexture;
-		
-		mzEngine.RunPass(nullptr, &passParams);
+
+		mzEngine.RunPass(cmd, &passParams);
+
+		mzEngine.End(cmd);
 	}
 };
 
