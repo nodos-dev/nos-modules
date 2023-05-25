@@ -10,6 +10,9 @@
 #include "YCbCr2RGB.comp.spv.dat"
 #include "YCbCr2RGB.frag.spv.dat"
 
+#include <MediaZ/PluginAPI.h>
+#include <MediaZ/Enums.h>
+
 using namespace mz;
 
 MZ_INIT();
@@ -232,6 +235,75 @@ struct AJA
 
     static MzResult GetFunctions(size_t * outCount, const char** pName, PFN_NodeFunctionExecute * outFunction) 
     {
+	    // auto &actions = functions["AJA.AJAIn"];
+	    //
+	    // actions.NodeFunctions["DumpInfo"] = [](mz::Args &pins, mz::Args &functionParams, void *ctx) {
+	    //     auto aja = ((AJAClient *)ctx);
+	    //
+	    //     for (u32 i = 0; i < 4; ++i)
+	    //     {
+	    //         AJALabelValuePairs info = {};
+	    //         aja->Device->GetVPID(NTV2Channel(i)).GetInfo(info);
+	    //         std::ostringstream ss;
+	    //         for (auto &[k, v] : info)
+	    //         {
+	    //             ss << k << " : " << v << "\n";
+	    //         }
+	    //
+	    //         mzEngine.Log((aja->Device->GetDisplayName() + " SingleLink " + std::to_string(i + 1) + " info").c_str(),
+					// 		 ss.str().c_str());
+	    //     }
+	    // };
+	    //
+	    // actions.NodeFunctions["StartLog"] = [](mz::Args &pins, mz::Args &functionParams, void *ctx) {
+	    //
+	    // };
+	    //
+	    // actions.NodeFunctions["StopLog"] = [](mz::Args &pins, mz::Args &functionParams, void *ctx) {
+	    //
+	    // };
+	    //
+	    // actions.NodeFunctions["ReloadShaders"] = [](mz::Args &pins, mz::Args &functionParams, void *ctx) {
+	    //     system("glslc -O -g " MZ_REPO_ROOT "/Plugins/mzBasic/Source/AJA/YCbCr2RGB.frag -c -o " MZ_REPO_ROOT
+	    //            "/../YCbCr2RGB_.frag");
+	    //     system("glslc -O -g " MZ_REPO_ROOT "/Plugins/mzBasic/Source/AJA/RGB2YCbCr.frag -c -o " MZ_REPO_ROOT
+	    //            "/../RGB2YCbCr_.frag");
+	    //     system("glslc -O -g " MZ_REPO_ROOT "/Plugins/mzBasic/Source/AJA/RGB2YCbCr.comp -c -o " MZ_REPO_ROOT
+	    //            "/../RGB2YCbCr_.comp");
+	    //     system("glslc -O -g " MZ_REPO_ROOT "/Plugins/mzBasic/Source/AJA/YCbCr2RGB.comp -c -o " MZ_REPO_ROOT
+	    //            "/../YCbCr2RGB_.comp");
+	    //
+	    //     system("spirv-opt -O " MZ_REPO_ROOT "/../YCbCr2RGB_.frag -o " MZ_REPO_ROOT "/../YCbCr2RGB.frag");
+	    //     system("spirv-opt -O " MZ_REPO_ROOT "/../RGB2YCbCr_.frag -o " MZ_REPO_ROOT "/../RGB2YCbCr.frag");
+	    //     system("spirv-opt -O " MZ_REPO_ROOT "/../RGB2YCbCr_.comp -o " MZ_REPO_ROOT "/../RGB2YCbCr.comp");
+	    //     system("spirv-opt -O " MZ_REPO_ROOT "/../YCbCr2RGB_.comp -o " MZ_REPO_ROOT "/../YCbCr2RGB.comp");
+	    //     auto YCbCr2RGB = ReadSpirv(MZ_REPO_ROOT "/../YCbCr2RGB.frag");
+	    //     auto RGB2YCbCr = ReadSpirv(MZ_REPO_ROOT "/../RGB2YCbCr.frag");
+	    //     auto RGB2YCbCr2 = ReadSpirv(MZ_REPO_ROOT "/../RGB2YCbCr.comp");
+	    //     auto YCbCr2RGB2 = ReadSpirv(MZ_REPO_ROOT "/../YCbCr2RGB.comp");
+	    //
+	    //     for (auto c : AJAClient::Ctx.Clients)
+	    //         for (auto& p : c->Pins)
+	    //             p->Stop();
+	    //
+	    //
+	    //     mzEngine.RegisterShader("AJA_YCbCr2RGB_Shader", Blob2Buf(YCbCr2RGB));
+	    //     mzEngine.RegisterShader("AJA_YCbCr2RGB_Shader", Blob2Buf(YCbCr2RGB));
+	    //     mzEngine.RegisterShader("AJA_RGB2YCbCr_Shader", Blob2Buf(RGB2YCbCr));
+	    //     mzEngine.RegisterShader("AJA_RGB2YCbCr_Compute_Shader", Blob2Buf(RGB2YCbCr2));
+	    //     mzEngine.RegisterShader("AJA_YCbCr2RGB_Compute_Shader", Blob2Buf(YCbCr2RGB2));
+	    //
+	    //     mzEngine.RegisterPass2({.Key = "AJA_RGB2YCbCr_Compute_Pass",.Shader="AJA_RGB2YCbCr_Compute_Shader"});
+	    //     mzEngine.RegisterPass2({.Key = "AJA_YCbCr2RGB_Compute_Pass",.Shader="AJA_YCbCr2RGB_Compute_Shader"});
+	    //     mzEngine.RegisterPass2({.Key = "AJA_YCbCr2RGB_Pass",.Shader="AJA_YCbCr2RGB_Shader"});
+	    //     mzEngine.RegisterPass2({.Key = "AJA_RGB2YCbCr_Pass",.Shader="AJA_RGB2YCbCr_Shader"});
+	    //     
+	    //     for (auto c : AJAClient::Ctx.Clients)
+	    //         for (auto& p : c->Pins)
+	    //             p->StartThread();
+	    // };
+	    //
+	    // functions["AJA.AJAOut"] = actions;
         return MZ_RESULT_SUCCESS;
     }
     static MzResult  ExecuteNode(void* ctx, const MzNodeExecuteArgs * args) { return MZ_RESULT_SUCCESS; }
@@ -281,79 +353,6 @@ struct AJA
     static void OnKeyEvent(void* ctx, const MzKeyEvent * keyEvent) { }
 };
 
-void MZAPI_ATTR RegisterAJA(NodeActionsMap& functions)
-{
-    auto &actions = functions["AJA.AJAIn"];
-
-    actions.NodeFunctions["DumpInfo"] = [](mz::Args &pins, mz::Args &functionParams, void *ctx) {
-        auto aja = ((AJAClient *)ctx);
-
-        for (u32 i = 0; i < 4; ++i)
-        {
-            AJALabelValuePairs info = {};
-            aja->Device->GetVPID(NTV2Channel(i)).GetInfo(info);
-            std::ostringstream ss;
-            for (auto &[k, v] : info)
-            {
-                ss << k << " : " << v << "\n";
-            }
-
-            mzEngine.Log((aja->Device->GetDisplayName() + " SingleLink " + std::to_string(i + 1) + " info").c_str(),
-						 ss.str().c_str());
-        }
-    };
-
-    actions.NodeFunctions["StartLog"] = [](mz::Args &pins, mz::Args &functionParams, void *ctx) {
-
-    };
-
-    actions.NodeFunctions["StopLog"] = [](mz::Args &pins, mz::Args &functionParams, void *ctx) {
-
-    };
-
-    actions.NodeFunctions["ReloadShaders"] = [](mz::Args &pins, mz::Args &functionParams, void *ctx) {
-        system("glslc -O -g " MZ_REPO_ROOT "/Plugins/mzBasic/Source/AJA/YCbCr2RGB.frag -c -o " MZ_REPO_ROOT
-               "/../YCbCr2RGB_.frag");
-        system("glslc -O -g " MZ_REPO_ROOT "/Plugins/mzBasic/Source/AJA/RGB2YCbCr.frag -c -o " MZ_REPO_ROOT
-               "/../RGB2YCbCr_.frag");
-        system("glslc -O -g " MZ_REPO_ROOT "/Plugins/mzBasic/Source/AJA/RGB2YCbCr.comp -c -o " MZ_REPO_ROOT
-               "/../RGB2YCbCr_.comp");
-        system("glslc -O -g " MZ_REPO_ROOT "/Plugins/mzBasic/Source/AJA/YCbCr2RGB.comp -c -o " MZ_REPO_ROOT
-               "/../YCbCr2RGB_.comp");
-
-        system("spirv-opt -O " MZ_REPO_ROOT "/../YCbCr2RGB_.frag -o " MZ_REPO_ROOT "/../YCbCr2RGB.frag");
-        system("spirv-opt -O " MZ_REPO_ROOT "/../RGB2YCbCr_.frag -o " MZ_REPO_ROOT "/../RGB2YCbCr.frag");
-        system("spirv-opt -O " MZ_REPO_ROOT "/../RGB2YCbCr_.comp -o " MZ_REPO_ROOT "/../RGB2YCbCr.comp");
-        system("spirv-opt -O " MZ_REPO_ROOT "/../YCbCr2RGB_.comp -o " MZ_REPO_ROOT "/../YCbCr2RGB.comp");
-        auto YCbCr2RGB = ReadSpirv(MZ_REPO_ROOT "/../YCbCr2RGB.frag");
-        auto RGB2YCbCr = ReadSpirv(MZ_REPO_ROOT "/../RGB2YCbCr.frag");
-        auto RGB2YCbCr2 = ReadSpirv(MZ_REPO_ROOT "/../RGB2YCbCr.comp");
-        auto YCbCr2RGB2 = ReadSpirv(MZ_REPO_ROOT "/../YCbCr2RGB.comp");
-
-        for (auto c : AJAClient::Ctx.Clients)
-            for (auto& p : c->Pins)
-                p->Stop();
-
-    
-        mzEngine.RegisterShader("AJA_YCbCr2RGB_Shader", Blob2Buf(YCbCr2RGB));
-        mzEngine.RegisterShader("AJA_YCbCr2RGB_Shader", Blob2Buf(YCbCr2RGB));
-        mzEngine.RegisterShader("AJA_RGB2YCbCr_Shader", Blob2Buf(RGB2YCbCr));
-        mzEngine.RegisterShader("AJA_RGB2YCbCr_Compute_Shader", Blob2Buf(RGB2YCbCr2));
-        mzEngine.RegisterShader("AJA_YCbCr2RGB_Compute_Shader", Blob2Buf(YCbCr2RGB2));
-
-        mzEngine.RegisterPass2({.Key = "AJA_RGB2YCbCr_Compute_Pass",.Shader="AJA_RGB2YCbCr_Compute_Shader"});
-        mzEngine.RegisterPass2({.Key = "AJA_YCbCr2RGB_Compute_Pass",.Shader="AJA_YCbCr2RGB_Compute_Shader"});
-        mzEngine.RegisterPass2({.Key = "AJA_YCbCr2RGB_Pass",.Shader="AJA_YCbCr2RGB_Shader"});
-        mzEngine.RegisterPass2({.Key = "AJA_RGB2YCbCr_Pass",.Shader="AJA_RGB2YCbCr_Shader"});
-        
-        for (auto c : AJAClient::Ctx.Clients)
-            for (auto& p : c->Pins)
-                p->StartThread();
-    };
-
-    functions["AJA.AJAOut"] = actions;
-}
-
 extern "C"
 {
 
@@ -362,8 +361,8 @@ MZAPI_ATTR MzResult MZAPI_CALL mzExportNodeFunctions(size_t* outSize, MzNodeFunc
     *outSize = 2;
     if (!outFunctions)
         return MZ_RESULT_SUCCESS;
-   
-    outFunctions[0] = outFunctions[1] = {
+
+    outFunctions[0] = outFunctions[1] = MzNodeFunctions {
         .CanCreateNode = AJA::CanCreateNode,
         .OnNodeCreated = AJA::OnNodeCreated,
         .OnNodeUpdated = AJA::OnNodeUpdated,

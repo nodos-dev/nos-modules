@@ -1,4 +1,5 @@
 #pragma once
 
-#include <MediaZ/Plugin.h>
+#include <MediaZ/PluginAPI.h>
+#include <MediaZ/Helpers.hpp>
 

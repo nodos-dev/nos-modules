@@ -4,6 +4,8 @@
 #include "glm/glm.hpp"
 #include <random>
 #include <uuid.h>
+#include <MediaZ/PluginAPI.h>
+#include <MediaZ/Helpers.hpp>
 
 namespace mz
 {

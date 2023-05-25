@@ -23,8 +23,6 @@ include(AJAVersionConfig)
 include(GNUInstallDirs)
 add_subdirectory(${EXTERNAL_DIR}/ntv2/ajalibraries "${CMAKE_CURRENT_BINARY_DIR}/ajalibraries")
 
-
-
 # Plugin
 # ------
 set(CMAKE_CXX_STANDARD 20)
