@@ -36,6 +36,9 @@
 typedef u32 uint;
 #include "CycloDefines.glsl"
 
+
+MZ_INIT();
+
 namespace mz
 {
 #undef near
@@ -46,6 +49,31 @@ struct Vertex : glm::vec3
 };
 
 static_assert(sizeof(Vertex) == 12);
+
+template<class T>
+bool NotSame(T a, T b) {
+    if constexpr (std::is_floating_point_v<T>)
+    {
+        return glm::abs(a - b) > glm::epsilon<T>();
+    }
+    else
+    {
+        return a != b;
+    }
+}
+
+template<class...T>
+u32 MakeFlags(const MzNodeExecuteArgs* pins, const char* var, u32 idx, T&&... tail)
+{
+    return MakeFlags(pins, var, idx) | MakeFlags(pins, tail...);
+}
+
+template<>
+u32 MakeFlags<>(const MzNodeExecuteArgs* pins, const char* var, u32 idx)
+{
+    auto val = GetPinValue<bool>(pins, var);
+    return val ? (*val << idx) : 0;
+}
 
 static glm::mat4 Perspective(f32 fovx, f32 pixelAspectRatio, glm::vec2 sensorSize, glm::vec2 centerShift)
 {
@@ -183,49 +211,20 @@ static glm::mat4 MakeTransform(glm::vec3 pos, glm::vec3 rot)
 template<class T>
 void AddParam(std::vector<MzShaderBinding>& inputs, const MzNodeExecuteArgs* pins, const char* name)
 {
-    if(auto val = GetPinValue<T>(name))
+    if(auto val = GetPinValue<T>(pins, name))
     {
         inputs.push_back({name, {val, sizeof(T)}});
     }
 }
 
-//template<class T>
-//void AddParamXF(std::vector<std::unique_ptr<mz::app::TShaderBinding>>& inputs, const MzNodeExecuteArgs* pins, const char* name, std::function<T(T const&)>&& xf = [](T const& t) { return U(t); })
-//{
-//    if(auto val = pins.Get<T>(name))
-//    {
-//        inputs.push_back(
-//            std::make_unique<mz::app::TShaderBinding>(
-//            mz::app::TShaderBinding{
-//                .var = name,
-//                .val = mz::Buffer::From<T>(xf(*val))
-//            }));
-//    }
-//}
-
 template<class T>
-void ChangeVal(std::vector<std::unique_ptr<mz::app::TShaderBinding>>& inputs, std::string const& name, T val )
+void AddParam(std::vector<MzShaderBinding>& inputs, const MzNodeExecuteArgs* pins, const char* name, T const& val)
 {
-    for (auto& in : inputs)
+    if (auto val = GetPinValue<T>(pins, name))
     {
-        if (in->var == name)
-        {
-            in->val = mz::Buffer::From(val);
-            return;
-        }
+        inputs.push_back({ name, {(void*)&val, sizeof(T)} });
     }
 }
-
-//template<class T>
-//void AddParam(std::vector<std::unique_ptr<mz::app::TShaderBinding>>& inputs,  const char* name, T val)
-//{
-//    inputs.push_back(
-//        std::make_unique<mz::app::TShaderBinding>(
-//            mz::app::TShaderBinding{
-//                .var = name,
-//                .val = mz::Buffer::From(val)
-//            }));
-//}
 
 template<class T>
 bool GetValue(std::map<std::string, const mz::fb::Pin*>& pins, std::string const& name, T& dst)
@@ -675,13 +674,15 @@ struct Cyclorama : PinMapping
     static MzResult ExecuteNode(void* ctx, const MzNodeExecuteArgs* args) \
     { 
         auto c = (Cyclorama*)ctx;
-        auto renderPinData = ValAsTex(GetPinValue<void>(args, "Render"));
+        
+        MzResourceShareInfo color;
+        MzRunPass2Params pass;
+        std::vector<MzDrawCall> calls(1 + c->CleanPlates.size());
+        std::vector<std::vector<MzShaderBinding>> inputs(calls.size());
 
-        app::TRunPass2 pass;
-        std::vector<MzShaderBinding> inputs;
-        pass.wireframe = *GetPinValue<bool>(args, "Wireframe");
-        pass.pass = "Cyclorama_" + UUID2STR(c->NodeId);
-
+        pass.Wireframe = *GetPinValue<bool>(args, "Wireframe");
+        pass.PassKey = "Cyclorama_Main_Pass";
+        pass.Output = ValAsTex(GetPinValue<void>(args, "Render"));;
         auto track = GetPinValue<fb::TTrack>(args, "Track");
       
         glm::dvec3 pos = (glm::dvec3&)track.location;
@@ -703,88 +704,105 @@ struct Cyclorama : PinMapping
         std::vector<u8> MVP_val = mz::Buffer::From(prj * view * model);
 
         auto Offset = c->GetOrigin(*GetPinValue<u32>(args, "OriginPreset"));
-        inputs.emplace_back(new app::TShaderBinding{ .var = "VOffset", .val = mz::Buffer::From(Offset) });
-        inputs.emplace_back(new app::TShaderBinding{ .var = "MVP", .val = MVP_val });
-
-        AddParam<f32>(inputs, args, "SmoothnessCurve");
-
-
-        renderPinData->UnPackTo(pass.output.get());
+        inputs[0].push_back({ "VOffset", {(void*)&Offset, sizeof(Offset)}});
+        inputs[0].push_back({ "MVP", {MVP_val.data(), MVP_val.size()}});
+        AddParam<f32>(inputs[0], args, "SmoothnessCurve");
+        f32 zero = 0.f;
+        f32 half = 0.5f;
 
         {
-            std::unique_ptr<mz::app::TDrawCall> call(new app::TDrawCall());
-            call->verts = std::make_unique<mz::app::VertexData>(c->Verts);
-            call->inputs = std::move(inputs);
-            call->inputs.emplace_back(new app::TShaderBinding{ .var = "UVSmoothness", .val = mz::Buffer::From(0.f) });
-            call->inputs.emplace_back(new app::TShaderBinding{ .var = "CP_MVP", .val = MVP_val });
-            call->inputs.emplace_back(new app::TShaderBinding{ .var = "Source", .val = mz::Buffer::From(mzEngine.GetColorTexture(*pins.Get<mz::fb::vec4>("CycloramaColor"))) });
-            pass.draws.emplace_back(std::move(call));
+
+            mzEngine.GetColorTexture(*GetPinValue<MzVec4>(args, "CycloramaColor"), &color);
+            inputs[0].push_back({ "UVSmoothness", {&zero, sizeof(zero)}});
+            inputs[0].push_back({ "CP_MVP", {MVP_val.data(), MVP_val.size()}});
+            inputs[0].push_back({ "Source", {&color, sizeof(color)}});
         }
+
+        std::vector<glm::mat4> matrices(calls.size());
+
+        auto* mat = &matrices[0];
+        auto* input = &inputs[0];
+        auto* call = &calls[0];
 
         for (auto& last : c->CleanPlates)
         {
-            std::unique_ptr<mz::app::TDrawCall> call(new app::TDrawCall());
-            call->verts = std::make_unique<mz::app::VertexData>(c->Verts);
-            call->verts->mutate_depth_write(false);
-            call->verts->mutate_depth_test(false);
-            call->verts->mutate_depth_func(app::DepthFunction::NEVER);
+            ++input, ++call, ++mat;
+            call->Vertices.DepthWrite = 0;
+            call->Vertices.DepthTest = 0;
+            call->Vertices.DepthFunc = MZ_DEPTH_FUNCTION_NEVER;
+
+            input->push_back({"UVSmoothness", {&half, sizeof(half)}});
+            input->push_back({"CP_MVP", {mat, sizeof(*mat)}});
+            input->push_back({"Source", {&last.Texture, sizeof(last.Texture)} });
 
             glm::vec3 pos = (glm::dvec3&)last.Track.location;
             glm::vec3 rot = (glm::dvec3&)last.Track.rotation;
             glm::mat4 model = glm::eulerAngleZYX(last.Rot.z, last.Rot.y, last.Rot.x) * glm::mat4(100.f);
             model[3] = glm::vec4(last.Pos, 1.f);
-
-            call->inputs.emplace_back(new app::TShaderBinding{ .var = "UVSmoothness", .val = mz::Buffer::From(.05f) });
-            std::vector<u8> CP_MVP_val = mz::Buffer::From(Perspective((f32)last.Track.fov, (f32)last.Track.pixel_aspect_ratio, (glm::dvec2&)last.Track.sensor_size, (glm::dvec2&)last.Track.center_shift) * MakeTransform(pos, rot) * model);
-            call->inputs.emplace_back(new app::TShaderBinding{ .var = "CP_MVP", .val = CP_MVP_val });
-            call->inputs.emplace_back(new app::TShaderBinding{ .var = "Source", .val = mz::Buffer::From(last.Texture) });
-            pass.draws.emplace_back(std::move(call));
+            *mat = Perspective((f32)last.Track.fov, (f32)last.Track.pixel_aspect_ratio, (glm::dvec2&)last.Track.sensor_size, (glm::dvec2&)last.Track.center_shift) * MakeTransform(pos, rot) * model;
         }
 
-        mzEngine.MakeAPICall(pass, true);
+        pass.DrawCalls = calls.data();
+        pass.DrawCallCount = calls.size();
+
+        for (u32 i = 0; i < calls.size(); ++i)
+        {
+            calls[i].Vertices = c->Verts;
+            calls[i].Bindings = inputs[i].data();
+            calls[i].BindingCount = inputs[i].size();
+        }
+
+        mzEngine.RunPass2(0, &pass);
 
         {
-            glm::vec4 smoothness(*pins.Get<f32>("BottomSmoothness"),
-                *pins.Get<f32>("LeftSmoothness"),
-                *pins.Get<f32>("TopSmoothness"),
-                *pins.Get<f32>("RightSmoothness"));
-            glm::vec4 crop(*pins.Get<f32>("BottomCrop"),
-                *pins.Get<f32>("LeftCrop"),
-                *pins.Get<f32>("TopCrop"),
-                *pins.Get<f32>("RightCrop"));
-            glm::vec2 diag(*pins.Get<f32>("DiagonalCrop"),
-                *pins.Get<f32>("DiagonalSmoothness"));
-            auto scale = glm::vec4(c->Width, c->LeftWingLength, c->Height, c->RightWingLength) / 100.f;
-            // smoothness = glm::clamp(smoothness / scale, glm::vec4(0), glm::vec4(1));
-            // crop = glm::clamp(crop / scale, glm::vec4(0), glm::vec4(1));
+            glm::vec4 smoothness = glm::vec4(
+                *GetPinValue<f32>(args, "BottomSmoothness"),
+                *GetPinValue<f32>(args, "LeftSmoothness"),
+                *GetPinValue<f32>(args, "TopSmoothness"),
+                *GetPinValue<f32>(args, "RightSmoothness")
+            ) / 100.f;
+            glm::vec4 crop = glm::vec4(
+                *GetPinValue<f32>(args, "BottomCrop"),
+                *GetPinValue<f32>(args, "LeftCrop"),
+                *GetPinValue<f32>(args, "TopCrop"),
+                *GetPinValue<f32>(args, "RightCrop")
+            ) / 100.f;
+            glm::vec2 diag = glm::vec2(
+                *GetPinValue<f32>(args, "DiagonalCrop"),
+                *GetPinValue<f32>(args, "DiagonalSmoothness")
+            ) / 100.f;
 
-            u32 flags = MakeFlags(pins,
+            f32 roundness = c->EdgeRoundness / 100.f;
+            auto scale = glm::vec4(c->Width, c->LeftWingLength, c->Height, c->RightWingLength) / 100.f;
+            
+            glm::vec2 angle = glm::radians(glm::vec2(c->LeftWingAngle, c->RightWingAngle));
+
+            u32 flags = MakeFlags(args,
                 "SharpEdges", SHARP_EDGES_BIT,
                 "HasLeftWing", HAS_LEFT_WING_BIT,
                 "HasRightWing", HAS_RIGHT_WING_BIT);
 
-            app::TRunPass maskPass;
-            maskPass.pass = "Cyclorama_Mask_" + UUID2STR(c->NodeId);
-            auto maskPinData = pins.Get<mz::fb::Texture>("Mask");
-            maskPass.output = std::make_unique<MzResourceShareInfo>();
-            maskPinData->UnPackTo(maskPass.output.get());
-            maskPass.verts = std::make_unique<mz::app::VertexData>(c->Verts);
-            maskPass.inputs.emplace_back(new app::TShaderBinding{ .var = "MVP", .val = MVP_val });
+            std::vector<MzShaderBinding> maskInputs;
+            MzRunPassParams maskPass;
+            maskPass.PassKey = "Cyclorama_Mask_Pass";
+            maskPass.Output = ValAsTex(GetPinValue<void>(args, "Mask"));;
+            maskPass.Vertices = c->Verts;
+            maskInputs.push_back({ "MVP", {MVP_val.data(), MVP_val.size() }});
 
-            AddParam(maskPass.inputs, "VOffset", Offset);
-            AddParam(maskPass.inputs, "Flags", flags);;
-            AddParam<f32>(maskPass.inputs, pins, "SmoothnessCurve");
-            AddParam<glm::vec4>(maskPass.inputs, pins, "MaskColor");
-            AddParam(maskPass.inputs, "Smoothness", smoothness / 100.f);
-            AddParam(maskPass.inputs, "SmoothnessCrop", crop / 100.f);
-            AddParam(maskPass.inputs, "Scale", scale);
-            AddParam(maskPass.inputs, "Roundness", (f32)c->EdgeRoundness / 100.F);
-            AddParam(maskPass.inputs, "Angle", glm::radians(glm::vec2(c->LeftWingAngle, c->RightWingAngle)));
-            AddParam(maskPass.inputs, "Diag", diag / 100.f);
+            AddParam(maskInputs, args, "VOffset", Offset);
+            AddParam(maskInputs, args, "Flags", flags);;
+            AddParam<f32>(maskInputs, args, "SmoothnessCurve");
+            AddParam<glm::vec4>(maskInputs, args, "MaskColor");
+            AddParam(maskInputs, args, "Smoothness", smoothness);
+            AddParam(maskInputs, args, "SmoothnessCrop", crop);
+            AddParam(maskInputs, args, "Scale", scale);
+            AddParam(maskInputs, args, "Roundness", roundness);
+            AddParam(maskInputs, args, "Angle", angle);
+            AddParam(maskInputs, args, "Diag", diag);
 
-
-            mzEngine.MakeAPICall(maskPass, true);
+            mzEngine.RunPass(0, &maskPass);
         }
+
         return MZ_RESULT_SUCCESS;
     }
 
@@ -799,101 +817,76 @@ struct Cyclorama : PinMapping
     static void OnKeyEvent(void* ctx, const MzKeyEvent* keyEvent) { }
 };
 
-template<class T>
-bool NotSame(T a, T b)  {
-    if constexpr(std::is_floating_point_v<T>)
-    {
-        return glm::abs(a-b) > glm::epsilon<T>();
-    }
-    else
-    {
-        return a != b;
-    }
-}
-
-
-template<class...T>
-u32 MakeFlags(MzNodeExecuteArgs* pins, const char* var, u32 idx, T&&... tail)
-{
-    return MakeFlags(pins, var, idx) | MakeFlags(pins, tail...);
-}
-
-template<>
-u32 MakeFlags<>(MzNodeExecuteArgs* pins, const char* var, u32 idx)
-{
-    auto val = GetPinValue<bool>(pins, var);
-    return val ? (*val << idx) : 0;
-}
 
 void RegisterCyclorama()
 {
-    auto &actions = functions["Cyclorama.Cyclorama"];
+    //auto &actions = functions["Cyclorama.Cyclorama"];
 
 
-    actions.EntryPoint = [](mz::Args &pins, void *ctx) {
-       
-    };
+    //actions.EntryPoint = [](mz::Args &pins, void *ctx) {
+    //   
+    //};
 
-    actions.NodeRemoved = [](void *ctx, mz::fb::UUID const &id) { delete (Cyclorama *)ctx; };
+    //actions.NodeRemoved = [](void *ctx, mz::fb::UUID const &id) { delete (Cyclorama *)ctx; };
 
-    actions.NodeFunctions["AddProjection"] = [](mz::Args &pins, mz::Args &functionParams, void *ctx) {
-        auto c = (Cyclorama *)ctx;
-        if(c->Capturing) return;
-        c->Capturing = true;
-        c->CapturedFrameCount = 0;
-        flatbuffers::FlatBufferBuilder fbb;
-        auto id = c->GetPinId("Video");
-        mzEngine.HandleEvent(CreateAppEvent(fbb, mz::app::CreateScheduleRequest(fbb, mz::app::ScheduleRequestKind::PIN, &id)));
-    };
+    //actions.NodeFunctions["AddProjection"] = [](mz::Args &pins, mz::Args &functionParams, void *ctx) {
+    //    auto c = (Cyclorama *)ctx;
+    //    if(c->Capturing) return;
+    //    c->Capturing = true;
+    //    c->CapturedFrameCount = 0;
+    //    flatbuffers::FlatBufferBuilder fbb;
+    //    auto id = c->GetPinId("Video");
+    //    mzEngine.HandleEvent(CreateAppEvent(fbb, mz::app::CreateScheduleRequest(fbb, mz::app::ScheduleRequestKind::PIN, &id)));
+    //};
 
-    actions.NodeFunctions["ClearProjection"] = [](mz::Args &pins, mz::Args &functionParams, void *ctx) {
-        auto c = (Cyclorama *)ctx;
-        if(c->Capturing) return;
-        c->Capturing = false;
-        c->CapturedFrameCount = 0;
-        c->CleanCleanPlates();
-        c->UpdateCleanPlatesValue();
-        c->Clear();
-    };
+    //actions.NodeFunctions["ClearProjection"] = [](mz::Args &pins, mz::Args &functionParams, void *ctx) {
+    //    auto c = (Cyclorama *)ctx;
+    //    if(c->Capturing) return;
+    //    c->Capturing = false;
+    //    c->CapturedFrameCount = 0;
+    //    c->CleanCleanPlates();
+    //    c->UpdateCleanPlatesValue();
+    //    c->Clear();
+    //};
 
-    actions.NodeFunctions["ReloadShaders"] = [&actions](mz::Args &pins, mz::Args &functionParams, void *ctx) {
-        auto c = (Cyclorama *)ctx;
-        system("glslc " MZ_REPO_ROOT "/Plugins/mzBasic/Source/VirtualStudio/Cyclorama/Cyclorama.frag -c -o " MZ_REPO_ROOT "/cyclo.frag");
-        system("glslc " MZ_REPO_ROOT "/Plugins/mzBasic/Source/VirtualStudio/Cyclorama/Cyclorama.vert -c -o " MZ_REPO_ROOT "/cyclo.vert");
-        system("glslc " MZ_REPO_ROOT "/Plugins/mzBasic/Source/VirtualStudio/Cyclorama/CycloramaMask.frag -c -o " MZ_REPO_ROOT "/cyclo_mask.frag");
-        system("glslc " MZ_REPO_ROOT "/Plugins/mzBasic/Source/VirtualStudio/Cyclorama/CycloramaMask.vert -c -o " MZ_REPO_ROOT "/cyclo_mask.vert");
-        system("glslc " MZ_REPO_ROOT "/Plugins/mzBasic/Source/VirtualStudio/Cyclorama/CleanPlateAcc.frag -c -o " MZ_REPO_ROOT "/cp.frag");
-        auto frag = ReadSpirv(MZ_REPO_ROOT "/cyclo.frag");
-        auto vert = ReadSpirv(MZ_REPO_ROOT "/cyclo.vert");
-        auto mask_frag = ReadSpirv(MZ_REPO_ROOT "/cyclo_mask.frag");
-        auto mask_vert = ReadSpirv(MZ_REPO_ROOT "/cyclo_mask.vert");
-        auto cp_frag = ReadSpirv(MZ_REPO_ROOT "/cp.frag");
+    //actions.NodeFunctions["ReloadShaders"] = [&actions](mz::Args &pins, mz::Args &functionParams, void *ctx) {
+    //    auto c = (Cyclorama *)ctx;
+    //    system("glslc " MZ_REPO_ROOT "/Plugins/mzBasic/Source/VirtualStudio/Cyclorama/Cyclorama.frag -c -o " MZ_REPO_ROOT "/cyclo.frag");
+    //    system("glslc " MZ_REPO_ROOT "/Plugins/mzBasic/Source/VirtualStudio/Cyclorama/Cyclorama.vert -c -o " MZ_REPO_ROOT "/cyclo.vert");
+    //    system("glslc " MZ_REPO_ROOT "/Plugins/mzBasic/Source/VirtualStudio/Cyclorama/CycloramaMask.frag -c -o " MZ_REPO_ROOT "/cyclo_mask.frag");
+    //    system("glslc " MZ_REPO_ROOT "/Plugins/mzBasic/Source/VirtualStudio/Cyclorama/CycloramaMask.vert -c -o " MZ_REPO_ROOT "/cyclo_mask.vert");
+    //    system("glslc " MZ_REPO_ROOT "/Plugins/mzBasic/Source/VirtualStudio/Cyclorama/CleanPlateAcc.frag -c -o " MZ_REPO_ROOT "/cp.frag");
+    //    auto frag = ReadSpirv(MZ_REPO_ROOT "/cyclo.frag");
+    //    auto vert = ReadSpirv(MZ_REPO_ROOT "/cyclo.vert");
+    //    auto mask_frag = ReadSpirv(MZ_REPO_ROOT "/cyclo_mask.frag");
+    //    auto mask_vert = ReadSpirv(MZ_REPO_ROOT "/cyclo_mask.vert");
+    //    auto cp_frag = ReadSpirv(MZ_REPO_ROOT "/cp.frag");
 
-        mzEngine.MakeAPICalls(
-            true,
-            app::TRegisterShader{.key = "Cyclorama_Frag", .spirv = frag },
-            app::TRegisterShader{.key = "Cyclorama_Vert", .spirv = vert},
-            app::TRegisterShader{.key = "Cyclorama_Mask_Frag", .spirv = mask_frag},
-            app::TRegisterShader{.key = "Cyclorama_Mask_Vert", .spirv = mask_vert}, 
-            app::TRegisterShader{.key = "Cyclorama_CleanPlateAccumulator", .spirv = cp_frag}, 
-            app::TRegisterPass{
-                                  .key = "Cyclorama_CleanPlateAccumulator" + UUID2STR(c->NodeId),
-                                  .shader = "Cyclorama_CleanPlateAccumulator",
-                                  .blend = false,
-            },
-            app::TRegisterPass{
-                .key = "Cyclorama_" + UUID2STR(c->NodeId),
-                .shader = "Cyclorama_Frag",
-                .vertex_shader = "Cyclorama_Vert",
-                .blend = true,
-            },
-            app::TRegisterPass{
-                .key = "Cyclorama_Mask_" + UUID2STR(c->NodeId),
-                .shader = "Cyclorama_Mask_Frag",
-                .vertex_shader = "Cyclorama_Mask_Vert",
-                .blend = false, 
-            });
-    };
+    //    mzEngine.MakeAPICalls(
+    //        true,
+    //        app::TRegisterShader{.key = "Cyclorama_Frag", .spirv = frag },
+    //        app::TRegisterShader{.key = "Cyclorama_Vert", .spirv = vert},
+    //        app::TRegisterShader{.key = "Cyclorama_Mask_Frag", .spirv = mask_frag},
+    //        app::TRegisterShader{.key = "Cyclorama_Mask_Vert", .spirv = mask_vert}, 
+    //        app::TRegisterShader{.key = "Cyclorama_CleanPlateAccumulator", .spirv = cp_frag}, 
+    //        app::TRegisterPass{
+    //                              .key = "Cyclorama_CleanPlateAccumulator" + UUID2STR(c->NodeId),
+    //                              .shader = "Cyclorama_CleanPlateAccumulator",
+    //                              .blend = false,
+    //        },
+    //        app::TRegisterPass{
+    //            .key = "Cyclorama_" + UUID2STR(c->NodeId),
+    //            .shader = "Cyclorama_Frag",
+    //            .vertex_shader = "Cyclorama_Vert",
+    //            .blend = true,
+    //        },
+    //        app::TRegisterPass{
+    //            .key = "Cyclorama_Mask_" + UUID2STR(c->NodeId),
+    //            .shader = "Cyclorama_Mask_Frag",
+    //            .vertex_shader = "Cyclorama_Mask_Vert",
+    //            .blend = false, 
+    //        });
+    //};
 }
 
 struct XF: glm::mat4
