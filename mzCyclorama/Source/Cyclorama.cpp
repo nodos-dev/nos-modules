@@ -495,15 +495,13 @@ struct Cyclorama : PinMapping
     }
 
 
-
-
-    inline static MzBuffer shaders[] =
+    inline static std::vector<u8> spirvs[] = 
     {
-        {(void*)Cyclorama_frag_spv, sizeof(Cyclorama_frag_spv) & ~3},
-        {(void*)Cyclorama_vert_spv, sizeof(Cyclorama_vert_spv) & ~3},
-        {(void*)CycloramaMask_frag_spv, sizeof(CycloramaMask_frag_spv) & ~3},
-        {(void*)CycloramaMask_vert_spv, sizeof(CycloramaMask_vert_spv) & ~3},
-        {(void*)CleanPlateAcc_frag_spv, sizeof(CleanPlateAcc_frag_spv) & ~3},
+        std::vector<u8>{Cyclorama_frag_spv, Cyclorama_frag_spv + (sizeof(Cyclorama_frag_spv) & ~3)},
+        std::vector<u8>{Cyclorama_vert_spv, Cyclorama_vert_spv + (sizeof(Cyclorama_vert_spv) & ~3)},
+        std::vector<u8>{CycloramaMask_frag_spv, CycloramaMask_frag_spv + (sizeof(CycloramaMask_frag_spv) & ~3)},
+        std::vector<u8>{CycloramaMask_vert_spv, CycloramaMask_vert_spv + (sizeof(CycloramaMask_vert_spv) & ~3)},
+        std::vector<u8>{CleanPlateAcc_frag_spv, CleanPlateAcc_frag_spv + (sizeof(CleanPlateAcc_frag_spv) & ~3)},
     };
 
     inline static MzPassInfo passes[] =
@@ -515,12 +513,12 @@ struct Cyclorama : PinMapping
 
     static MzResult GetShaders(size_t* outCount, MzBuffer* outSpirvBufs)
     {
-        *outCount = sizeof(shaders) / sizeof(shaders[0]);
+        *outCount = sizeof(spirvs) / sizeof(spirvs[0]);
         if (!outSpirvBufs)
             return MZ_RESULT_SUCCESS;
 
-        for (auto s : shaders)
-            *outSpirvBufs++ = s;
+        for (auto& s : spirvs)
+            *outSpirvBufs++ = {s.data(), s.size()};
 
         return MZ_RESULT_SUCCESS;
     };
@@ -532,9 +530,8 @@ struct Cyclorama : PinMapping
         if (!outMzPassInfos)
             return MZ_RESULT_SUCCESS;
 
-        for (auto s : passes)
-            *outMzPassInfos++ = s;
-
+        memcpy(outMzPassInfos, passes, sizeof(passes));
+        
         return MZ_RESULT_SUCCESS;
     }
 
@@ -547,7 +544,7 @@ struct Cyclorama : PinMapping
         *ctx = c;
     }
     static void OnNodeUpdated(void* ctx, const MzFbNode* updatedNode) { }
-    static void OnNodeDeleted(void* ctx, MzUUID nodeId) { }
+    static void OnNodeDeleted(void* ctx, MzUUID nodeId) { delete (Cyclorama*)ctx; }
     static void OnPinValueChanged(void* ctx, MzUUID id, MzBuffer* value) 
     { 
         auto c = static_cast<Cyclorama*>(ctx);
@@ -667,8 +664,6 @@ struct Cyclorama : PinMapping
     static void OnNodeSelected(MzUUID graphId, MzUUID selectedNodeId) { }
     static void OnPathCommand(void* ctx, const MzPathCommand* command) { }
 
-    // Function Nodes
-    static MzResult GetFunctions(size_t* outCount, const char** pName, PFN_NodeFunctionExecute* outFunction) { return MZ_RESULT_SUCCESS; }
     
     // Execution
     static MzResult ExecuteNode(void* ctx, const MzNodeExecuteArgs* args) \
@@ -815,79 +810,62 @@ struct Cyclorama : PinMapping
     static void OnMenuRequested(void* ctx, const MzContextMenuRequest* request) { }
     static void OnMenuCommand(void* ctx, uint32_t cmd) { }
     static void OnKeyEvent(void* ctx, const MzKeyEvent* keyEvent) { }
+
+
+    inline static std::pair<const char*, PFN_NodeFunctionExecute> Functions[] = 
+    {
+        { "AddProjection", [](void* ctx, const MzNodeExecuteArgs* nodeArgs, const MzNodeExecuteArgs* functionArgs)
+        {
+            auto c = (Cyclorama*)ctx;
+            if (c->Capturing) return;
+            c->Capturing = true;
+            c->CapturedFrameCount = 0;
+            flatbuffers::FlatBufferBuilder fbb;
+            auto id = c->GetPinId("Video");
+            mzEngine.HandleEvent(CreateAppEvent(fbb, mz::app::CreateScheduleRequest(fbb, mz::app::ScheduleRequestKind::PIN, &id)));
+        }},
+        {"ClearProjection", [](void* ctx, const MzNodeExecuteArgs* nodeArgs, const MzNodeExecuteArgs* functionArgs) {
+            auto c = (Cyclorama *)ctx;
+            if(c->Capturing) return;
+            c->Capturing = false;
+            c->CapturedFrameCount = 0;
+            c->CleanCleanPlates();
+            c->UpdateCleanPlatesValue();
+            c->Clear();
+        }},
+        {"ReloadShaders", [](void* ctx, const MzNodeExecuteArgs* nodeArgs, const MzNodeExecuteArgs* functionArgs) {
+            auto c = (Cyclorama*)ctx;
+            system("glslc " MZ_REPO_ROOT "/Plugins/mzBasic/Source/VirtualStudio/Cyclorama/Cyclorama.frag -c -o " MZ_REPO_ROOT "/cyclo.frag");
+            system("glslc " MZ_REPO_ROOT "/Plugins/mzBasic/Source/VirtualStudio/Cyclorama/Cyclorama.vert -c -o " MZ_REPO_ROOT "/cyclo.vert");
+            system("glslc " MZ_REPO_ROOT "/Plugins/mzBasic/Source/VirtualStudio/Cyclorama/CycloramaMask.frag -c -o " MZ_REPO_ROOT "/cyclo_mask.frag");
+            system("glslc " MZ_REPO_ROOT "/Plugins/mzBasic/Source/VirtualStudio/Cyclorama/CycloramaMask.vert -c -o " MZ_REPO_ROOT "/cyclo_mask.vert");
+            system("glslc " MZ_REPO_ROOT "/Plugins/mzBasic/Source/VirtualStudio/Cyclorama/CleanPlateAcc.frag -c -o " MZ_REPO_ROOT "/cp.frag");
+            spirvs[0] = ReadSpirv(MZ_REPO_ROOT "/cyclo.frag");
+            spirvs[1] = ReadSpirv(MZ_REPO_ROOT "/cyclo.vert");
+            spirvs[2] = ReadSpirv(MZ_REPO_ROOT "/cyclo_mask.frag");
+            spirvs[3] = ReadSpirv(MZ_REPO_ROOT "/cyclo_mask.vert");
+            spirvs[4] = ReadSpirv(MZ_REPO_ROOT "/cp.frag");
+            
+        }}
+    };
+
+    // Function Nodes
+    static MzResult GetFunctions(size_t* outCount, const char** pName, PFN_NodeFunctionExecute* outFunction)
+    {
+        *outCount = sizeof(Functions)/sizeof(Functions[0]);
+
+        if(!pName || !outFunction) 
+            return MZ_RESULT_SUCCESS;
+
+        for (auto& [name, fn] : Functions)
+        {
+            *pName++ = name;
+            *outFunction++ = fn;
+        }
+
+        return MZ_RESULT_SUCCESS;
+    }
 };
-
-
-void RegisterCyclorama()
-{
-    //auto &actions = functions["Cyclorama.Cyclorama"];
-
-
-    //actions.EntryPoint = [](mz::Args &pins, void *ctx) {
-    //   
-    //};
-
-    //actions.NodeRemoved = [](void *ctx, mz::fb::UUID const &id) { delete (Cyclorama *)ctx; };
-
-    //actions.NodeFunctions["AddProjection"] = [](mz::Args &pins, mz::Args &functionParams, void *ctx) {
-    //    auto c = (Cyclorama *)ctx;
-    //    if(c->Capturing) return;
-    //    c->Capturing = true;
-    //    c->CapturedFrameCount = 0;
-    //    flatbuffers::FlatBufferBuilder fbb;
-    //    auto id = c->GetPinId("Video");
-    //    mzEngine.HandleEvent(CreateAppEvent(fbb, mz::app::CreateScheduleRequest(fbb, mz::app::ScheduleRequestKind::PIN, &id)));
-    //};
-
-    //actions.NodeFunctions["ClearProjection"] = [](mz::Args &pins, mz::Args &functionParams, void *ctx) {
-    //    auto c = (Cyclorama *)ctx;
-    //    if(c->Capturing) return;
-    //    c->Capturing = false;
-    //    c->CapturedFrameCount = 0;
-    //    c->CleanCleanPlates();
-    //    c->UpdateCleanPlatesValue();
-    //    c->Clear();
-    //};
-
-    //actions.NodeFunctions["ReloadShaders"] = [&actions](mz::Args &pins, mz::Args &functionParams, void *ctx) {
-    //    auto c = (Cyclorama *)ctx;
-    //    system("glslc " MZ_REPO_ROOT "/Plugins/mzBasic/Source/VirtualStudio/Cyclorama/Cyclorama.frag -c -o " MZ_REPO_ROOT "/cyclo.frag");
-    //    system("glslc " MZ_REPO_ROOT "/Plugins/mzBasic/Source/VirtualStudio/Cyclorama/Cyclorama.vert -c -o " MZ_REPO_ROOT "/cyclo.vert");
-    //    system("glslc " MZ_REPO_ROOT "/Plugins/mzBasic/Source/VirtualStudio/Cyclorama/CycloramaMask.frag -c -o " MZ_REPO_ROOT "/cyclo_mask.frag");
-    //    system("glslc " MZ_REPO_ROOT "/Plugins/mzBasic/Source/VirtualStudio/Cyclorama/CycloramaMask.vert -c -o " MZ_REPO_ROOT "/cyclo_mask.vert");
-    //    system("glslc " MZ_REPO_ROOT "/Plugins/mzBasic/Source/VirtualStudio/Cyclorama/CleanPlateAcc.frag -c -o " MZ_REPO_ROOT "/cp.frag");
-    //    auto frag = ReadSpirv(MZ_REPO_ROOT "/cyclo.frag");
-    //    auto vert = ReadSpirv(MZ_REPO_ROOT "/cyclo.vert");
-    //    auto mask_frag = ReadSpirv(MZ_REPO_ROOT "/cyclo_mask.frag");
-    //    auto mask_vert = ReadSpirv(MZ_REPO_ROOT "/cyclo_mask.vert");
-    //    auto cp_frag = ReadSpirv(MZ_REPO_ROOT "/cp.frag");
-
-    //    mzEngine.MakeAPICalls(
-    //        true,
-    //        app::TRegisterShader{.key = "Cyclorama_Frag", .spirv = frag },
-    //        app::TRegisterShader{.key = "Cyclorama_Vert", .spirv = vert},
-    //        app::TRegisterShader{.key = "Cyclorama_Mask_Frag", .spirv = mask_frag},
-    //        app::TRegisterShader{.key = "Cyclorama_Mask_Vert", .spirv = mask_vert}, 
-    //        app::TRegisterShader{.key = "Cyclorama_CleanPlateAccumulator", .spirv = cp_frag}, 
-    //        app::TRegisterPass{
-    //                              .key = "Cyclorama_CleanPlateAccumulator" + UUID2STR(c->NodeId),
-    //                              .shader = "Cyclorama_CleanPlateAccumulator",
-    //                              .blend = false,
-    //        },
-    //        app::TRegisterPass{
-    //            .key = "Cyclorama_" + UUID2STR(c->NodeId),
-    //            .shader = "Cyclorama_Frag",
-    //            .vertex_shader = "Cyclorama_Vert",
-    //            .blend = true,
-    //        },
-    //        app::TRegisterPass{
-    //            .key = "Cyclorama_Mask_" + UUID2STR(c->NodeId),
-    //            .shader = "Cyclorama_Mask_Frag",
-    //            .vertex_shader = "Cyclorama_Mask_Vert",
-    //            .blend = false, 
-    //        });
-    //};
-}
 
 struct XF: glm::mat4
 {
