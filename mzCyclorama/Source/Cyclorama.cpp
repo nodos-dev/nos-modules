@@ -486,13 +486,13 @@ struct Cyclorama : PinMapping
     }
 
 
-    inline static std::vector<u8> spirvs[] = 
+    inline static std::pair<const char*, std::vector<u8>> spirvs[] = 
     {
-        std::vector<u8>{std::begin(Cyclorama_frag_spv), std::end(Cyclorama_frag_spv)},
-        std::vector<u8>{std::begin(Cyclorama_vert_spv), std::end(Cyclorama_vert_spv)},
-        std::vector<u8>{std::begin(CycloramaMask_frag_spv), std::end(CycloramaMask_frag_spv)},
-        std::vector<u8>{std::begin(CycloramaMask_vert_spv), std::end(CycloramaMask_vert_spv)},
-        std::vector<u8>{std::begin(CleanPlateAcc_frag_spv), std::end(CleanPlateAcc_frag_spv)},
+        {"Cyclorama_Frag",{std::begin(Cyclorama_frag_spv), std::end(Cyclorama_frag_spv)}},
+        {"Cyclorama_Vert",{std::begin(Cyclorama_vert_spv), std::end(Cyclorama_vert_spv)}},
+        {"Cyclorama_Mask_Frag",{std::begin(CycloramaMask_frag_spv), std::end(CycloramaMask_frag_spv)}},
+        {"Cyclorama_Mask_Vert",{std::begin(CycloramaMask_vert_spv), std::end(CycloramaMask_vert_spv)}},
+        {"Cyclorama_CleanPlateAccumulator",{std::begin(CleanPlateAcc_frag_spv), std::end(CleanPlateAcc_frag_spv)}},
     };
 
     inline static MzPassInfo passes[] =
@@ -502,14 +502,17 @@ struct Cyclorama : PinMapping
         {.Key = "Cyclorama_Mask_Pass", .Shader = "Cyclorama_Mask_Frag", .VertexShader = "Cyclorama_Mask_Vert", .MultiSample = 1},
     };
 
-    static MzResult GetShaders(size_t* outCount, MzBuffer* outSpirvBufs)
+    static MzResult GetShaders(size_t* outCount, const char** names, MzBuffer* outSpirvBufs)
     {
         *outCount = sizeof(spirvs) / sizeof(spirvs[0]);
         if (!outSpirvBufs)
             return MZ_RESULT_SUCCESS;
 
-        for (auto& s : spirvs)
-            *outSpirvBufs++ = {s.data(), s.size()};
+        for (auto& [name, spirv] : spirvs)
+        {
+            *names++ = name;
+            *outSpirvBufs++ = { spirv.data(), spirv.size() };
+        }
 
         return MZ_RESULT_SUCCESS;
     };
@@ -834,11 +837,14 @@ struct Cyclorama : PinMapping
         system("glslc " MZ_REPO_ROOT "/Plugins/mzBasic/Source/VirtualStudio/Cyclorama/CycloramaMask.frag -c -o " MZ_REPO_ROOT "/cyclo_mask.frag");
         system("glslc " MZ_REPO_ROOT "/Plugins/mzBasic/Source/VirtualStudio/Cyclorama/CycloramaMask.vert -c -o " MZ_REPO_ROOT "/cyclo_mask.vert");
         system("glslc " MZ_REPO_ROOT "/Plugins/mzBasic/Source/VirtualStudio/Cyclorama/CleanPlateAcc.frag -c -o " MZ_REPO_ROOT "/cp.frag");
-        spirvs[0] = ReadSpirv(MZ_REPO_ROOT "/cyclo.frag");
-        spirvs[1] = ReadSpirv(MZ_REPO_ROOT "/cyclo.vert");
-        spirvs[2] = ReadSpirv(MZ_REPO_ROOT "/cyclo_mask.frag");
-        spirvs[3] = ReadSpirv(MZ_REPO_ROOT "/cyclo_mask.vert");
-        spirvs[4] = ReadSpirv(MZ_REPO_ROOT "/cp.frag");
+        spirvs[0].second = ReadSpirv(MZ_REPO_ROOT "/cyclo.frag");
+        spirvs[1].second = ReadSpirv(MZ_REPO_ROOT "/cyclo.vert");
+        spirvs[2].second = ReadSpirv(MZ_REPO_ROOT "/cyclo_mask.frag");
+        spirvs[3].second = ReadSpirv(MZ_REPO_ROOT "/cyclo_mask.vert");
+        spirvs[4].second = ReadSpirv(MZ_REPO_ROOT "/cp.frag");
+
+        mzEngine.ReloadShaders();
+
     }
 
     inline static std::pair<const char*, PFN_NodeFunctionExecute> Functions[] = 

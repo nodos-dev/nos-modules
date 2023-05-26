@@ -32,12 +32,12 @@ static mz::fb::String256 Str256(std::string const &str)
     return re;
 }
 
-MzBuffer shaders[] = 
+std::pair<const char*, std::vector<u8>> shaders[] =
 {
-    {(void*)YCbCr2RGB_frag_spv, sizeof(YCbCr2RGB_frag_spv) & ~3},
-    {(void*)RGB2YCbCr_frag_spv, sizeof(RGB2YCbCr_frag_spv) & ~3},
-    {(void*)RGB2YCbCr_comp_spv, sizeof(RGB2YCbCr_comp_spv) & ~3},
-    {(void*)YCbCr2RGB_comp_spv, sizeof(YCbCr2RGB_comp_spv) & ~3},
+    {"AJA_RGB2YCbCr_Compute_Shader", {std::begin(RGB2YCbCr_comp_spv), std::end(RGB2YCbCr_comp_spv)}},
+    {"AJA_YCbCr2RGB_Compute_Shader", {std::begin(YCbCr2RGB_comp_spv), std::end(YCbCr2RGB_comp_spv)}},
+    {"AJA_YCbCr2RGB_Shader",         {std::begin(YCbCr2RGB_frag_spv), std::end(YCbCr2RGB_frag_spv)}},
+    {"AJA_RGB2YCbCr_Shader",         {std::begin(RGB2YCbCr_frag_spv), std::end(RGB2YCbCr_frag_spv)}},
 };
 
 MzPassInfo passes[] = 
@@ -50,14 +50,17 @@ MzPassInfo passes[] =
 
 struct AJA
 {
-    static MzResult GetShaders(size_t* outCount, MzBuffer* outSpirvBufs)
+    static MzResult GetShaders(size_t* outCount, const char** names, MzBuffer* outSpirvBufs)
     {
         *outCount = sizeof(shaders)/sizeof(shaders[0]);
         if(!outSpirvBufs) 
             return MZ_RESULT_SUCCESS;
 
-        for(auto s : shaders)
-            *outSpirvBufs++ = s;
+        for (auto& [name, spirv] : shaders)
+        {
+            *names++ = name;
+            *outSpirvBufs++ = { spirv.data(), spirv.size() };
+        }
 
         return MZ_RESULT_SUCCESS;
     };
@@ -69,8 +72,7 @@ struct AJA
         if (!outMzPassInfos)
             return MZ_RESULT_SUCCESS;
 
-        for (auto s : passes)
-            *outMzPassInfos++ = s;
+        memcpy(outMzPassInfos, passes, sizeof(passes));
 
         return MZ_RESULT_SUCCESS;
     }
