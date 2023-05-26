@@ -1,0 +1,10 @@
+namespace mz.fb;
+
+enum GradientKind: uint
+{
+    RADIAL     = 0,
+    HORIZONTAL = 1,
+    VERTICAL   = 2,
+    DIAGONAL   = 3,
+    SKEW_DIAGONAL   = 4,
+}

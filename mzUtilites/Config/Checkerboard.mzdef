@@ -1,0 +1,72 @@
+{
+    "nodes": [
+        {
+            "class_name": "Checkerboard",
+            "contents_type": "Job",
+            "contents": {
+                "type": "GPU"
+            },
+            "pins": [
+                {
+                    "name": "Squares",
+                    "type_name": "mz.fb.vec2i",
+                    "show_as": "INPUT_PIN",
+                    "can_show_as": "INPUT_PIN_OR_PROPERTY",
+                    "data": {
+                        "x": 160,
+                        "y": 90
+                    },
+                    "min": {
+                        "x": 2,
+                        "y": 2
+                    }
+                },
+                {
+                    "name": "OddColor",
+                    "type_name": "mz.fb.vec4",
+                    "show_as": "INPUT_PIN",
+                    "can_show_as": "INPUT_PIN_OR_PROPERTY",
+                    "visualizer": {
+                        "type": "COLOR_PICKER"
+                    },
+                    "data": {
+                        "x": 1,
+                        "y": 1,
+                        "z": 1,
+                        "w": 1
+                    }
+                },
+                {
+                    "name": "EvenColor",
+                    "type_name": "mz.fb.vec4",
+                    "show_as": "INPUT_PIN",
+                    "can_show_as": "INPUT_PIN_OR_PROPERTY",
+                    "visualizer": {
+                        "type": "COLOR_PICKER"
+                    },
+                    "data": {
+                        "x": 0,
+                        "y": 0,
+                        "z": 0,
+                        "w": 1
+                    }
+                },
+                {
+                    "name": "Output",
+                    "type_name": "mz.fb.Texture",
+                    "show_as": "OUTPUT_PIN",
+                    "can_show_as": "OUTPUT_PIN_OR_PROPERTY"
+                }
+            ],
+            "functions": [
+                {
+                    "class_name": "ReloadShaders",
+                    "contents_type": "Job",
+                    "contents": {
+                        "type": "CPU"
+                    }
+                }
+            ]
+        },
+    ]
+}

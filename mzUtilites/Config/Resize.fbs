@@ -1,0 +1,11 @@
+namespace mz.fb;
+
+enum ResizeMethod: uint
+{
+    NEAREST = 0,
+    BILINEAR = 1,
+    BICUBIC = 2,
+    DIRECTIONAL_BLUR_WITH_UNSHARP_MASK_UPSAMPLE,
+    LANCZOS3,
+    GAUSSIAN_UNSHARP_MASK,
+}

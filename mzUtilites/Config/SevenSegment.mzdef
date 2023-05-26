@@ -1,0 +1,63 @@
+{
+    "nodes": [
+      {
+        "class_name": "SevenSegment",
+        "contents_type": "Job",
+        "always_execute": "true",
+        "contents": {
+          "type": "GPU"
+        },
+        "pins": [
+          {
+            "name": "Number",
+            "type_name": "uint",
+            "show_as": "INPUT_PIN",
+            "can_show_as": "INPUT_PIN_OR_PROPERTY"
+          },
+          {
+            "name": "RenderFrameNo",
+            "type_name": "bool",
+            "show_as": "INPUT_PIN",
+            "can_show_as": "INPUT_PIN_OR_PROPERTY"
+          },
+          {
+            "name": "SampleInput",
+            "type_name": "bool",
+            "show_as": "INPUT_PIN",
+            "can_show_as": "INPUT_PIN_OR_PROPERTY"
+          },
+          {
+            "name": "Color",
+            "type_name": "mz.fb.vec4",
+            "show_as": "INPUT_PIN",
+            "can_show_as": "INPUT_PIN_OR_PROPERTY",
+            "visualizer": {
+              "type": "COLOR_PICKER"
+            },
+            "data" :{"x" : 1, "y" : 0.5, "z" : 0.5, "w" : 1}
+          },
+          {
+            "name": "Input",
+            "type_name": "mz.fb.Texture",
+            "show_as": "INPUT_PIN",
+            "can_show_as": "INPUT_PIN_OR_PROPERTY"
+          },
+          {
+            "name": "Output",
+            "type_name": "mz.fb.Texture",
+            "show_as": "OUTPUT_PIN",
+            "can_show_as": "OUTPUT_PIN_OR_PROPERTY"
+          }
+        ],
+        "functions": [
+          {
+            "class_name": "ReloadShaders",
+            "contents_type": "Job",
+            "contents": {
+              "type": "CPU"
+            }
+          }
+        ]
+      }
+    ]
+}

@@ -2,82 +2,71 @@
     "namespace": "mz",
     "name": "Filters",
     "node_definitions": [
-        "Filters.mzdef"
+        "ColorCorrect.mzdef",
+        "Diff.mzdef,
+        "GaussianBlur.mzdef",
+        "KawaseLightStreak.mzdef",
+        "Kuwahara.mzdef",
+        "PremultiplyAlpha.mzdef",
+        "Sampler.mzdef",
+        "Sharpen.mzdef",
+        "Sobel.mzdef",
+        "Thresholder.mzdef",
     ],
     "fb_includes" :[
-      "Filters.fbs"  
+      "Thresholder.fbs"  
     ],
     "binary_path": "../Binaries/mzFilters",
     "menu_items": [
         {
-            "category": "Filter",
+            "category": "Filters",
+            "class_name": "ColorCorrect",
+            "display_name": "Color Correct"
+        },
+        {
+            "category": "Filters",
             "class_name": "GaussianBlur",
             "display_name": "Gaussian Blur"
         },
         {
-            "category": "Filter",
-            "class_name": "SevenSegment",
-            "display_name": "SevenSegment"
-        },
-        {
-            "category": "Filter",
-            "class_name": "Gradient",
-            "display_name": "Gradient"
-        },
-        {
-            "category": "Filter",
-            "class_name": "Checkerboard",
-            "display_name": "Checkerboard"
-        },
-        {
-            "category": "Filter",
-            "class_name": "Resize",
-            "display_name": "Resize"
-        },
-        {
-            "category": "Filter",
+            "category": "Filters",
             "class_name": "KawaseLightStreak",
             "display_name": "Kawase Light Streak"
         },
         {
-            "category": "Filter",
+            "category": "Filters",
             "class_name": "Thresholder",
             "display_name": "Thresholder"
         },
         {
-            "category": "Filter",
+            "category": "Filters",
             "class_name": "Sampler",
             "display_name": "Sampler"
         },
         {
-            "category": "Filter",
-            "class_name": "Offset",
-            "display_name": "Offset"
-        },
-        {
-            "category": "Filter",
-            "class_name": "QuadMerge",
-            "display_name": "Quad Merge"
-        },
-        {
-            "category": "Filter",
+            "category": "Filters",
             "class_name": "Sobel",
             "display_name": "Sobel"
         },
         {
-            "category": "Filter",
+            "category": "Filters",
             "class_name": "Kuwahara",
             "display_name": "Kuwahara"
         },
         {
-            "category": "Filter",
+            "category": "Filters",
             "class_name": "Sharpen",
             "display_name": "Sharpen"
         },
         {
-            "category": "Filter",
+            "category": "Filters",
             "class_name": "PremultiplyAlpha",
             "display_name": "Premultiply Alpha"
+        },
+        {
+            "category": "Filters",
+            "class_name": "Diff",
+            "display_name": "Difference"
         }
     ]
 }

@@ -1,0 +1,6 @@
+namespace mz.fb;
+
+enum ThresholderOutputType : uint {
+  OriginalColor = 0,
+  White = 1
+}

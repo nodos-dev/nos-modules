@@ -1,0 +1,62 @@
+{
+    "namespace": "mz",
+    "name": "Utilities",
+    "node_definitions": [
+        "Checkerboard.mzdef",
+        "Color.mzdef",
+        "Gradient.mzdef",
+        "Merge.mzdef",
+        "Offset.mzdef",
+        "QuadMerge.mzdef",
+        "Resize.mzdef",
+        "SevenSegment.mzdef",
+    ],
+    "fb_includes" :[
+        "Merge.fbs",
+        "Gradient.fbs",
+        "Resize.fbs"
+    ],
+    "binary_path": "../Binaries/mzUtilities",
+    "menu_items": [
+        {
+            "category": "Utilities",
+            "class_name": "Color",
+            "display_name": "Color"
+        },
+        {
+            "category": "Utilities",
+            "class_name": "Merge",
+            "display_name": "Merge"
+        },
+        {
+            "category": "Utilities",
+            "class_name": "SevenSegment",
+            "display_name": "SevenSegment"
+        },
+        {
+            "category": "Utilities",
+            "class_name": "Gradient",
+            "display_name": "Gradient"
+        },
+        {
+            "category": "Utilities",
+            "class_name": "Checkerboard",
+            "display_name": "Checkerboard"
+        },
+        {
+            "category": "Utilities",
+            "class_name": "Resize",
+            "display_name": "Resize"
+        },
+        {
+            "category": "Utilities",
+            "class_name": "Offset",
+            "display_name": "Offset"
+        },
+        {
+            "category": "Utilities",
+            "class_name": "QuadMerge",
+            "display_name": "Quad Merge"
+        },
+    ]
+}

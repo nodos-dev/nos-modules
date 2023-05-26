@@ -20,6 +20,7 @@
 #include "Sobel.frag.spv.dat"
 #include "Thresholder.frag.spv.dat"
 #include "QuadMerge.frag.spv.dat"
+#include "Sampler.frag.spv.dat"
 
 // Nodes
 #include "GaussianBlur.hpp"
@@ -31,22 +32,16 @@ namespace mz::filters
 
 enum Filters
 {
-	Color = 0,						// Done
 	ColorCorrect,					// Done
 	Diff,							// Done
-	Gradient,						// Done
 	Kuwahara,						// Done
 	GaussianBlur,					// Done
-	Offset,							// Done
-	// Merge,
 	KawaseLightStreak,				// Done
 	PremultiplyAlpha,				// Done
-	// Resize,
-	SevenSegment,					// Done
 	Sharpen,						// Done
 	Sobel,							// Done
 	Thresholder,					// Done
-	QuadMerge,						// Done
+	Sampler,						// Done
 	Count
 };
 
@@ -68,16 +63,6 @@ MZAPI_ATTR MzResult MZAPI_CALL mzExportNodeFunctions(size_t* outSize, MzNodeFunc
 		auto* funcs = &outFunctions[i];
 		switch ((Filters)i)
 		{
-		// COLOR FILTER
-		case Filters::Color: {
-			funcs->TypeName = "mz.Color";
-			funcs->GetShaderSource = [](MzBuffer* outSpirvBuf) -> MzResult {
-				outSpirvBuf->Data = (void*)(Color_frag_spv);
-				outSpirvBuf->Size = sizeof(Color_frag_spv);
-				return MZ_RESULT_SUCCESS;
-			};
-			break;
-		}
 		// COLOR CORRECT FILTER
 		case Filters::ColorCorrect: {
 			funcs->TypeName = "mz.ColorCorrect";
@@ -98,16 +83,6 @@ MZAPI_ATTR MzResult MZAPI_CALL mzExportNodeFunctions(size_t* outSize, MzNodeFunc
 			};
 			break;
 		}
-		// GRADIENT FILTER
-		case Filters::Gradient: {
-			funcs->TypeName = "mz.Gradient";
-			funcs->GetShaderSource = [](MzBuffer* outSpirvBuf) -> MzResult {
-				outSpirvBuf->Data = (void*)(Gradient_frag_spv);
-				outSpirvBuf->Size = sizeof(Gradient_frag_spv);
-				return MZ_RESULT_SUCCESS;
-			};
-			break;
-		}
 		// KUWAHARA FILTER
 		case Filters::Kuwahara: {
 			funcs->TypeName = "mz.Kuwahara";
@@ -121,16 +96,6 @@ MZAPI_ATTR MzResult MZAPI_CALL mzExportNodeFunctions(size_t* outSize, MzNodeFunc
 		// GAUSSIAN BLUR FILTER
 		case Filters::GaussianBlur: {
 			RegisterGaussianBlur(funcs);
-			break;
-		}
-		// OFFSET FILTER
-		case Filters::Offset: {
-			funcs->TypeName = "mz.Offset";
-			funcs->GetShaderSource = [](MzBuffer* outSpirvBuf)-> MzResult {
-				outSpirvBuf->Data = (void*)(Offset_frag_spv);
-				outSpirvBuf->Size = sizeof(Offset_frag_spv);
-				return MZ_RESULT_SUCCESS;
-			};
 			break;
 		}
 		// MERGE FILTER
@@ -149,16 +114,6 @@ MZAPI_ATTR MzResult MZAPI_CALL mzExportNodeFunctions(size_t* outSize, MzNodeFunc
 			funcs->GetShaderSource = [](MzBuffer* outSpirvBuf)-> MzResult {
 				outSpirvBuf->Data = (void*)(PremultiplyAlpha_frag_spv);
 				outSpirvBuf->Size = sizeof(PremultiplyAlpha_frag_spv);
-				return MZ_RESULT_SUCCESS;
-			};
-			break;
-		}
-		// SEVENSEGMENT FILTER
-		case Filters::SevenSegment: {
-			funcs->TypeName = "mz.SevenSegment";
-			funcs->GetShaderSource = [](MzBuffer* outSpirvBuf)-> MzResult {
-				outSpirvBuf->Data = (void*)(SevenSegment_frag_spv);
-				outSpirvBuf->Size = sizeof(SevenSegment_frag_spv);
 				return MZ_RESULT_SUCCESS;
 			};
 			break;
@@ -193,12 +148,12 @@ MZAPI_ATTR MzResult MZAPI_CALL mzExportNodeFunctions(size_t* outSize, MzNodeFunc
 			};
 			break;
 		}
-		// QUADMERGE FILTER
-		case Filters::QuadMerge: {
-			funcs->TypeName = "mz.QuadMerge";
+		// SAMPLER FILTER
+		case Filters::Sampler: {
+			funcs->TypeName = "mz.Sampler";
 			funcs->GetShaderSource = [](MzBuffer* outSpirvBuf)-> MzResult {
-				outSpirvBuf->Data = (void*)(QuadMerge_frag_spv);
-				outSpirvBuf->Size = sizeof(QuadMerge_frag_spv);
+				outSpirvBuf->Data = (void*)(Sampler_frag_spv);
+				outSpirvBuf->Size = sizeof(Sampler_frag_spv);
 				return MZ_RESULT_SUCCESS;
 			};
 			break;

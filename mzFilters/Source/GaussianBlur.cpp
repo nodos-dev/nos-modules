@@ -122,6 +122,7 @@ struct GaussBlurContext
 
 		auto intermTexData = SerializeResourceInfo(IntermediateTexture);
 		auto intermTexBuf = MzBuffer {.Data = intermTexData.data(), .Size = intermTexData.size()};
+		
 		SHADER_BUFFER_BINDING(inputBinding, "Input", inputTexture);
 		SHADER_BUFFER_BINDING(intermediateBinding, "Input", intermTexBuf);
 		SHADER_BINDING(softnessBinding, "Softness", *softnessPinValue);

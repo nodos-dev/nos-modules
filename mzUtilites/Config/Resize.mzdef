@@ -1,0 +1,50 @@
+{    
+    "nodes": [
+        {
+            "class_name": "Resize",
+            "contents_type": "Job",
+            "contents": {
+                "type": "CPU"
+            },
+            "functions": [
+                {
+                    "class_name": "ReloadShaders",
+                    "contents_type": "Job",
+                    "contents": {
+                        "type": "CPU"
+                    }
+                }
+            ],
+            "pins": [
+                {
+                    "name": "Input",
+                    "type_name": "mz.fb.Texture",
+                    "show_as": "INPUT_PIN",
+                    "can_show_as": "INPUT_PIN_ONLY"
+                },
+                {
+                    "name": "Output",
+                    "type_name": "mz.fb.Texture",
+                    "show_as": "OUTPUT_PIN",
+                    "can_show_as": "OUTPUT_PIN_ONLY",
+                    "data": {
+                        "unscaled": true
+                    }
+                },
+                {
+                    "name": "Method",
+                    "type_name": "mz.fb.ResizeMethod",
+                    "show_as": "PROPERTY",
+                    "can_show_as": "INPUT_OUTPUT_PROPERTY"
+                },
+                {
+                    "name": "Size",
+                    "type_name": "mz.fb.vec2u",
+                    "show_as": "PROPERTY",
+                    "can_show_as": "INPUT_OUTPUT_PROPERTY",
+                    "data" : { "x": 1920, "y": 1080 }
+                }
+            ]
+        },
+    ]
+}

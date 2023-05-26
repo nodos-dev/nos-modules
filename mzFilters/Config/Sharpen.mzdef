@@ -1,0 +1,53 @@
+{
+    "nodes": [
+        {
+            "class_name": "Sharpen",
+            "contents_type": "Job",
+            "contents": {
+                "type": "GPU"
+            },
+            "pins": [
+                {
+                    "name": "Input",
+                    "type_name": "mz.fb.Texture",
+                    "show_as": "INPUT_PIN",
+                    "can_show_as": "INPUT_PIN_ONLY",
+                    "data": {
+                        "filtering": "LINEAR"
+                    }
+                },
+                {
+                    "name": "Radius",
+                    "type_name": "float",
+                    "show_as": "PROPERTY",
+                    "can_show_as": "PROPERTY_ONLY",
+                    "data": 1.0,
+                    "min": 0.0,
+                    "max": 4.0
+                },
+                {
+                    "name": "Sharpness",
+                    "type_name": "float",
+                    "show_as": "PROPERTY",
+                    "can_show_as": "PROPERTY_ONLY",
+                    "data": 1.0,
+                    "min": 0.0,
+                    "max": 4.0
+                },
+                {
+                    "name": "PreMultiplyAlpha",
+                    "type_name": "bool",
+                    "show_as": "PROPERTY",
+                    "can_show_as": "PROPERTY_ONLY",
+                    "data": 0
+                },
+                {
+                    "name": "Output",
+                    "type_name": "mz.fb.Texture",
+                    "show_as": "OUTPUT_PIN",
+                    "can_show_as": "OUTPUT_PIN_ONLY"
+                }
+            ]
+        }
+    ]
+}

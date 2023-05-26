@@ -1,0 +1,55 @@
+{
+    "nodes": [
+        {
+            "class_name": "GaussianBlur",
+            "contents_type": "Job",
+            "contents": {
+                "type": "CPU"
+            },
+            "pins": [
+                {
+                    "name": "Input",
+                    "type_name": "mz.fb.Texture",
+                    "show_as": "INPUT_PIN",
+                    "can_show_as": "INPUT_PIN_OR_PROPERTY",
+                    "data": {
+                        "filtering": "LINEAR"
+                    }
+                },
+                {
+                    "name": "Softness",
+                    "type_name": "float",
+                    "show_as": "PROPERTY",
+                    "can_show_as": "INPUT_PIN_OR_PROPERTY",
+                    "data": 0.0,
+                    "min": 0.0,
+                    "max": 1.0
+                },
+                {
+                    "name": "Kernel_Size",
+                    "type_name": "mz.fb.vec2",
+                    "show_as": "PROPERTY",
+                    "can_show_as": "INPUT_PIN_OR_PROPERTY",
+                    "data": {
+                        "x": 6.0,
+                        "y": 6.0
+                    },
+                    "min": {
+                        "x": 0.0,
+                        "y": 0.0
+                    },
+                    "max": {
+                        "x": 100.0,
+                        "y": 100.0
+                    }
+                },
+                {
+                    "name": "Output",
+                    "type_name": "mz.fb.Texture",
+                    "show_as": "OUTPUT_PIN",
+                    "can_show_as": "OUTPUT_PIN_OR_PROPERTY"
+                }
+            ]
+        }
+    ]
+}
