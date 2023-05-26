@@ -1,6 +1,11 @@
 {
-    "namespace": "mz",
-    "name": "Filters",
+    "info": {
+        "id": {
+            "name": "mz.filters",
+            "version": "0.1.0"
+        },
+        "display_name": "Filters"
+    },
     "node_definitions": [
         "ColorCorrect.mzdef",
         "Diff.mzdef,
@@ -17,7 +22,7 @@
       "Thresholder.fbs"  
     ],
     "binary_path": "../Binaries/mzFilters",
-    "menu_items": [
+    "associated_nodes": [
         {
             "category": "Filters",
             "class_name": "ColorCorrect",

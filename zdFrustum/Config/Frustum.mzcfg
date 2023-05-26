@@ -1,13 +1,18 @@
 {
-    "namespace": "ZD",
-    "name": "Frustum",
+    "info": {
+        "id": {
+            "name": "zd.frustum",
+            "version": "0.1.0"
+        },
+        "display_name": "Frustum"
+    },
     "node_definitions": [
         "Frustum.mzdef"
     ],
     "fb_includes" :[
       "Frustum.fbs"
     ],
-    "menu_items": [
+    "associated_nodes": [
         {
             "category": "Lens",
             "class_name": "Frustum",

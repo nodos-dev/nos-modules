@@ -1,6 +1,11 @@
 {
-    "namespace": "mz",
-    "name": "Utilities",
+    "info": {
+        "id": {
+            "name": "mz.utilities",
+            "version": "0.1.0"
+        },
+        "display_name": "Utilities"
+    },
     "node_definitions": [
         "Checkerboard.mzdef",
         "Color.mzdef",
@@ -17,7 +22,7 @@
         "Resize.fbs"
     ],
     "binary_path": "../Binaries/mzUtilities",
-    "menu_items": [
+    "associated_nodes": [
         {
             "category": "Utilities",
             "class_name": "Color",

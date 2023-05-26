@@ -1,13 +1,18 @@
 {
-    "namespace": "Cyclorama",
-    "name": "Cyclorama",
+    "info": {
+        "id": {
+            "name": "Cyclorama",
+            "version": "0.1.0"
+        },
+        "display_name": "Cyclorama"
+    },
     "node_definitions": [
         "Cyclorama.mzdef"
     ],
     "fb_includes" :[
       "Cyclorama.fbs"
     ],
-    "menu_items": [
+    "associated_nodes": [
         {
             "category": "Keying",
             "class_name": "Cyclorama",

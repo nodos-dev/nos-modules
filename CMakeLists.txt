@@ -23,5 +23,6 @@ endif()
 add_subdirectory(mzMath)
 add_subdirectory(mzAJA)
 add_subdirectory(mzFilters)
+add_subdirectory(mzUtilities)
 # add_subdirectory(mzCyclorama)
 

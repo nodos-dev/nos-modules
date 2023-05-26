@@ -1,6 +1,11 @@
 {
-    "namespace": "AJA",
-    "name": "AJA",
+    "info": {
+        "id": {
+            "name": "AJA",
+            "version": "0.1.0"
+        },
+        "display_name": "AJA"
+    },
     "node_definitions": [
         "AJA.mzdef"
     ],
@@ -8,7 +13,7 @@
       "AJA.fbs"
     ],
     "binary_path": "../Binaries/mzAJA",
-    "menu_items": [
+    "associated_nodes": [
         {
             "category": "Device",
             "class_name": "AJAIn",
