@@ -812,41 +812,46 @@ struct Cyclorama : PinMapping
     static void OnKeyEvent(void* ctx, const MzKeyEvent* keyEvent) { }
 
 
+    static void AddProjection(void* ctx, const MzNodeExecuteArgs* nodeArgs, const MzNodeExecuteArgs* functionArgs)
+    {
+        auto c = (Cyclorama*)ctx;
+        if (c->Capturing) return;
+        c->Capturing = true;
+        c->CapturedFrameCount = 0;
+        flatbuffers::FlatBufferBuilder fbb;
+        auto id = c->GetPinId("Video");
+        mzEngine.HandleEvent(CreateAppEvent(fbb, mz::app::CreateScheduleRequest(fbb, mz::app::ScheduleRequestKind::PIN, &id)));
+    };
+
+    static void ClearProjection(void* ctx, const MzNodeExecuteArgs* nodeArgs, const MzNodeExecuteArgs* functionArgs) {
+        auto c = (Cyclorama*)ctx;
+        if (c->Capturing) return;
+        c->Capturing = false;
+        c->CapturedFrameCount = 0;
+        c->CleanCleanPlates();
+        c->UpdateCleanPlatesValue();
+        c->Clear();
+    }
+
+    static void ReloadShaders(void* ctx, const MzNodeExecuteArgs* nodeArgs, const MzNodeExecuteArgs* functionArgs) {
+        auto c = (Cyclorama*)ctx;
+        system("glslc " MZ_REPO_ROOT "/Plugins/mzBasic/Source/VirtualStudio/Cyclorama/Cyclorama.frag -c -o " MZ_REPO_ROOT "/cyclo.frag");
+        system("glslc " MZ_REPO_ROOT "/Plugins/mzBasic/Source/VirtualStudio/Cyclorama/Cyclorama.vert -c -o " MZ_REPO_ROOT "/cyclo.vert");
+        system("glslc " MZ_REPO_ROOT "/Plugins/mzBasic/Source/VirtualStudio/Cyclorama/CycloramaMask.frag -c -o " MZ_REPO_ROOT "/cyclo_mask.frag");
+        system("glslc " MZ_REPO_ROOT "/Plugins/mzBasic/Source/VirtualStudio/Cyclorama/CycloramaMask.vert -c -o " MZ_REPO_ROOT "/cyclo_mask.vert");
+        system("glslc " MZ_REPO_ROOT "/Plugins/mzBasic/Source/VirtualStudio/Cyclorama/CleanPlateAcc.frag -c -o " MZ_REPO_ROOT "/cp.frag");
+        spirvs[0] = ReadSpirv(MZ_REPO_ROOT "/cyclo.frag");
+        spirvs[1] = ReadSpirv(MZ_REPO_ROOT "/cyclo.vert");
+        spirvs[2] = ReadSpirv(MZ_REPO_ROOT "/cyclo_mask.frag");
+        spirvs[3] = ReadSpirv(MZ_REPO_ROOT "/cyclo_mask.vert");
+        spirvs[4] = ReadSpirv(MZ_REPO_ROOT "/cp.frag");
+    }
+
     inline static std::pair<const char*, PFN_NodeFunctionExecute> Functions[] = 
     {
-        { "AddProjection", [](void* ctx, const MzNodeExecuteArgs* nodeArgs, const MzNodeExecuteArgs* functionArgs)
-        {
-            auto c = (Cyclorama*)ctx;
-            if (c->Capturing) return;
-            c->Capturing = true;
-            c->CapturedFrameCount = 0;
-            flatbuffers::FlatBufferBuilder fbb;
-            auto id = c->GetPinId("Video");
-            mzEngine.HandleEvent(CreateAppEvent(fbb, mz::app::CreateScheduleRequest(fbb, mz::app::ScheduleRequestKind::PIN, &id)));
-        }},
-        {"ClearProjection", [](void* ctx, const MzNodeExecuteArgs* nodeArgs, const MzNodeExecuteArgs* functionArgs) {
-            auto c = (Cyclorama *)ctx;
-            if(c->Capturing) return;
-            c->Capturing = false;
-            c->CapturedFrameCount = 0;
-            c->CleanCleanPlates();
-            c->UpdateCleanPlatesValue();
-            c->Clear();
-        }},
-        {"ReloadShaders", [](void* ctx, const MzNodeExecuteArgs* nodeArgs, const MzNodeExecuteArgs* functionArgs) {
-            auto c = (Cyclorama*)ctx;
-            system("glslc " MZ_REPO_ROOT "/Plugins/mzBasic/Source/VirtualStudio/Cyclorama/Cyclorama.frag -c -o " MZ_REPO_ROOT "/cyclo.frag");
-            system("glslc " MZ_REPO_ROOT "/Plugins/mzBasic/Source/VirtualStudio/Cyclorama/Cyclorama.vert -c -o " MZ_REPO_ROOT "/cyclo.vert");
-            system("glslc " MZ_REPO_ROOT "/Plugins/mzBasic/Source/VirtualStudio/Cyclorama/CycloramaMask.frag -c -o " MZ_REPO_ROOT "/cyclo_mask.frag");
-            system("glslc " MZ_REPO_ROOT "/Plugins/mzBasic/Source/VirtualStudio/Cyclorama/CycloramaMask.vert -c -o " MZ_REPO_ROOT "/cyclo_mask.vert");
-            system("glslc " MZ_REPO_ROOT "/Plugins/mzBasic/Source/VirtualStudio/Cyclorama/CleanPlateAcc.frag -c -o " MZ_REPO_ROOT "/cp.frag");
-            spirvs[0] = ReadSpirv(MZ_REPO_ROOT "/cyclo.frag");
-            spirvs[1] = ReadSpirv(MZ_REPO_ROOT "/cyclo.vert");
-            spirvs[2] = ReadSpirv(MZ_REPO_ROOT "/cyclo_mask.frag");
-            spirvs[3] = ReadSpirv(MZ_REPO_ROOT "/cyclo_mask.vert");
-            spirvs[4] = ReadSpirv(MZ_REPO_ROOT "/cp.frag");
-            
-        }}
+        {"AddProjection", AddProjection},
+        {"ClearProjection", ClearProjection},
+        {"ReloadShaders", ReloadShaders}
     };
 
     // Function Nodes
