@@ -63,13 +63,13 @@ bool NotSame(T a, T b) {
 }
 
 template<class...T>
-u32 MakeFlags(const MzNodeExecuteArgs* pins, const char* var, u32 idx, T&&... tail)
+u32 MakeFlags(std::map<std::string, void*> const& pins, const char* var, u32 idx, T&&... tail)
 {
     return MakeFlags(pins, var, idx) | MakeFlags(pins, tail...);
 }
 
 template<>
-u32 MakeFlags<>(const MzNodeExecuteArgs* pins, const char* var, u32 idx)
+u32 MakeFlags<>(std::map<std::string, void*> const& pins, const char* var, u32 idx)
 {
     auto val = GetPinValue<bool>(pins, var);
     return val ? (*val << idx) : 0;
@@ -209,20 +209,11 @@ static glm::mat4 MakeTransform(glm::vec3 pos, glm::vec3 rot)
 }
 
 template<class T>
-void AddParam(std::vector<MzShaderBinding>& inputs, const MzNodeExecuteArgs* pins, const char* name)
+void AddParam(std::vector<MzShaderBinding>& inputs, std::map<std::string, void*> const& pins, const char* name)
 {
     if(auto val = GetPinValue<T>(pins, name))
     {
-        inputs.push_back({name, {val, sizeof(T)}});
-    }
-}
-
-template<class T>
-void AddParam(std::vector<MzShaderBinding>& inputs, const MzNodeExecuteArgs* pins, const char* name, T const& val)
-{
-    if (auto val = GetPinValue<T>(pins, name))
-    {
-        inputs.push_back({ name, {(void*)&val, sizeof(T)} });
+        inputs.push_back({.Name = name, .FixedSize = val});
     }
 }
 
@@ -497,11 +488,11 @@ struct Cyclorama : PinMapping
 
     inline static std::vector<u8> spirvs[] = 
     {
-        std::vector<u8>{Cyclorama_frag_spv, Cyclorama_frag_spv + (sizeof(Cyclorama_frag_spv) & ~3)},
-        std::vector<u8>{Cyclorama_vert_spv, Cyclorama_vert_spv + (sizeof(Cyclorama_vert_spv) & ~3)},
-        std::vector<u8>{CycloramaMask_frag_spv, CycloramaMask_frag_spv + (sizeof(CycloramaMask_frag_spv) & ~3)},
-        std::vector<u8>{CycloramaMask_vert_spv, CycloramaMask_vert_spv + (sizeof(CycloramaMask_vert_spv) & ~3)},
-        std::vector<u8>{CleanPlateAcc_frag_spv, CleanPlateAcc_frag_spv + (sizeof(CleanPlateAcc_frag_spv) & ~3)},
+        std::vector<u8>{std::begin(Cyclorama_frag_spv), std::end(Cyclorama_frag_spv)},
+        std::vector<u8>{std::begin(Cyclorama_vert_spv), std::end(Cyclorama_vert_spv)},
+        std::vector<u8>{std::begin(CycloramaMask_frag_spv), std::end(CycloramaMask_frag_spv)},
+        std::vector<u8>{std::begin(CycloramaMask_vert_spv), std::end(CycloramaMask_vert_spv)},
+        std::vector<u8>{std::begin(CleanPlateAcc_frag_spv), std::end(CleanPlateAcc_frag_spv)},
     };
 
     inline static MzPassInfo passes[] =
@@ -607,8 +598,8 @@ struct Cyclorama : PinMapping
             {
                 MzShaderBinding bindings[] =
                 {
-                    {"lhs", {&c->lhs, sizeof(c->lhs)}},
-                    {"rhs", {&video, sizeof(video)}},
+                    ShaderBinding("lhs", c->lhs),
+                    ShaderBinding("rhs", video),
                 };
 
                 MzRunPassParams pass;
@@ -666,10 +657,12 @@ struct Cyclorama : PinMapping
 
     
     // Execution
-    static MzResult ExecuteNode(void* ctx, const MzNodeExecuteArgs* args) \
+    static MzResult ExecuteNode(void* ctx, const MzNodeExecuteArgs* inArgs) \
     { 
         auto c = (Cyclorama*)ctx;
         
+        auto args = GetPinValues(inArgs);
+
         MzResourceShareInfo color;
         MzRunPass2Params pass;
         std::vector<MzDrawCall> calls(1 + c->CleanPlates.size());
@@ -696,21 +689,21 @@ struct Cyclorama : PinMapping
         glm::mat4 model = glm::eulerAngleZYX(mrot.z, mrot.y, mrot.x) * glm::mat4(100.f);
         model[3] = glm::vec4(mpos, 1.f);
 
-        std::vector<u8> MVP_val = mz::Buffer::From(prj * view * model);
+        glm::mat4 MVP = prj * view * model;
 
         auto Offset = c->GetOrigin(*GetPinValue<u32>(args, "OriginPreset"));
-        inputs[0].push_back({ "VOffset", {(void*)&Offset, sizeof(Offset)}});
-        inputs[0].push_back({ "MVP", {MVP_val.data(), MVP_val.size()}});
+        inputs[0].push_back(ShaderBinding("VOffset", Offset));
+        inputs[0].push_back(ShaderBinding("MVP", MVP));
+
         AddParam<f32>(inputs[0], args, "SmoothnessCurve");
         f32 zero = 0.f;
         f32 half = 0.5f;
 
         {
-
             mzEngine.GetColorTexture(*GetPinValue<MzVec4>(args, "CycloramaColor"), &color);
-            inputs[0].push_back({ "UVSmoothness", {&zero, sizeof(zero)}});
-            inputs[0].push_back({ "CP_MVP", {MVP_val.data(), MVP_val.size()}});
-            inputs[0].push_back({ "Source", {&color, sizeof(color)}});
+            inputs[0].push_back(ShaderBinding("UVSmoothness", zero));
+            inputs[0].push_back(ShaderBinding("CP_MVP", MVP));
+            inputs[0].push_back(ShaderBinding("Source", color));
         }
 
         std::vector<glm::mat4> matrices(calls.size());
@@ -726,9 +719,9 @@ struct Cyclorama : PinMapping
             call->Vertices.DepthTest = 0;
             call->Vertices.DepthFunc = MZ_DEPTH_FUNCTION_NEVER;
 
-            input->push_back({"UVSmoothness", {&half, sizeof(half)}});
-            input->push_back({"CP_MVP", {mat, sizeof(*mat)}});
-            input->push_back({"Source", {&last.Texture, sizeof(last.Texture)} });
+            input->push_back(ShaderBinding("UVSmoothness", half));
+            input->push_back(ShaderBinding("CP_MVP", *mat));
+            input->push_back(ShaderBinding("Source", last.Texture));
 
             glm::vec3 pos = (glm::dvec3&)last.Track.location;
             glm::vec3 rot = (glm::dvec3&)last.Track.rotation;
@@ -782,18 +775,19 @@ struct Cyclorama : PinMapping
             maskPass.PassKey = "Cyclorama_Mask_Pass";
             maskPass.Output = ValAsTex(GetPinValue<void>(args, "Mask"));;
             maskPass.Vertices = c->Verts;
-            maskInputs.push_back({ "MVP", {MVP_val.data(), MVP_val.size() }});
+            maskInputs.push_back(ShaderBinding("MVP", MVP));
 
-            AddParam(maskInputs, args, "VOffset", Offset);
-            AddParam(maskInputs, args, "Flags", flags);;
+            
             AddParam<f32>(maskInputs, args, "SmoothnessCurve");
             AddParam<glm::vec4>(maskInputs, args, "MaskColor");
-            AddParam(maskInputs, args, "Smoothness", smoothness);
-            AddParam(maskInputs, args, "SmoothnessCrop", crop);
-            AddParam(maskInputs, args, "Scale", scale);
-            AddParam(maskInputs, args, "Roundness", roundness);
-            AddParam(maskInputs, args, "Angle", angle);
-            AddParam(maskInputs, args, "Diag", diag);
+            maskInputs.push_back(ShaderBinding("VOffset", Offset));
+            maskInputs.push_back(ShaderBinding("Flags", flags));
+            maskInputs.push_back(ShaderBinding("Smoothness", smoothness));
+            maskInputs.push_back(ShaderBinding("SmoothnessCrop", crop));
+            maskInputs.push_back(ShaderBinding("Scale", scale));
+            maskInputs.push_back(ShaderBinding("Roundness", roundness));
+            maskInputs.push_back(ShaderBinding("Angle", angle));
+            maskInputs.push_back(ShaderBinding("Diag", diag));
 
             mzEngine.RunPass(0, &maskPass);
         }

@@ -16,6 +16,7 @@
 							.Value = variable						\
 					}
 
+
 namespace mz::filters
 {
 
@@ -27,8 +28,6 @@ struct GaussBlurContext
 	GaussBlurContext(fb::Node const& node)
 	{
 		NodeId = *node.id();
-		RegisterShaders();
-		RegisterPasses();
 
 		IntermediateTexture.info.texture.filter = MZ_TEXTURE_FILTER_LINEAR;
 		IntermediateTexture.info.texture.usage = MzImageUsage(MZ_IMAGE_USAGE_RENDER_TARGET | MZ_IMAGE_USAGE_SAMPLED); 
@@ -39,28 +38,33 @@ struct GaussBlurContext
 		DestroyResources();
 	}
 
-	void RegisterShaders()
-	{
-		static bool registered = false;
-		if (registered)
-			return;
-		mzEngine.RegisterShader("Gaussian_Blur",
-		                        MzBuffer{
-			                        .Data = (void*)GaussianBlur_frag_spv,
-			                        .Size = sizeof(GaussianBlur_frag_spv)
-		                        }); // TODO Check result
-		registered = true;
-	}
 
-	void RegisterPasses()
+	static MzResult GetShaders(size_t* outCount, MzBuffer* infos)
 	{
-		auto key = "Gaussian_Blur_Pass_" + mz::UUID2STR(NodeId);
-		MzPassInfo info = {};
-		info.Key = key.c_str();
-		info.Shader = "Gaussian_Blur";
-		mzEngine.RegisterPass(&info); // TODO Check result
-	}
+		*outCount = 1;
+		if (!infos)
+			return MZ_RESULT_SUCCESS;
 
+		infos->Data = (void*)GaussianBlur_frag_spv;
+		infos->Size = sizeof(GaussianBlur_frag_spv);
+
+		return MZ_RESULT_SUCCESS;
+	};
+
+	static MzResult GetPasses(size_t* outCount, MzPassInfo* infos)
+	{
+		*outCount = 1;
+		if (!infos)
+			return MZ_RESULT_SUCCESS;
+
+		infos->Key = "Gaussian_Blur_Pass";
+		infos->Shader = "Gaussian_Blur";
+		infos->Blend = false;
+		infos->MultiSample = 1;
+
+		return MZ_RESULT_SUCCESS;
+	}
+	
 	void DestroyResources()
 	{
 		if (IntermediateTexture.memory.handle)
@@ -86,80 +90,43 @@ struct GaussBlurContext
 
 	void Run(const MzNodeExecuteArgs* pins)
 	{
-		// Create AllPinValues
-		MzBuffer inputTexture = {};
-		float* softnessPinValue = nullptr;
-		MzVec2* kernelPinValue = nullptr;
-		uint32_t passTypeValue = 0;
-		
+
 		MzResourceShareInfo outputTexture;
 
-		// Check and set all of them
-		for (size_t i{}; i < pins->PinCount; i++)
-		{
-			if (strcmp(pins->PinNames[i], "Input") == 0)
-			{
-				inputTexture = pins->PinValues[i];
-			}
-			if (strcmp(pins->PinNames[i], "Softness") == 0)
-			{
-				softnessPinValue = (float*)(pins->PinValues[i].Data);
-				*softnessPinValue += 1.0f;
-			}
-			if (strcmp(pins->PinNames[i], "Kernel_Size") == 0)
-			{
-				kernelPinValue = (MzVec2*)(pins->PinValues[i].Data);
-			}
-			if (strcmp(pins->PinNames[i], "Output") == 0)
-			{
-				outputTexture = mz::ValAsTex(pins->PinValues[i].Data);
-			}
-		}
+		auto values = GetPinValues(pins);
+
+		const MzResourceShareInfo input  = ValAsTex(values["Input"]);
+		const MzResourceShareInfo output = ValAsTex(values["Output"]);
+		const f32 softness = *(f32*)values["Softness"];
+		const MzVec2 Kernel_Size = *(MzVec2*)values["Kernel_Size"];
+		const MzVec2u Pass_Type = MzVec2u(0, 1);
 
 		SetupIntermediateTexture(&outputTexture);
+
+		std::vector<MzShaderBinding> bindings = {
+			ShaderBinding("Input", input),
+			ShaderBinding("Kernel_Size", Kernel_Size.x),
+			ShaderBinding("Pass_Type", Pass_Type.x),
+			ShaderBinding("Softness", softness),
+		};
 		
-		std::string key = "Gaussian_Blur_Pass_" + mz::UUID2STR(NodeId);
-
-		auto intermTexData = SerializeResourceInfo(IntermediateTexture);
-		auto intermTexBuf = MzBuffer {.Data = intermTexData.data(), .Size = intermTexData.size()};
-		
-		SHADER_BUFFER_BINDING(inputBinding, "Input", inputTexture);
-		SHADER_BUFFER_BINDING(intermediateBinding, "Input", intermTexBuf);
-		SHADER_BINDING(softnessBinding, "Softness", *softnessPinValue);
-		SHADER_BINDING(kernelSizeXBinding, "Kernel_Size", kernelPinValue->x);
-		SHADER_BINDING(kernelSizeYBinding, "Kernel_Size", kernelPinValue->y);
-		SHADER_BINDING(passTypeBinding, "Pass_Type", passTypeValue);
-
-		MzShaderBinding bindings[4];
-		bindings[0] = inputBinding;
-		bindings[1] = softnessBinding;
-		bindings[2] = kernelSizeXBinding;
-		bindings[3] = passTypeBinding;
-
 		// Horz pass
-		MzRunPassParams passParams = {};
-		passParams.PassKey = key.c_str();
-		passParams.Bindings = bindings;
-		passParams.BindingCount = 4;
-		passParams.Wireframe = false;
-		passParams.Output = IntermediateTexture;
-
-		MzCmd cmd;
-		mzEngine.Begin(&cmd);
-		
-		mzEngine.RunPass(cmd, &passParams);
-
-		passTypeValue = 1;
+		MzRunPassParams pass = {
+			.PassKey = "Gaussian_Blur_Pass",
+			.Bindings = bindings.data(),
+			.BindingCount = (u32)bindings.size(),
+			.Output = IntermediateTexture,
+			.Wireframe = false,
+		};
+		mzEngine.RunPass(0, &pass);
 
 		// Vert pass
-		bindings[0] = intermediateBinding;
-		bindings[2] = kernelSizeYBinding;
-		passParams.Bindings = bindings;
-		passParams.Output = outputTexture;
+		bindings[0].Resource = &IntermediateTexture;
+		bindings[1].FixedSize = &Kernel_Size.y;
+		bindings[2].FixedSize = &Pass_Type.y;
+		pass.Output = outputTexture;
+		mzEngine.RunPass(0, &pass);
 
-		mzEngine.RunPass(cmd, &passParams);
-
-		mzEngine.End(cmd);
 	}
 };
 
