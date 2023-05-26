@@ -6,20 +6,15 @@
 #include <Builtins_generated.h>
 
 // Shaders
-#include "Color.frag.spv.dat"
 #include "ColorCorrect.frag.spv.dat"
 #include "Diff.frag.spv.dat"
-#include "Gradient.frag.spv.dat"
 #include "GaussianBlur.frag.spv.dat"
 #include "Kuwahara.frag.spv.dat"
-#include "Offset.frag.spv.dat"
 #include "KawaseLightStreak.frag.spv.dat"
 #include "PremultiplyAlpha.frag.spv.dat"
-#include "SevenSegment.frag.spv.dat"
 #include "Sharpen.frag.spv.dat"
 #include "Sobel.frag.spv.dat"
 #include "Thresholder.frag.spv.dat"
-#include "QuadMerge.frag.spv.dat"
 #include "Sampler.frag.spv.dat"
 
 // Nodes
