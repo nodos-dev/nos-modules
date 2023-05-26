@@ -1,12 +1,17 @@
 {
-    "namespace": "mz.math",
-    "name": "Math",
+    "info": {
+        "id": {
+            "name": "mz.math",
+            "version": "0.1.0"
+        },
+        "display_name": "Math"
+    },
     "fb_includes": [],
     "node_definitions": [
-        "mzMath.mzdef"
+        "Math.mzdef"
     ],
-    "binary_path": "../Binaries/mzMath.dll",
-    "menu_items": [
+    "binary_path": "../Binaries/mzMath",
+    "associated_nodes": [
         {
             "category": "Math",
             "class_name": "U32ToString",

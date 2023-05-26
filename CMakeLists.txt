@@ -23,5 +23,5 @@ endif()
 add_subdirectory(mzMath)
 add_subdirectory(mzAJA)
 add_subdirectory(mzFilters)
-add_subdirectory(mzCyclorama)
+# add_subdirectory(mzCyclorama)
 

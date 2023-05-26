@@ -51,7 +51,7 @@ MZAPI_ATTR MzResult MZAPI_CALL mzExportNodeFunctions(size_t* outSize, MzNodeFunc
 		{
             case Utilities::Checkerboard:
             {
-            	funcs->TypeName = "mz.ColorCorrect";
+            	funcs->TypeName = "mz.Checkerboard";
 			    funcs->GetShaderSource = [](MzBuffer* outSpirvBuf) -> MzResult {
 				outSpirvBuf->Data = (void*)(Checkerboard_frag_spv);
 				outSpirvBuf->Size = sizeof(Checkerboard_frag_spv);
