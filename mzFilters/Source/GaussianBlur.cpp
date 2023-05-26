@@ -153,7 +153,7 @@ struct GaussBlurContext
 
 		// Vert pass
 		bindings[0] = intermediateBinding;
-		bindings[3] = kernelSizeYBinding;
+		bindings[2] = kernelSizeYBinding;
 		passParams.Bindings = bindings;
 		passParams.Output = outputTexture;
 
