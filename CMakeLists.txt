@@ -3,6 +3,8 @@ project("Plugins")
 
 set(EXTERNAL_DIR ${CMAKE_CURRENT_SOURCE_DIR}/External)
 
+# Dependencies
+# ------------
 
 # stb
 if (NOT WITH_MEDIAZ)
@@ -19,10 +21,10 @@ if (NOT WITH_MEDIAZ)
     find_package(mzPluginSDK REQUIRED)
 endif()
 
-# set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/../CMakeBuild/Debug/install/SDK/cmake")
 add_subdirectory(mzMath)
 add_subdirectory(mzAJA)
 add_subdirectory(mzFilters)
 add_subdirectory(mzUtilities)
 add_subdirectory(mzCyclorama)
+add_subdirectory(zdFrustum)
 

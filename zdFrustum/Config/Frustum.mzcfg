@@ -12,6 +12,7 @@
     "fb_includes" :[
       "Frustum.fbs"
     ],
+    "binary_path": "../Binaries/zdFrustum",
     "associated_nodes": [
         {
             "category": "Lens",

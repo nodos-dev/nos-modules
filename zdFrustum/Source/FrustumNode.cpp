@@ -1,6 +1,9 @@
 // Copyright MediaZ AS. All Rights Reserved.
 
-#include <MediaZ/Plugin.h>
+#include <MediaZ/PluginAPI.h>
+#include <MediaZ/Helpers.hpp>
+
+MZ_INIT()
 
 #include "Common_generated.h"
 #include "flatbuffers/flatbuffers.h"
@@ -13,8 +16,6 @@ using namespace ZD::Curve;
 
 namespace mz
 {
-
-EngineNodeServices mzEngine;
 
 struct Frustum: PinMapping
 {
@@ -78,51 +79,47 @@ struct Frustum: PinMapping
 
 extern "C"
 {
-void MZAPI_ATTR Register(NodeActionsMap& functions, EngineNodeServices services, std::set<flatbuffers::Type const*> const& types)
+
+MZAPI_ATTR MzResult MZAPI_CALL mzExportNodeFunctions(size_t* outSize, MzNodeFunctions* outFunctions)
 {
-    mzEngine = services;
-    auto &actions = functions["ZD.Frustum"];
-    actions.NodeCreated = [](auto &node, Args &args, void **ctx) 
-    { 
-        Frustum* f = new Frustum();
-        f->Load(node);
-
-        *ctx = f;
-     };
-
-    actions.NodeUpdate = [](auto &node, auto ctx) 
-    {
-        ((Frustum*)ctx)->Load(node);
-    };
-    
-    actions.MenuFired = [](auto &node, auto ctx, auto &request) {};
-    actions.CommandFired = [](auto &node, auto ctx, u32 cmd) {};
-
-    actions.NodeRemoved = [](auto ctx, auto &id) {
-        delete (Frustum*)ctx;
-    };
-
-    actions.PinValueChanged = [](auto ctx, auto &id, mz::Buffer* value) {
-        ((Frustum*)ctx)->ValueChanged(id, value->data());
-    };
-
-    actions.PinShowAsChanged = [](auto ctx, auto &id, int value) {};
-    actions.EntryPoint = [](mz::Args &pins, auto ctx) { 
-        
-        auto zoom  = pins.Get<f64>("Zoom");
-        auto focus = pins.Get<f64>("Focus");
-        if(zoom && focus)
-        {
-            auto& clb = ((Frustum*)ctx)->calibrator;
-            if(auto fov = pins.Get<f64>("FOV"))                    *fov = clb.GetFoV(*zoom, *focus);
-            if (auto k1k2 = pins.Get<mz::fb::vec2>("k1k2")) (glm::vec2&)*k1k2 = clb.GetK1K2(*zoom, *focus);
-            if(auto np = pins.Get<f64>("Nodal Point"))             *np =  clb.NodalPointCurve.GetInterpolatedValue(*zoom);
-            if(auto fdc = pins.Get<f64>("Focus Distance Curve"))   *fdc =  clb.FocusDistanceCurve.GetInterpolatedValue(*focus);
-        }
-        
-        return true; 
-    };
+	if (!outFunctions)
+	{
+		*outSize = 1;
+		return MZ_RESULT_SUCCESS;
+	}
+	auto& funcs = outFunctions[0];
+	funcs.TypeName = "zd.frustum.Frustum";
+	funcs.OnNodeCreated = [](auto *node,void **ctx) {
+		Frustum* f = new Frustum();
+		f->Load(*node);
+		*ctx = f;
+	};
+	funcs.OnNodeUpdated = [](void *ctx, auto *node) {
+		((Frustum*)ctx)->Load(*node);
+	};
+	funcs.OnNodeDeleted = [](void *ctx, MzUUID nodeId) {
+		delete (Frustum*)ctx;
+	};
+	funcs.OnPinValueChanged = [](void *ctx, MzUUID pinId, MzBuffer *value) {
+		((Frustum*)ctx)->ValueChanged(pinId, value->Data);
+	};
+	funcs.ExecuteNode = [](void* ctx, MzNodeExecuteArgs const* args) {
+		auto values = GetPinValues(args);
+		auto zoom = (f64*)values["Zoom"];
+		auto focus = (f64*)values["Focus"];
+		if (zoom && focus)
+		{
+			auto& clb = ((Frustum*)ctx)->calibrator;
+			if (auto fov = (f64*)values["FOV"])                    *fov = clb.GetFoV(*zoom, *focus);
+			if (auto k1k2 = (mz::fb::vec2*)values["k1k2"]) (glm::vec2&)*k1k2 = clb.GetK1K2(*zoom, *focus);
+			if (auto np = (f64*)values["Nodal Point"])             *np = clb.NodalPointCurve.GetInterpolatedValue(*zoom);
+			if (auto fdc = (f64*)values["Focus Distance Curve"])   *fdc = clb.FocusDistanceCurve.GetInterpolatedValue(*focus);
+		}
+		return MZ_RESULT_SUCCESS;
+	};
+	return MZ_RESULT_SUCCESS;
 }
+
 }
 
 } // namespace mz
