@@ -12,6 +12,7 @@
     "fb_includes" :[
       "Cyclorama.fbs"
     ],
+    "binary_path": "../Binaries/mzCyclorama",
     "associated_nodes": [
         {
             "category": "Keying",
