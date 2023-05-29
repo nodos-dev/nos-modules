@@ -1,5 +1,3 @@
-cmake_minimum_required(VERSION 3.24.2)
-project("zdFrustum")
 
 # Dependencies
 # ------------
@@ -13,33 +11,5 @@ if (NOT WITH_MEDIAZ)
     target_include_directories(nlohmann INTERFACE ${EXTERNAL_DIR}/json/single_include)
 endif()
 
-# Plugin
-# ------
-set(CMAKE_CXX_STANDARD 20)
-
-string(REGEX REPLACE "\\\\" "/" MZ_WORK_FOLDER "$ENV{PROGRAMDATA}/mediaz/core")
-set(MZ_WORK_FOLDER "${MZ_WORK_FOLDER}")
-set(MZ_REPO_ROOT "${MZ_WORK_FOLDER}")
-add_compile_definitions(MZ_WORK_FOLDER="${MZ_WORK_FOLDER}")
-add_compile_definitions(MZ_REPO_ROOT="${MZ_REPO_ROOT}")
-
-set(SOURCE_FOLDER "${CMAKE_CURRENT_SOURCE_DIR}/Source")
-
-file(GLOB_RECURSE SOURCES CONFIGURE_DEPENDS ${SOURCE_FOLDER}
-    "${SOURCE_FOLDER}/*.cpp" "${SOURCE_FOLDER}/*.inl" "${SOURCE_FOLDER}/*.glsl"
-    "${SOURCE_FOLDER}/*.comp" "${SOURCE_FOLDER}/*.frag" "${SOURCE_FOLDER}/*.vert")
-file(GLOB_RECURSE HEADERS CONFIGURE_DEPENDS ${SOURCE_FOLDER} "${SOURCE_FOLDER}/*.h" "${SOURCE_FOLDER}/*.hpp")
-file(GLOB_RECURSE RESOURCES CONFIGURE_DEPENDS ${SOURCE_FOLDER} "${SOURCE_FOLDER}/*.rc")
-
-add_library(${PROJECT_NAME} MODULE ${SOURCES} ${HEADERS} ${RESOURCES})
-set_target_properties(${PROJECT_NAME} PROPERTIES
-    LIBRARY_OUTPUT_DIRECTORY_DEBUG "${CMAKE_CURRENT_SOURCE_DIR}/Binaries"
-    LIBRARY_OUTPUT_DIRECTORY_RELEASE "${CMAKE_CURRENT_SOURCE_DIR}/Binaries"
-    LIBRARY_OUTPUT_DIRECTORY_RELWITHDEBINFO "${CMAKE_CURRENT_SOURCE_DIR}/Binaries"
-    LIBRARY_OUTPUT_DIRECTORY_MINSIZEREL "${CMAKE_CURRENT_SOURCE_DIR}/Binaries"
-)
-
-set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_STANDARD 20)
-
-target_link_libraries(${PROJECT_NAME} PRIVATE nlohmann boost_math)
-target_link_libraries(${PROJECT_NAME} PUBLIC mzPluginSDK)
+list(APPEND DEPENDENCIES nlohmann boost_math)
+add_folder_as_plugin_project("zdFrustum" "${DEPENDENCIES}" "")

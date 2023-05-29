@@ -1,6 +1,3 @@
-cmake_minimum_required(VERSION 3.24.2)
-project(mzAJA)
-
 # Dependencies
 # ------------
 # AJA
@@ -23,40 +20,9 @@ include(AJAVersionConfig)
 include(GNUInstallDirs)
 add_subdirectory(${EXTERNAL_DIR}/ntv2/ajalibraries "${CMAKE_CURRENT_BINARY_DIR}/ajalibraries")
 
-# Plugin
-# ------
-set(CMAKE_CXX_STANDARD 20)
-
-string(REGEX REPLACE "\\\\" "/" MZ_WORK_FOLDER "$ENV{PROGRAMDATA}/mediaz/core")
-set(MZ_WORK_FOLDER "${MZ_WORK_FOLDER}")
-set(MZ_REPO_ROOT "${MZ_WORK_FOLDER}")
-add_compile_definitions(MZ_WORK_FOLDER="${MZ_WORK_FOLDER}")
-add_compile_definitions(MZ_REPO_ROOT="${MZ_REPO_ROOT}")
-
-set(SOURCE_FOLDER "${CMAKE_CURRENT_SOURCE_DIR}/Source")
-
-file(GLOB_RECURSE SOURCES CONFIGURE_DEPENDS ${SOURCE_FOLDER}
-    "${SOURCE_FOLDER}/*.cpp" "${SOURCE_FOLDER}/*.inl" "${SOURCE_FOLDER}/*.glsl"
-    "${SOURCE_FOLDER}/*.comp" "${SOURCE_FOLDER}/*.frag" "${SOURCE_FOLDER}/*.vert")
-file(GLOB_RECURSE HEADERS CONFIGURE_DEPENDS ${SOURCE_FOLDER} "${SOURCE_FOLDER}/*.h" "${SOURCE_FOLDER}/*.hpp")
-file(GLOB_RECURSE RESOURCES CONFIGURE_DEPENDS ${SOURCE_FOLDER} "${SOURCE_FOLDER}/*.rc")
-
-add_library(${PROJECT_NAME} MODULE ${SOURCES} ${HEADERS} ${RESOURCES})
-set_target_properties(${PROJECT_NAME} PROPERTIES
-    LIBRARY_OUTPUT_DIRECTORY_DEBUG "${CMAKE_CURRENT_SOURCE_DIR}/Binaries"
-    LIBRARY_OUTPUT_DIRECTORY_RELEASE "${CMAKE_CURRENT_SOURCE_DIR}/Binaries"
-    LIBRARY_OUTPUT_DIRECTORY_RELWITHDEBINFO "${CMAKE_CURRENT_SOURCE_DIR}/Binaries"
-    LIBRARY_OUTPUT_DIRECTORY_MINSIZEREL "${CMAKE_CURRENT_SOURCE_DIR}/Binaries"
-)
-
-set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_STANDARD 20)
-
-target_include_directories(${PROJECT_NAME} PUBLIC $ENV{MZ_SDK_DIR}/include)
-target_include_directories(${PROJECT_NAME} PRIVATE ${EXTERNAL_DIR}
+list(APPEND DEPENDENCIES stb asio ajantv2)
+list(APPEND INCLUDE_FOLDERS ${EXTERNAL_DIR}
     ${EXTERNAL_DIR}/ntv2
     ${EXTERNAL_DIR}/ntv2/ajalibraries/ajantv2/src/win
-    ${EXTERNAL_DIR}/ntv2/ajalibraries/ajantv2/includes
-    ${SOURCE_FOLDER})
-
-target_link_libraries(${PROJECT_NAME} PRIVATE ajantv2 stb asio)
-target_link_libraries(${PROJECT_NAME} PUBLIC mzPluginSDK)
+    ${EXTERNAL_DIR}/ntv2/ajalibraries/ajantv2/includes)
+add_folder_as_plugin_project("mzAJA" "${DEPENDENCIES}" "${INCLUDE_FOLDERS}")

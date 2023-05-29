@@ -3,6 +3,45 @@ project("Plugins")
 
 set(EXTERNAL_DIR ${CMAKE_CURRENT_SOURCE_DIR}/External)
 
+function(add_folder_as_plugin_project NAME DEPENDENCIES INCLUDE_FOLDERS)
+    project(${NAME})
+    message("Processing plugin ${NAME}")
+
+    # TODO: Set convenient paths for debug too. Or, remove it if not used.
+    string(REGEX REPLACE "\\\\" "/" MZ_WORK_FOLDER "$ENV{PROGRAMDATA}/mediaz/core")
+    set(MZ_WORK_FOLDER "${MZ_WORK_FOLDER}")
+    set(MZ_REPO_ROOT "${MZ_WORK_FOLDER}")
+    add_compile_definitions(MZ_WORK_FOLDER="${MZ_WORK_FOLDER}")
+    add_compile_definitions(MZ_REPO_ROOT="${MZ_REPO_ROOT}")
+
+    set(SOURCE_FOLDER "${CMAKE_CURRENT_SOURCE_DIR}/Source")
+    set(CONFIG_FOLDERS "${CMAKE_CURRENT_SOURCE_DIR}" "${CMAKE_CURRENT_SOURCE_DIR}/Config")
+
+    file(GLOB_RECURSE SOURCES CONFIGURE_DEPENDS ${SOURCE_FOLDER}
+        "${SOURCE_FOLDER}/*.cpp" "${SOURCE_FOLDER}/*.inl" "${SOURCE_FOLDER}/*.glsl"
+        "${SOURCE_FOLDER}/*.comp" "${SOURCE_FOLDER}/*.frag" "${SOURCE_FOLDER}/*.vert")
+    foreach(CONFIG_FOLDER ${CONFIG_FOLDERS})
+        file(GLOB_RECURSE CONFIG_FILES CONFIGURE_DEPENDS ${CONFIG_FOLDER} 
+            "${CONFIG_FOLDER}/*.mzcfg" "${CONFIG_FOLDER}/*.mzdef" "${CONFIG_FOLDER}/*.fbs")
+    endforeach()
+    file(GLOB_RECURSE HEADERS CONFIGURE_DEPENDS ${SOURCE_FOLDER} "${SOURCE_FOLDER}/*.h" "${SOURCE_FOLDER}/*.hpp")
+    file(GLOB_RECURSE RESOURCES CONFIGURE_DEPENDS ${SOURCE_FOLDER} "${SOURCE_FOLDER}/*.rc")
+
+    add_library(${NAME} MODULE ${SOURCES} ${HEADERS} ${RESOURCES} ${CONFIG_FILES})
+    set_target_properties(${NAME} PROPERTIES
+        CXX_STANDARD 20
+        LIBRARY_OUTPUT_DIRECTORY_DEBUG "${CMAKE_CURRENT_SOURCE_DIR}/Binaries"
+        LIBRARY_OUTPUT_DIRECTORY_RELEASE "${CMAKE_CURRENT_SOURCE_DIR}/Binaries"
+        LIBRARY_OUTPUT_DIRECTORY_RELWITHDEBINFO "${CMAKE_CURRENT_SOURCE_DIR}/Binaries"
+        LIBRARY_OUTPUT_DIRECTORY_MINSIZEREL "${CMAKE_CURRENT_SOURCE_DIR}/Binaries"
+    )
+
+    target_include_directories(${NAME} PRIVATE ${INCLUDE_FOLDERS})
+
+    target_link_libraries(${NAME} PRIVATE ${DEPENDENCIES})
+    target_link_libraries(${NAME} PUBLIC mzPluginSDK)
+endfunction()
+
 # Dependencies
 # ------------
 
