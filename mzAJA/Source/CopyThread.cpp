@@ -273,8 +273,6 @@ void CopyThread::CreateRings(u32 size)
     if (CompressedTex.memory.handle)
         mzEngine.Destroy(&CompressedTex);
     
-    TRing<MzTextureInfo>(ext, size);;
-
 	gpuRing = MakeShared<GPURing>(ext, size);
 	MzVec2u compressedExt((10 == BitWidth()) ? ((ext.x + (48 - ext.x % 48) % 48) / 3) << 1 : ext.x >> 1, ext.y >> u32(Interlaced()));
 	cpuRing = MakeShared<CPURing>(compressedExt, size);
@@ -516,7 +514,7 @@ void CopyThread::AJAOutputProc()
             }
             else
             {
-                client->Device->DMAWriteFrame(OutFrame, Buf, Size, Channel);
+                client->Device->DMAWriteFrame(OutFrame, Buf, Pitch * Segments, Channel);
             }
 
             cpuRing->EndPop(res);
@@ -700,6 +698,7 @@ void CopyThread::OutputConversionThread::Consume(const Parameters& item)
         mzEngine.RunPass(cmd, &pass);
     }
 
+    mzEngine.Copy(cmd, &Cpy->CompressedTex, &outgoing->Res, 0);
     mzEngine.End(cmd);
 
     Cpy->cpuRing->EndPush(outgoing);
