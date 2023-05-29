@@ -190,17 +190,7 @@ MzResult ToString(void* ctx, const MzNodeExecuteArgs* args)
 {
 	auto* in = reinterpret_cast<u32*>(args->PinValues[0].Data);
 	auto s = std::to_string(*in);
-	MzBuffer* out = &args->PinValues[1];
-	if (out->Size != s.size() + 1)
-	{
-		void* buffer = mzEngine.AllocateMemory(s.size() + 1);
-		if (!buffer)
-			return MZ_RESULT_OUT_OF_MEMORY;
-		out->Data = buffer;
-		out->Size = s.size() + 1;
-	}
-	strncpy((char*)out->Data, s.c_str(), out->Size);
-	return MZ_RESULT_SUCCESS;
+	return mzEngine.SetPinValue(args->PinIds[1], MzBuffer { .Data = (void*)s.c_str(), .Size = s.size() + 1 });
 }
 
 extern "C"
@@ -229,9 +219,9 @@ MZAPI_ATTR MzResult MZAPI_CALL mzExportNodeFunctions(size_t* outCount, MzNodeFun
 				constexpr uint32_t PIN_AMPLITUDE = 0;
 				constexpr uint32_t PIN_FREQUENCY = 1;
 				constexpr uint32_t PIN_OUT = 2;
-				MzBuffer* ampBuf = &args->PinValues[PIN_AMPLITUDE];
-				MzBuffer* freqBuf = &args->PinValues[PIN_FREQUENCY];
-				MzBuffer* outBuf = &args->PinValues[PIN_OUT];
+				auto ampBuf = &args->PinValues[PIN_AMPLITUDE];
+				auto freqBuf = &args->PinValues[PIN_FREQUENCY];
+				auto outBuf = &args->PinValues[PIN_OUT];
 				float frequency = *static_cast<float*>(freqBuf->Data);
 				float amplitude = *static_cast<float*>(ampBuf->Data);
 				auto millis = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count();
@@ -248,10 +238,10 @@ MZAPI_ATTR MzResult MZAPI_CALL mzExportNodeFunctions(size_t* outCount, MzNodeFun
 				constexpr uint32_t PIN_MIN = 1;
 				constexpr uint32_t PIN_MAX = 2;
 				constexpr uint32_t PIN_OUT = 3;
-				MzBuffer* valueBuf = &args->PinValues[PIN_IN];
-				MzBuffer* minBuf = &args->PinValues[PIN_MIN];
-				MzBuffer* maxBuf = &args->PinValues[PIN_MAX];
-				MzBuffer* outBuf = &args->PinValues[PIN_OUT];
+				auto valueBuf = &args->PinValues[PIN_IN];
+				auto minBuf = &args->PinValues[PIN_MIN];
+				auto maxBuf = &args->PinValues[PIN_MAX];
+				auto outBuf = &args->PinValues[PIN_OUT];
 				float value = *static_cast<float*>(valueBuf->Data);
 				float min = *static_cast<float*>(minBuf->Data);
 				float max = *static_cast<float*>(maxBuf->Data);
@@ -265,8 +255,8 @@ MZAPI_ATTR MzResult MZAPI_CALL mzExportNodeFunctions(size_t* outCount, MzNodeFun
 			functions->ExecuteNode = [](void* ctx, const MzNodeExecuteArgs* args) {
 				constexpr uint32_t PIN_IN = 0;
 				constexpr uint32_t PIN_OUT = 1;
-				MzBuffer* valueBuf = &args->PinValues[PIN_IN];
-				MzBuffer* outBuf = &args->PinValues[PIN_OUT];
+				auto valueBuf = &args->PinValues[PIN_IN];
+				auto outBuf = &args->PinValues[PIN_OUT];
 				float value = *static_cast<float*>(valueBuf->Data);
 				*(static_cast<float*>(outBuf->Data)) = std::abs(value);
 				return MZ_RESULT_SUCCESS;
