@@ -63,13 +63,13 @@ bool NotSame(T a, T b) {
 }
 
 template<class...T>
-u32 MakeFlags(std::map<std::string, void*> const& pins, const char* var, u32 idx, T&&... tail)
+u32 MakeFlags(std::unordered_map<std::string, void*> const& pins, const char* var, u32 idx, T&&... tail)
 {
     return MakeFlags(pins, var, idx) | MakeFlags(pins, tail...);
 }
 
 template<>
-u32 MakeFlags<>(std::map<std::string, void*> const& pins, const char* var, u32 idx)
+u32 MakeFlags<>(std::unordered_map<std::string, void*> const& pins, const char* var, u32 idx)
 {
     auto val = GetPinValue<bool>(pins, var);
     return val ? (*val << idx) : 0;
@@ -209,7 +209,7 @@ static glm::mat4 MakeTransform(glm::vec3 pos, glm::vec3 rot)
 }
 
 template<class T>
-void AddParam(std::vector<MzShaderBinding>& inputs, std::map<std::string, void*> const& pins, const char* name)
+void AddParam(std::vector<MzShaderBinding>& inputs, std::unordered_map<std::string, void*> const& pins, const char* name)
 {
     if(auto val = GetPinValue<T>(pins, name))
     {
@@ -218,7 +218,7 @@ void AddParam(std::vector<MzShaderBinding>& inputs, std::map<std::string, void*>
 }
 
 template<class T>
-bool GetValue(std::map<std::string, const mz::fb::Pin*>& pins, std::string const& name, T& dst)
+bool GetValue(std::unordered_map<std::string, const mz::fb::Pin*>& pins, std::string const& name, T& dst)
 {
     if(auto pin = pins[name])
     {
@@ -232,7 +232,7 @@ bool GetValue(std::map<std::string, const mz::fb::Pin*>& pins, std::string const
 }
 
 template<class T>
-bool GetValue(std::map<std::string, const mz::fb::Pin*>& pins, std::string const& name, std::function<void(T*)>&& cb)
+bool GetValue(std::unordered_map<std::string, const mz::fb::Pin*>& pins, std::string const& name, std::function<void(T*)>&& cb)
 {
     if(auto pin = pins[name])
     {

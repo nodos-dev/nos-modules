@@ -14,7 +14,7 @@
         "Offset.mzdef",
         "QuadMerge.mzdef",
         "Resize.mzdef",
-        "SevenSegment.mzdef",
+        "SevenSegment.mzdef"
     ],
     "fb_includes" :[
         "Merge.fbs",

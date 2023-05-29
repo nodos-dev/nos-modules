@@ -1,0 +1,41 @@
+{
+    "info": {
+        "id": {
+            "name": "mz.track",
+            "version": "0.1.0"
+        },
+        "display_name": "Track"
+    },
+    "node_definitions": [
+        "Track.mzdef"
+    ],
+    "fb_includes": [],
+    "binary_path": "../Binaries/mzTrack",
+    "associated_nodes": [
+        {
+            "category": "Track",
+            "class_name": "FreeD",
+            "display_name": "FreeD"
+        },
+        {
+            "category": "Track",
+            "class_name": "Xync",
+            "display_name": "Xync"
+        },
+        {
+            "category": "Track",
+            "class_name": "Stype",
+            "display_name": "Stype"
+        },
+        {
+            "category": "Track",
+            "class_name": "MoSys",
+            "display_name": "MoSys"
+        },
+        {
+            "category": "Track",
+            "class_name": "UserTrack",
+            "display_name": "User Track"
+        }
+    ]
+}

@@ -65,5 +65,6 @@ add_subdirectory(mzAJA)
 add_subdirectory(mzFilters)
 add_subdirectory(mzUtilities)
 add_subdirectory(mzCyclorama)
+add_subdirectory(mzTrack)
 add_subdirectory(zdFrustum)
 
