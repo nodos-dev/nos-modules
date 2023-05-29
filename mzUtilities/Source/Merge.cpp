@@ -78,7 +78,7 @@ struct MergeContext
 		                                                         ));
 
 		
-		mzEngine.EnqueueEvent(event.Get());
+		mzEngine.HandleEvent(event);
 	}
 
 	static void OnNodeCreated(const MzFbNode* node, void** outCtxPtr)
@@ -115,7 +115,7 @@ struct MergeContext
 			fb::CreatePinDirect(fbb, &opacityId, opacityPinName.c_str(), "float", fb::ShowAs::PROPERTY, fb::CanShowAs::OUTPUT_PIN_OR_PROPERTY, pinCategory.c_str(),0,&opacityData),
 			fb::CreatePinDirect(fbb, &blendId, blendPinName.c_str(), "mz.fb.BlendMode", fb::ShowAs::PROPERTY, fb::CanShowAs::OUTPUT_PIN_OR_PROPERTY, pinCategory.c_str(),0,&blendModeData),
 		};
-		mzEngine.EnqueueEvent(CreateAppEvent(fbb,CreatePartialNodeUpdateDirect(fbb, &((MergeContext*)(ctx))->Id, ClearFlags::NONE,0,&pins)).Get());
+		mzEngine.HandleEvent(CreateAppEvent(fbb,CreatePartialNodeUpdateDirect(fbb, &((MergeContext*)(ctx))->Id, ClearFlags::NONE,0,&pins)));
 	}
 };
 
