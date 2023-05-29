@@ -5,7 +5,7 @@
 #include <glm/glm.hpp>
 #include <Builtins_generated.h>
 
-//Shaders
+// Shaders
 #include "Checkerboard.frag.spv.dat"
 #include "Color.frag.spv.dat"
 #include "Gradient.frag.spv.dat"
@@ -14,6 +14,9 @@
 #include "QuadMerge.frag.spv.dat"
 #include "Resize.frag.spv.dat"
 #include "SevenSegment.frag.spv.dat"
+
+// Nodes
+#include "Merge.hpp"
 
 MZ_INIT();
 
@@ -35,6 +38,8 @@ enum Utilities
 
 #define COLOR_PIN_COLOR_IDX 0
 #define COLOR_PIN_OUTPUT_IDX 1
+extern "C"
+{
 
 MZAPI_ATTR MzResult MZAPI_CALL mzExportNodeFunctions(size_t* outSize, MzNodeFunctions* outFunctions)
 {
@@ -51,7 +56,7 @@ MZAPI_ATTR MzResult MZAPI_CALL mzExportNodeFunctions(size_t* outSize, MzNodeFunc
 		{
             case Utilities::Checkerboard:
             {
-            	funcs->TypeName = "mz.Checkerboard";
+            	funcs->TypeName = "mz.utilities.Checkerboard";
 			    funcs->GetShaderSource = [](MzBuffer* outSpirvBuf) -> MzResult {
 				outSpirvBuf->Data = (void*)(Checkerboard_frag_spv);
 				outSpirvBuf->Size = sizeof(Checkerboard_frag_spv);
@@ -61,7 +66,7 @@ MZAPI_ATTR MzResult MZAPI_CALL mzExportNodeFunctions(size_t* outSize, MzNodeFunc
             }
             case Utilities::Color:
             {
-                funcs->TypeName = "mz.Color";
+                funcs->TypeName = "mz.utilities.Color";
                 funcs->GetShaderSource = [](MzBuffer* outSpirvBuf) -> MzResult {
                     outSpirvBuf->Data = (void*)(Color_frag_spv);
                     outSpirvBuf->Size = sizeof(Color_frag_spv);
@@ -71,7 +76,7 @@ MZAPI_ATTR MzResult MZAPI_CALL mzExportNodeFunctions(size_t* outSize, MzNodeFunc
             }
             case Utilities::Gradient:
             {
-                funcs->TypeName = "mz.Gradient";
+                funcs->TypeName = "mz.utilities.Gradient";
                 funcs->GetShaderSource = [](MzBuffer* outSpirvBuf) -> MzResult {
                     outSpirvBuf->Data = (void*)(Gradient_frag_spv);
                     outSpirvBuf->Size = sizeof(Gradient_frag_spv);
@@ -81,12 +86,12 @@ MZAPI_ATTR MzResult MZAPI_CALL mzExportNodeFunctions(size_t* outSize, MzNodeFunc
             }
             case Utilities::Merge:
             {
-                // TODO port to new API
+                RegisterMerge(funcs);
                 break;
             }
             case Utilities::Offset:
             {
-                funcs->TypeName = "mz.Offset";
+                funcs->TypeName = "mz.utilities.Offset";
                 funcs->GetShaderSource = [](MzBuffer* outSpirvBuf) -> MzResult {
                     outSpirvBuf->Data = (void*)(Offset_frag_spv);
                     outSpirvBuf->Size = sizeof(Offset_frag_spv);
@@ -96,7 +101,7 @@ MZAPI_ATTR MzResult MZAPI_CALL mzExportNodeFunctions(size_t* outSize, MzNodeFunc
             }
             case Utilities::QuadMerge:
             {
-                funcs->TypeName = "mz.QuadMerge";
+                funcs->TypeName = "mz.utilities.QuadMerge";
                 funcs->GetShaderSource = [](MzBuffer* outSpirvBuf) -> MzResult {
                     outSpirvBuf->Data = (void*)(QuadMerge_frag_spv);
                     outSpirvBuf->Size = sizeof(QuadMerge_frag_spv);
@@ -111,7 +116,7 @@ MZAPI_ATTR MzResult MZAPI_CALL mzExportNodeFunctions(size_t* outSize, MzNodeFunc
             }
             case Utilities::SevenSegment:
             {
-                funcs->TypeName = "mz.SevenSegment";
+                funcs->TypeName = "mz.utilities.SevenSegment";
                 funcs->GetShaderSource = [](MzBuffer* outSpirvBuf) -> MzResult {
                     outSpirvBuf->Data = (void*)(SevenSegment_frag_spv);
                     outSpirvBuf->Size = sizeof(SevenSegment_frag_spv);
@@ -123,5 +128,5 @@ MZAPI_ATTR MzResult MZAPI_CALL mzExportNodeFunctions(size_t* outSize, MzNodeFunc
         }
     }
 }
-
+}
 }

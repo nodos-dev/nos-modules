@@ -123,7 +123,7 @@ struct MergeContext
 
 void RegisterMerge(MzNodeFunctions* out)
 {
-	out->TypeName = "mz.Merge";
+	out->TypeName = "mz.utilities.Merge";
 	out->OnMenuRequested = [](void* ctx, const MzContextMenuRequest* request) {
 		((mz::filters::MergeContext*)ctx)->OnMenuRequested(ctx, request);
 	};
