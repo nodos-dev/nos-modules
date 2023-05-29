@@ -32,15 +32,15 @@ static mz::fb::String256 Str256(std::string const &str)
     return re;
 }
 
-std::pair<const char*, std::vector<u8>> shaders[] =
+static std::vector<std::pair<const char*, std::vector<u8>>> shaders =
 {
     {"AJA_RGB2YCbCr_Compute_Shader", {std::begin(RGB2YCbCr_comp_spv), std::end(RGB2YCbCr_comp_spv)}},
     {"AJA_YCbCr2RGB_Compute_Shader", {std::begin(YCbCr2RGB_comp_spv), std::end(YCbCr2RGB_comp_spv)}},
-    {"AJA_YCbCr2RGB_Shader",         {std::begin(YCbCr2RGB_frag_spv), std::end(YCbCr2RGB_frag_spv)}},
     {"AJA_RGB2YCbCr_Shader",         {std::begin(RGB2YCbCr_frag_spv), std::end(RGB2YCbCr_frag_spv)}},
+    {"AJA_YCbCr2RGB_Shader",         {std::begin(YCbCr2RGB_frag_spv), std::end(YCbCr2RGB_frag_spv)}},
 };
 
-MzPassInfo passes[] = 
+static std::vector<MzPassInfo> passes =
 {
     {.Key = "AJA_RGB2YCbCr_Compute_Pass", .Shader = "AJA_RGB2YCbCr_Compute_Shader", .MultiSample = 1},
     {.Key = "AJA_YCbCr2RGB_Compute_Pass", .Shader = "AJA_YCbCr2RGB_Compute_Shader", .MultiSample = 1},
@@ -52,14 +52,14 @@ struct AJA
 {
     static MzResult GetShaders(size_t* outCount, const char** names, MzBuffer* outSpirvBufs)
     {
-        *outCount = sizeof(shaders)/sizeof(shaders[0]);
+        *outCount = shaders.size();
         if(!outSpirvBufs) 
             return MZ_RESULT_SUCCESS;
 
         for (auto& [name, spirv] : shaders)
         {
-            *names++ = name;
-            *outSpirvBufs++ = { spirv.data(), spirv.size() };
+            *(names++) = name;
+            *(outSpirvBufs++) = { spirv.data(), spirv.size() };
         }
 
         return MZ_RESULT_SUCCESS;
@@ -67,12 +67,12 @@ struct AJA
 
     static MzResult GetPasses(size_t* outCount, MzPassInfo* outMzPassInfos)
     {
-        *outCount = sizeof(passes) / sizeof(passes[0]);
+        *outCount = passes.size();
 
         if (!outMzPassInfos)
             return MZ_RESULT_SUCCESS;
 
-        memcpy(outMzPassInfos, passes, sizeof(passes));
+        memcpy(outMzPassInfos, passes.data(), passes.size() * sizeof(passes[0]));
 
         return MZ_RESULT_SUCCESS;
     }
@@ -235,8 +235,45 @@ struct AJA
         aja->OnPathCommand(params->Id, (app::PathCommand)params->CommandType, mz::Buffer((u8*)params->Args.Data, params->Args.Size));
     }
 
-    static MzResult GetFunctions(size_t * outCount, const char** pName, PFN_NodeFunctionExecute * outFunction) 
+
+    static void ReloadShaders(void* ctx, const MzNodeExecuteArgs* nodeArgs, const MzNodeExecuteArgs* functionArgs)
     {
+        system(("glslc -O -g " + std::string(mzEngine.WorkFolder()) +  "/../Plugins/mzAJA/Source/YCbCr2RGB.frag -c -o " + std::string(mzEngine.WorkFolder()) + "/../YCbCr2RGB_.frag").c_str());
+        system(("glslc -O -g " + std::string(mzEngine.WorkFolder()) +  "/../Plugins/mzAJA/Source/RGB2YCbCr.frag -c -o " + std::string(mzEngine.WorkFolder()) + "/../RGB2YCbCr_.frag").c_str());
+        system(("glslc -O -g " + std::string(mzEngine.WorkFolder()) +  "/../Plugins/mzAJA/Source/RGB2YCbCr.comp -c -o " + std::string(mzEngine.WorkFolder()) + "/../RGB2YCbCr_.comp").c_str());
+        system(("glslc -O -g " + std::string(mzEngine.WorkFolder()) +  "/../Plugins/mzAJA/Source/YCbCr2RGB.comp -c -o " + std::string(mzEngine.WorkFolder()) + "/../YCbCr2RGB_.comp").c_str());
+        system(("spirv-opt -O " + std::string(mzEngine.WorkFolder()) +  "/../YCbCr2RGB_.frag -o " + std::string(mzEngine.WorkFolder()) +  "/../YCbCr2RGB.frag").c_str());
+        system(("spirv-opt -O " + std::string(mzEngine.WorkFolder()) +  "/../RGB2YCbCr_.frag -o " + std::string(mzEngine.WorkFolder()) +  "/../RGB2YCbCr.frag").c_str());
+        system(("spirv-opt -O " + std::string(mzEngine.WorkFolder()) +  "/../RGB2YCbCr_.comp -o " + std::string(mzEngine.WorkFolder()) +  "/../RGB2YCbCr.comp").c_str());
+        system(("spirv-opt -O " + std::string(mzEngine.WorkFolder()) +  "/../YCbCr2RGB_.comp -o " + std::string(mzEngine.WorkFolder()) +  "/../YCbCr2RGB.comp").c_str());
+            
+        for (auto c : AJAClient::Ctx.Clients)
+            for (auto& p : c->Pins)
+                p->Stop();
+   
+        shaders[0] = { "AJA_RGB2YCbCr_Compute_Shader", ReadSpirv(std::string(mzEngine.WorkFolder()) +  "/../RGB2YCbCr.comp") };
+        shaders[1] = { "AJA_YCbCr2RGB_Compute_Shader", ReadSpirv(std::string(mzEngine.WorkFolder()) +  "/../YCbCr2RGB.comp") };
+        shaders[2] = { "AJA_RGB2YCbCr_Shader", ReadSpirv(std::string(mzEngine.WorkFolder()) +  "/../RGB2YCbCr.frag") };
+        shaders[3] = { "AJA_YCbCr2RGB_Shader", ReadSpirv(std::string(mzEngine.WorkFolder()) +  "/../YCbCr2RGB.frag") };
+        
+        mzEngine.ReloadShaders(((AJAClient*)ctx)->Input ? "AJA.AJAIn" : "AJA.AJAOut");
+                 
+        for (auto c : AJAClient::Ctx.Clients)
+            for (auto& p : c->Pins)
+            {
+                p->CreateRings(p->GetRingSize());
+                p->StartThread();
+            }
+    }
+
+    static MzResult GetFunctions(size_t * outCount, const char** pName, PFN_NodeFunctionExecute * fns) 
+    {
+        *outCount = 1;
+        if(!pName || !fns)
+            return MZ_RESULT_SUCCESS;
+        *fns = ReloadShaders;
+        *pName = "ReloadShaders";
+        return MZ_RESULT_SUCCESS;
 	    // auto &actions = functions["AJA.AJAIn"];
 	    //
 	    // actions.NodeFunctions["DumpInfo"] = [](mz::Args &pins, mz::Args &functionParams, void *ctx) {

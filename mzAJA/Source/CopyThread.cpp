@@ -560,7 +560,7 @@ void CopyThread::InputConversionThread::Consume(CopyThread::Parameters const& pa
 
     std::vector<MzShaderBinding> inputs;
 
-    glm::mat4 colorspace = glm::inverse(Cpy->GetMatrix<f64>());
+    glm::mat4 colorspace = Cpy->GetMatrix<f64>();
 
     uint32_t iflags = params.FieldIdx | ((Cpy->client->Shader == ShaderType::Comp10) << 2);
 
@@ -579,7 +579,7 @@ void CopyThread::InputConversionThread::Consume(CopyThread::Parameters const& pa
     if (Cpy->client->Shader != ShaderType::Frag8)
     {
         inputs.emplace_back(ShaderBinding("Output", res->Res));
-        MzRunComputePassParams pass;
+        MzRunComputePassParams pass = {};
         pass.PassKey = "AJA_YCbCr2RGB_Compute_Pass";
         pass.DispatchSize = Cpy->GetSuitableDispatchSize();
         pass.Bindings = inputs.data();
@@ -589,7 +589,7 @@ void CopyThread::InputConversionThread::Consume(CopyThread::Parameters const& pa
     }
     else
     {
-        MzRunPassParams pass;
+        MzRunPassParams pass = {};
         pass.PassKey = "AJA_YCbCr2RGB_Pass";
         pass.Output = res->Res;
         pass.Bindings = inputs.data();
@@ -679,7 +679,7 @@ void CopyThread::OutputConversionThread::Consume(const Parameters& item)
     if (Cpy->client->Shader != ShaderType::Frag8)
     {
         inputs.emplace_back(ShaderBinding("Output", Cpy->CompressedTex));
-        MzRunComputePassParams pass;
+        MzRunComputePassParams pass = {};
         pass.PassKey = "AJA_RGB2YCbCr_Compute_Pass";
         pass.DispatchSize = Cpy->GetSuitableDispatchSize();
         pass.Bindings = inputs.data();
@@ -689,7 +689,7 @@ void CopyThread::OutputConversionThread::Consume(const Parameters& item)
     }
     else
     {
-        MzRunPassParams pass;
+        MzRunPassParams pass = {};
         pass.PassKey = "AJA_RGB2YCbCr_Pass";
         pass.Output = Cpy->CompressedTex;
         pass.Bindings = inputs.data();

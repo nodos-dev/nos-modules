@@ -86,7 +86,7 @@ struct AjaAction
     operator u32() const { return *(u32*)this; }
 };
 
-struct AJAClient
+struct MZAPI_ATTR AJAClient
 {
     inline static struct
     {

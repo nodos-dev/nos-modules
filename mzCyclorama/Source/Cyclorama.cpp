@@ -835,18 +835,18 @@ struct Cyclorama : PinMapping
 
     static void ReloadShaders(void* ctx, const MzNodeExecuteArgs* nodeArgs, const MzNodeExecuteArgs* functionArgs) {
         auto c = (Cyclorama*)ctx;
-        system("glslc " MZ_REPO_ROOT "/Plugins/mzBasic/Source/VirtualStudio/Cyclorama/Cyclorama.frag -c -o " MZ_REPO_ROOT "/cyclo.frag");
-        system("glslc " MZ_REPO_ROOT "/Plugins/mzBasic/Source/VirtualStudio/Cyclorama/Cyclorama.vert -c -o " MZ_REPO_ROOT "/cyclo.vert");
-        system("glslc " MZ_REPO_ROOT "/Plugins/mzBasic/Source/VirtualStudio/Cyclorama/CycloramaMask.frag -c -o " MZ_REPO_ROOT "/cyclo_mask.frag");
-        system("glslc " MZ_REPO_ROOT "/Plugins/mzBasic/Source/VirtualStudio/Cyclorama/CycloramaMask.vert -c -o " MZ_REPO_ROOT "/cyclo_mask.vert");
-        system("glslc " MZ_REPO_ROOT "/Plugins/mzBasic/Source/VirtualStudio/Cyclorama/CleanPlateAcc.frag -c -o " MZ_REPO_ROOT "/cp.frag");
-        spirvs[0].second = ReadSpirv(MZ_REPO_ROOT "/cyclo.frag");
-        spirvs[1].second = ReadSpirv(MZ_REPO_ROOT "/cyclo.vert");
-        spirvs[2].second = ReadSpirv(MZ_REPO_ROOT "/cyclo_mask.frag");
-        spirvs[3].second = ReadSpirv(MZ_REPO_ROOT "/cyclo_mask.vert");
-        spirvs[4].second = ReadSpirv(MZ_REPO_ROOT "/cp.frag");
+        system(("glslc " + std::string(mzEngine.WorkFolder()) +  "/Plugins/mzBasic/Source/VirtualStudio/Cyclorama/Cyclorama.frag -c -o " + std::string(mzEngine.WorkFolder()) +  "/cyclo.frag").c_str());
+        system(("glslc " + std::string(mzEngine.WorkFolder()) +  "/Plugins/mzBasic/Source/VirtualStudio/Cyclorama/Cyclorama.vert -c -o " + std::string(mzEngine.WorkFolder()) +  "/cyclo.vert").c_str());
+        system(("glslc " + std::string(mzEngine.WorkFolder()) +  "/Plugins/mzBasic/Source/VirtualStudio/Cyclorama/CycloramaMask.frag -c -o " + std::string(mzEngine.WorkFolder()) +  "/cyclo_mask.frag").c_str());
+        system(("glslc " + std::string(mzEngine.WorkFolder()) +  "/Plugins/mzBasic/Source/VirtualStudio/Cyclorama/CycloramaMask.vert -c -o " + std::string(mzEngine.WorkFolder()) +  "/cyclo_mask.vert").c_str());
+        system(("glslc " + std::string(mzEngine.WorkFolder()) +  "/Plugins/mzBasic/Source/VirtualStudio/Cyclorama/CleanPlateAcc.frag -c -o " + std::string(mzEngine.WorkFolder()) +  "/cp.frag").c_str());
+        spirvs[0].second = ReadSpirv(std::string(mzEngine.WorkFolder()) + "/cyclo.frag");
+        spirvs[1].second = ReadSpirv(std::string(mzEngine.WorkFolder()) + "/cyclo.vert");
+        spirvs[2].second = ReadSpirv(std::string(mzEngine.WorkFolder()) + "/cyclo_mask.frag");
+        spirvs[3].second = ReadSpirv(std::string(mzEngine.WorkFolder()) + "/cyclo_mask.vert");
+        spirvs[4].second = ReadSpirv(std::string(mzEngine.WorkFolder()) + "/cp.frag");
 
-        mzEngine.ReloadShaders();
+        mzEngine.ReloadShaders("Cyclorama.Cyclorama");
 
     }
 
