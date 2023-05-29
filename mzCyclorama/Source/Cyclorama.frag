@@ -34,5 +34,6 @@ vec4 GetProjectedColor()
 
 void main()
 {   
-    rt = GetProjectedColor();
+    // rt = GetProjectedColor();
+    rt = vec4(1);
 }

@@ -560,7 +560,7 @@ void CopyThread::InputConversionThread::Consume(CopyThread::Parameters const& pa
 
     std::vector<MzShaderBinding> inputs;
 
-    glm::mat4 colorspace = Cpy->GetMatrix<f64>();
+    glm::mat4 colorspace = glm::inverse(Cpy->GetMatrix<f64>());
 
     uint32_t iflags = params.FieldIdx | ((Cpy->client->Shader == ShaderType::Comp10) << 2);
 
@@ -663,7 +663,7 @@ void CopyThread::OutputConversionThread::Consume(const Parameters& item)
         return;
 
 
-    glm::mat4 colorspace = glm::inverse(Cpy->GetMatrix<f64>());
+    glm::mat4 colorspace = (Cpy->GetMatrix<f64>());
     uint32_t iflags = (Cpy->client->Shader == ShaderType::Comp10) << 2;
 
     std::vector<MzShaderBinding> inputs;
