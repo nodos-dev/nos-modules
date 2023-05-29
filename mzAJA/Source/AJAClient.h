@@ -29,7 +29,7 @@ std::vector<u8> StringValue(std::string const& str);
 std::string GetQuadName(NTV2Channel channel);
 std::string GetChannelStr(NTV2Channel channel, AJADevice::Mode mode);
 const u8 *AddIfNotFound(std::string name, std::string tyName, std::vector<u8> val,
-                               std::map<std::string, const mz::fb::Pin *> &pins,
+                               std::unordered_map<std::string, const mz::fb::Pin *> &pins,
                                std::vector<flatbuffers::Offset<mz::fb::Pin>> &toAdd,
                                flatbuffers::FlatBufferBuilder &fbb, mz::fb::ShowAs showAs = mz::fb::ShowAs::PROPERTY,
                                mz::fb::CanShowAs canShowAs = mz::fb::CanShowAs::INPUT_PIN_OR_PROPERTY);
@@ -171,7 +171,7 @@ struct AJAClient
                       std::vector<flatbuffers::Offset<mz::fb::NodeStatusMessage>> &msg);
     void SetReference(std::string const &val);
     void OnNodeUpdate(mz::fb::Node const &event);
-    void OnNodeUpdate(PinMapping &&newMapping, std::map<std::string, const mz::fb::Pin *> &tmpPins,
+    void OnNodeUpdate(PinMapping &&newMapping, std::unordered_map<std::string, const mz::fb::Pin *> &tmpPins,
                       std::vector<mz::fb::UUID> &pinsToDelete);
     void OnPinMenuFired(MzContextMenuRequest const &request);
 

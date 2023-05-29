@@ -46,7 +46,7 @@ std::string GetChannelStr(NTV2Channel channel, AJADevice::Mode mode)
 }
 
 const u8 *AddIfNotFound(std::string name, std::string tyName, std::vector<u8> val,
-                        std::map<std::string, const mz::fb::Pin *> &pins,
+                        std::unordered_map<std::string, const mz::fb::Pin *> &pins,
                         std::vector<flatbuffers::Offset<mz::fb::Pin>> &toAdd, flatbuffers::FlatBufferBuilder &fbb,
                         mz::fb::ShowAs showAs, mz::fb::CanShowAs canShowAs)
 {
@@ -320,7 +320,7 @@ void AJAClient::OnNodeUpdate(mz::fb::Node const &event)
     }
 }
 
-void AJAClient::OnNodeUpdate(PinMapping &&newMapping, std::map<std::string, const mz::fb::Pin *> &tmpPins,
+void AJAClient::OnNodeUpdate(PinMapping &&newMapping, std::unordered_map<std::string, const mz::fb::Pin *> &tmpPins,
                              std::vector<mz::fb::UUID> &pinsToDelete)
 {
     Mapping = std::move(newMapping);
