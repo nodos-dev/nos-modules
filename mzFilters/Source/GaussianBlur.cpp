@@ -23,17 +23,18 @@ struct GaussBlurContext
 	}
 
 
-	static MzResult GetShaders(size_t* outCount, MzBuffer* infos)
+	static MzResult GetShaders(size_t* outCount, const char** outShaderNames, MzBuffer* infos)
 	{
 		*outCount = 1;
 		if (!infos)
 			return MZ_RESULT_SUCCESS;
 
+		outShaderNames[0] = "Gaussian_Blur";
 		infos->Data = (void*)GaussianBlur_frag_spv;
 		infos->Size = sizeof(GaussianBlur_frag_spv);
 
 		return MZ_RESULT_SUCCESS;
-	};
+	}
 
 	static MzResult GetPasses(size_t* outCount, MzPassInfo* infos)
 	{
@@ -126,4 +127,6 @@ void RegisterGaussianBlur(MzNodeFunctions* out)
 		((mz::filters::GaussBlurContext*)ctx)->Run(args);
 		return MZ_RESULT_SUCCESS;
 	};
+	out->GetShaders = mz::filters::GaussBlurContext::GetShaders;
+	out->GetPasses = mz::filters::GaussBlurContext::GetPasses;
 }

@@ -27,16 +27,26 @@ namespace mz::filters
 
 enum Filters
 {
-	ColorCorrect,					// Done
-	Diff,							// Done
-	Kuwahara,						// Done
-	GaussianBlur,					// Done
-	KawaseLightStreak,				// Done
-	PremultiplyAlpha,				// Done
-	Sharpen,						// Done
-	Sobel,							// Done
-	Thresholder,					// Done
-	Sampler,						// Done
+	ColorCorrect,
+	// Done
+	Diff,
+	// Done
+	Kuwahara,
+	// Done
+	GaussianBlur,
+	// Done
+	KawaseLightStreak,
+	// Done
+	PremultiplyAlpha,
+	// Done
+	Sharpen,
+	// Done
+	Sobel,
+	// Done
+	Thresholder,
+	// Done
+	Sampler,
+	// Done
 	Count
 };
 
@@ -90,12 +100,12 @@ MZAPI_ATTR MzResult MZAPI_CALL mzExportNodeFunctions(size_t* outSize, MzNodeFunc
 		}
 		// GAUSSIAN BLUR FILTER
 		case Filters::GaussianBlur: {
-			
+
 			RegisterGaussianBlur(funcs);
 			break;
 		}
 		// MERGE FILTER
-		case Filters::KawaseLightStreak:{
+		case Filters::KawaseLightStreak: {
 			funcs->TypeName = "mz.filters.KawaseLightStreak";
 			funcs->GetShaderSource = [](MzBuffer* outSpirvBuf)-> MzResult {
 				outSpirvBuf->Data = (void*)(KawaseLightStreak_frag_spv);
