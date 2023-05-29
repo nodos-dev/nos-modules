@@ -8,7 +8,7 @@
     },
     "node_definitions": [
         "ColorCorrect.mzdef",
-        "Diff.mzdef,
+        "Diff.mzdef",
         "GaussianBlur.mzdef",
         "KawaseLightStreak.mzdef",
         "Kuwahara.mzdef",
@@ -16,7 +16,7 @@
         "Sampler.mzdef",
         "Sharpen.mzdef",
         "Sobel.mzdef",
-        "Thresholder.mzdef",
+        "Thresholder.mzdef"
     ],
     "fb_includes" :[
       "Thresholder.fbs"  

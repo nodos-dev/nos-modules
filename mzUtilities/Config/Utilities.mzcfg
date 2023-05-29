@@ -16,7 +16,7 @@
         "Resize.mzdef",
         "SevenSegment.mzdef"
     ],
-    "fb_includes" :[
+    "fb_includes": [
         "Merge.fbs",
         "Gradient.fbs",
         "Resize.fbs"
@@ -62,6 +62,6 @@
             "category": "Utilities",
             "class_name": "QuadMerge",
             "display_name": "Quad Merge"
-        },
+        }
     ]
 }

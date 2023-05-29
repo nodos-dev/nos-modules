@@ -112,6 +112,7 @@ MZAPI_ATTR MzResult MZAPI_CALL mzExportNodeFunctions(size_t* outSize, MzNodeFunc
             case Utilities::Resize:
             {
                 // TODO port to new API
+                funcs->TypeName = "mz.utilities.Resize";
                 break;
             }
             case Utilities::SevenSegment:
@@ -127,6 +128,7 @@ MZAPI_ATTR MzResult MZAPI_CALL mzExportNodeFunctions(size_t* outSize, MzNodeFunc
             default: break;
         }
     }
+    return MZ_RESULT_SUCCESS;
 }
 }
 }
