@@ -432,6 +432,7 @@ struct Cyclorama : PinMapping
             lhs.info.texture.width  = src.width;
 			lhs.info.texture.usage  = MzImageUsage(MZ_IMAGE_USAGE_SAMPLED | MZ_IMAGE_USAGE_RENDER_TARGET | MZ_IMAGE_USAGE_TRANSFER_SRC | MZ_IMAGE_USAGE_TRANSFER_DST);
             lhs.info.texture.format = MZ_FORMAT_R16G16B16A16_UNORM;
+            lhs.info.type = MZ_RESOURCE_TYPE_TEXTURE;
             rt = lhs;
             mzEngine.Create(&lhs);
             mzEngine.Create(&rt);
@@ -792,6 +793,8 @@ struct Cyclorama : PinMapping
             maskInputs.push_back(ShaderBinding("Angle", angle));
             maskInputs.push_back(ShaderBinding("Diag", diag));
 
+            maskPass.Bindings = maskInputs.data();
+            maskPass.BindingCount = maskInputs.size();
             mzEngine.RunPass(0, &maskPass);
         }
 

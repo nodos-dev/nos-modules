@@ -278,6 +278,7 @@ void CopyThread::CreateRings(u32 size)
 	gpuRing = MakeShared<GPURing>(ext, size);
 	MzVec2u compressedExt((10 == BitWidth()) ? ((ext.x + (48 - ext.x % 48) % 48) / 3) << 1 : ext.x >> 1, ext.y >> u32(Interlaced()));
 	cpuRing = MakeShared<CPURing>(compressedExt, size);
+    CompressedTex.info.type = MZ_RESOURCE_TYPE_TEXTURE;
     CompressedTex.info.texture.width = compressedExt.x;
     CompressedTex.info.texture.height = compressedExt.y;
     CompressedTex.info.texture.format = MZ_FORMAT_R8G8B8A8_UINT;
@@ -714,6 +715,7 @@ CopyThread::CopyThread(mz::fb::UUID id, struct AJAClient *client, u32 ringSize, 
 {
 
     {
+        SSBO.info.type = MZ_RESOURCE_TYPE_BUFFER;
         SSBO.info.buffer.size = (1<<(SSBO_SIZE)) * sizeof(u16);
         SSBO.info.buffer.usage = MZ_BUFFER_USAGE_STORAGE_BUFFER; // | MZ_BUFFER_USAGE_DEVICE_MEMORY;
         mzEngine.Create(&SSBO);
