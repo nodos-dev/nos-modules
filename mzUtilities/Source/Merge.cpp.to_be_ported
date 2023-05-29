@@ -47,7 +47,7 @@ struct MergeContext
 
         for (auto& [name, _] : pins.PinData)
             if (name.starts_with("Texture_"))
-                TextureCount = std::max(TextureCount.load(), (u32)std::atoi(name.c_str() + sizeof("Texture_")));
+                         = std::max(TextureCount.load(), (u32)std::atoi(name.c_str() + sizeof("Texture_")));
         
         // If there is no pin for uniform, use dummy texture
         for (u32 i = TextureCount; i < 16; i++)

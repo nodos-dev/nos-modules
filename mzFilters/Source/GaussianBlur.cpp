@@ -1,22 +1,6 @@
 #include "GaussianBlur.hpp"
 #include "GaussianBlur.frag.spv.dat"
 
-#define SHADER_BINDING(name, varName, variable)						\
-					MzShaderBinding name = {						\
-							.VariableName = varName,				\
-							.Value = {								\
-								.Data = &variable,					\
-								.Size = sizeof(variable)			\
-							}										\
-					}
-
-#define SHADER_BUFFER_BINDING(name, varName, variable)				\
-					MzShaderBinding name = {						\
-							.VariableName = varName,				\
-							.Value = variable						\
-					}
-
-
 namespace mz::filters
 {
 
