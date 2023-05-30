@@ -134,9 +134,9 @@ struct RealityKeyerContext : public NodeContext
 		exposure.mutate_y(pow(2.0, exposure.y()));
 		exposure.mutate_z(pow(2.0, exposure.z()));
 
-		offset.mutate_x(offset.x() * masterOffset);
-		offset.mutate_y(offset.y() * masterOffset);
-		offset.mutate_z(offset.z() * masterOffset);
+		offset.mutate_x(offset.x() + masterOffset);
+		offset.mutate_y(offset.y() + masterOffset);
+		offset.mutate_z(offset.z() + masterOffset);
 
 		saturation.mutate_x(saturation.x() * masterSaturation);
 		saturation.mutate_y(saturation.y() * masterSaturation);
@@ -146,9 +146,9 @@ struct RealityKeyerContext : public NodeContext
 		contrast.mutate_y(contrast.y() * masterContrast);
 		contrast.mutate_z(contrast.z() * masterContrast);
 
-		contrastCenter.mutate_x(contrastCenter.x() * masterContrastCenter);
-		contrastCenter.mutate_y(contrastCenter.y() * masterContrastCenter);
-		contrastCenter.mutate_z(contrastCenter.z() * masterContrastCenter);
+		contrastCenter.mutate_x(contrastCenter.x() + masterContrastCenter);
+		contrastCenter.mutate_y(contrastCenter.y() + masterContrastCenter);
+		contrastCenter.mutate_z(contrastCenter.z() + masterContrastCenter);
 
 		std::vector ibkPass2Bindings = {
 			ShaderBinding("Input", inputTextureInfo),
