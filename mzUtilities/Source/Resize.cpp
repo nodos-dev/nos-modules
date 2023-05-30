@@ -38,6 +38,9 @@ struct ResizeContext
 	{
 		auto pins = GetPinValues(args);
 
+		auto inputTex = ValAsTex(pins["Input"]);
+		auto method = GetPinValue<uint32_t>(pins, "Method");
+		
 		auto tex = ValAsTex(pins["Output"]);
 		auto size = GetPinValue<mz::fb::vec2>(pins, "Size");
 		
@@ -49,7 +52,28 @@ struct ResizeContext
 			mzEngine.Destroy(&tex);
 			mzEngine.Create(&tex);
 			
+			MzBuffer buf = {
+				.Data = &tex,
+				.Size = sizeof(tex)
+			};
+			mzEngine.SetPinValue(((MzUUID)(args->PinIds[1])), buf);
 		}
+
+		std::vector<MzShaderBinding> bindings = {
+		ShaderBinding("Input", inputTex),
+		ShaderBinding("Method", method)
+		};
+		
+		MzRunPassParams resizeParam {
+			.Benchmark = 0,
+			.PassKey = "Resize_Pass",
+			.Output = tex,
+			.Bindings = bindings.data(),
+			.Wireframe = 0,
+			.BindingCount = 2
+		};
+
+		mzEngine.RunPass(nullptr, &resizeParam);
 	}
 	
 };
