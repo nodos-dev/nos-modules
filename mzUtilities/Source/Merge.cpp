@@ -122,6 +122,8 @@ struct MergeContext
 	static MzResult GetShaders(size_t* outCount, const char** outShaderNames, MzBuffer* outSpirvBufs)
 	{
 		*outCount = 1;
+		if (!outShaderNames || !outSpirvBufs)
+			return MZ_RESULT_SUCCESS;
 		*outShaderNames = "Merge_Pass";
 		outSpirvBufs->Data = (void*)(Merge_frag_spv);
 		outSpirvBufs->Size = sizeof(Merge_frag_spv);
