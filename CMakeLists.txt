@@ -20,9 +20,11 @@ function(add_folder_as_plugin_project NAME DEPENDENCIES INCLUDE_FOLDERS)
     file(GLOB_RECURSE SOURCES CONFIGURE_DEPENDS ${SOURCE_FOLDER}
         "${SOURCE_FOLDER}/*.cpp" "${SOURCE_FOLDER}/*.inl" "${SOURCE_FOLDER}/*.glsl"
         "${SOURCE_FOLDER}/*.comp" "${SOURCE_FOLDER}/*.frag" "${SOURCE_FOLDER}/*.vert")
+    list(APPEND CONFIG_FILES)
     foreach(CONFIG_FOLDER ${CONFIG_FOLDERS})
-        file(GLOB_RECURSE CONFIG_FILES CONFIGURE_DEPENDS ${CONFIG_FOLDER} 
+        file(GLOB_RECURSE CUR_CONFIG_FILES CONFIGURE_DEPENDS ${CONFIG_FOLDER} 
             "${CONFIG_FOLDER}/*.mzcfg" "${CONFIG_FOLDER}/*.mzdef" "${CONFIG_FOLDER}/*.fbs")
+        list(APPEND CONFIG_FILES ${CUR_CONFIG_FILES})
     endforeach()
     file(GLOB_RECURSE HEADERS CONFIGURE_DEPENDS ${SOURCE_FOLDER} "${SOURCE_FOLDER}/*.h" "${SOURCE_FOLDER}/*.hpp")
     file(GLOB_RECURSE RESOURCES CONFIGURE_DEPENDS ${SOURCE_FOLDER} "${SOURCE_FOLDER}/*.rc")
@@ -66,5 +68,6 @@ add_subdirectory(mzFilters)
 add_subdirectory(mzUtilities)
 add_subdirectory(mzCyclorama)
 add_subdirectory(mzTrack)
+add_subdirectory(mzRealityKeyer)
 add_subdirectory(zdFrustum)
 
