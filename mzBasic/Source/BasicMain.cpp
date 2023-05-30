@@ -22,7 +22,6 @@ void MZAPI_ATTR Register(NodeActionsMap& functions, EngineNodeServices services,
     RegisterTrack(functions);
     RegisterRealityKeyer(functions);
     RegisterCyclorama(functions);
-    RegisterDistortion(functions);
 }
 
 }

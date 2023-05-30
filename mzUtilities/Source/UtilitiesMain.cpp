@@ -14,6 +14,8 @@
 #include "QuadMerge.frag.spv.dat"
 #include "Resize.frag.spv.dat"
 #include "SevenSegment.frag.spv.dat"
+#include "Distort.frag.spv.dat"
+#include "Undistort.frag.spv.dat"
 
 // Nodes
 #include "Merge.hpp"
@@ -33,6 +35,8 @@ enum Utilities
 	QuadMerge,
 	Resize,
 	SevenSegment,
+	Distort,
+	Undistort,
 	Count
 };
 
@@ -111,6 +115,24 @@ MZAPI_ATTR MzResult MZAPI_CALL mzExportNodeFunctions(size_t* outSize, MzNodeFunc
 			funcs->GetShaderSource = [](MzBuffer* outSpirvBuf) -> MzResult {
 				outSpirvBuf->Data = (void*)(SevenSegment_frag_spv);
 				outSpirvBuf->Size = sizeof(SevenSegment_frag_spv);
+				return MZ_RESULT_SUCCESS;
+			};
+			break;
+		}
+		case Utilities::Distort: {
+			funcs->TypeName = "mz.utilities.Distort";
+			funcs->GetShaderSource = [](MzBuffer* outSpirvBuf) -> MzResult {
+				outSpirvBuf->Data = (void*)(Distort_frag_spv);
+				outSpirvBuf->Size = sizeof(Distort_frag_spv);
+				return MZ_RESULT_SUCCESS;
+			};
+			break;
+		}
+		case Utilities::Undistort: {
+			funcs->TypeName = "mz.utilities.Undistort";
+			funcs->GetShaderSource = [](MzBuffer* outSpirvBuf) -> MzResult {
+				outSpirvBuf->Data = (void*)(Undistort_frag_spv);
+				outSpirvBuf->Size = sizeof(Undistort_frag_spv);
 				return MZ_RESULT_SUCCESS;
 			};
 			break;

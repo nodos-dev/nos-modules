@@ -14,12 +14,14 @@
         "Offset.mzdef",
         "QuadMerge.mzdef",
         "Resize.mzdef",
-        "SevenSegment.mzdef"
+        "SevenSegment.mzdef",
+        "Distortion.mzdef"
     ],
     "fb_includes": [
         "Merge.fbs",
         "Gradient.fbs",
-        "Resize.fbs"
+        "Resize.fbs",
+        "Distortion.fbs"
     ],
     "binary_path": "../Binaries/mzUtilities",
     "associated_nodes": [
@@ -62,6 +64,16 @@
             "category": "Utilities",
             "class_name": "QuadMerge",
             "display_name": "Quad Merge"
+        },
+        {
+            "category": "Utilities",
+            "class_name": "Distort",
+            "display_name": "Distort"
+        },
+        {
+            "category": "Utilities",
+            "class_name": "Undistort",
+            "display_name": "Undistort"
         }
     ]
 }
