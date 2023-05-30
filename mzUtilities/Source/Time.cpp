@@ -22,6 +22,7 @@ public:
 
 void RegisterTime(MzNodeFunctions* fn)
 {
+    fn->TypeName = "mz.utiltiies.Time";
 	// functions["mz.Time"].NodeCreated = [](auto const&, auto&, void** context) {
 	// 	*context = new TimeNodeContext();
 	// };

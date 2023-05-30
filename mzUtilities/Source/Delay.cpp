@@ -170,6 +170,7 @@ struct DelayTexture : DelayContext
 //void RegisterDelay(NodeActionsMap& functions, std::set<flatbuffers::Type const*> const& types)
 void RegisterDelay(MzNodeFunctions* functions)
 {
+    functions->TypeName = "mz.utiltiies.Delay";
     // mz::mzEngine = mzEngine;
 
     // for(auto const& type : types)

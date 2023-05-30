@@ -18,8 +18,9 @@
         "Distortion.mzdef",
         "Swizzle.mzdef",
         "TextureSwitcher.mzdef",
-        "ChannelViewer.mzdef"
+        "ChannelViewer.mzdef",
         "Time.mzdef",
+        "ImageIO.mzdef"
     ],
     "fb_includes": [
         "Merge.fbs",
@@ -32,6 +33,16 @@
     ],
     "binary_path": "../Binaries/mzUtilities",
     "associated_nodes": [
+        {
+            "category": "Media",
+            "class_name": "ReadImage",
+            "display_name": "Read Image"
+        },
+        {
+            "category": "Media",
+            "class_name": "WriteImage",
+            "display_name": "Write Image"
+        },
         {
             "category": "Utilities",
             "class_name": "Color",
