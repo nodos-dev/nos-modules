@@ -169,6 +169,86 @@
         },
         {
             "category": "Math|Addition",
+            "class_name": "Add_i8",
+            "display_name": "Add i8"
+        },
+        {
+            "category": "Math|Subtraction",
+            "class_name": "Sub_i8",
+            "display_name": "Sub i8"
+        },
+        {
+            "category": "Math|Multiplication",
+            "class_name": "Mul_i8",
+            "display_name": "Mul i8"
+        },
+        {
+            "category": "Math|Division",
+            "class_name": "Div_i8",
+            "display_name": "Div i8"
+        },
+        {
+            "category": "Math|Addition",
+            "class_name": "Add_u8",
+            "display_name": "Add u8"
+        },
+        {
+            "category": "Math|Subtraction",
+            "class_name": "Sub_u8",
+            "display_name": "Sub u8"
+        },
+        {
+            "category": "Math|Multiplication",
+            "class_name": "Mul_u8",
+            "display_name": "Mul u8"
+        },
+        {
+            "category": "Math|Division",
+            "class_name": "Div_u8",
+            "display_name": "Div u8"
+        },
+        {
+            "category": "Math|Addition",
+            "class_name": "Add_i16",
+            "display_name": "Add i16"
+        },
+        {
+            "category": "Math|Subtraction",
+            "class_name": "Sub_i16",
+            "display_name": "Sub i16"
+        },
+        {
+            "category": "Math|Multiplication",
+            "class_name": "Mul_i16",
+            "display_name": "Mul i16"
+        },
+        {
+            "category": "Math|Division",
+            "class_name": "Div_i16",
+            "display_name": "Div i16"
+        },
+        {
+            "category": "Math|Addition",
+            "class_name": "Add_u16",
+            "display_name": "Add u16"
+        },
+        {
+            "category": "Math|Subtraction",
+            "class_name": "Sub_u16",
+            "display_name": "Sub u16"
+        },
+        {
+            "category": "Math|Multiplication",
+            "class_name": "Mul_u16",
+            "display_name": "Mul u16"
+        },
+        {
+            "category": "Math|Division",
+            "class_name": "Div_u16",
+            "display_name": "Div u16"
+        },
+        {
+            "category": "Math|Addition",
             "class_name": "Add_vec2",
             "display_name": "Add Vec2"
         },
