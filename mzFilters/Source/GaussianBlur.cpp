@@ -1,7 +1,7 @@
 #include "GaussianBlur.hpp"
 #include "GaussianBlur.frag.spv.dat"
 
-namespace mz::filters
+namespace mz::utilities
 {
 
 struct GaussBlurContext
@@ -121,12 +121,12 @@ void RegisterGaussianBlur(MzNodeFunctions* out)
 {
 	out->TypeName = "mz.filters.GaussianBlur";
 	out->OnNodeCreated = [](const MzFbNode* node, void** outCtxPtr) {
-		*outCtxPtr = new mz::filters::GaussBlurContext(*node);
+		*outCtxPtr = new mz::utilities::GaussBlurContext(*node);
 	};
 	out->ExecuteNode = [](void* ctx, const MzNodeExecuteArgs* args) {
-		((mz::filters::GaussBlurContext*)ctx)->Run(args);
+		((mz::utilities::GaussBlurContext*)ctx)->Run(args);
 		return MZ_RESULT_SUCCESS;
 	};
-	out->GetShaders = mz::filters::GaussBlurContext::GetShaders;
-	out->GetPasses = mz::filters::GaussBlurContext::GetPasses;
+	out->GetShaders = mz::utilities::GaussBlurContext::GetShaders;
+	out->GetPasses = mz::utilities::GaussBlurContext::GetPasses;
 }
