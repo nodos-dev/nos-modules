@@ -29,8 +29,6 @@ private:
 	std::chrono::high_resolution_clock::time_point TimeStart;
 };
 
-void RegisterDelay(NodeActionsMap&, std::set<flatbuffers::Type const*> const&);
-
 void RegisterUtil(NodeActionsMap& functions, std::set<flatbuffers::Type const*> const& types)
 {
 	functions["mz.Time"].NodeCreated = [](auto const&, auto&, void** context) {
@@ -56,7 +54,6 @@ void RegisterUtil(NodeActionsMap& functions, std::set<flatbuffers::Type const*> 
 		return true;
 	};
 	RegisterImageIO(functions);
-	RegisterDelay(functions, types);
 	RegisterChannelViewer(functions);
 	RegisterSwitcher(functions);
 }

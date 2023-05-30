@@ -16,6 +16,8 @@
 #include "SevenSegment.frag.spv.dat"
 #include "Distort.frag.spv.dat"
 #include "Undistort.frag.spv.dat"
+#include "Swizzle.frag.spv.dat"
+#include "TextureSwitcher.frag.spv.dat"
 
 // Nodes
 #include "Merge.hpp"
@@ -37,6 +39,8 @@ enum Utilities
 	SevenSegment,
 	Distort,
 	Undistort,
+	Swizzle,
+	TextureSwitcher,
 	Count
 };
 
@@ -133,6 +137,24 @@ MZAPI_ATTR MzResult MZAPI_CALL mzExportNodeFunctions(size_t* outSize, MzNodeFunc
 			funcs->GetShaderSource = [](MzBuffer* outSpirvBuf) -> MzResult {
 				outSpirvBuf->Data = (void*)(Undistort_frag_spv);
 				outSpirvBuf->Size = sizeof(Undistort_frag_spv);
+				return MZ_RESULT_SUCCESS;
+			};
+			break;
+		}
+		case Utilities::Swizzle: {
+			funcs->TypeName = "mz.utilities.Swizzle";
+			funcs->GetShaderSource = [](MzBuffer* outSpirvBuf) -> MzResult {
+				outSpirvBuf->Data = (void*)(Swizzle_frag_spv);
+				outSpirvBuf->Size = sizeof(Swizzle_frag_spv);
+				return MZ_RESULT_SUCCESS;
+			};
+			break;
+		}
+		case Utilities::TextureSwitcher: {
+			funcs->TypeName = "mz.utilities.TextureSwitcher";
+			funcs->GetShaderSource = [](MzBuffer* outSpirvBuf) -> MzResult {
+				outSpirvBuf->Data = (void*)(TextureSwitcher_frag_spv);
+				outSpirvBuf->Size = sizeof(TextureSwitcher_frag_spv);
 				return MZ_RESULT_SUCCESS;
 			};
 			break;

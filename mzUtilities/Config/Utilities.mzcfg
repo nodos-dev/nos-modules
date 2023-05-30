@@ -15,13 +15,17 @@
         "QuadMerge.mzdef",
         "Resize.mzdef",
         "SevenSegment.mzdef",
-        "Distortion.mzdef"
+        "Distortion.mzdef",
+        "Swizzle.mzdef",
+        "TextureSwitcher.mzdef"
     ],
     "fb_includes": [
         "Merge.fbs",
         "Gradient.fbs",
         "Resize.fbs",
-        "Distortion.fbs"
+        "Distortion.fbs",
+		"Swizzle.fbs",
+		"TextureSwitcher.fbs"
     ],
     "binary_path": "../Binaries/mzUtilities",
     "associated_nodes": [
@@ -71,9 +75,19 @@
             "display_name": "Distort"
         },
         {
+          "category": "Utilities",
+          "class_name": "Undistort",
+          "display_name": "Undistort"
+        },
+		{
             "category": "Utilities",
-            "class_name": "Undistort",
-            "display_name": "Undistort"
+            "class_name": "Swizzle",
+            "display_name": "Swizzle"
+        },
+        {
+            "category": "Utilities",
+            "class_name": "TextureSwitcher",
+            "display_name": "Texture Switcher"
         }
     ]
 }
