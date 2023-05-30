@@ -56,7 +56,7 @@ struct MergeContext
 		MzRunPassParams mergePass{
 			.PassKey = "Merge_Pass",
 			.Bindings = bindings.data(),
-			.BindingCount = (uint32_t)bindings.size(),
+			.BindingCount = static_cast<uint32_t>(bindings.size()),
 			.Output = output,
 		};
 
@@ -118,20 +118,43 @@ struct MergeContext
 		};
 		mzEngine.HandleEvent(CreateAppEvent(fbb,CreatePartialNodeUpdateDirect(fbb, &((MergeContext*)(ctx))->Id, ClearFlags::NONE,0,&pins)));
 	}
+
+	static MzResult GetShaders(size_t* outCount, const char** outShaderNames, MzBuffer* outSpirvBufs)
+	{
+		*outCount = 1;
+		*outShaderNames = "Merge_Pass";
+		outSpirvBufs->Data = (void*)(Merge_frag_spv);
+		outSpirvBufs->Size = sizeof(Merge_frag_spv);
+		return MZ_RESULT_SUCCESS;
+	}
+
+	static void OnNodeDeleted(void* ctx, MzUUID id)
+	{
+		delete static_cast<MergeContext*>(ctx);
+	}
 };
 
 void RegisterMerge(MzNodeFunctions* out)
 {
 	out->TypeName = "mz.utilities.Merge";
 	out->OnMenuRequested = [](void* ctx, const MzContextMenuRequest* request) {
-		((MergeContext*)ctx)->OnMenuRequested(ctx, request);
+		mz::utilities::MergeContext::OnMenuRequested(ctx, request);
+	};
+	out->OnNodeCreated = [](const MzFbNode* node, void** outCtxPtr) {
+		mz::utilities::MergeContext::OnNodeCreated(node, outCtxPtr);
 	};
 	out->OnMenuCommand = [](void* ctx, uint32_t cmd) {
-		((MergeContext*)ctx)->OnMenuCommand(ctx, cmd);
+		mz::utilities::MergeContext::OnMenuCommand(ctx, cmd);
+	};
+	out->GetShaders = [](size_t* outCount, const char** outShaderNames, MzBuffer* outSpirvBufs) -> MzResult {
+		return mz::utilities::MergeContext::GetShaders(outCount, outShaderNames, outSpirvBufs);
 	};
 	out->ExecuteNode = [](void* ctx, const MzNodeExecuteArgs* args) {
-		((MergeContext*)ctx)->Run(args);
+		static_cast<mz::utilities::MergeContext*>(ctx)->Run(args);
 		return MZ_RESULT_SUCCESS;
+	};
+	out->OnNodeDeleted = [](void* ctx, MzUUID id) {
+		mz::utilities::MergeContext::OnNodeDeleted(ctx, id);
 	};
 }
 
