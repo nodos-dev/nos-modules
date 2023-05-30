@@ -20,6 +20,17 @@
                     "show_as": "OUTPUT_PIN",
                     "can_show_as" : "OUTPUT_PIN_OR_PROPERTY"
                 }
+            ],
+            "functions": [
+                {
+                    "class_name": "ReadImage_Load",
+                    "contents_type": "Job",
+                    "contents": {
+                        "type": "CPU"
+                    },
+                    "pins": [
+                    ]
+                }
             ]
         },
         {

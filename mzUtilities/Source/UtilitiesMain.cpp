@@ -1,7 +1,7 @@
 // Copyright MediaZ AS. All Rights Reserved.
 
 // Includes
-#include <MediaZ/PluginAPI.h>
+#include <MediaZ/Helpers.hpp>
 #include <glm/glm.hpp>
 #include <Builtins_generated.h>
 
@@ -19,9 +19,6 @@
 #include "Swizzle.frag.spv.dat"
 #include "TextureSwitcher.frag.spv.dat"
 
-// Nodes
-#include "Merge.hpp"
-#include "ChannelViewer.hpp"
 
 MZ_INIT();
 
@@ -33,7 +30,6 @@ enum Utilities
 	Checkerboard,
 	Color,
 	Gradient,
-	Merge,
 	Offset,
 	QuadMerge,
 	Resize,
@@ -43,130 +39,60 @@ enum Utilities
 	Swizzle,
 	TextureSwitcher,
 	ChannelViewer,
+	Merge,
+	Delay,
+	Time,
+	ReadImage,
+	WriteImage,
 	Count
 };
+
+void RegisterMerge(MzNodeFunctions*);
+void RegisterDelay(MzNodeFunctions*);
+void RegisterTime(MzNodeFunctions*);
+void RegisterReadImage(MzNodeFunctions*);
+void RegisterWriteImage(MzNodeFunctions*);
+void RegisterChannelViewer(MzNodeFunctions*);
 
 extern "C"
 {
 
-MZAPI_ATTR MzResult MZAPI_CALL mzExportNodeFunctions(size_t* outSize, MzNodeFunctions* outFunctions)
+MZAPI_ATTR MzResult MZAPI_CALL mzExportNodeFunctions(size_t* outSize, MzNodeFunctions* funcs)
 {
-	if (!outFunctions)
+    *outSize = Utilities::Count;
+	if (!funcs)
 	{
-		*outSize = Utilities::Count;
 		return MZ_RESULT_SUCCESS;
 	}
 
-	for (size_t i = 0; i < Utilities::Count; ++i)
-	{
-		auto* funcs = &outFunctions[i];
-		switch ((Utilities)i)
-		{
-		case Utilities::Checkerboard: {
-			funcs->TypeName = "mz.utilities.Checkerboard";
-			funcs->GetShaderSource = [](MzBuffer* outSpirvBuf) -> MzResult {
-				outSpirvBuf->Data = (void*)(Checkerboard_frag_spv);
-				outSpirvBuf->Size = sizeof(Checkerboard_frag_spv);
-				return MZ_RESULT_SUCCESS;
-			};
-			break;
-		}
-		case Utilities::Color: {
-			funcs->TypeName = "mz.utilities.Color";
-			funcs->GetShaderSource = [](MzBuffer* outSpirvBuf) -> MzResult {
-				outSpirvBuf->Data = (void*)(Color_frag_spv);
-				outSpirvBuf->Size = sizeof(Color_frag_spv);
-				return MZ_RESULT_SUCCESS;
-			};
-			break;
-		}
-		case Utilities::Gradient: {
-			funcs->TypeName = "mz.utilities.Gradient";
-			funcs->GetShaderSource = [](MzBuffer* outSpirvBuf) -> MzResult {
-				outSpirvBuf->Data = (void*)(Gradient_frag_spv);
-				outSpirvBuf->Size = sizeof(Gradient_frag_spv);
-				return MZ_RESULT_SUCCESS;
-			};
-			break;
-		}
-		case Utilities::Merge: {
-			RegisterMerge(funcs);
-			break;
-		}
-		case Utilities::Offset: {
-			funcs->TypeName = "mz.utilities.Offset";
-			funcs->GetShaderSource = [](MzBuffer* outSpirvBuf) -> MzResult {
-				outSpirvBuf->Data = (void*)(Offset_frag_spv);
-				outSpirvBuf->Size = sizeof(Offset_frag_spv);
-				return MZ_RESULT_SUCCESS;
-			};
-			break;
-		}
-		case Utilities::QuadMerge: {
-			funcs->TypeName = "mz.utilities.QuadMerge";
-			funcs->GetShaderSource = [](MzBuffer* outSpirvBuf) -> MzResult {
-				outSpirvBuf->Data = (void*)(QuadMerge_frag_spv);
-				outSpirvBuf->Size = sizeof(QuadMerge_frag_spv);
-				return MZ_RESULT_SUCCESS;
-			};
-			break;
-		}
-		case Utilities::Resize: {
-			// TODO port to new API
-			funcs->TypeName = "mz.utilities.Resize";
-			break;
-		}
-		case Utilities::SevenSegment: {
-			funcs->TypeName = "mz.utilities.SevenSegment";
-			funcs->GetShaderSource = [](MzBuffer* outSpirvBuf) -> MzResult {
-				outSpirvBuf->Data = (void*)(SevenSegment_frag_spv);
-				outSpirvBuf->Size = sizeof(SevenSegment_frag_spv);
-				return MZ_RESULT_SUCCESS;
-			};
-			break;
-		}
-		case Utilities::Distort: {
-			funcs->TypeName = "mz.utilities.Distort";
-			funcs->GetShaderSource = [](MzBuffer* outSpirvBuf) -> MzResult {
-				outSpirvBuf->Data = (void*)(Distort_frag_spv);
-				outSpirvBuf->Size = sizeof(Distort_frag_spv);
-				return MZ_RESULT_SUCCESS;
-			};
-			break;
-		}
-		case Utilities::Undistort: {
-			funcs->TypeName = "mz.utilities.Undistort";
-			funcs->GetShaderSource = [](MzBuffer* outSpirvBuf) -> MzResult {
-				outSpirvBuf->Data = (void*)(Undistort_frag_spv);
-				outSpirvBuf->Size = sizeof(Undistort_frag_spv);
-				return MZ_RESULT_SUCCESS;
-			};
-			break;
-		}
-		case Utilities::Swizzle: {
-			funcs->TypeName = "mz.utilities.Swizzle";
-			funcs->GetShaderSource = [](MzBuffer* outSpirvBuf) -> MzResult {
-				outSpirvBuf->Data = (void*)(Swizzle_frag_spv);
-				outSpirvBuf->Size = sizeof(Swizzle_frag_spv);
-				return MZ_RESULT_SUCCESS;
-			};
-			break;
-		}
-		case Utilities::TextureSwitcher: {
-			funcs->TypeName = "mz.utilities.TextureSwitcher";
-			funcs->GetShaderSource = [](MzBuffer* outSpirvBuf) -> MzResult {
-				outSpirvBuf->Data = (void*)(TextureSwitcher_frag_spv);
-				outSpirvBuf->Size = sizeof(TextureSwitcher_frag_spv);
-				return MZ_RESULT_SUCCESS;
-			};
-			break;
-		}
-		case Utilities::ChannelViewer: {
-			RegisterChannelViewer(funcs);
-		}
-		default: break;
-		}
-	}
+#define REGISTER_FILTER(name) \
+    funcs[Utilities::##name] = MzNodeFunctions{ \
+        .TypeName = "mz.utilities." #name, \
+        .GetShaderSource = [](MzBuffer* spirv) { \
+				*spirv = { (void*)(name##_frag_spv), sizeof (name##_frag_spv) }; \
+				return MZ_RESULT_SUCCESS; \
+			},\
+    };
+
+    REGISTER_FILTER(Checkerboard);
+    REGISTER_FILTER(Color);
+    REGISTER_FILTER(Gradient);
+    REGISTER_FILTER(Offset);
+    REGISTER_FILTER(QuadMerge);
+    REGISTER_FILTER(Resize);
+    REGISTER_FILTER(SevenSegment);
+    REGISTER_FILTER(Distort);
+    REGISTER_FILTER(Undistort);
+    REGISTER_FILTER(Swizzle);
+    REGISTER_FILTER(TextureSwitcher);
+
+    RegisterMerge(&funcs[Utilities::Merge]);
+    RegisterDelay(&funcs[Utilities::Delay]);
+    RegisterTime(&funcs[Utilities::Time]);
+    RegisterReadImage(&funcs[Utilities::ReadImage]);
+    RegisterWriteImage(&funcs[Utilities::WriteImage]);
+    RegisterChannelViewer(&funcs[Utilities::ChannelViewer]);
+
 	return MZ_RESULT_SUCCESS;
 }
 }

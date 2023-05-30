@@ -1,13 +1,13 @@
 // Copyright MediaZ AS. All Rights Reserved.
 
-#include "ChannelViewer.hpp"
+#include <MediaZ/Helpers.hpp>
 #include "ChannelViewer.frag.spv.dat"
 #include <glm/glm.hpp>
 
-namespace mz::channelviewer
+namespace mz::utilities
 {
 
-MzResult GetShaders(size_t* outCount, const char** outShaderNames, MzBuffer* infos)
+static MzResult GetShaders(size_t* outCount, const char** outShaderNames, MzBuffer* infos)
 {
 	*outCount = 1;
 	if (!infos)
@@ -20,7 +20,7 @@ MzResult GetShaders(size_t* outCount, const char** outShaderNames, MzBuffer* inf
 	return MZ_RESULT_SUCCESS;
 }
 
-MzResult GetPasses(size_t* outCount, MzPassInfo* infos)
+static MzResult GetPasses(size_t* outCount, MzPassInfo* infos)
 {
 	*outCount = 1;
 	if (!infos)
@@ -34,7 +34,7 @@ MzResult GetPasses(size_t* outCount, MzPassInfo* infos)
 	return MZ_RESULT_SUCCESS;
 }
 
-MzResult Run(void* ctx, const MzNodeExecuteArgs* pins)
+static MzResult Run(void* ctx, const MzNodeExecuteArgs* pins)
 {
 	auto values = GetPinValues(pins);
 	const MzResourceShareInfo input = ValAsTex(values["Input"]);
@@ -62,13 +62,15 @@ MzResult Run(void* ctx, const MzNodeExecuteArgs* pins)
 	mzEngine.RunPass(0, &pass);
 	return MZ_RESULT_SUCCESS;
 }
-} // namespace mz::channelviewer
 
 void RegisterChannelViewer(MzNodeFunctions* out)
 {
 	out->TypeName = "mz.utilities.ChannelViewer";
-	out->GetShaders = mz::channelviewer::GetShaders;
-	out->GetPasses = mz::channelviewer::GetPasses;
-	out->ExecuteNode = mz::channelviewer::Run;
+	out->GetShaders = mz::utilities::GetShaders;
+	out->GetPasses = mz::utilities::GetPasses;
+	out->ExecuteNode = mz::utilities::Run;
 }
+
+
+} 
 

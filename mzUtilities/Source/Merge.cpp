@@ -1,6 +1,7 @@
 // Copyright MediaZ AS. All Rights Reserved.
 
-#include "Merge.hpp"
+#include <MediaZ/Helpers.hpp>
+#include <MediaZ/PluginAPI.h>
 #include "Merge.frag.spv.dat"
 
 #include <random>
@@ -21,7 +22,7 @@ uuids::uuid_random_generator generator(mtengine);
 
 }
 
-namespace mz::filters
+namespace mz::utilities
 {
 
 struct MergeContext
@@ -119,19 +120,19 @@ struct MergeContext
 	}
 };
 
-}
-
 void RegisterMerge(MzNodeFunctions* out)
 {
 	out->TypeName = "mz.utilities.Merge";
 	out->OnMenuRequested = [](void* ctx, const MzContextMenuRequest* request) {
-		((mz::filters::MergeContext*)ctx)->OnMenuRequested(ctx, request);
+		((MergeContext*)ctx)->OnMenuRequested(ctx, request);
 	};
 	out->OnMenuCommand = [](void* ctx, uint32_t cmd) {
-		((mz::filters::MergeContext*)ctx)->OnMenuCommand(ctx, cmd);
+		((MergeContext*)ctx)->OnMenuCommand(ctx, cmd);
 	};
 	out->ExecuteNode = [](void* ctx, const MzNodeExecuteArgs* args) {
-		((mz::filters::MergeContext*)ctx)->Run(args);
+		((MergeContext*)ctx)->Run(args);
 		return MZ_RESULT_SUCCESS;
 	};
+}
+
 }

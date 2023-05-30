@@ -19,13 +19,14 @@
         "Swizzle.mzdef",
         "TextureSwitcher.mzdef",
         "ChannelViewer.mzdef"
+        "Time.mzdef",
     ],
     "fb_includes": [
         "Merge.fbs",
         "Gradient.fbs",
         "Resize.fbs",
         "Distortion.fbs",
-		    "Swizzle.fbs",
+        "Swizzle.fbs",
         "TextureSwitcher.fbs",
         "ChannelViewer.fbs"
     ],
@@ -95,6 +96,11 @@
           "category": "Channels",
           "class_name": "ChannelViewer",
           "display_name": "Channel Viewer"
+        },
+        {
+            "category": "Utilities",
+            "class_name": "Time",
+            "display_name": "Time"
         }
     ]
 }
