@@ -17,15 +17,17 @@
         "SevenSegment.mzdef",
         "Distortion.mzdef",
         "Swizzle.mzdef",
-        "TextureSwitcher.mzdef"
+        "TextureSwitcher.mzdef",
+        "ChannelViewer.mzdef"
     ],
     "fb_includes": [
         "Merge.fbs",
         "Gradient.fbs",
         "Resize.fbs",
         "Distortion.fbs",
-		"Swizzle.fbs",
-		"TextureSwitcher.fbs"
+		    "Swizzle.fbs",
+        "TextureSwitcher.fbs",
+        "ChannelViewer.fbs"
     ],
     "binary_path": "../Binaries/mzUtilities",
     "associated_nodes": [
@@ -79,7 +81,7 @@
           "class_name": "Undistort",
           "display_name": "Undistort"
         },
-		{
+		    {
             "category": "Utilities",
             "class_name": "Swizzle",
             "display_name": "Swizzle"
@@ -88,6 +90,11 @@
             "category": "Utilities",
             "class_name": "TextureSwitcher",
             "display_name": "Texture Switcher"
+        },
+        {
+          "category": "Channels",
+          "class_name": "ChannelViewer",
+          "display_name": "Channel Viewer"
         }
     ]
 }

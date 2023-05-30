@@ -21,6 +21,7 @@
 
 // Nodes
 #include "Merge.hpp"
+#include "ChannelViewer.hpp"
 
 MZ_INIT();
 
@@ -41,6 +42,7 @@ enum Utilities
 	Undistort,
 	Swizzle,
 	TextureSwitcher,
+	ChannelViewer,
 	Count
 };
 
@@ -158,6 +160,9 @@ MZAPI_ATTR MzResult MZAPI_CALL mzExportNodeFunctions(size_t* outSize, MzNodeFunc
 				return MZ_RESULT_SUCCESS;
 			};
 			break;
+		}
+		case Utilities::ChannelViewer: {
+			RegisterChannelViewer(funcs);
 		}
 		default: break;
 		}
