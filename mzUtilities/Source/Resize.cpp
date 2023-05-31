@@ -1,4 +1,5 @@
-﻿#include "Resize.hpp"
+﻿#include <MediaZ/Helpers.hpp>
+
 #include "Resize.frag.spv.dat"
 
 #include "Builtins_generated.h"
@@ -9,11 +10,7 @@ namespace mz::utilities
 struct ResizeContext
 {
 	MzUUID NodeId;
-
-	ResizeContext(MzFbNode const& node)
-	{
-		NodeId = *node.id();		
-	}
+	
 	static void OnNodeUpdated(void* ctx, const MzFbNode* updatedNode)
 	{
 		updatedNode->UnPackTo((fb::TNode*)ctx);
@@ -26,9 +23,7 @@ struct ResizeContext
 
 	static void OnNodeCreated(const MzFbNode* node, void** outCtxPtr)
 	{
-		static bool reg = false;
-		if(reg) return;
-		reg = true;
+		*outCtxPtr = node->UnPack();
 	}
 
 	static MzResult GetPasses(size_t* outCount, MzPassInfo* infos)
@@ -51,7 +46,7 @@ struct ResizeContext
 		if(!outSpirvBufs)
 			return MZ_RESULT_SUCCESS;
 		
-		*outShaderNames = "Resize_Pass";
+		*outShaderNames = "Resize_Shader";
 		outSpirvBufs->Data = (void*)(Resize_frag_spv);
 		outSpirvBufs->Size = sizeof(Resize_frag_spv);
 		return MZ_RESULT_SUCCESS;
@@ -103,8 +98,6 @@ struct ResizeContext
 	
 };
 
-} // namespace mz::utilities
-
 void RegisterResize(MzNodeFunctions* out)
 {
 	out->TypeName = "mz.utilities.Resize";
@@ -118,3 +111,7 @@ void RegisterResize(MzNodeFunctions* out)
 	out->OnNodeDeleted = mz::utilities::ResizeContext::OnNodeDeleted;
 	out->OnNodeUpdated = mz::utilities::ResizeContext::OnNodeUpdated;
 }
+
+} // namespace mz::utilities
+
+

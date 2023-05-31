@@ -53,6 +53,7 @@ void RegisterTime(MzNodeFunctions*);
 void RegisterReadImage(MzNodeFunctions*);
 void RegisterWriteImage(MzNodeFunctions*);
 void RegisterChannelViewer(MzNodeFunctions*);
+void RegisterResize(MzNodeFunctions*);
 
 extern "C"
 {
@@ -79,7 +80,6 @@ MZAPI_ATTR MzResult MZAPI_CALL mzExportNodeFunctions(size_t* outSize, MzNodeFunc
     REGISTER_FILTER(Gradient);
     REGISTER_FILTER(Offset);
     REGISTER_FILTER(QuadMerge);
-    REGISTER_FILTER(Resize);
     REGISTER_FILTER(SevenSegment);
     REGISTER_FILTER(Distort);
     REGISTER_FILTER(Undistort);
@@ -92,7 +92,7 @@ MZAPI_ATTR MzResult MZAPI_CALL mzExportNodeFunctions(size_t* outSize, MzNodeFunc
     RegisterReadImage(&funcs[Utilities::ReadImage]);
     RegisterWriteImage(&funcs[Utilities::WriteImage]);
     RegisterChannelViewer(&funcs[Utilities::ChannelViewer]);
-
+	RegisterResize(&funcs[Utilities::Resize]);
 	return MZ_RESULT_SUCCESS;
 }
 }
