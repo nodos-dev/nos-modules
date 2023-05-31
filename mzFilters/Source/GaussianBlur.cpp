@@ -75,23 +75,20 @@ struct GaussBlurContext
 
 	void Run(const mzNodeExecuteArgs* pins)
 	{
-
-		mzResourceShareInfo outputTexture;
-
 		auto values = GetPinValues(pins);
 
 		const mzResourceShareInfo input  = DeserializeTextureInfo(values["Input"]);
-		const mzResourceShareInfo output = DeserializeTextureInfo(values["Output"]);
+		mzResourceShareInfo output = DeserializeTextureInfo(values["Output"]);
 		const f32 softness = *(f32*)values["Softness"];
-		const mzVec2 Kernel_Size = *(mzVec2*)values["Kernel_Size"];
-		const mzVec2u Pass_Type = mzVec2u(0, 1);
+		const mzVec2 kernelSize = *(mzVec2*)values["Kernel_Size"];
+		const mzVec2u passType = mzVec2u(0, 1);
 
-		SetupIntermediateTexture(&outputTexture);
+		SetupIntermediateTexture(&output);
 
 		std::vector<mzShaderBinding> bindings = {
 			ShaderBinding("Input", input),
-			ShaderBinding("Kernel_Size", Kernel_Size.x),
-			ShaderBinding("Pass_Type", Pass_Type.x),
+			ShaderBinding("Kernel_Size", kernelSize.x),
+			ShaderBinding("Pass_Type", passType.x),
 			ShaderBinding("Softness", softness),
 		};
 		
@@ -99,7 +96,7 @@ struct GaussBlurContext
 		mzRunPassParams pass = {
 			.PassKey = "Gaussian_Blur_Pass",
 			.Bindings = bindings.data(),
-			.BindingCount = (u32)bindings.size(),
+			.BindingCount = (uint32_t)bindings.size(),
 			.Output = IntermediateTexture,
 			.Wireframe = false,
 		};
@@ -107,9 +104,9 @@ struct GaussBlurContext
 
 		// Vert pass
 		bindings[0].Resource = &IntermediateTexture;
-		bindings[1].FixedSize = &Kernel_Size.y;
-		bindings[2].FixedSize = &Pass_Type.y;
-		pass.Output = outputTexture;
+		bindings[1].FixedSize = &kernelSize.y;
+		bindings[2].FixedSize = &passType.y;
+		pass.Output = output;
 		mzEngine.RunPass(0, &pass);
 
 	}
