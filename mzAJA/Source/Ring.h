@@ -11,19 +11,19 @@ struct TRing
     
     struct Resource
     {
-        MzResourceShareInfo Res;
+        mzResourceShareInfo Res;
 
         Resource(T r) : Res{}
         {
-            if constexpr (std::is_same_v<T, MzBufferInfo>)
+            if constexpr (std::is_same_v<T, mzBufferInfo>)
             {
-                Res.info.type = MZ_RESOURCE_TYPE_BUFFER;
-                Res.info.buffer = r;
+                Res.Info.Type = MZ_RESOURCE_TYPE_BUFFER;
+                Res.Info.Buffer = r;
             }
             else
             {
-                Res.info.type = MZ_RESOURCE_TYPE_TEXTURE;
-                Res.info.texture = r;
+                Res.Info.Type = MZ_RESOURCE_TYPE_TEXTURE;
+                Res.Info.Texture = r;
             }
             mzEngine.Create(&Res);
         }
@@ -50,21 +50,21 @@ struct TRing
         Size = size;
     }
     
-    TRing(MzVec2u extent, u32 Size) 
-        requires(std::is_same_v<T, MzBufferInfo>)
+    TRing(mzVec2u extent, u32 Size) 
+        requires(std::is_same_v<T, mzBufferInfo>)
         : Extent(extent), Sample()
     {
-        Sample.size = Extent.x * Extent.y * 4;
+        Sample.Size = Extent.x * Extent.y * 4;
         Resizex(Size);
     }
     
-    TRing(MzVec2u extent, u32 Size, MzFormat format = MZ_FORMAT_R16G16B16A16_UNORM)
-        requires(std::is_same_v<T, MzTextureInfo>)
+    TRing(mzVec2u extent, u32 Size, mzFormat format = MZ_FORMAT_R16G16B16A16_UNORM)
+        requires(std::is_same_v<T, mzTextureInfo>)
         : Extent(extent), Sample()
     {
-        Sample.width = Extent.x;
-        Sample.height = Extent.y;
-        Sample.format = format;
+        Sample.Width = Extent.x;
+        Sample.Height = Extent.y;
+        Sample.Format = format;
         Resizex(Size);
     }
 
@@ -78,7 +78,7 @@ struct TRing
     std::vector<rc<Resource>> Glob;
 
     u32 Size = 0;
-    MzVec2u Extent;
+    mzVec2u Extent;
     std::atomic_bool Exit = false;
     std::atomic_bool ResetFrameCount = true;
 
@@ -210,7 +210,7 @@ struct TRing
     }
 };
 
-typedef TRing<MzBufferInfo> CPURing;
-typedef TRing<MzTextureInfo> GPURing;
+typedef TRing<mzBufferInfo> CPURing;
+typedef TRing<mzTextureInfo> GPURing;
 
 } // namespace mz

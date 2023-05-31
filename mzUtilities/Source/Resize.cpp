@@ -9,21 +9,21 @@ namespace mz::utilities
 
 struct ResizeContext
 {
-	MzUUID NodeId;
+	mzUUID NodeId;
 	
-	static void OnNodeUpdated(void* ctx, const MzFbNode* updatedNode)
+	static void OnNodeUpdated(void* ctx, const mzFbNode* updatedNode)
 	{
 		mzEngine.LogW("UPDATED RESIZE NODE");
 		updatedNode->UnPackTo((fb::TNode*)ctx);
 	}
 
-	static void OnNodeDeleted(void* ctx, MzUUID nodeId)
+	static void OnNodeDeleted(void* ctx, mzUUID nodeId)
 	{
 		mzEngine.LogW("DELETED RESIZE NODE");
 		delete (fb::TNode*)ctx;
 	}
 
-	static MzResult GetPasses(size_t* outCount, MzPassInfo* infos)
+	static mzResult GetPasses(size_t* outCount, mzPassInfo* infos)
 	{
 		*outCount = 1;
 		if(!infos)
@@ -37,7 +37,7 @@ struct ResizeContext
 		return MZ_RESULT_SUCCESS;
 	}
 
-	static MzResult GetShaders(size_t* outCount, const char** outShaderNames, MzBuffer* outSpirvBufs)
+	static mzResult GetShaders(size_t* outCount, const char** outShaderNames, mzBuffer* outSpirvBufs)
 	{
 		*outCount = 1;
 		if(!outSpirvBufs || !outShaderNames)
@@ -49,7 +49,7 @@ struct ResizeContext
 		return MZ_RESULT_SUCCESS;
 	}
 	
-	static MzResult ExecuteNode(void* ctx, const MzNodeExecuteArgs* args)
+	static mzResult ExecuteNode(void* ctx, const mzNodeExecuteArgs* args)
 	{
 		mzEngine.LogW("EXECUTE RESIZE NODE");
 		auto pins = GetPinValues(args);
@@ -60,17 +60,17 @@ struct ResizeContext
 		auto tex = DeserializeTextureInfo(pins["Output"]);
 		auto size = GetPinValue<mz::fb::vec2>(pins, "Size");
 		
-		if(size->x() != tex.info.texture.width ||
-			size->y() != tex.info.texture.height)
+		if(size->x() != tex.Info.Texture.Width ||
+			size->y() != tex.Info.Texture.Height)
 		{
-			tex.info.texture.width = size->x();
-			tex.info.texture.height = size->y();
+			tex.Info.Texture.Width = size->x();
+			tex.Info.Texture.Height = size->y();
 			mzEngine.Destroy(&tex);
 			mzEngine.Create(&tex);
 			auto texFb = ConvertTextureInfo(tex);
 			texFb.unscaled = true;
 			auto texFbBuf = mz::Buffer::From(texFb);
-			mzEngine.SetPinValue(((MzUUID)(args->PinIds[1])), {.Data = texFbBuf.data(), .Size = texFbBuf.size()});
+			mzEngine.SetPinValue(((mzUUID)(args->PinIds[1])), {.Data = texFbBuf.data(), .Size = texFbBuf.size()});
 		}
 
 		std::vector bindings = {
@@ -78,7 +78,7 @@ struct ResizeContext
 			ShaderBinding("Method", method)
 		};
 		
-		MzRunPassParams resizeParam {
+		mzRunPassParams resizeParam {
 			.PassKey = "Resize_Pass",
 			.Bindings = bindings.data(),
 			.BindingCount = 2,
@@ -94,12 +94,12 @@ struct ResizeContext
 	
 };
 
-void RegisterResize(MzNodeFunctions* out)
+void RegisterResize(mzNodeFunctions* out)
 {
 	out->TypeName = "mz.utilities.Resize";
 	out->GetPasses = mz::utilities::ResizeContext::GetPasses;
 	out->GetShaders = mz::utilities::ResizeContext::GetShaders;
-	out->ExecuteNode = [](void* ctx, const MzNodeExecuteArgs* args)-> MzResult {
+	out->ExecuteNode = [](void* ctx, const mzNodeExecuteArgs* args)-> mzResult {
 		return ((mz::utilities::ResizeContext*)ctx)->ExecuteNode(ctx, args);
 	};
 	out->OnNodeDeleted = mz::utilities::ResizeContext::OnNodeDeleted;

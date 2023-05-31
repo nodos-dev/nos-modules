@@ -7,7 +7,7 @@
 namespace mz::utilities
 {
 
-static MzResult GetShaders(size_t* outCount, const char** outShaderNames, MzBuffer* infos)
+static mzResult GetShaders(size_t* outCount, const char** outShaderNames, mzBuffer* infos)
 {
 	*outCount = 1;
 	if (!infos)
@@ -20,7 +20,7 @@ static MzResult GetShaders(size_t* outCount, const char** outShaderNames, MzBuff
 	return MZ_RESULT_SUCCESS;
 }
 
-static MzResult GetPasses(size_t* outCount, MzPassInfo* infos)
+static mzResult GetPasses(size_t* outCount, mzPassInfo* infos)
 {
 	*outCount = 1;
 	if (!infos)
@@ -34,11 +34,11 @@ static MzResult GetPasses(size_t* outCount, MzPassInfo* infos)
 	return MZ_RESULT_SUCCESS;
 }
 
-static MzResult Run(void* ctx, const MzNodeExecuteArgs* pins)
+static mzResult Run(void* ctx, const mzNodeExecuteArgs* pins)
 {
 	auto values = GetPinValues(pins);
-	const MzResourceShareInfo input = DeserializeTextureInfo(values["Input"]);
-	const MzResourceShareInfo output = DeserializeTextureInfo(values["Output"]);
+	const mzResourceShareInfo input = DeserializeTextureInfo(values["Input"]);
+	const mzResourceShareInfo output = DeserializeTextureInfo(values["Output"]);
 
 	auto channel = *(u32*)values["Channel"];
 	auto format = *(u32*)values["Format"];
@@ -49,10 +49,10 @@ static MzResult Run(void* ctx, const MzNodeExecuteArgs* pins)
 	constexpr glm::vec3 coeffs[3] = {{.299f, .587f, .114f}, {.2126f, .7152f, .0722f}, {.2627f, .678f, .0593f}};
 
 	glm::vec4 multipliers = glm::vec4(coeffs[format], channel > 3);
-	std::vector<MzShaderBinding> bindings = {
+	std::vector<mzShaderBinding> bindings = {
 		ShaderBinding("Input", input), ShaderBinding("Channel", val), ShaderBinding("Format", multipliers)};
 
-	MzRunPassParams pass = {
+	mzRunPassParams pass = {
 		.PassKey = "Channel_Viewer_Pass",
 		.Bindings = bindings.data(),
 		.BindingCount = (u32)bindings.size(),
@@ -63,7 +63,7 @@ static MzResult Run(void* ctx, const MzNodeExecuteArgs* pins)
 	return MZ_RESULT_SUCCESS;
 }
 
-void RegisterChannelViewer(MzNodeFunctions* out)
+void RegisterChannelViewer(mzNodeFunctions* out)
 {
 	out->TypeName = "mz.utilities.ChannelViewer";
 	out->GetShaders = mz::utilities::GetShaders;

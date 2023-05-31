@@ -182,7 +182,7 @@ struct Stype : public TrackNodeContext
     }
 };
 
-void RegisterStypeNode(MzNodeFunctions &functions)
+void RegisterStypeNode(mzNodeFunctions &functions)
 {
 	functions.TypeName = "mz.track.Stype";
     RegisterTrackCommon(functions);
@@ -210,7 +210,7 @@ void RegisterStypeNode(MzNodeFunctions &functions)
 		}
     };
 
-	functions.OnPinValueChanged = [](auto ctx, auto id, MzBuffer* value) 
+	functions.OnPinValueChanged = [](auto ctx, auto id, mzBuffer* value) 
 	{ 
 		Stype* fnctx = (Stype*)ctx;
 		fnctx->OnPinValueChanged(id, value->Data);

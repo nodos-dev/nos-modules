@@ -209,7 +209,7 @@ static glm::mat4 MakeTransform(glm::vec3 pos, glm::vec3 rot)
 }
 
 template<class T>
-void AddParam(std::vector<MzShaderBinding>& inputs, std::unordered_map<std::string, void*> const& pins, const char* name)
+void AddParam(std::vector<mzShaderBinding>& inputs, std::unordered_map<std::string, void*> const& pins, const char* name)
 {
     if(auto val = GetPinValue<T>(pins, name))
     {
@@ -247,7 +247,7 @@ bool GetValue(std::unordered_map<std::string, const mz::fb::Pin*>& pins, std::st
 
 struct Cyclorama : PinMapping
 {
-    MzVertexData Verts = {};
+    mzVertexData Verts = {};
 
     enum 
     {
@@ -259,13 +259,13 @@ struct Cyclorama : PinMapping
 
     std::atomic_uint CapturedFrameCount = 0;
 
-    MzResourceShareInfo lhs = {};
-    MzResourceShareInfo rt = {};
+    mzResourceShareInfo lhs = {};
+    mzResourceShareInfo rt = {};
     
     struct FrameData
     {
         std::string Path;
-        MzResourceShareInfo Texture;
+        mzResourceShareInfo Texture;
         mz::fb::TTrack Track;
         glm::vec3 Pos;
         glm::vec3 Rot;
@@ -285,11 +285,11 @@ struct Cyclorama : PinMapping
 			i32 w, h, n;
 			if (auto raw = stbi_load(dat.path.c_str(), &w, &h, &n, 4))
             {
-                MzResourceShareInfo tex = {};
-                tex.info.texture.width = w;
-                tex.info.texture.height = h;
-                tex.info.texture.format = MZ_FORMAT_R8G8B8A8_UNORM;
-				mzEngine.ImageLoad(raw, MzVec2u(w, h), MZ_FORMAT_R8G8B8A8_SRGB, &tex);
+                mzResourceShareInfo tex = {};
+                tex.Info.Texture.Width = w;
+                tex.Info.Texture.Height = h;
+                tex.Info.Texture.Format = MZ_FORMAT_R8G8B8A8_UNORM;
+				mzEngine.ImageLoad(raw, mzVec2u(w, h), MZ_FORMAT_R8G8B8A8_SRGB, &tex);
                 free(raw);
                 out = {
                     .Path = std::move(dat.path),
@@ -328,10 +328,10 @@ struct Cyclorama : PinMapping
 
     void Clear()
     {
-        MzCmd cmd;
+        mzCmd cmd;
         mzEngine.Begin(&cmd);
-        mzEngine.Clear(cmd, &rt, MzVec4(0,0,0,1));
-        mzEngine.Clear(cmd, &lhs, MzVec4(0,0,0,1));
+        mzEngine.Clear(cmd, &rt, mzVec4(0,0,0,1));
+        mzEngine.Clear(cmd, &lhs, mzVec4(0,0,0,1));
         mzEngine.End(cmd);
     }
 
@@ -389,7 +389,7 @@ struct Cyclorama : PinMapping
     void GenerateVertices2(std::vector<Vertex>& vertices, std::vector<glm::uvec3>& indices);
     void LoadVertices()
     {
-        if(Verts.Buffer.memory.pid)
+        if(Verts.Buffer.Memory.PID)
         {
             mzEngine.Destroy(&Verts.Buffer);
         }
@@ -401,9 +401,9 @@ struct Cyclorama : PinMapping
 
         u32 vsz = vertices.size() * sizeof(vertices[0]);
         u32 isz = indices.size() * sizeof(indices[0]);
-        Verts.Buffer.info.type = MZ_RESOURCE_TYPE_BUFFER;
-        Verts.Buffer.info.buffer.size = vsz + isz;
-        Verts.Buffer.info.buffer.usage = MzBufferUsage(MZ_BUFFER_USAGE_VERTEX_BUFFER | MZ_BUFFER_USAGE_INDEX_BUFFER);
+        Verts.Buffer.Info.Type = MZ_RESOURCE_TYPE_BUFFER;
+        Verts.Buffer.Info.Buffer.Size = vsz + isz;
+        Verts.Buffer.Info.Buffer.Usage = mzBufferUsage(MZ_BUFFER_USAGE_VERTEX_BUFFER | MZ_BUFFER_USAGE_INDEX_BUFFER);
         Verts.VertexOffset= 0;
         Verts.IndexOffset = vsz;
         Verts.IndexCount = indices.size() * 3;
@@ -454,11 +454,11 @@ struct Cyclorama : PinMapping
         if (GetValue<void>(name2pin, "Video", 
             [&src](auto* bufStart) { flatbuffers::GetRoot<mz::fb::Texture>(bufStart)->UnPackTo(&src); }))
         {
-            lhs.info.texture.height = src.height;
-            lhs.info.texture.width  = src.width;
-			lhs.info.texture.usage  = MzImageUsage(MZ_IMAGE_USAGE_SAMPLED | MZ_IMAGE_USAGE_RENDER_TARGET | MZ_IMAGE_USAGE_TRANSFER_SRC | MZ_IMAGE_USAGE_TRANSFER_DST);
-            lhs.info.texture.format = MZ_FORMAT_R16G16B16A16_UNORM;
-            lhs.info.type = MZ_RESOURCE_TYPE_TEXTURE;
+            lhs.Info.Texture.Height = src.height;
+            lhs.Info.Texture.Width  = src.width;
+			lhs.Info.Texture.Usage  = mzImageUsage(MZ_IMAGE_USAGE_SAMPLED | MZ_IMAGE_USAGE_RENDER_TARGET | MZ_IMAGE_USAGE_TRANSFER_SRC | MZ_IMAGE_USAGE_TRANSFER_DST);
+            lhs.Info.Texture.Format = MZ_FORMAT_R16G16B16A16_UNORM;
+            lhs.Info.Type = MZ_RESOURCE_TYPE_TEXTURE;
             rt = lhs;
             mzEngine.Create(&lhs);
             mzEngine.Create(&rt);
@@ -478,12 +478,12 @@ struct Cyclorama : PinMapping
 
     void DestroyTransientResources()
     {
-        if (lhs.memory.pid)
+        if (lhs.Memory.PID)
         {
             mzEngine.Destroy(&lhs);
             lhs = {};
         }
-        if (rt.memory.pid)
+        if (rt.Memory.PID)
         {
             mzEngine.Destroy(&rt);
             rt = {};
@@ -492,7 +492,7 @@ struct Cyclorama : PinMapping
 
     Cyclorama() 
     {
-        MzBuffer val;
+        mzBuffer val;
         switch (mzEngine.GetDefaultValueOfType("mz.fb.Track", &val))
         {
         case MZ_RESULT_SUCCESS:
@@ -550,14 +550,14 @@ struct Cyclorama : PinMapping
         {"Cyclorama_CleanPlateAccumulator",{std::begin(CleanPlateAcc_frag_spv), std::end(CleanPlateAcc_frag_spv)}},
     };
 
-    inline static MzPassInfo passes[] =
+    inline static mzPassInfo passes[] =
     {
         {.Key = "Cyclorama_CleanPlateAccumulator_Pass", .Shader = "Cyclorama_CleanPlateAccumulator", .MultiSample = 1},
         {.Key = "Cyclorama_Main_Pass", .Shader = "Cyclorama_Frag", .VertexShader = "Cyclorama_Vert", .Blend = true, .MultiSample = 8, },
         {.Key = "Cyclorama_Mask_Pass", .Shader = "Cyclorama_Mask_Frag", .VertexShader = "Cyclorama_Mask_Vert", .MultiSample = 1},
     };
 
-    static MzResult GetShaders(size_t* outCount, const char** names, MzBuffer* outSpirvBufs)
+    static mzResult GetShaders(size_t* outCount, const char** names, mzBuffer* outSpirvBufs)
     {
         *outCount = sizeof(spirvs) / sizeof(spirvs[0]);
         if (!outSpirvBufs)
@@ -572,7 +572,7 @@ struct Cyclorama : PinMapping
         return MZ_RESULT_SUCCESS;
     };
 
-    static MzResult GetPasses(size_t* outCount, MzPassInfo* outMzPassInfos)
+    static mzResult GetPasses(size_t* outCount, mzPassInfo* outMzPassInfos)
     {
         *outCount = sizeof(passes) / sizeof(passes[0]);
 
@@ -585,16 +585,16 @@ struct Cyclorama : PinMapping
     }
 
     // Node graph event callbacks
-    static MzResult CanCreateNode(const MzFbNode* node) { return MZ_RESULT_SUCCESS; }
-    static void OnNodeCreated(const MzFbNode* node, void** ctx) 
+    static mzResult CanCreateNode(const mzFbNode* node) { return MZ_RESULT_SUCCESS; }
+    static void OnNodeCreated(const mzFbNode* node, void** ctx) 
     {
         Cyclorama* c = new Cyclorama();
         c->Load(*node);
         *ctx = c;
     }
-    static void OnNodeUpdated(void* ctx, const MzFbNode* updatedNode) { }
-    static void OnNodeDeleted(void* ctx, MzUUID nodeId) { delete (Cyclorama*)ctx; }
-    static void OnPinValueChanged(void* ctx, MzUUID id, MzBuffer* value) 
+    static void OnNodeUpdated(void* ctx, const mzFbNode* updatedNode) { }
+    static void OnNodeDeleted(void* ctx, mzUUID nodeId) { delete (Cyclorama*)ctx; }
+    static void OnPinValueChanged(void* ctx, mzUUID id, mzBuffer* value) 
     { 
         auto c = static_cast<Cyclorama*>(ctx);
         auto PinName = c->GetPinName(id);
@@ -660,13 +660,13 @@ struct Cyclorama : PinMapping
             
             if (c->CapturedFrameCount++ < 50)
             {
-                MzShaderBinding bindings[] =
+                mzShaderBinding bindings[] =
                 {
                     ShaderBinding("lhs", c->lhs),
                     ShaderBinding("rhs", video),
                 };
 
-                MzRunPassParams pass = {};
+                mzRunPassParams pass = {};
                 pass.PassKey = "Cyclorama_CleanPlateAccumulator_Pass";
                 pass.Output = c->rt;
                 pass.BindingCount = sizeof(bindings) / sizeof(bindings[0]);
@@ -683,11 +683,11 @@ struct Cyclorama : PinMapping
                     path = std::filesystem::current_path();
                 path /= (std::to_string(idx) + UUID2STR(c->NodeId) + ".png");
 
-                MzResourceShareInfo tmp = c->lhs;
-                MzResourceShareInfo tex = c->lhs;
-                tex.info.texture.format = MZ_FORMAT_R8G8B8A8_UNORM;
-                tex.info.texture.width = 960;
-                tex.info.texture.height = 540;
+                mzResourceShareInfo tmp = c->lhs;
+                mzResourceShareInfo tex = c->lhs;
+                tex.Info.Texture.Format = MZ_FORMAT_R8G8B8A8_UNORM;
+                tex.Info.Texture.Width = 960;
+                tex.Info.Texture.Height = 540;
                 mzEngine.Create(&tex);
                 mzEngine.Create(&c->lhs);
                 mzEngine.Clear(0, &c->lhs, {});
@@ -701,27 +701,27 @@ struct Cyclorama : PinMapping
                 {
                     c->Status |= Cyclorama::SAVING;
                     c->UpdateStatus();
-                    MzResourceShareInfo srgb = tmp;
-                    srgb.info.type = MZ_RESOURCE_TYPE_TEXTURE;
-                    srgb.info.texture.format = MZ_FORMAT_R8G8B8A8_SRGB;
-                    srgb.info.texture.width = 960;
-                    srgb.info.texture.height = 540;
-                    srgb.info.texture.usage = MzImageUsage(MZ_IMAGE_USAGE_TRANSFER_DST | MZ_IMAGE_USAGE_TRANSFER_SRC);
+                    mzResourceShareInfo srgb = tmp;
+                    srgb.Info.Type = MZ_RESOURCE_TYPE_TEXTURE;
+                    srgb.Info.Texture.Format = MZ_FORMAT_R8G8B8A8_SRGB;
+                    srgb.Info.Texture.Width = 960;
+                    srgb.Info.Texture.Height = 540;
+                    srgb.Info.Texture.Usage = mzImageUsage(MZ_IMAGE_USAGE_TRANSFER_DST | MZ_IMAGE_USAGE_TRANSFER_SRC);
                     mzEngine.Create(&srgb);
-                    MzCmd cmd;
+                    mzCmd cmd;
                     mzEngine.Begin(&cmd);
                     mzEngine.Blit(cmd, &tmp, &tex);
                     mzEngine.Blit(cmd, &tmp, &srgb);
-                    MzResourceShareInfo buf;
+                    mzResourceShareInfo buf;
                     mzEngine.Download(cmd, &srgb, &buf);
                     mzEngine.End(cmd);
 
-                    auto dst = new u8[srgb.info.texture.width * srgb.info.texture.height * 3];
+                    auto dst = new u8[srgb.Info.Texture.Width * srgb.Info.Texture.Height * 3];
                     auto src = mzEngine.Map(&buf);
-                    for(u32 i = 0; i < srgb.info.texture.width; ++i)
-                        for(u32 j = 0; j < srgb.info.texture.height; ++j)
-                            memcpy(dst + 3 * (j + i * srgb.info.texture.height), src + 4 * (j + i * srgb.info.texture.height), 3);
-                    auto re = stbi_write_png(path.string().c_str(), srgb.info.texture.width, srgb.info.texture.height, 3, dst, srgb.info.texture.width * 3);
+                    for(u32 i = 0; i < srgb.Info.Texture.Width; ++i)
+                        for(u32 j = 0; j < srgb.Info.Texture.Height; ++j)
+                            memcpy(dst + 3 * (j + i * srgb.Info.Texture.Height), src + 4 * (j + i * srgb.Info.Texture.Height), 3);
+                    auto re = stbi_write_png(path.string().c_str(), srgb.Info.Texture.Width, srgb.Info.Texture.Height, 3, dst, srgb.Info.Texture.Width * 3);
                     delete dst;
                     mzEngine.Destroy(&buf);
                     mzEngine.Destroy(&tmp);
@@ -738,24 +738,24 @@ struct Cyclorama : PinMapping
             }
         }
     }
-    static void OnPinConnected(void* ctx, MzUUID pinId) { }
-    static void OnPinDisconnected(void* ctx, MzUUID pinId) { }
-    static void OnPinShowAsChanged(void* ctx, MzUUID pinId, MzFbShowAs showAs) { }
-    static void OnNodeSelected(MzUUID graphId, MzUUID selectedNodeId) { }
-    static void OnPathCommand(void* ctx, const MzPathCommand* command) { }
+    static void OnPinConnected(void* ctx, mzUUID pinId) { }
+    static void OnPinDisconnected(void* ctx, mzUUID pinId) { }
+    static void OnPinShowAsChanged(void* ctx, mzUUID pinId, mzFbShowAs showAs) { }
+    static void OnNodeSelected(mzUUID graphId, mzUUID selectedNodeId) { }
+    static void OnPathCommand(void* ctx, const mzPathCommand* command) { }
 
     
     // Execution
-    static MzResult ExecuteNode(void* ctx, const MzNodeExecuteArgs* inArgs) \
+    static mzResult ExecuteNode(void* ctx, const mzNodeExecuteArgs* inArgs) \
     { 
         auto c = (Cyclorama*)ctx;
         
         auto args = GetPinValues(inArgs);
 
-        MzResourceShareInfo color;
-        MzRunPass2Params pass;
-        std::vector<MzDrawCall> calls(1 + c->CleanPlates.size());
-        std::vector<std::vector<MzShaderBinding>> inputs(calls.size());
+        mzResourceShareInfo color;
+        mzRunPass2Params pass;
+        std::vector<mzDrawCall> calls(1 + c->CleanPlates.size());
+        std::vector<std::vector<mzShaderBinding>> inputs(calls.size());
 
         pass.Wireframe = *GetPinValue<bool>(args, "Wireframe");
         pass.PassKey = "Cyclorama_Main_Pass";
@@ -789,7 +789,7 @@ struct Cyclorama : PinMapping
         f32 half = 0.5f;
 
         {
-            mzEngine.GetColorTexture(*GetPinValue<MzVec4>(args, "CycloramaColor"), &color);
+            mzEngine.GetColorTexture(*GetPinValue<mzVec4>(args, "CycloramaColor"), &color);
             inputs[0].push_back(ShaderBinding("UVSmoothness", zero));
             inputs[0].push_back(ShaderBinding("CP_MVP", MVP));
             inputs[0].push_back(ShaderBinding("Source", color));
@@ -861,8 +861,8 @@ struct Cyclorama : PinMapping
                 "HasLeftWing", HAS_LEFT_WING_BIT,
                 "HasRightWing", HAS_RIGHT_WING_BIT);
 
-            std::vector<MzShaderBinding> maskInputs;
-            MzRunPassParams maskPass;
+            std::vector<mzShaderBinding> maskInputs;
+            mzRunPassParams maskPass;
             maskPass.PassKey = "Cyclorama_Mask_Pass";
             maskPass.Output = DeserializeTextureInfo(GetPinValue<void>(args, "Mask"));;
             maskPass.Vertices = c->Verts;
@@ -888,18 +888,18 @@ struct Cyclorama : PinMapping
         return MZ_RESULT_SUCCESS;
     }
 
-    static MzResult CanCopy(void* ctx, MzCopyInfo* copyInfo) { return MZ_RESULT_SUCCESS; }
-    static MzResult BeginCopyFrom(void* ctx, MzCopyInfo* cospyInfo) { return MZ_RESULT_SUCCESS; }
-    static MzResult BeginCopyTo(void* ctx, MzCopyInfo* copyInfo) { return MZ_RESULT_SUCCESS; }
-    static void EndCopyFrom(void* ctx, MzCopyInfo* copyInfo) {  }
-    static void EndCopyTo(void* ctx, MzCopyInfo* copyInfo) { }
+    static mzResult CanCopy(void* ctx, mzCopyInfo* copyInfo) { return MZ_RESULT_SUCCESS; }
+    static mzResult BeginCopyFrom(void* ctx, mzCopyInfo* cospyInfo) { return MZ_RESULT_SUCCESS; }
+    static mzResult BeginCopyTo(void* ctx, mzCopyInfo* copyInfo) { return MZ_RESULT_SUCCESS; }
+    static void EndCopyFrom(void* ctx, mzCopyInfo* copyInfo) {  }
+    static void EndCopyTo(void* ctx, mzCopyInfo* copyInfo) { }
     // Menu & key events
-    static void OnMenuRequested(void* ctx, const MzContextMenuRequest* request) { }
+    static void OnMenuRequested(void* ctx, const mzContextMenuRequest* request) { }
     static void OnMenuCommand(void* ctx, uint32_t cmd) { }
-    static void OnKeyEvent(void* ctx, const MzKeyEvent* keyEvent) { }
+    static void OnKeyEvent(void* ctx, const mzKeyEvent* keyEvent) { }
 
 
-    static void AddProjection(void* ctx, const MzNodeExecuteArgs* nodeArgs, const MzNodeExecuteArgs* functionArgs)
+    static void AddProjection(void* ctx, const mzNodeExecuteArgs* nodeArgs, const mzNodeExecuteArgs* functionArgs)
     {
         auto c = (Cyclorama*)ctx;
         if (c->Status & Cyclorama::CAPTURING) return;
@@ -911,7 +911,7 @@ struct Cyclorama : PinMapping
         mzEngine.HandleEvent(CreateAppEvent(fbb, mz::app::CreateScheduleRequest(fbb, mz::app::ScheduleRequestKind::PIN, &id)));
     };
 
-    static void ClearProjection(void* ctx, const MzNodeExecuteArgs* nodeArgs, const MzNodeExecuteArgs* functionArgs) {
+    static void ClearProjection(void* ctx, const mzNodeExecuteArgs* nodeArgs, const mzNodeExecuteArgs* functionArgs) {
         auto c = (Cyclorama*)ctx;
         if (c->Status & Cyclorama::CAPTURING) return;
         c->Status &= ~Cyclorama::CAPTURING;
@@ -922,7 +922,7 @@ struct Cyclorama : PinMapping
         c->Clear();
     }
 
-    static void ReloadShaders(void* ctx, const MzNodeExecuteArgs* nodeArgs, const MzNodeExecuteArgs* functionArgs) {
+    static void ReloadShaders(void* ctx, const mzNodeExecuteArgs* nodeArgs, const mzNodeExecuteArgs* functionArgs) {
         auto c = (Cyclorama*)ctx;
         system(("glslc " + std::string(mzEngine.WorkFolder()) +  "/../Plugins/mzCyclorama/Source/Cyclorama.frag -c -o " + std::string(mzEngine.WorkFolder()) +  "/cyclo.frag").c_str());
         system(("glslc " + std::string(mzEngine.WorkFolder()) +  "/../Plugins/mzCyclorama/Source/Cyclorama.vert -c -o " + std::string(mzEngine.WorkFolder()) +  "/cyclo.vert").c_str());
@@ -939,7 +939,7 @@ struct Cyclorama : PinMapping
 
     }
 
-    inline static std::pair<const char*, PFN_NodeFunctionExecute> Functions[] = 
+    inline static std::pair<const char*, mzPfnNodeFunctionExecute> Functions[] = 
     {
         {"AddProjection", AddProjection},
         {"ClearProjection", ClearProjection},
@@ -947,7 +947,7 @@ struct Cyclorama : PinMapping
     };
 
     // Function Nodes
-    static MzResult GetFunctions(size_t* outCount, const char** pName, PFN_NodeFunctionExecute* outFunction)
+    static mzResult GetFunctions(size_t* outCount, const char** pName, mzPfnNodeFunctionExecute* outFunction)
     {
         *outCount = sizeof(Functions)/sizeof(Functions[0]);
 
@@ -1145,7 +1145,7 @@ void Cyclorama::GenerateVertices2(std::vector<Vertex> &vertices, std::vector<glm
 extern "C"
 {
 
-    MZAPI_ATTR MzResult MZAPI_CALL mzExportNodeFunctions(size_t* outSize, MzNodeFunctions* outFunctions)
+    MZAPI_ATTR mzResult MZAPI_CALL mzExportNodeFunctions(size_t* outSize, mzNodeFunctions* outFunctions)
     {
         *outSize = 1;
         if (!outFunctions)

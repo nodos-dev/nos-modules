@@ -20,7 +20,7 @@ MZ_INIT();
 namespace mz
 {
 
-static MzBuffer Blob2Buf(std::vector<u8> const& v) 
+static mzBuffer Blob2Buf(std::vector<u8> const& v) 
 { 
     return { (void*)v.data(), v.size() }; 
 };
@@ -40,7 +40,7 @@ static std::vector<std::pair<const char*, std::vector<u8>>> shaders =
     {"AJA_YCbCr2RGB_Shader",         {std::begin(YCbCr2RGB_frag_spv), std::end(YCbCr2RGB_frag_spv)}},
 };
 
-static std::vector<MzPassInfo> passes =
+static std::vector<mzPassInfo> passes =
 {
     {.Key = "AJA_RGB2YCbCr_Compute_Pass", .Shader = "AJA_RGB2YCbCr_Compute_Shader", .MultiSample = 1},
     {.Key = "AJA_YCbCr2RGB_Compute_Pass", .Shader = "AJA_YCbCr2RGB_Compute_Shader", .MultiSample = 1},
@@ -50,7 +50,7 @@ static std::vector<MzPassInfo> passes =
 
 struct AJA
 {
-    static MzResult GetShaders(size_t* outCount, const char** names, MzBuffer* outSpirvBufs)
+    static mzResult GetShaders(size_t* outCount, const char** names, mzBuffer* outSpirvBufs)
     {
         *outCount = shaders.size();
         if(!outSpirvBufs) 
@@ -65,7 +65,7 @@ struct AJA
         return MZ_RESULT_SUCCESS;
     };
 
-    static MzResult GetPasses(size_t* outCount, MzPassInfo* outMzPassInfos)
+    static mzResult GetPasses(size_t* outCount, mzPassInfo* outMzPassInfos)
     {
         *outCount = passes.size();
 
@@ -77,12 +77,12 @@ struct AJA
         return MZ_RESULT_SUCCESS;
     }
 
-    static MzResult GetShaderSource(MzBuffer * outSpirvBuf) 
+    static mzResult GetShaderSource(mzBuffer * outSpirvBuf) 
     { 
         return MZ_RESULT_SUCCESS;
     }
 
-    static MzResult CanCreateNode(const MzFbNode * node) 
+    static mzResult CanCreateNode(const mzFbNode * node) 
     { 
         for (auto pin : *node->pins())
         {
@@ -101,7 +101,7 @@ struct AJA
         return MZ_RESULT_FAILED;
     }
     
-    static void OnNodeCreated(const MzFbNode * inNode, void** ctx) 
+    static void OnNodeCreated(const mzFbNode * inNode, void** ctx) 
     { 
         auto& node = *inNode;
         AJADevice::Init();
@@ -204,39 +204,39 @@ struct AJA
     }
 
 
-    static void OnNodeUpdated(void* ctx, const MzFbNode * node) 
+    static void OnNodeUpdated(void* ctx, const mzFbNode * node) 
     {
         ((AJAClient *)ctx)->OnNodeUpdate(*node);
     }
     
-    static void OnNodeDeleted(void* ctx, const MzUUID nodeId) 
+    static void OnNodeDeleted(void* ctx, const mzUUID nodeId) 
     { 
         auto c = ((AJAClient *)ctx);
         c->OnNodeRemoved();
         delete c;
     }
-    static void OnPinValueChanged(void* ctx, const MzUUID id, MzBuffer * value)
+    static void OnPinValueChanged(void* ctx, const mzUUID id, mzBuffer * value)
     { 
         return ((AJAClient *)ctx)->OnPinValueChanged(id, value->Data);
     }
 
-    static void OnPinConnected(void* ctx, const MzUUID pinId) { }
-    static void OnPinDisconnected(void* ctx, const MzUUID pinId) { }
+    static void OnPinConnected(void* ctx, const mzUUID pinId) { }
+    static void OnPinDisconnected(void* ctx, const mzUUID pinId) { }
 
-    static void OnPinShowAsChanged(void* ctx, const MzUUID id, MzFbShowAs showAs) 
+    static void OnPinShowAsChanged(void* ctx, const mzUUID id, mzFbShowAs showAs) 
     { 
     }
 
-    static void OnNodeSelected(const MzUUID graphId, const MzUUID selectedNodeId) { }
+    static void OnNodeSelected(const mzUUID graphId, const mzUUID selectedNodeId) { }
 
-    static void OnPathCommand(void* ctx, const MzPathCommand* params)
+    static void OnPathCommand(void* ctx, const mzPathCommand* params)
     { 
         auto aja = ((AJAClient *)ctx);
         aja->OnPathCommand(params->Id, (app::PathCommand)params->CommandType, mz::Buffer((u8*)params->Args.Data, params->Args.Size));
     }
 
 
-    static void ReloadShaders(void* ctx, const MzNodeExecuteArgs* nodeArgs, const MzNodeExecuteArgs* functionArgs)
+    static void ReloadShaders(void* ctx, const mzNodeExecuteArgs* nodeArgs, const mzNodeExecuteArgs* functionArgs)
     {
         system(("glslc -O -g " + std::string(mzEngine.WorkFolder()) +  "/../Plugins/mzAJA/Source/YCbCr2RGB.frag -c -o " + std::string(mzEngine.WorkFolder()) + "/../YCbCr2RGB_.frag").c_str());
         system(("glslc -O -g " + std::string(mzEngine.WorkFolder()) +  "/../Plugins/mzAJA/Source/RGB2YCbCr.frag -c -o " + std::string(mzEngine.WorkFolder()) + "/../RGB2YCbCr_.frag").c_str());
@@ -266,7 +266,7 @@ struct AJA
             }
     }
 
-    static MzResult GetFunctions(size_t * outCount, const char** pName, PFN_NodeFunctionExecute * fns) 
+    static mzResult GetFunctions(size_t * outCount, const char** pName, mzPfnNodeFunctionExecute * fns) 
     {
         *outCount = 1;
         if(!pName || !fns)
@@ -345,13 +345,13 @@ struct AJA
 	    // functions["AJA.AJAOut"] = actions;
         return MZ_RESULT_SUCCESS;
     }
-    static MzResult  ExecuteNode(void* ctx, const MzNodeExecuteArgs * args) { return MZ_RESULT_SUCCESS; }
-    static MzResult  CanCopy(void* ctx, MzCopyInfo * copyInfo)
+    static mzResult  ExecuteNode(void* ctx, const mzNodeExecuteArgs * args) { return MZ_RESULT_SUCCESS; }
+    static mzResult  CanCopy(void* ctx, mzCopyInfo * copyInfo)
     { 
         return MZ_RESULT_SUCCESS;
     }
 
-    static MzResult  BeginCopyFrom(void* ctx, MzCopyInfo * cpy)
+    static mzResult  BeginCopyFrom(void* ctx, mzCopyInfo * cpy)
     { 
         if (((AJAClient*)ctx)->BeginCopyFrom(*cpy))
         {
@@ -360,7 +360,7 @@ struct AJA
         return MZ_RESULT_FAILED;
     }
 
-    static MzResult  BeginCopyTo(void* ctx, MzCopyInfo * cpy)
+    static mzResult  BeginCopyTo(void* ctx, mzCopyInfo * cpy)
     { 
         if (((AJAClient*)ctx)->BeginCopyTo(*cpy))
         {
@@ -369,17 +369,17 @@ struct AJA
         return MZ_RESULT_FAILED;
     }
 
-    static void  EndCopyFrom(void* ctx, MzCopyInfo * cpy)
+    static void  EndCopyFrom(void* ctx, mzCopyInfo * cpy)
     { 
         return ((AJAClient *)ctx)->EndCopyFrom(*cpy);
     }
 
-    static void  EndCopyTo(void* ctx, MzCopyInfo * cpy)
+    static void  EndCopyTo(void* ctx, mzCopyInfo * cpy)
     { 
         return ((AJAClient *)ctx)->EndCopyTo(*cpy);
     }
 
-    static void OnMenuRequested(void* ctx, const MzContextMenuRequest * request) 
+    static void OnMenuRequested(void* ctx, const mzContextMenuRequest * request) 
     { 
         ((AJAClient *)ctx)->OnMenuFired(*request);
     }
@@ -389,19 +389,19 @@ struct AJA
         ((AJAClient *)ctx)->OnCommandFired(cmd); 
     }
 
-    static void OnKeyEvent(void* ctx, const MzKeyEvent * keyEvent) { }
+    static void OnKeyEvent(void* ctx, const mzKeyEvent * keyEvent) { }
 };
 
 extern "C"
 {
 
-MZAPI_ATTR MzResult MZAPI_CALL mzExportNodeFunctions(size_t* outSize, MzNodeFunctions* outFunctions)
+MZAPI_ATTR mzResult MZAPI_CALL mzExportNodeFunctions(size_t* outSize, mzNodeFunctions* outFunctions)
 {
     *outSize = 2;
     if (!outFunctions)
         return MZ_RESULT_SUCCESS;
 
-    outFunctions[0] = outFunctions[1] = MzNodeFunctions {
+    outFunctions[0] = outFunctions[1] = mzNodeFunctions {
         .CanCreateNode = AJA::CanCreateNode,
         .OnNodeCreated = AJA::OnNodeCreated,
         .OnNodeUpdated = AJA::OnNodeUpdated,

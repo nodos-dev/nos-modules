@@ -80,7 +80,7 @@ struct Frustum: PinMapping
 extern "C"
 {
 
-MZAPI_ATTR MzResult MZAPI_CALL mzExportNodeFunctions(size_t* outSize, MzNodeFunctions* outFunctions)
+MZAPI_ATTR mzResult MZAPI_CALL mzExportNodeFunctions(size_t* outSize, mzNodeFunctions* outFunctions)
 {
 	if (!outFunctions)
 	{
@@ -97,13 +97,13 @@ MZAPI_ATTR MzResult MZAPI_CALL mzExportNodeFunctions(size_t* outSize, MzNodeFunc
 	funcs.OnNodeUpdated = [](void *ctx, auto *node) {
 		((Frustum*)ctx)->Load(*node);
 	};
-	funcs.OnNodeDeleted = [](void *ctx, MzUUID nodeId) {
+	funcs.OnNodeDeleted = [](void *ctx, mzUUID nodeId) {
 		delete (Frustum*)ctx;
 	};
-	funcs.OnPinValueChanged = [](void *ctx, MzUUID pinId, MzBuffer *value) {
+	funcs.OnPinValueChanged = [](void *ctx, mzUUID pinId, mzBuffer *value) {
 		((Frustum*)ctx)->ValueChanged(pinId, value->Data);
 	};
-	funcs.ExecuteNode = [](void* ctx, MzNodeExecuteArgs const* args) {
+	funcs.ExecuteNode = [](void* ctx, mzNodeExecuteArgs const* args) {
 		auto values = GetPinValues(args);
 		auto zoom = (f64*)values["Zoom"];
 		auto focus = (f64*)values["Focus"];

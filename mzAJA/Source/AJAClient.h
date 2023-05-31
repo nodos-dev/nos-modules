@@ -173,9 +173,9 @@ struct MZAPI_ATTR AJAClient
     void OnNodeUpdate(mz::fb::Node const &event);
     void OnNodeUpdate(PinMapping &&newMapping, std::unordered_map<std::string, const mz::fb::Pin *> &tmpPins,
                       std::vector<mz::fb::UUID> &pinsToDelete);
-    void OnPinMenuFired(MzContextMenuRequest const &request);
+    void OnPinMenuFired(mzContextMenuRequest const &request);
 
-    void OnMenuFired(MzContextMenuRequest const &request);
+    void OnMenuFired(mzContextMenuRequest const &request);
     void OnCommandFired(u32 cmd);
 
     void OnNodeRemoved();
@@ -184,10 +184,10 @@ struct MZAPI_ATTR AJAClient
     void OnPinValueChanged(mz::fb::UUID id, void *value);
     void OnExecute();
 
-    bool BeginCopyFrom(MzCopyInfo &cpy);
-    bool BeginCopyTo(MzCopyInfo &cpy);
-    void EndCopyFrom(MzCopyInfo &cpy);
-    void EndCopyTo(MzCopyInfo &cpy);
+    bool BeginCopyFrom(mzCopyInfo &cpy);
+    bool BeginCopyTo(mzCopyInfo &cpy);
+    void EndCopyFrom(mzCopyInfo &cpy);
+    void EndCopyTo(mzCopyInfo &cpy);
 
     void AddTexturePin(const mz::fb::Pin* pin, u32 ringSize, NTV2Channel channel,
                        const fb::Texture* tex, NTV2VideoFormat fmt, AJADevice::Mode mode,

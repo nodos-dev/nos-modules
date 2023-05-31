@@ -438,7 +438,7 @@ namespace mz
 		//mz::fb::Track* outTrack;
 	};
 
-void RegisterXyncNode(MzNodeFunctions& functions)
+void RegisterXyncNode(mzNodeFunctions& functions)
 {
 	functions.TypeName = "mz.track.Xync";
 	RegisterTrackCommon(functions);
@@ -467,7 +467,7 @@ void RegisterXyncNode(MzNodeFunctions& functions)
 		//context->Start();
     };
 
-	functions.OnPinValueChanged = [](auto ctx, auto id, MzBuffer* value) 
+	functions.OnPinValueChanged = [](auto ctx, auto id, mzBuffer* value) 
 	{ 
 		XyncNodeContext* fnctx = (XyncNodeContext*)ctx;
 		fnctx->OnPinValueChanged(id, value->Data);

@@ -254,7 +254,7 @@ struct FreeDNodeContext : public TrackNodeContext
 		}
 };
 
-void RegisterFreeDNode(MzNodeFunctions& functions)
+void RegisterFreeDNode(mzNodeFunctions& functions)
 {
 	functions.TypeName = "mz.track.FreeD";
 	RegisterTrackCommon(functions);
@@ -281,7 +281,7 @@ void RegisterFreeDNode(MzNodeFunctions& functions)
 			}
 		}
     };
-	functions.OnPinValueChanged = [](auto ctx, auto id, MzBuffer* value) 
+	functions.OnPinValueChanged = [](auto ctx, auto id, mzBuffer* value) 
 	{ 
 		FreeDNodeContext* fnctx = (FreeDNodeContext*)ctx;
 		fnctx->OnPinValueChanged(id, value->Data);

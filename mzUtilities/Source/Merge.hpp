@@ -4,5 +4,5 @@
 
 #include <MediaZ/Helpers.hpp>
 
-void RegisterMerge(MzNodeFunctions* out);
+void RegisterMerge(mzNodeFunctions* out);
 

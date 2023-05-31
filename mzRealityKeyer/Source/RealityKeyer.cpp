@@ -13,7 +13,7 @@ namespace mz
 
 struct RealityKeyerContext : public NodeContext
 {
-	static MzResult GetShaders(size_t* outCount, const char** outShaderNames, MzBuffer* outSpirvBufs)
+	static mzResult GetShaders(size_t* outCount, const char** outShaderNames, mzBuffer* outSpirvBufs)
 	{
 		*outCount = 3;
 		if (!outShaderNames || !outSpirvBufs)
@@ -21,24 +21,24 @@ struct RealityKeyerContext : public NodeContext
 		outShaderNames[0] = "IBK_Pass_1_Shader";
 		outShaderNames[1] = "IBK_Pass_2_Shader";
 		outShaderNames[2] = "IBK_Horz_Blur_Pass_Shader";
-		outSpirvBufs[0] = MzBuffer{.Data = (void*)IBKPass1_frag_spv, .Size = sizeof(IBKPass1_frag_spv)};
-		outSpirvBufs[1] = MzBuffer{.Data = (void*)IBKPass2_frag_spv, .Size = sizeof(IBKPass2_frag_spv)};
-		outSpirvBufs[2] = MzBuffer{.Data = (void*)IBKHorizontalBlur_frag_spv, .Size = sizeof(IBKHorizontalBlur_frag_spv)};
+		outSpirvBufs[0] = mzBuffer{.Data = (void*)IBKPass1_frag_spv, .Size = sizeof(IBKPass1_frag_spv)};
+		outSpirvBufs[1] = mzBuffer{.Data = (void*)IBKPass2_frag_spv, .Size = sizeof(IBKPass2_frag_spv)};
+		outSpirvBufs[2] = mzBuffer{.Data = (void*)IBKHorizontalBlur_frag_spv, .Size = sizeof(IBKHorizontalBlur_frag_spv)};
 		return MZ_RESULT_SUCCESS;
 	}
 
-	static MzResult GetPasses(size_t* outCount, MzPassInfo* outMzPassInfos)
+	static mzResult GetPasses(size_t* outCount, mzPassInfo* outMzPassInfos)
 	{
 		*outCount = 3;
 		if (!outMzPassInfos)
 			return MZ_RESULT_SUCCESS;
-		outMzPassInfos[0] = MzPassInfo{.Key = "IBK_Pass_1", .Shader = "IBK_Pass_1_Shader"};
-		outMzPassInfos[1] = MzPassInfo{.Key = "IBK_Pass_2", .Shader = "IBK_Pass_2_Shader"};
-		outMzPassInfos[2] = MzPassInfo{.Key = "IBK_Horz_Blur_Pass", .Shader = "IBK_Horz_Blur_Pass_Shader"};
+		outMzPassInfos[0] = mzPassInfo{.Key = "IBK_Pass_1", .Shader = "IBK_Pass_1_Shader"};
+		outMzPassInfos[1] = mzPassInfo{.Key = "IBK_Pass_2", .Shader = "IBK_Pass_2_Shader"};
+		outMzPassInfos[2] = mzPassInfo{.Key = "IBK_Horz_Blur_Pass", .Shader = "IBK_Horz_Blur_Pass_Shader"};
 		return MZ_RESULT_SUCCESS;
 	}
 
-	void Run(const MzNodeExecuteArgs* args)
+	void Run(const mzNodeExecuteArgs* args)
 	{
 		auto values = GetPinValues(args);
 		auto outputTextureInfo = DeserializeTextureInfo(values["Output"]);
@@ -48,10 +48,10 @@ struct RealityKeyerContext : public NodeContext
 		auto cleanPlate = DeserializeTextureInfo(values["Clean_Plate"]);
 		auto cleanPlateMask = DeserializeTextureInfo(values["Clean_Plate_Mask"]);
 
-		MzCmd cmd;
+		mzCmd cmd;
 		mzEngine.Begin(&cmd);
 		// Pass 1 begin
-		MzRunPassParams ibkPass1 = {};
+		mzRunPassParams ibkPass1 = {};
 		ibkPass1.PassKey = "IBK_Pass_1"; 
 		std::vector ibkPass1Bindings = {
 			ShaderBinding("Input", inputTextureInfo),
@@ -73,10 +73,10 @@ struct RealityKeyerContext : public NodeContext
 		// Pass 1 end
 
 		// Horz blur begin
-		MzRunPassParams ibkHorzBlurPass = {};
+		mzRunPassParams ibkHorzBlurPass = {};
 		ibkHorzBlurPass.PassKey = "IBK_Horz_Blur_Pass";
 		float blurRadius = *(float*)values["Erode"] + *(float*)values["Softness"];
-		mz::fb::vec2 blurInputSize(hardMaskTextureInfo.info.texture.width, hardMaskTextureInfo.info.texture.height);
+		mz::fb::vec2 blurInputSize(hardMaskTextureInfo.Info.Texture.Width, hardMaskTextureInfo.Info.Texture.Height);
 		std::vector ibkHorzBlurPassBindings = {
 			ShaderBinding("Input", hardMaskTextureInfo),
 			ShaderBinding("Blur_Radius", blurRadius),
@@ -89,9 +89,9 @@ struct RealityKeyerContext : public NodeContext
 		// Horz blur end
 
 		// Pass 2 begin
-		MzRunPassParams ibkPass2 = {};
+		mzRunPassParams ibkPass2 = {};
 		ibkPass2.PassKey = "IBK_Pass_2";
-		mz::fb::vec2 coreMatteTextureSize(hardMaskTextureInfo.info.texture.width, hardMaskTextureInfo.info.texture.height);
+		mz::fb::vec2 coreMatteTextureSize(hardMaskTextureInfo.Info.Texture.Width, hardMaskTextureInfo.Info.Texture.Height);
 		
 		float softMatte422FilteringValue = *static_cast<float*>(values["Soft_Matte_422_Filtering"]);
 		mz::fb::vec2 softMatte422Filtering(1.0f - softMatte422FilteringValue, softMatte422FilteringValue * .5f);
@@ -203,7 +203,7 @@ struct RealityKeyerContext : public NodeContext
 
 
 extern "C"
-MZAPI_ATTR MzResult MZAPI_CALL mzExportNodeFunctions(size_t* outCount, MzNodeFunctions* outFunctions)
+MZAPI_ATTR mzResult MZAPI_CALL mzExportNodeFunctions(size_t* outCount, mzNodeFunctions* outFunctions)
 {
 	*outCount = 1;
 	if (!outFunctions)
@@ -211,7 +211,7 @@ MZAPI_ATTR MzResult MZAPI_CALL mzExportNodeFunctions(size_t* outCount, MzNodeFun
 	auto& keyer = outFunctions[0];
 	
 	keyer.TypeName = "mz.realitykeyer.RealityKeyer";
-	keyer.OnNodeCreated = [](const MzFbNode* node, void** ctx) {
+	keyer.OnNodeCreated = [](const mzFbNode* node, void** ctx) {
 		*ctx = new RealityKeyerContext();
 		auto* RealityKeyerCtx = static_cast<RealityKeyerContext*>(*ctx);
 		RealityKeyerCtx->Load(*node);
@@ -219,7 +219,7 @@ MZAPI_ATTR MzResult MZAPI_CALL mzExportNodeFunctions(size_t* outCount, MzNodeFun
 	keyer.GetShaders = RealityKeyerContext::GetShaders,
 	keyer.GetPasses = RealityKeyerContext::GetPasses,
 	keyer.OnNodeDeleted = [](void* ctx, auto id) { delete static_cast<RealityKeyerContext*>(ctx); };
-	keyer.ExecuteNode = [](void* ctx, const MzNodeExecuteArgs* args) {
+	keyer.ExecuteNode = [](void* ctx, const mzNodeExecuteArgs* args) {
 		auto* RealityKeyerCtx = static_cast<RealityKeyerContext*>(ctx);
 		RealityKeyerCtx->Run(args);
 		return MZ_RESULT_SUCCESS;

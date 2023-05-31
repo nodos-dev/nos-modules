@@ -110,21 +110,21 @@ struct JobQueue
 };
 
 
-// TODO: DelayResource with policy based handling of mz::fb::Buffer and MzResourceShareInfo
+// TODO: DelayResource with policy based handling of mz::fb::Buffer and mzResourceShareInfo
 struct DelayTexture : DelayContext
 {
-    MzResourceShareInfo Base;
+    mzResourceShareInfo Base;
     //JobQueue Queue;
     //
-    std::queue<MzResourceShareInfo> FreeList;
+    std::queue<mzResourceShareInfo> FreeList;
 
-    MzResourceShareInfo GetTexture()
+    mzResourceShareInfo GetTexture()
     {
-        MzResourceShareInfo tmp;
+        mzResourceShareInfo tmp;
 
         if (Ring.size() > Delay)
         {
-            tmp = *Ring.front().As<MzResourceShareInfo>();
+            tmp = *Ring.front().As<mzResourceShareInfo>();
             Ring.pop();
         }
         else if (!FreeList.empty())
@@ -156,19 +156,19 @@ struct DelayTexture : DelayContext
     {
         while(Ring.size() > Delay + 1)
         {
-            FreeList.push(*Ring.front().As<MzResourceShareInfo>());
+            FreeList.push(*Ring.front().As<mzResourceShareInfo>());
             Ring.pop();
         }
         if (Ring.empty() || Ring.size() < Delay)
             return;
-        FreeList.push(*buf->As<MzResourceShareInfo>());
+        FreeList.push(*buf->As<mzResourceShareInfo>());
         *buf = std::move(Ring.front());
         Ring.pop();
     }
 };
 
 //void RegisterDelay(NodeActionsMap& functions, std::set<flatbuffers::Type const*> const& types)
-void RegisterDelay(MzNodeFunctions* functions)
+void RegisterDelay(mzNodeFunctions* functions)
 {
     functions->TypeName = "mz.utiltiies.Delay";
     // mz::mzEngine = mzEngine;

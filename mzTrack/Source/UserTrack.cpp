@@ -8,7 +8,7 @@
 namespace mz
 {
 
-void RegisterController(MzNodeFunctions& functions)
+void RegisterController(mzNodeFunctions& functions)
 {
     functions.TypeName = "mz.track.UserTrack";
     struct UserTrack {
@@ -81,7 +81,7 @@ void RegisterController(MzNodeFunctions& functions)
     };
 
     functions.OnNodeDeleted = [](void* ctx, auto){delete (UserTrack*)ctx;};
-    functions.OnKeyEvent = [](void* ctx, MzKeyEvent const* keyEvent){
+    functions.OnKeyEvent = [](void* ctx, mzKeyEvent const* keyEvent){
 		auto& key = keyEvent->Key;
     	auto& mdelta = keyEvent->MouseDelta;
     	auto c = (UserTrack*)ctx;
@@ -122,7 +122,7 @@ void RegisterController(MzNodeFunctions& functions)
         mzEngine.HandleEvent(CreateAppEvent(fbb, mz::app::CreatePinDirtied(fbb, &c->OutPinId)));
     };
 
-    functions.ExecuteNode = [](void* ctx, const MzNodeExecuteArgs* args){
+    functions.ExecuteNode = [](void* ctx, const mzNodeExecuteArgs* args){
         auto c = (UserTrack*)ctx;
     	auto values = GetPinValues(args);
         c->impulse = glm::max(*(f64*)values["Impulse"], 1.);

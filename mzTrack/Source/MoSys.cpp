@@ -299,7 +299,7 @@ struct MoSys : public TrackNodeContext
     }
 };
 
-void RegisterMoSysNode(MzNodeFunctions &functions)
+void RegisterMoSysNode(mzNodeFunctions &functions)
 {
 	functions.TypeName = "mz.track.MoSys";
     RegisterTrackCommon(functions);
@@ -327,7 +327,7 @@ void RegisterMoSysNode(MzNodeFunctions &functions)
         }
     };
 
-    functions.OnPinValueChanged = [](auto ctx, auto id, MzBuffer* value) {
+    functions.OnPinValueChanged = [](auto ctx, auto id, mzBuffer* value) {
         MoSys *fnctx = (MoSys *)ctx;
         fnctx->OnPinValueChanged(id, value->Data);
     };

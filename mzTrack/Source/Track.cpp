@@ -18,15 +18,15 @@ enum class TrackNode
 	Count
 };
 
-void RegisterFreeDNode(MzNodeFunctions& functions);
-void RegisterXyncNode(MzNodeFunctions& functions);
-void RegisterStypeNode(MzNodeFunctions& functions);
-void RegisterMoSysNode(MzNodeFunctions& functions);
-void RegisterController(MzNodeFunctions& functions);
-void RegisterCalculateNodalPoint(MzNodeFunctions& functions);
+void RegisterFreeDNode(mzNodeFunctions& functions);
+void RegisterXyncNode(mzNodeFunctions& functions);
+void RegisterStypeNode(mzNodeFunctions& functions);
+void RegisterMoSysNode(mzNodeFunctions& functions);
+void RegisterController(mzNodeFunctions& functions);
+void RegisterCalculateNodalPoint(mzNodeFunctions& functions);
 
 extern "C"
-MZAPI_ATTR MzResult MZAPI_CALL mzExportNodeFunctions(size_t* outSize, MzNodeFunctions* outFunctions)
+MZAPI_ATTR mzResult MZAPI_CALL mzExportNodeFunctions(size_t* outSize, mzNodeFunctions* outFunctions)
 {
 	*outSize = (size_t)TrackNode::Count;
 	if (!outFunctions)

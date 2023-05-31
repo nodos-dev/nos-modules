@@ -17,7 +17,7 @@
 namespace mz::utilities
 {
 
-static MzResult GetShaders(size_t* count, const char** names, MzBuffer* spirv)
+static mzResult GetShaders(size_t* count, const char** names, mzBuffer* spirv)
 {
 	*count = 1;
 	if (!names || !spirv)
@@ -29,13 +29,13 @@ static MzResult GetShaders(size_t* count, const char** names, MzBuffer* spirv)
 	return MZ_RESULT_SUCCESS;
 }
 
-static MzResult GetPasses(size_t* count, MzPassInfo* passes)
+static mzResult GetPasses(size_t* count, mzPassInfo* passes)
 {
 	*count = 1;
 	if (!passes)
 		return MZ_RESULT_SUCCESS;
 
-	*passes = MzPassInfo{
+	*passes = mzPassInfo{
 		.Key = "SRGB2Linear_Pass",
 		.Shader = "ReadImage_SRGB2Linear",
 		.Blend = 0,
@@ -45,14 +45,14 @@ static MzResult GetPasses(size_t* count, MzPassInfo* passes)
 	return MZ_RESULT_SUCCESS;
 }
 
-static MzResult GetFunctions(size_t* count, const char** names, PFN_NodeFunctionExecute* fns)
+static mzResult GetFunctions(size_t* count, const char** names, mzPfnNodeFunctionExecute* fns)
 {
     *count = 1;
     if(!names || !fns)
         return MZ_RESULT_SUCCESS;
     
     *names = "ReadImage_Load";
-    *fns = [](void* ctx, const MzNodeExecuteArgs* nodeArgs, const MzNodeExecuteArgs* functionArgs)
+    *fns = [](void* ctx, const mzNodeExecuteArgs* nodeArgs, const mzNodeExecuteArgs* functionArgs)
     {
         auto values = GetPinValues(nodeArgs);
         std::filesystem::path path = GetPinValue<const char>(values, "Path");
@@ -61,15 +61,15 @@ static MzResult GetFunctions(size_t* count, const char** names, PFN_NodeFunction
             mzEngine.LogE("Read Image cannot load file %s", path.string().c_str());
             return;
         }
-        MzResourceShareInfo out = DeserializeTextureInfo(GetPinValue<void>(values, "Out"));
-        MzResourceShareInfo tmp = out;
+        mzResourceShareInfo out = DeserializeTextureInfo(GetPinValue<void>(values, "Out"));
+        mzResourceShareInfo tmp = out;
 		
 		int w, h, n;
 		u8* img = stbi_load(path.string().c_str(), &w, &h, &n, 4);
-		mzEngine.ImageLoad(img, MzVec2u(w,h), MZ_FORMAT_R8G8B8A8_SRGB, &tmp);
+		mzEngine.ImageLoad(img, mzVec2u(w,h), MZ_FORMAT_R8G8B8A8_SRGB, &tmp);
 		free(img);
 
-        MzCmd cmd;
+        mzCmd cmd;
         mzEngine.Begin(&cmd);
         mzEngine.Copy(cmd, &tmp, &out, 0);
         mzEngine.End(cmd);
@@ -80,7 +80,7 @@ static MzResult GetFunctions(size_t* count, const char** names, PFN_NodeFunction
 }
 
 
-void RegisterReadImage(MzNodeFunctions* fn)
+void RegisterReadImage(mzNodeFunctions* fn)
 {
     *fn = {
         .TypeName = "mz.utilities.ReadImage",
@@ -90,7 +90,7 @@ void RegisterReadImage(MzNodeFunctions* fn)
     };
 }
 
-// void RegisterReadImage(MzNodeFunctions* fn)
+// void RegisterReadImage(mzNodeFunctions* fn)
 // {
 	// auto& actions = functions["mz.ReadImage"];
 

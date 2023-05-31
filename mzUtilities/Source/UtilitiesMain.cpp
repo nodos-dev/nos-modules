@@ -47,18 +47,18 @@ enum Utilities
 	Count
 };
 
-void RegisterMerge(MzNodeFunctions*);
-void RegisterDelay(MzNodeFunctions*);
-void RegisterTime(MzNodeFunctions*);
-void RegisterReadImage(MzNodeFunctions*);
-void RegisterWriteImage(MzNodeFunctions*);
-void RegisterChannelViewer(MzNodeFunctions*);
-void RegisterResize(MzNodeFunctions*);
+void RegisterMerge(mzNodeFunctions*);
+void RegisterDelay(mzNodeFunctions*);
+void RegisterTime(mzNodeFunctions*);
+void RegisterReadImage(mzNodeFunctions*);
+void RegisterWriteImage(mzNodeFunctions*);
+void RegisterChannelViewer(mzNodeFunctions*);
+void RegisterResize(mzNodeFunctions*);
 
 extern "C"
 {
 
-MZAPI_ATTR MzResult MZAPI_CALL mzExportNodeFunctions(size_t* outSize, MzNodeFunctions* funcs)
+MZAPI_ATTR mzResult MZAPI_CALL mzExportNodeFunctions(size_t* outSize, mzNodeFunctions* funcs)
 {
     *outSize = Utilities::Count;
 	if (!funcs)
@@ -67,9 +67,9 @@ MZAPI_ATTR MzResult MZAPI_CALL mzExportNodeFunctions(size_t* outSize, MzNodeFunc
 	}
 
 #define REGISTER_FILTER(name) \
-    funcs[Utilities::##name] = MzNodeFunctions{ \
+    funcs[Utilities::##name] = mzNodeFunctions{ \
         .TypeName = "mz.utilities." #name, \
-        .GetShaderSource = [](MzBuffer* spirv) { \
+        .GetShaderSource = [](mzBuffer* spirv) { \
 				*spirv = { (void*)(name##_frag_spv), sizeof (name##_frag_spv) }; \
 				return MZ_RESULT_SUCCESS; \
 			},\

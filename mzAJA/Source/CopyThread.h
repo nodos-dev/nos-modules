@@ -91,7 +91,7 @@ struct CopyThread : TrackSync
     std::atomic_bool run = true;
     mz::fb::ShowAs kind;
     rc<GPURing> gpuRing;
-	MzResourceShareInfo CompressedTex = {};
+	mzResourceShareInfo CompressedTex = {};
     rc<CPURing> cpuRing;
 	// The ring objects above are overwritten on path restart.
 	// TODO: Find out other synchronization issues and fix them all
@@ -105,7 +105,7 @@ struct CopyThread : TrackSync
     std::atomic<Colorspace> Colorspace = Colorspace::REC709;
     std::atomic<GammaCurve> GammaCurve = GammaCurve::REC709;
     std::atomic_bool NarrowRange = true;
-    MzResourceShareInfo SSBO;
+    mzResourceShareInfo SSBO;
 
 	struct
 	{
@@ -145,8 +145,8 @@ struct CopyThread : TrackSync
 
     virtual u32 GetRingSize() override;
     virtual std::string Name() const override;
-	MzVec2u GetSuitableDispatchSize() const;
-	MzVec2u Extent() const;
+	mzVec2u GetSuitableDispatchSize() const;
+	mzVec2u Extent() const;
     bool IsInput() const;
     void AJAInputProc();
     void AJAOutputProc();

@@ -6,15 +6,15 @@ namespace mz::utilities
 
 struct GaussBlurContext
 {
-	MzResourceShareInfo IntermediateTexture = {};
+	mzResourceShareInfo IntermediateTexture = {};
 	mz::fb::UUID NodeId;
 
 	GaussBlurContext(fb::Node const& node)
 	{
 		NodeId = *node.id();
-		IntermediateTexture.info.type = MZ_RESOURCE_TYPE_TEXTURE;
-		IntermediateTexture.info.texture.filter = MZ_TEXTURE_FILTER_LINEAR;
-		IntermediateTexture.info.texture.usage = MzImageUsage(MZ_IMAGE_USAGE_RENDER_TARGET | MZ_IMAGE_USAGE_SAMPLED); 
+		IntermediateTexture.Info.Type = MZ_RESOURCE_TYPE_TEXTURE;
+		IntermediateTexture.Info.Texture.Filter = MZ_TEXTURE_FILTER_LINEAR;
+		IntermediateTexture.Info.Texture.Usage = mzImageUsage(MZ_IMAGE_USAGE_RENDER_TARGET | MZ_IMAGE_USAGE_SAMPLED); 
 	}
 
 	~GaussBlurContext()
@@ -23,7 +23,7 @@ struct GaussBlurContext
 	}
 
 
-	static MzResult GetShaders(size_t* outCount, const char** outShaderNames, MzBuffer* infos)
+	static mzResult GetShaders(size_t* outCount, const char** outShaderNames, mzBuffer* infos)
 	{
 		*outCount = 1;
 		if (!infos)
@@ -36,7 +36,7 @@ struct GaussBlurContext
 		return MZ_RESULT_SUCCESS;
 	}
 
-	static MzResult GetPasses(size_t* outCount, MzPassInfo* infos)
+	static mzResult GetPasses(size_t* outCount, mzPassInfo* infos)
 	{
 		*outCount = 1;
 		if (!infos)
@@ -52,43 +52,43 @@ struct GaussBlurContext
 	
 	void DestroyResources()
 	{
-		if (IntermediateTexture.memory.handle)
+		if (IntermediateTexture.Memory.Handle)
 		{
 			mzEngine.Destroy(&IntermediateTexture);
 		}
 	}
 
-	void SetupIntermediateTexture(MzResourceShareInfo* outputTexture)
+	void SetupIntermediateTexture(mzResourceShareInfo* outputTexture)
 	{
 		
-		if (IntermediateTexture.info.texture.width == outputTexture->info.texture.width &&
-		    IntermediateTexture.info.texture.height == outputTexture->info.texture.height &&
-		    IntermediateTexture.info.texture.format == outputTexture->info.texture.format)
+		if (IntermediateTexture.Info.Texture.Width == outputTexture->Info.Texture.Width &&
+		    IntermediateTexture.Info.Texture.Height == outputTexture->Info.Texture.Height &&
+		    IntermediateTexture.Info.Texture.Format == outputTexture->Info.Texture.Format)
 			return;
 
-		IntermediateTexture.info.texture.width = outputTexture->info.texture.width;
-		IntermediateTexture.info.texture.height = outputTexture->info.texture.height;
-		IntermediateTexture.info.texture.format = outputTexture->info.texture.format;
+		IntermediateTexture.Info.Texture.Width = outputTexture->Info.Texture.Width;
+		IntermediateTexture.Info.Texture.Height = outputTexture->Info.Texture.Height;
+		IntermediateTexture.Info.Texture.Format = outputTexture->Info.Texture.Format;
 		
 		mzEngine.Create(&IntermediateTexture); // TODO Check result
 	}
 
-	void Run(const MzNodeExecuteArgs* pins)
+	void Run(const mzNodeExecuteArgs* pins)
 	{
 
-		MzResourceShareInfo outputTexture;
+		mzResourceShareInfo outputTexture;
 
 		auto values = GetPinValues(pins);
 
-		const MzResourceShareInfo input  = DeserializeTextureInfo(values["Input"]);
-		const MzResourceShareInfo output = DeserializeTextureInfo(values["Output"]);
+		const mzResourceShareInfo input  = DeserializeTextureInfo(values["Input"]);
+		const mzResourceShareInfo output = DeserializeTextureInfo(values["Output"]);
 		const f32 softness = *(f32*)values["Softness"];
-		const MzVec2 Kernel_Size = *(MzVec2*)values["Kernel_Size"];
-		const MzVec2u Pass_Type = MzVec2u(0, 1);
+		const mzVec2 Kernel_Size = *(mzVec2*)values["Kernel_Size"];
+		const mzVec2u Pass_Type = mzVec2u(0, 1);
 
 		SetupIntermediateTexture(&outputTexture);
 
-		std::vector<MzShaderBinding> bindings = {
+		std::vector<mzShaderBinding> bindings = {
 			ShaderBinding("Input", input),
 			ShaderBinding("Kernel_Size", Kernel_Size.x),
 			ShaderBinding("Pass_Type", Pass_Type.x),
@@ -96,7 +96,7 @@ struct GaussBlurContext
 		};
 		
 		// Horz pass
-		MzRunPassParams pass = {
+		mzRunPassParams pass = {
 			.PassKey = "Gaussian_Blur_Pass",
 			.Bindings = bindings.data(),
 			.BindingCount = (u32)bindings.size(),
@@ -117,13 +117,13 @@ struct GaussBlurContext
 
 }
 
-void RegisterGaussianBlur(MzNodeFunctions* out)
+void RegisterGaussianBlur(mzNodeFunctions* out)
 {
 	out->TypeName = "mz.filters.GaussianBlur";
-	out->OnNodeCreated = [](const MzFbNode* node, void** outCtxPtr) {
+	out->OnNodeCreated = [](const mzFbNode* node, void** outCtxPtr) {
 		*outCtxPtr = new mz::utilities::GaussBlurContext(*node);
 	};
-	out->ExecuteNode = [](void* ctx, const MzNodeExecuteArgs* args) {
+	out->ExecuteNode = [](void* ctx, const mzNodeExecuteArgs* args) {
 		((mz::utilities::GaussBlurContext*)ctx)->Run(args);
 		return MZ_RESULT_SUCCESS;
 	};

@@ -20,7 +20,7 @@ public:
 };
 
 
-void RegisterTime(MzNodeFunctions* fn)
+void RegisterTime(mzNodeFunctions* fn)
 {
     fn->TypeName = "mz.utiltiies.Time";
 	// functions["mz.Time"].NodeCreated = [](auto const&, auto&, void** context) {

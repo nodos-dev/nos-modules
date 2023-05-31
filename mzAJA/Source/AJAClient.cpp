@@ -443,7 +443,7 @@ void AJAClient::OnNodeUpdate(PinMapping &&newMapping, std::unordered_map<std::st
     }
 }
 
-void AJAClient::OnPinMenuFired(MzContextMenuRequest const &request)
+void AJAClient::OnPinMenuFired(mzContextMenuRequest const &request)
 {
     flatbuffers::FlatBufferBuilder fbb;
     auto name = Mapping.GetPinName(*request.item_id());
@@ -463,7 +463,7 @@ void AJAClient::OnPinMenuFired(MzContextMenuRequest const &request)
     }
 }
 
-void AJAClient::OnMenuFired(MzContextMenuRequest const&request)
+void AJAClient::OnMenuFired(mzContextMenuRequest const&request)
 {
     if (0 != memcmp(request.item_id(), &Mapping.NodeId, 16))
     {
@@ -837,7 +837,7 @@ void AJAClient::OnExecute()
 {
 }
 
-bool AJAClient::BeginCopyFrom(MzCopyInfo &cpy)
+bool AJAClient::BeginCopyFrom(mzCopyInfo &cpy)
 {
     GPURing::Resource *slot = 0;
     auto it = Pins.find(cpy.ID); 
@@ -863,7 +863,7 @@ bool AJAClient::BeginCopyFrom(MzCopyInfo &cpy)
     return cpy.ShouldCopyTexture = !!(cpy.Data = slot);
 }
 
-bool AJAClient::BeginCopyTo(MzCopyInfo &cpy)
+bool AJAClient::BeginCopyTo(mzCopyInfo &cpy)
 {
     GPURing::Resource *slot = 0;
     auto it = Pins.find(cpy.ID); 
@@ -885,7 +885,7 @@ bool AJAClient::BeginCopyTo(MzCopyInfo &cpy)
     return cpy.ShouldCopyTexture = !!(cpy.Data = slot);
 }
 
-void AJAClient::EndCopyFrom(MzCopyInfo &cpy)
+void AJAClient::EndCopyFrom(mzCopyInfo &cpy)
 {
     if(!cpy.Data) 
         return;
@@ -898,7 +898,7 @@ void AJAClient::EndCopyFrom(MzCopyInfo &cpy)
     th->gpuRing->EndPop(res);
 }
 
-void AJAClient::EndCopyTo(MzCopyInfo &cpy)
+void AJAClient::EndCopyTo(mzCopyInfo &cpy)
 {
     if(!cpy.Data) 
         return;

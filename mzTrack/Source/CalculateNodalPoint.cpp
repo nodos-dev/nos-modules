@@ -2,7 +2,7 @@
 
 namespace mz
 {
-void RegisterCalculateNodalPoint(MzNodeFunctions& out)
+void RegisterCalculateNodalPoint(mzNodeFunctions& out)
 {
 	out.TypeName = "mz.track.CalculateNodalPoint";
 	out.ExecuteNode = [](auto ctx, auto args) {

@@ -56,7 +56,7 @@ enum Filters
 extern "C"
 {
 
-MZAPI_ATTR MzResult MZAPI_CALL mzExportNodeFunctions(size_t* outSize, MzNodeFunctions* outFunctions)
+MZAPI_ATTR mzResult MZAPI_CALL mzExportNodeFunctions(size_t* outSize, mzNodeFunctions* outFunctions)
 {
 	if (!outFunctions)
 	{
@@ -71,7 +71,7 @@ MZAPI_ATTR MzResult MZAPI_CALL mzExportNodeFunctions(size_t* outSize, MzNodeFunc
 		// COLOR CORRECT FILTER
 		case Filters::ColorCorrect: {
 			funcs->TypeName = "mz.filters.ColorCorrect";
-			funcs->GetShaderSource = [](MzBuffer* outSpirvBuf) -> MzResult {
+			funcs->GetShaderSource = [](mzBuffer* outSpirvBuf) -> mzResult {
 				outSpirvBuf->Data = (void*)(ColorCorrect_frag_spv);
 				outSpirvBuf->Size = sizeof(ColorCorrect_frag_spv);
 				return MZ_RESULT_SUCCESS;
@@ -81,7 +81,7 @@ MZAPI_ATTR MzResult MZAPI_CALL mzExportNodeFunctions(size_t* outSize, MzNodeFunc
 		// DIFF FILTER
 		case Filters::Diff: {
 			funcs->TypeName = "mz.filters.Diff";
-			funcs->GetShaderSource = [](MzBuffer* outSpirvBuf) -> MzResult {
+			funcs->GetShaderSource = [](mzBuffer* outSpirvBuf) -> mzResult {
 				outSpirvBuf->Data = (void*)(Diff_frag_spv);
 				outSpirvBuf->Size = sizeof(Diff_frag_spv);
 				return MZ_RESULT_SUCCESS;
@@ -91,7 +91,7 @@ MZAPI_ATTR MzResult MZAPI_CALL mzExportNodeFunctions(size_t* outSize, MzNodeFunc
 		// KUWAHARA FILTER
 		case Filters::Kuwahara: {
 			funcs->TypeName = "mz.filters.Kuwahara";
-			funcs->GetShaderSource = [](MzBuffer* outSpirvBuf) -> MzResult {
+			funcs->GetShaderSource = [](mzBuffer* outSpirvBuf) -> mzResult {
 				outSpirvBuf->Data = (void*)(Kuwahara_frag_spv);
 				outSpirvBuf->Size = sizeof(Kuwahara_frag_spv);
 				return MZ_RESULT_SUCCESS;
@@ -107,7 +107,7 @@ MZAPI_ATTR MzResult MZAPI_CALL mzExportNodeFunctions(size_t* outSize, MzNodeFunc
 		// MERGE FILTER
 		case Filters::KawaseLightStreak: {
 			funcs->TypeName = "mz.filters.KawaseLightStreak";
-			funcs->GetShaderSource = [](MzBuffer* outSpirvBuf)-> MzResult {
+			funcs->GetShaderSource = [](mzBuffer* outSpirvBuf)-> mzResult {
 				outSpirvBuf->Data = (void*)(KawaseLightStreak_frag_spv);
 				outSpirvBuf->Size = sizeof(KawaseLightStreak_frag_spv);
 				return MZ_RESULT_SUCCESS;
@@ -117,7 +117,7 @@ MZAPI_ATTR MzResult MZAPI_CALL mzExportNodeFunctions(size_t* outSize, MzNodeFunc
 		// PREMULTIPLY ALPHA FILTER
 		case Filters::PremultiplyAlpha: {
 			funcs->TypeName = "mz.filters.PremultiplyAlpha";
-			funcs->GetShaderSource = [](MzBuffer* outSpirvBuf)-> MzResult {
+			funcs->GetShaderSource = [](mzBuffer* outSpirvBuf)-> mzResult {
 				outSpirvBuf->Data = (void*)(PremultiplyAlpha_frag_spv);
 				outSpirvBuf->Size = sizeof(PremultiplyAlpha_frag_spv);
 				return MZ_RESULT_SUCCESS;
@@ -127,7 +127,7 @@ MZAPI_ATTR MzResult MZAPI_CALL mzExportNodeFunctions(size_t* outSize, MzNodeFunc
 		// SHARPEN FILTER
 		case Filters::Sharpen: {
 			funcs->TypeName = "mz.filters.Sharpen";
-			funcs->GetShaderSource = [](MzBuffer* outSpirvBuf)-> MzResult {
+			funcs->GetShaderSource = [](mzBuffer* outSpirvBuf)-> mzResult {
 				outSpirvBuf->Data = (void*)(Sharpen_frag_spv);
 				outSpirvBuf->Size = sizeof(Sharpen_frag_spv);
 				return MZ_RESULT_SUCCESS;
@@ -137,7 +137,7 @@ MZAPI_ATTR MzResult MZAPI_CALL mzExportNodeFunctions(size_t* outSize, MzNodeFunc
 		// SOBEL FILTER
 		case Filters::Sobel: {
 			funcs->TypeName = "mz.filters.Sobel";
-			funcs->GetShaderSource = [](MzBuffer* outSpirvBuf)-> MzResult {
+			funcs->GetShaderSource = [](mzBuffer* outSpirvBuf)-> mzResult {
 				outSpirvBuf->Data = (void*)(Sobel_frag_spv);
 				outSpirvBuf->Size = sizeof(Sobel_frag_spv);
 				return MZ_RESULT_SUCCESS;
@@ -147,7 +147,7 @@ MZAPI_ATTR MzResult MZAPI_CALL mzExportNodeFunctions(size_t* outSize, MzNodeFunc
 		// THRESHOLDER FILTER
 		case Filters::Thresholder: {
 			funcs->TypeName = "mz.filters.Thresholder";
-			funcs->GetShaderSource = [](MzBuffer* outSpirvBuf)-> MzResult {
+			funcs->GetShaderSource = [](mzBuffer* outSpirvBuf)-> mzResult {
 				outSpirvBuf->Data = (void*)(Thresholder_frag_spv);
 				outSpirvBuf->Size = sizeof(Thresholder_frag_spv);
 				return MZ_RESULT_SUCCESS;
@@ -157,7 +157,7 @@ MZAPI_ATTR MzResult MZAPI_CALL mzExportNodeFunctions(size_t* outSize, MzNodeFunc
 		// SAMPLER FILTER
 		case Filters::Sampler: {
 			funcs->TypeName = "mz.filters.Sampler";
-			funcs->GetShaderSource = [](MzBuffer* outSpirvBuf)-> MzResult {
+			funcs->GetShaderSource = [](mzBuffer* outSpirvBuf)-> mzResult {
 				outSpirvBuf->Data = (void*)(Sampler_frag_spv);
 				outSpirvBuf->Size = sizeof(Sampler_frag_spv);
 				return MZ_RESULT_SUCCESS;

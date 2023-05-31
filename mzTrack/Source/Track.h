@@ -92,7 +92,7 @@ namespace mz
 			}
 		}
 
-		bool EntryPoint(MzNodeExecuteArgs const& args)
+		bool EntryPoint(mzNodeExecuteArgs const& args)
 		{
 			if (ShouldRestart)
 			{
@@ -327,7 +327,7 @@ namespace mz
 					return;
 				}
 				u8 buf[4096];
-				MzBuffer defaultTrackData;
+				mzBuffer defaultTrackData;
 				mzEngine.GetDefaultValueOfType("mz.fb.Track", &defaultTrackData);
 				mz::Buffer defaultTrackBuffer = mz::Buffer((uint8_t*)defaultTrackData.Data, defaultTrackData.Size);
 				fb::TTrack defaultTrack = defaultTrackBuffer.As<fb::TTrack>();
@@ -364,9 +364,9 @@ namespace mz
 		
 	};
 
-	static void RegisterTrackCommon(MzNodeFunctions& functions)
+	static void RegisterTrackCommon(mzNodeFunctions& functions)
 	{
-		functions.OnPathCommand = [](void* ctx, const MzPathCommand* command)
+		functions.OnPathCommand = [](void* ctx, const mzPathCommand* command)
 		{
 			TrackNodeContext* trkCtx = (TrackNodeContext*)ctx;
 			mz::Buffer val((u8*)command->Args.Data, command->Args.Size);
@@ -378,7 +378,7 @@ namespace mz
 			trkCtx->Restart();
 		};
 
-		functions.ExecuteNode = [](void* ctx, const MzNodeExecuteArgs* args) {
+		functions.ExecuteNode = [](void* ctx, const mzNodeExecuteArgs* args) {
 			if (((TrackNodeContext*)ctx)->EntryPoint(*args))
 				return MZ_RESULT_SUCCESS;
 			return MZ_RESULT_FAILED; };

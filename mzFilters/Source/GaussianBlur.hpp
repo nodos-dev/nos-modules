@@ -4,4 +4,4 @@
 
 #include <MediaZ/Helpers.hpp>
 
-void RegisterGaussianBlur(MzNodeFunctions* out);
+void RegisterGaussianBlur(mzNodeFunctions* out);

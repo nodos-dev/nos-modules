@@ -41,7 +41,7 @@ template<class T> T Mul(T x, T y) { return x * y; }
 template<class T> T Div(T x, T y) { return x / y; }
 
 template<class T, T F(T, T)>
-MzResult ScalarBinopExecute(void* ctx, const MzNodeExecuteArgs* args)
+mzResult ScalarBinopExecute(void* ctx, const mzNodeExecuteArgs* args)
 {
 	auto X = reinterpret_cast<T*>(args->PinValues[0].Data);
 	auto Y = reinterpret_cast<T*>(args->PinValues[1].Data);
@@ -81,7 +81,7 @@ struct Vec {
 };
 
 template<class T, int Dim, Vec<T,Dim>F(Vec<T,Dim>,Vec<T,Dim>)>
-MzResult VecBinopExecute(void* ctx, const MzNodeExecuteArgs* args)
+mzResult VecBinopExecute(void* ctx, const mzNodeExecuteArgs* args)
 {
 	auto X = reinterpret_cast<Vec<T, Dim>*>(args->PinValues[0].Data);
 	auto Y = reinterpret_cast<Vec<T, Dim>*>(args->PinValues[1].Data);
@@ -186,17 +186,17 @@ enum class MathNodeTypes {
 };
 
 template<class T>
-MzResult ToString(void* ctx, const MzNodeExecuteArgs* args)
+mzResult ToString(void* ctx, const mzNodeExecuteArgs* args)
 {
 	auto* in = reinterpret_cast<u32*>(args->PinValues[0].Data);
 	auto s = std::to_string(*in);
-	return mzEngine.SetPinValue(args->PinIds[1], MzBuffer { .Data = (void*)s.c_str(), .Size = s.size() + 1 });
+	return mzEngine.SetPinValue(args->PinIds[1], mzBuffer { .Data = (void*)s.c_str(), .Size = s.size() + 1 });
 }
 
 extern "C"
 {
 
-MZAPI_ATTR MzResult MZAPI_CALL mzExportNodeFunctions(size_t* outCount, MzNodeFunctions* outFunctions)
+MZAPI_ATTR mzResult MZAPI_CALL mzExportNodeFunctions(size_t* outCount, mzNodeFunctions* outFunctions)
 {
 	*outCount = (size_t)(MathNodeTypes::Count);
 	if (!outFunctions)
@@ -215,7 +215,7 @@ MZAPI_ATTR MzResult MZAPI_CALL mzExportNodeFunctions(size_t* outCount, MzNodeFun
 		}
 		case MathNodeTypes::SineWave: {
 			functions->TypeName = "mz.math.SineWave";
-			functions->ExecuteNode = [](void* ctx, const MzNodeExecuteArgs* args) {
+			functions->ExecuteNode = [](void* ctx, const mzNodeExecuteArgs* args) {
 				constexpr uint32_t PIN_AMPLITUDE = 0;
 				constexpr uint32_t PIN_FREQUENCY = 1;
 				constexpr uint32_t PIN_OUT = 2;
@@ -233,7 +233,7 @@ MZAPI_ATTR MzResult MZAPI_CALL mzExportNodeFunctions(size_t* outCount, MzNodeFun
 		}
 		case MathNodeTypes::Clamp: {
 			functions->TypeName = "mz.math.Clamp";
-			functions->ExecuteNode = [](void* ctx, const MzNodeExecuteArgs* args) {
+			functions->ExecuteNode = [](void* ctx, const mzNodeExecuteArgs* args) {
 				constexpr uint32_t PIN_IN = 0;
 				constexpr uint32_t PIN_MIN = 1;
 				constexpr uint32_t PIN_MAX = 2;
@@ -252,7 +252,7 @@ MZAPI_ATTR MzResult MZAPI_CALL mzExportNodeFunctions(size_t* outCount, MzNodeFun
 		}
 		case MathNodeTypes::Absolute: {
 			functions->TypeName = "mz.math.Absolute";
-			functions->ExecuteNode = [](void* ctx, const MzNodeExecuteArgs* args) {
+			functions->ExecuteNode = [](void* ctx, const mzNodeExecuteArgs* args) {
 				constexpr uint32_t PIN_IN = 0;
 				constexpr uint32_t PIN_OUT = 1;
 				auto valueBuf = &args->PinValues[PIN_IN];
