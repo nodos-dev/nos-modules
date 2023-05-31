@@ -31,15 +31,15 @@ vec4 MixColor(float c)
 vec4 CalcSmoothness(in float c[5])
 {
     const float N = mix(2, 16, ubo.SmoothnessCurve);
-    float re = 0;
-    for(int i = 0; i < 5; ++i) re += pow(clamp(c[i], 0, 1), N);
-    return MixColor(pow(re, 1.0/N));
+    float re = 1;
+    for(int i = 0; i < 5; ++i) re *= 1 - clamp(c[i], 0, 1); return MixColor(1-re);
+    for(int i = 0; i < 5; ++i) re += pow(clamp(c[i], 0, 1), N); return MixColor(pow(re - 1, 1.0/N));
 }
 
 vec2 Project(in vec2 L, in vec2 R, in vec2 P)
 {
-    L = L - R;
-    P = P - R;
+    L -= R;
+    P -= R;
     return L * dot(L, P) / dot(L, L) + R;
 }
 
@@ -112,7 +112,6 @@ float SmoothnessLine2(
     const float b = Cross(p, p2) + Cross(p1, p0);
     const float c = Cross(p, p0);
 
-    
     if(dot(D0 - D1, D0 - D1) < EPSILON)
     {
         return 1 - clamp(-c/b, 0, 1);
@@ -143,23 +142,65 @@ float DiagSmoothness(vec2 X, vec2 Y, vec2 O, vec3 P)
     return int(P.z == 0)*(SmoothnessLine2(O + X - B, O + Y - B, -B, -B, Diag.xx, Diag.yy, P.xy));
 }
 
+
+void swap(inout vec2 a, inout vec2 b)
+{
+    vec2 tmp = a;
+    a = b;
+    b = tmp;
+}
+
+float DiagCoeff(vec2 B0, vec2 B1, vec2 O0, vec2 O1, vec2 C, vec2 pos, bool flip)
+{
+    if(flip)
+    {
+        swap(B0, B1);
+        swap(O0, O1);
+        C.xy = C.yx;
+    }
+
+    const vec2 d0 = B0 - normalize(B0 - O0) * ((ubo.Diag.x *2/ sqrt(2)) + C.y) - normalize(B0 - B1) * C.x;
+    const vec2 d1 = B0 - normalize(B0 - B1) * ((ubo.Diag.x *2/ sqrt(2)) + C.x) - normalize(B0 - O0) * C.y;
+    const vec2 d2 = B0 - normalize(B0 - O0) * (((ubo.Diag.x + ubo.Diag.y)*2 / sqrt(2)) + C.y) - normalize(B0 - B1) * (C.x);
+    const vec2 d3 = B0 - normalize(B0 - B1) * (((ubo.Diag.x + ubo.Diag.y)*2 / sqrt(2)) + C.x) - normalize(B0 - O0) * (C.y);
+    const vec2 d0x = d2 + normalize(B0 - O1) * ubo.Diag.y;
+    const vec2 d1x = d3 + normalize(B0 - O1) * ubo.Diag.y;
+    const vec2 a = Project(d0x, d1x, pos);
+    const vec2 b = Project(d2, d3, pos);
+    
+    if((ubo.Diag.x > EPSILON || ubo.Diag.y > EPSILON) && (((flip ? -1 : 1)*Cross(d1x-d0x, pos-d0x))<0))
+    {
+        return -1;
+    }
+
+    if(((flip ? -1 : 1)*Cross(d3-d2, pos-d2))<0)
+    {
+        float x0 = length(pos - a);
+        float x1 = length(pos - b);
+        float x2 = length(a-b);
+        return 1-clamp(x0 / x2, 0, 1);
+    }
+
+    return 0;
+}
+
 void main()
 {   
     const bool HasLeftWing = GetBit(ubo.Flags, HAS_LEFT_WING_BIT);
     const bool HasRightWing = GetBit(ubo.Flags, HAS_RIGHT_WING_BIT);
     const bool SharpEdges = GetBit(ubo.Flags, SHARP_EDGES_BIT);
     
-    const vec4 S  = ubo.Scale;
-    const vec4 C  = ubo.SmoothnessCrop;
-    const vec4 s  = ubo.Smoothness;
-    const vec2 A  = ubo.Angle;
-    const float R  = ubo.Roundness;
+    const vec4  S = ubo.Scale.xwzy;
+    const vec4  C = ubo.SmoothnessCrop.xwzy;
+    const vec4  s = ubo.Smoothness.xwzy;
+    const vec2  A = ubo.Angle.yx;
+    const float R = ubo.Roundness;
 
     vec3 POS = pos.xyz;
-
+    
     const vec2 SIN = sin(A);
     const vec2 COS = cos(A);
-    const vec2 WIN = R * vec2(HasLeftWing, HasRightWing);
+    const vec2 WIN = R * vec2(HasLeftWing, HasRightWing).yx;
     const vec2 COT  = WIN * abs(1.0 / tan(A * .5));
     
     const vec2 LL = S.yw - R + WIN - COT;
@@ -174,12 +215,11 @@ void main()
     
     const vec2 BR = vec2(LX.y, -LY.y);
     const vec2 BL = vec2(LX.x, +LY.x);
-    
-    bool RHS = Sign(OR, BR, POS.xy) && Sign(vec2(0, OR.y), OR, POS.xy);
-    bool LHS = Sign(BL, OL, POS.xy) && Sign(OL, vec2(0, OL.y), POS.xy);
 
     if(!InQuad(OL, OR, BL, BR, POS.xy))
     {
+        const bool RHS = Sign(OR, BR, POS.xy) && Sign(vec2(0, OR.y), OR, POS.xy);
+        const bool LHS = Sign(BL, OL, POS.xy) && Sign(OL, vec2(0, OL.y), POS.xy);
         if(RHS) POS.xy = Project(BR, OR, POS.xy);
         if(LHS) POS.xy = Project(BL, OL, POS.xy);
         if(!LHS && !RHS) POS.xy = Project(OL, OR, POS.xy);
@@ -201,16 +241,44 @@ void main()
     }
     
     float Coeff[5] = float[5](0,0,0,0,0);
-    Coeff[0] = SmoothnessLine(BR, OR, BL, OL, C.wy, C.wy, POS.xy);
-    Coeff[1] = (POS.z + C.z + s.z - S.z) / s.z;
-    Coeff[2] = int(!HasLeftWing) * (1 - clamp((Distance(OL, BL, POS.xy) - C.y) / s.y, 0, 1)); 
-    Coeff[3] = int(!HasRightWing) * (1 - clamp((Distance(OR, BR, POS.xy) - C.w) / s.w, 0, 1));
 
-    if(HasRightWing ^^ HasLeftWing)
+    Coeff[0] = (POS.x - SC.y) / abs(SC.x - SC.y);
+    Coeff[1] = (POS.z + C.z + s.z - S.z)/ s.z;
+    if(!HasLeftWing  ) Coeff[2] = 1 - clamp((Distance(OL, BL, POS.xy) - C.y) / s.y, 0, 1); 
+    if(!HasRightWing ) Coeff[3] = 1 - clamp((Distance(OR, BR, POS.xy) - C.w) / s.w, 0, 1); 
+
+    if((HasRightWing ^^ HasLeftWing))
     {
-        Coeff[4] = HasLeftWing ? DiagSmoothness(OR, BL, BR, POS) : DiagSmoothness(OL, BR, BL, POS);
+
+#if 0  // Debug
+        if(
+            length(d0x - POS.xy) < 0.025 || length(d1x - POS.xy) < 0.025
+        )
+        {
+            rt = vec4(0, 0, 1, 1);
+            return;
+        }
+
+        if(
+            length(d0 - POS.xy) < 0.025 || length(d1 - POS.xy) < 0.025 ||
+            length(d2 - POS.xy) < 0.025 || length(d3 - POS.xy) < 0.025 ||
+            length(d0x - POS.xy) < 0.025 || length(d1x - POS.xy) < 0.025
+        )
+        {
+            rt = vec4(1, 1, 1, 1);
+            return;
+        }
+        if(length(POS.xy - b) < 0.005){ rt = vec4(1, 1, 0, 1); return;}
+        if(length(POS.xy - a) < 0.005){ rt = vec4(1, 0, 1, 1); return;}
+#endif
+
+        if((Coeff[4] = DiagCoeff(BL, BR, OL, OR, C.yw, POS.xy, HasLeftWing)) < 0)
+        {
+            rt = vec4(0, 0, 0, 1);
+            return;
+        }
     }
-    
+
     rt = CalcSmoothness(Coeff);
     rt.a = 1;
 }

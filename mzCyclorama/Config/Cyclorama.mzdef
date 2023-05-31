@@ -354,6 +354,14 @@
                     "show_as": "PROPERTY",
                     "can_show_as": "PROPERTY_ONLY",
                     "pin_category": "CleanPlate"
+                },
+                {
+                    "name": "CaptureFolder",
+                    "type_name": "string",
+                    "show_as": "PROPERTY",
+                    "can_show_as": "PROPERTY_ONLY",
+                    "pin_category": "CleanPlate",
+                    "data" : "R:/Reality/Assets/CleanPlates/"
                 }
             ]
         }

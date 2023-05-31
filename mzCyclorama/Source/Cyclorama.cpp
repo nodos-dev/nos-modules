@@ -249,7 +249,13 @@ struct Cyclorama : PinMapping
 {
     MzVertexData Verts = {};
 
-    std::atomic_bool Capturing = false;
+    enum 
+    {
+        CAPTURING = 1,
+        SAVING    = 2,
+    };
+
+    std::atomic_uint Status = 0;
 
     std::atomic_uint CapturedFrameCount = 0;
 
@@ -298,8 +304,10 @@ struct Cyclorama : PinMapping
         }
     };
 
+
+    std::string CaptureFolder = "R:/Reality/Assets/CleanPlates";
     std::vector<FrameData> CleanPlates;
-    // std::map<u32, FrameData> CleanPlates;
+    std::mutex CPLock;
 
     mz::fb::TTrack Track;
     
@@ -368,6 +376,16 @@ struct Cyclorama : PinMapping
         mzEngine.HandleEvent(CreateAppEvent(fbb, mz::CreatePinValueChangedDirect(fbb, &id, &buf)));
     }
 
+    void UpdateStatus()
+    {
+        std::vector<flatbuffers::Offset<mz::fb::NodeStatusMessage>> msg;
+        flatbuffers::FlatBufferBuilder fbb;
+        if(Status.load() & CAPTURING) msg.push_back(fb::CreateNodeStatusMessageDirect(fbb, "Capturing Clean Plate", fb::NodeStatusMessageType::INFO));
+        if(Status.load() & SAVING)    msg.push_back(fb::CreateNodeStatusMessageDirect(fbb, "Saving Clean Plate", fb::NodeStatusMessageType::INFO));
+        mzEngine.HandleEvent(CreateAppEvent(
+            fbb, mz::CreatePartialNodeUpdateDirect(fbb, &NodeId, ClearFlags::NONE, 0, 0, 0, 0, 0, 0, &msg)));
+    }
+
     void GenerateVertices2(std::vector<Vertex>& vertices, std::vector<glm::uvec3>& indices);
     void LoadVertices()
     {
@@ -422,6 +440,14 @@ struct Cyclorama : PinMapping
         GetValue<void>(name2pin, "CleanPlates", [this](auto captures) 
         { 
             LoadCleanPlates(*flatbuffers::GetRoot<mz::fb::CaptureDataArray>(captures));
+        });
+
+        GetValue<const char>(name2pin, "CaptureFolder", [this](const char* folder)
+        { 
+            if (std::filesystem::is_directory(folder))
+            {
+                CaptureFolder = std::filesystem::path(folder).string();
+            }
         });
 
         fb::TTexture src;
@@ -486,6 +512,34 @@ struct Cyclorama : PinMapping
         }
     }
 
+
+    void Validate(std::unordered_map<std::string, void*>& pins)
+    {
+        auto clampAndBroadcast = [&](f32 lo, f32 hi, const char* name) -> f32
+        {
+            f32& tmp = *GetPinValue<f32>(pins, name);
+            if(tmp<lo||tmp>hi) 
+            {
+                tmp = glm::clamp(tmp, lo, hi);
+                mzEngine.SetPinValueByName(NodeId, name, {&tmp, sizeof(tmp)});
+            }
+            return tmp;
+        };
+
+        const f32 Cb = clampAndBroadcast(0, Width - EdgeRoundness, "BottomCrop");
+        const f32 Cl = clampAndBroadcast(0, LeftWingLength - EdgeRoundness, "LeftCrop");
+        const f32 Cr = clampAndBroadcast(0, RightWingLength - EdgeRoundness, "RightCrop");
+        const f32 Ct = clampAndBroadcast(0, Height - EdgeRoundness, "TopCrop");
+
+        clampAndBroadcast(0, Width - EdgeRoundness - Cb, "BottomSmoothness");
+        clampAndBroadcast(0, LeftWingLength - EdgeRoundness - Cl, "LeftSmoothness");
+        clampAndBroadcast(0, RightWingLength - EdgeRoundness - Cr, "RightSmoothness");
+        clampAndBroadcast(0, Height - EdgeRoundness - Ct, "TopSmoothness");
+
+        const f32 DMax = glm::length(glm::vec2(LeftWingLength - EdgeRoundness - Cl, RightWingLength - EdgeRoundness - Cr)) * 0.5;
+        const f32 D = clampAndBroadcast(0, DMax, "DiagonalCrop");
+        clampAndBroadcast(0, DMax - D, "DiagonalSmoothness");
+    }
 
     inline static std::pair<const char*, std::vector<u8>> spirvs[] = 
     {
@@ -583,13 +637,19 @@ struct Cyclorama : PinMapping
         CHECK_AND_SET(Position)
         CHECK_AND_SET(Rotation)
 
+        if ("CaptureFolder" == PinName)
+        {
+            c->CaptureFolder = (char*)value->Data;
+            return;
+        }
+
         if ("CleanPlates" == PinName)
         {
             // c->LoadCleanPlates(*value->As<mz::fb::CaptureDataArray>());
             return;
         }
 
-        if (!c->Capturing)
+        if (!(c->Status & Cyclorama::CAPTURING))
         {
             return;
         }
@@ -616,39 +676,64 @@ struct Cyclorama : PinMapping
             }
             else
             {
+                std::unique_lock lock(c->CPLock);
                 const u32 idx = c->CleanPlates.size();
-                std::string path = "R:/Reality/Assets/CleanPlates/" + std::to_string(idx) + UUID2STR(c->NodeId) + ".png";
-                MzResourceShareInfo tex = c->lhs;
+                std::filesystem::path path = c->CaptureFolder;
+                if (!std::filesystem::is_directory(path))
+                    path = std::filesystem::current_path();
+                path /= (std::to_string(idx) + UUID2STR(c->NodeId) + ".png");
+
                 MzResourceShareInfo tmp = c->lhs;
-                MzResourceShareInfo srgb = c->lhs;
+                MzResourceShareInfo tex = c->lhs;
                 tex.info.texture.format = MZ_FORMAT_R8G8B8A8_UNORM;
-                srgb.info.texture.format = MZ_FORMAT_R8G8B8A8_SRGB;
+                tex.info.texture.width = 960;
+                tex.info.texture.height = 540;
                 mzEngine.Create(&tex);
-                mzEngine.Create(&srgb);
                 mzEngine.Create(&c->lhs);
-                c->CleanPlates.push_back({ .Path = path,
+                mzEngine.Clear(0, &c->lhs, {});
+                c->CleanPlates.push_back({  .Path = path.string(),
                                             .Texture = tex,
                                             .Track = c->Track,
                                             .Pos = c->Position,
-                                            .Rot = c->Rotation, });
-                std::thread([tmp, tex, srgb, path = std::move(path)]
+                                            .Rot = c->Rotation});
+
+                std::thread([c, tmp, tex, path = std::move(path)]
                 {
-                    MzResourceShareInfo buf;
+                    c->Status |= Cyclorama::SAVING;
+                    c->UpdateStatus();
+                    MzResourceShareInfo srgb = tmp;
+                    srgb.info.type = MZ_RESOURCE_TYPE_TEXTURE;
+                    srgb.info.texture.format = MZ_FORMAT_R8G8B8A8_SRGB;
+                    srgb.info.texture.width = 960;
+                    srgb.info.texture.height = 540;
+                    srgb.info.texture.usage = MzImageUsage(MZ_IMAGE_USAGE_TRANSFER_DST | MZ_IMAGE_USAGE_TRANSFER_SRC);
+                    mzEngine.Create(&srgb);
                     MzCmd cmd;
                     mzEngine.Begin(&cmd);
                     mzEngine.Blit(cmd, &tmp, &tex);
                     mzEngine.Blit(cmd, &tmp, &srgb);
+                    MzResourceShareInfo buf;
                     mzEngine.Download(cmd, &srgb, &buf);
                     mzEngine.End(cmd);
-                    auto re = stbi_write_png(path.c_str(), tex.info.texture.width, tex.info.texture.height, 4, mzEngine.Map(&buf), tex.info.texture.width * 4);
+
+                    auto dst = new u8[srgb.info.texture.width * srgb.info.texture.height * 3];
+                    auto src = mzEngine.Map(&buf);
+                    for(u32 i = 0; i < srgb.info.texture.width; ++i)
+                        for(u32 j = 0; j < srgb.info.texture.height; ++j)
+                            memcpy(dst + 3 * (j + i * srgb.info.texture.height), src + 4 * (j + i * srgb.info.texture.height), 3);
+                    auto re = stbi_write_png(path.string().c_str(), srgb.info.texture.width, srgb.info.texture.height, 3, dst, srgb.info.texture.width * 3);
+                    delete dst;
                     mzEngine.Destroy(&buf);
                     mzEngine.Destroy(&tmp);
                     mzEngine.Destroy(&srgb);
+                    c->Status &= ~Cyclorama::SAVING;
+                    c->UpdateStatus();
                 }).detach();
-                c->Capturing = false;
+                c->Status &= ~Cyclorama::CAPTURING;
                 c->CapturedFrameCount = 0;
+                c->UpdateStatus();
                 c->UpdateCleanPlatesValue();
-                flatbuffers::FlatBufferBuilder fbb;
+				flatbuffers::FlatBufferBuilder fbb;
                 mzEngine.HandleEvent(CreateAppEvent(fbb, mz::app::CreateScheduleRequest(fbb, mz::app::ScheduleRequestKind::PIN, &id, true)));
             }
         }
@@ -747,6 +832,8 @@ struct Cyclorama : PinMapping
         mzEngine.RunPass2(0, &pass);
 
         {
+            c->Validate(args);
+
             glm::vec4 smoothness = glm::vec4(
                 *GetPinValue<f32>(args, "BottomSmoothness"),
                 *GetPinValue<f32>(args, "LeftSmoothness"),
@@ -815,9 +902,10 @@ struct Cyclorama : PinMapping
     static void AddProjection(void* ctx, const MzNodeExecuteArgs* nodeArgs, const MzNodeExecuteArgs* functionArgs)
     {
         auto c = (Cyclorama*)ctx;
-        if (c->Capturing) return;
-        c->Capturing = true;
+        if (c->Status & Cyclorama::CAPTURING) return;
+        c->Status |= Cyclorama::CAPTURING;
         c->CapturedFrameCount = 0;
+        c->UpdateStatus();
         flatbuffers::FlatBufferBuilder fbb;
         auto id = c->GetPinId("Video");
         mzEngine.HandleEvent(CreateAppEvent(fbb, mz::app::CreateScheduleRequest(fbb, mz::app::ScheduleRequestKind::PIN, &id)));
@@ -825,9 +913,10 @@ struct Cyclorama : PinMapping
 
     static void ClearProjection(void* ctx, const MzNodeExecuteArgs* nodeArgs, const MzNodeExecuteArgs* functionArgs) {
         auto c = (Cyclorama*)ctx;
-        if (c->Capturing) return;
-        c->Capturing = false;
+        if (c->Status & Cyclorama::CAPTURING) return;
+        c->Status &= ~Cyclorama::CAPTURING;
         c->CapturedFrameCount = 0;
+        c->UpdateStatus();
         c->CleanCleanPlates();
         c->UpdateCleanPlatesValue();
         c->Clear();

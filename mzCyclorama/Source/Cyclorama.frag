@@ -17,13 +17,13 @@ vec4 GetProjectedColor()
 {
 	vec4 Color = vec4(0,0,0,0);
     const float UVSmoothness = ubo.UVSmoothness;
-    const vec2 UV = vec2(0.5) + pos.xy / pos.w * 0.5;
-    if((UV.x > 0 && UV.x < 1) && (UV.y > 0 && UV.y < 1))
+    const vec2 UV =  pos.xy / pos.w * 0.5 + 0.5;
+    if(pos.w > 0 && (UV.x > 0 && UV.x < 1) && (UV.y > 0 && UV.y < 1))
     {
-        float N = mix(2, 16, ubo.SmoothnessCurve);
         Color = texture(Source, UV);
-        if(UVSmoothness > 0.001)
+        // if(UVSmoothness > 0.001)
         {
+            const float N = mix(2, 16, ubo.SmoothnessCurve);
             vec2 uv = abs(UV * 2 - 1);
             uv = clamp((uv - vec2(1-UVSmoothness)) / UVSmoothness, 0, 1);
             Color.a = 1 - pow(pow(uv.x, N) + pow(uv.y, N), 1.0 / N);
@@ -34,6 +34,5 @@ vec4 GetProjectedColor()
 
 void main()
 {   
-    // rt = GetProjectedColor();
-    rt = vec4(1);
+    rt = GetProjectedColor();
 }
