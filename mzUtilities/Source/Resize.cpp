@@ -59,18 +59,18 @@ struct ResizeContext
 			mzEngine.SetPinValue(((MzUUID)(args->PinIds[1])), buf);
 		}
 
-		std::vector<MzShaderBinding> bindings = {
-		ShaderBinding("Input", inputTex),
-		ShaderBinding("Method", method)
+		std::vector bindings = {
+			ShaderBinding("Input", inputTex),
+			ShaderBinding("Method", method)
 		};
 		
 		MzRunPassParams resizeParam {
-			.Benchmark = 0,
 			.PassKey = "Resize_Pass",
-			.Output = tex,
 			.Bindings = bindings.data(),
+			.BindingCount = 2,
+			.Output = tex,
 			.Wireframe = 0,
-			.BindingCount = 2
+			.Benchmark = 0,
 		};
 
 		mzEngine.RunPass(nullptr, &resizeParam);
