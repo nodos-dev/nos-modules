@@ -8,6 +8,12 @@ namespace mz::utilities
 
 struct ResizeContext
 {
+	MzUUID NodeId;
+
+	ResizeContext(MzFbNode const& node)
+	{
+		NodeId = *node.id();		
+	}
 	static void OnNodeUpdated(void* ctx, const MzFbNode* updatedNode)
 	{
 		updatedNode->UnPackTo((fb::TNode*)ctx);
@@ -25,16 +31,33 @@ struct ResizeContext
 		reg = true;
 	}
 
+	static MzResult GetPasses(size_t* outCount, MzPassInfo* infos)
+	{
+		*outCount = 1;
+		if(!infos)
+			return MZ_RESULT_SUCCESS;
+
+		infos->Key = "Resize_Pass";
+		infos->Shader = "Resize";
+		infos->Blend = false;
+		infos->MultiSample = 1;
+
+		return MZ_RESULT_SUCCESS;
+	}
+
 	static MzResult GetShaders(size_t* outCount, const char** outShaderNames, MzBuffer* outSpirvBufs)
 	{
 		*outCount = 1;
+		if(!outSpirvBufs)
+			return MZ_RESULT_SUCCESS;
+		
 		*outShaderNames = "Resize_Pass";
 		outSpirvBufs->Data = (void*)(Resize_frag_spv);
 		outSpirvBufs->Size = sizeof(Resize_frag_spv);
 		return MZ_RESULT_SUCCESS;
 	}
 	
-	static void ExecuteNode(void* ctx, const MzNodeExecuteArgs* args)
+	static MzResult ExecuteNode(void* ctx, const MzNodeExecuteArgs* args)
 	{
 		auto pins = GetPinValues(args);
 
@@ -74,6 +97,8 @@ struct ResizeContext
 		};
 
 		mzEngine.RunPass(nullptr, &resizeParam);
+
+		return MZ_RESULT_SUCCESS;
 	}
 	
 };
@@ -82,5 +107,14 @@ struct ResizeContext
 
 void RegisterResize(MzNodeFunctions* out)
 {
-	
+	out->TypeName = "mz.utilities.Resize";
+	out->GetPasses = mz::utilities::ResizeContext::GetPasses;
+	out->GetShaders = mz::utilities::ResizeContext::GetShaders;
+	out->ExecuteNode = [](void* ctx, const MzNodeExecuteArgs* args)-> MzResult {
+		return ((mz::utilities::ResizeContext*)ctx)->ExecuteNode(ctx, args);
+	};
+	out->OnNodeCreated = mz::utilities::ResizeContext::OnNodeCreated;
+	out->OnNodeCreated = mz::utilities::ResizeContext::OnNodeCreated;
+	out->OnNodeDeleted = mz::utilities::ResizeContext::OnNodeDeleted;
+	out->OnNodeUpdated = mz::utilities::ResizeContext::OnNodeUpdated;
 }
