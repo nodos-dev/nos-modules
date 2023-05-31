@@ -7,7 +7,8 @@
         "display_name": "Track"
     },
     "node_definitions": [
-        "Track.mzdef"
+        "Track.mzdef",
+        "CalculateNodalPoint.mzdef"
     ],
     "fb_includes": [],
     "binary_path": "../Binaries/mzTrack",
@@ -36,6 +37,11 @@
             "category": "Track",
             "class_name": "UserTrack",
             "display_name": "User Track"
+        },
+        {
+            "category": "Track",
+            "class_name": "CalculateNodalPoint",
+            "display_name": "Calculate Nodal Point"
         }
     ]
 }

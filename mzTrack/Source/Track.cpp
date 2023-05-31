@@ -14,6 +14,7 @@ enum class TrackNode
 	SType,
 	MoSys,
 	UserTrack,
+	CalculateNodalPoint,
 	Count
 };
 
@@ -22,6 +23,7 @@ void RegisterXyncNode(MzNodeFunctions& functions);
 void RegisterStypeNode(MzNodeFunctions& functions);
 void RegisterMoSysNode(MzNodeFunctions& functions);
 void RegisterController(MzNodeFunctions& functions);
+void RegisterCalculateNodalPoint(MzNodeFunctions& functions);
 
 extern "C"
 MZAPI_ATTR MzResult MZAPI_CALL mzExportNodeFunctions(size_t* outSize, MzNodeFunctions* outFunctions)
@@ -34,6 +36,7 @@ MZAPI_ATTR MzResult MZAPI_CALL mzExportNodeFunctions(size_t* outSize, MzNodeFunc
 	RegisterStypeNode(outFunctions[2]);
 	RegisterMoSysNode(outFunctions[3]);
 	RegisterController(outFunctions[4]);
+	RegisterCalculateNodalPoint(outFunctions[5]);
 	return MZ_RESULT_SUCCESS;
 }
 
