@@ -2,7 +2,6 @@
 
 #include "AJAMain.h"
 #include "CopyThread.h"
-#include "Ring.h"
 #include "AJAClient.h"
 
 #include "RGB2YCbCr.comp.spv.dat"
@@ -11,7 +10,6 @@
 #include "YCbCr2RGB.frag.spv.dat"
 
 #include <MediaZ/PluginAPI.h>
-#include <MediaZ/Enums.h>
 
 using namespace mz;
 
