@@ -13,17 +13,14 @@ struct ResizeContext
 	
 	static void OnNodeUpdated(void* ctx, const MzFbNode* updatedNode)
 	{
+		mzEngine.LogW("UPDATED RESIZE NODE");
 		updatedNode->UnPackTo((fb::TNode*)ctx);
 	}
 
 	static void OnNodeDeleted(void* ctx, MzUUID nodeId)
 	{
+		mzEngine.LogW("DELETED RESIZE NODE");
 		delete (fb::TNode*)ctx;
-	}
-
-	static void OnNodeCreated(const MzFbNode* node, void** outCtxPtr)
-	{
-		*outCtxPtr = node->UnPack();
 	}
 
 	static MzResult GetPasses(size_t* outCount, MzPassInfo* infos)
@@ -33,7 +30,7 @@ struct ResizeContext
 			return MZ_RESULT_SUCCESS;
 
 		infos->Key = "Resize_Pass";
-		infos->Shader = "Resize";
+		infos->Shader = "Resize_Shader";
 		infos->Blend = false;
 		infos->MultiSample = 1;
 
@@ -43,7 +40,7 @@ struct ResizeContext
 	static MzResult GetShaders(size_t* outCount, const char** outShaderNames, MzBuffer* outSpirvBufs)
 	{
 		*outCount = 1;
-		if(!outSpirvBufs)
+		if(!outSpirvBufs || !outShaderNames)
 			return MZ_RESULT_SUCCESS;
 		
 		*outShaderNames = "Resize_Shader";
@@ -54,6 +51,7 @@ struct ResizeContext
 	
 	static MzResult ExecuteNode(void* ctx, const MzNodeExecuteArgs* args)
 	{
+		mzEngine.LogW("EXECUTE RESIZE NODE");
 		auto pins = GetPinValues(args);
 
 		auto inputTex = DeserializeTextureInfo(pins["Input"]);
@@ -69,12 +67,10 @@ struct ResizeContext
 			tex.info.texture.height = size->y();
 			mzEngine.Destroy(&tex);
 			mzEngine.Create(&tex);
-			
-			MzBuffer buf = {
-				.Data = &tex,
-				.Size = sizeof(tex)
-			};
-			mzEngine.SetPinValue(((MzUUID)(args->PinIds[1])), buf);
+			auto texFb = ConvertTextureInfo(tex);
+			texFb.unscaled = true;
+			auto texFbBuf = mz::Buffer::From(texFb);
+			mzEngine.SetPinValue(((MzUUID)(args->PinIds[1])), {.Data = texFbBuf.data(), .Size = texFbBuf.size()});
 		}
 
 		std::vector bindings = {
@@ -106,8 +102,6 @@ void RegisterResize(MzNodeFunctions* out)
 	out->ExecuteNode = [](void* ctx, const MzNodeExecuteArgs* args)-> MzResult {
 		return ((mz::utilities::ResizeContext*)ctx)->ExecuteNode(ctx, args);
 	};
-	out->OnNodeCreated = mz::utilities::ResizeContext::OnNodeCreated;
-	out->OnNodeCreated = mz::utilities::ResizeContext::OnNodeCreated;
 	out->OnNodeDeleted = mz::utilities::ResizeContext::OnNodeDeleted;
 	out->OnNodeUpdated = mz::utilities::ResizeContext::OnNodeUpdated;
 }

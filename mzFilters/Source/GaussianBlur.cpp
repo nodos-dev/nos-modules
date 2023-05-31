@@ -12,7 +12,7 @@ struct GaussBlurContext
 	GaussBlurContext(fb::Node const& node)
 	{
 		NodeId = *node.id();
-
+		IntermediateTexture.info.type = MZ_RESOURCE_TYPE_TEXTURE;
 		IntermediateTexture.info.texture.filter = MZ_TEXTURE_FILTER_LINEAR;
 		IntermediateTexture.info.texture.usage = MzImageUsage(MZ_IMAGE_USAGE_RENDER_TARGET | MZ_IMAGE_USAGE_SAMPLED); 
 	}
