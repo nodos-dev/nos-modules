@@ -58,13 +58,13 @@ struct ResizeContext
 		auto method = GetPinValue<uint32_t>(pins, "Method");
 		
 		auto tex = DeserializeTextureInfo(pins["Output"]);
-		auto size = GetPinValue<mz::fb::vec2>(pins, "Size");
+		auto size = GetPinValue<mzVec2u>(pins, "Size");
 		
-		if(size->x() != tex.Info.Texture.Width ||
-			size->y() != tex.Info.Texture.Height)
+		if(size->x != tex.Info.Texture.Width ||
+			size->y != tex.Info.Texture.Height)
 		{
-			tex.Info.Texture.Width = size->x();
-			tex.Info.Texture.Height = size->y();
+			tex.Info.Texture.Width = size->x;
+			tex.Info.Texture.Height = size->y;
 			mzEngine.Destroy(&tex);
 			mzEngine.Create(&tex);
 			auto texFb = ConvertTextureInfo(tex);
