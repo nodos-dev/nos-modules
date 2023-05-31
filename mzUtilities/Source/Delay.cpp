@@ -145,7 +145,7 @@ struct DelayTexture : DelayContext
     {
         auto tmp = GetTexture();
         Ring.push(Buffer::From(tmp));
-        auto src = ValAsTex((void*)buf.data());
+        auto src = DeserializeTextureInfo((void*)buf.data());
         auto dst = tmp;
         //Queue.Enqueue([this, src = src, dst = dst] {
             mzEngine.Blit(0, &src, &dst);

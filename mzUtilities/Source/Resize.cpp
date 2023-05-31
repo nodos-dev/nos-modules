@@ -38,10 +38,10 @@ struct ResizeContext
 	{
 		auto pins = GetPinValues(args);
 
-		auto inputTex = ValAsTex(pins["Input"]);
+		auto inputTex = DeserializeTextureInfo(pins["Input"]);
 		auto method = GetPinValue<uint32_t>(pins, "Method");
 		
-		auto tex = ValAsTex(pins["Output"]);
+		auto tex = DeserializeTextureInfo(pins["Output"]);
 		auto size = GetPinValue<mz::fb::vec2>(pins, "Size");
 		
 		if(size->x() != tex.info.texture.width ||

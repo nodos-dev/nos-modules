@@ -61,7 +61,7 @@ static MzResult GetFunctions(size_t* count, const char** names, PFN_NodeFunction
             mzEngine.LogE("Read Image cannot load file %s", path.string().c_str());
             return;
         }
-        MzResourceShareInfo out = ValAsTex(GetPinValue<void>(values, "Out"));
+        MzResourceShareInfo out = DeserializeTextureInfo(GetPinValue<void>(values, "Out"));
         MzResourceShareInfo tmp = out;
 		
 		int w, h, n;

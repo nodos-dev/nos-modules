@@ -33,7 +33,7 @@ struct MergeContext
 	void Run(const MzNodeExecuteArgs* pins)
 	{
 		auto values = GetPinValues(pins);
-		const MzResourceShareInfo output = ValAsTex(values["Out"]);
+		const MzResourceShareInfo output = DeserializeTextureInfo(values["Out"]);
 
 		std::vector<MzShaderBinding> bindings;
 
@@ -43,7 +43,7 @@ struct MergeContext
 			MzBuffer val = pins->PinValues[i];
 			if (name.starts_with("Texture_"))
 			{
-				auto tex = ValAsTex(val.Data);
+				auto tex = DeserializeTextureInfo(val.Data);
 				bindings.emplace_back(ShaderBinding(name.c_str(), tex));
 				++TextureCount;
 			}

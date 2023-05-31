@@ -57,7 +57,7 @@ static MzResult GetFunctions(size_t* count, const char** names, PFN_NodeFunction
             mzEngine.LogE("Write Image cannot write to directory %s", path.parent_path().c_str());
             return;
         }
-        MzResourceShareInfo input = ValAsTex(GetPinValue<void>(values, "Input"));
+        MzResourceShareInfo input = DeserializeTextureInfo(GetPinValue<void>(values, "Input"));
         MzResourceShareInfo srgb = input;
         srgb.info.texture.format = MZ_FORMAT_R8G8B8A8_SRGB;
         srgb.info.texture.usage = MZ_IMAGE_USAGE_NONE;

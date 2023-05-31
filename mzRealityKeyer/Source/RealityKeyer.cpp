@@ -41,12 +41,12 @@ struct RealityKeyerContext : public NodeContext
 	void Run(const MzNodeExecuteArgs* args)
 	{
 		auto values = GetPinValues(args);
-		auto outputTextureInfo = ValAsTex(values["Output"]);
-		auto hardMaskTextureInfo = ValAsTex(values["Hard_Mask"]);
-		auto hardMaskHorzBlurTextureInfo = ValAsTex(values["Hard_Mask_Horz_Blur"]);
-		auto inputTextureInfo = ValAsTex(values["Input"]);
-		auto cleanPlate = ValAsTex(values["Clean_Plate"]);
-		auto cleanPlateMask = ValAsTex(values["Clean_Plate_Mask"]);
+		auto outputTextureInfo = DeserializeTextureInfo(values["Output"]);
+		auto hardMaskTextureInfo = DeserializeTextureInfo(values["Hard_Mask"]);
+		auto hardMaskHorzBlurTextureInfo = DeserializeTextureInfo(values["Hard_Mask_Horz_Blur"]);
+		auto inputTextureInfo = DeserializeTextureInfo(values["Input"]);
+		auto cleanPlate = DeserializeTextureInfo(values["Clean_Plate"]);
+		auto cleanPlateMask = DeserializeTextureInfo(values["Clean_Plate_Mask"]);
 
 		MzCmd cmd;
 		mzEngine.Begin(&cmd);

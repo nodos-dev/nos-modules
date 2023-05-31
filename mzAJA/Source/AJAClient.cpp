@@ -847,7 +847,7 @@ bool AJAClient::BeginCopyFrom(MzCopyInfo &cpy)
     auto th = *it;
 	if ((slot = th->gpuRing->TryPop(cpy.FrameNumber, th->SpareCount)))
 	{
-		cpy.CopyTextureTo = ValAsTex(cpy.SrcPinData.Data); 
+		cpy.CopyTextureTo = DeserializeTextureInfo(cpy.SrcPinData.Data); 
 		cpy.CopyTextureFrom = slot->Res;
 
         slot->Res;
@@ -879,7 +879,7 @@ bool AJAClient::BeginCopyTo(MzCopyInfo &cpy)
             // slot->Res->mutate_field_type(fb::FieldType(*cpy.PathState));
 		}
 
-        cpy.CopyTextureFrom = ValAsTex(cpy.SrcPinData.Data);
+        cpy.CopyTextureFrom = DeserializeTextureInfo(cpy.SrcPinData.Data);
         cpy.CopyTextureTo = slot->Res;
 	}
     return cpy.ShouldCopyTexture = !!(cpy.Data = slot);

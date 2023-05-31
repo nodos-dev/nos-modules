@@ -596,7 +596,7 @@ struct Cyclorama : PinMapping
 
         if ("Video" == c->GetPinName(id))
         {
-            auto video = ValAsTex(value->Data);
+            auto video = DeserializeTextureInfo(value->Data);
             
             if (c->CapturedFrameCount++ < 50)
             {
@@ -674,7 +674,7 @@ struct Cyclorama : PinMapping
 
         pass.Wireframe = *GetPinValue<bool>(args, "Wireframe");
         pass.PassKey = "Cyclorama_Main_Pass";
-        pass.Output = ValAsTex(GetPinValue<void>(args, "Render"));;
+        pass.Output = DeserializeTextureInfo(GetPinValue<void>(args, "Render"));;
         auto track = GetPinValue<fb::TTrack>(args, "Track");
       
         glm::dvec3 pos = (glm::dvec3&)track.location;
@@ -777,7 +777,7 @@ struct Cyclorama : PinMapping
             std::vector<MzShaderBinding> maskInputs;
             MzRunPassParams maskPass;
             maskPass.PassKey = "Cyclorama_Mask_Pass";
-            maskPass.Output = ValAsTex(GetPinValue<void>(args, "Mask"));;
+            maskPass.Output = DeserializeTextureInfo(GetPinValue<void>(args, "Mask"));;
             maskPass.Vertices = c->Verts;
             maskInputs.push_back(ShaderBinding("MVP", MVP));
 

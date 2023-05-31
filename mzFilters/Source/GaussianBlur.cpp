@@ -80,8 +80,8 @@ struct GaussBlurContext
 
 		auto values = GetPinValues(pins);
 
-		const MzResourceShareInfo input  = ValAsTex(values["Input"]);
-		const MzResourceShareInfo output = ValAsTex(values["Output"]);
+		const MzResourceShareInfo input  = DeserializeTextureInfo(values["Input"]);
+		const MzResourceShareInfo output = DeserializeTextureInfo(values["Output"]);
 		const f32 softness = *(f32*)values["Softness"];
 		const MzVec2 Kernel_Size = *(MzVec2*)values["Kernel_Size"];
 		const MzVec2u Pass_Type = MzVec2u(0, 1);

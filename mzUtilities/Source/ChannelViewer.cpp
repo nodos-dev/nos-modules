@@ -37,8 +37,8 @@ static MzResult GetPasses(size_t* outCount, MzPassInfo* infos)
 static MzResult Run(void* ctx, const MzNodeExecuteArgs* pins)
 {
 	auto values = GetPinValues(pins);
-	const MzResourceShareInfo input = ValAsTex(values["Input"]);
-	const MzResourceShareInfo output = ValAsTex(values["Output"]);
+	const MzResourceShareInfo input = DeserializeTextureInfo(values["Input"]);
+	const MzResourceShareInfo output = DeserializeTextureInfo(values["Output"]);
 
 	auto channel = *(u32*)values["Channel"];
 	auto format = *(u32*)values["Format"];
