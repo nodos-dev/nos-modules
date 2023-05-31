@@ -40,7 +40,6 @@ enum Utilities
 	TextureSwitcher,
 	ChannelViewer,
 	Merge,
-	Delay,
 	Time,
 	ReadImage,
 	WriteImage,
@@ -48,12 +47,12 @@ enum Utilities
 };
 
 void RegisterMerge(mzNodeFunctions*);
-void RegisterDelay(mzNodeFunctions*);
 void RegisterTime(mzNodeFunctions*);
 void RegisterReadImage(mzNodeFunctions*);
 void RegisterWriteImage(mzNodeFunctions*);
 void RegisterChannelViewer(mzNodeFunctions*);
 void RegisterResize(mzNodeFunctions*);
+
 
 extern "C"
 {
@@ -87,7 +86,6 @@ MZAPI_ATTR mzResult MZAPI_CALL mzExportNodeFunctions(size_t* outSize, mzNodeFunc
     REGISTER_FILTER(TextureSwitcher);
 
     RegisterMerge(&funcs[Utilities::Merge]);
-    RegisterDelay(&funcs[Utilities::Delay]);
     RegisterTime(&funcs[Utilities::Time]);
     RegisterReadImage(&funcs[Utilities::ReadImage]);
     RegisterWriteImage(&funcs[Utilities::WriteImage]);
