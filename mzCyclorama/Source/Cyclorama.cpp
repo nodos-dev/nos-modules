@@ -666,8 +666,8 @@ struct Cyclorama : PinMapping
                     ShaderBinding("rhs", video),
                 };
 
-                MzRunPassParams pass;
-                pass.PassKey = "Cyclorama_CleanPlateAccumulator";
+                MzRunPassParams pass = {};
+                pass.PassKey = "Cyclorama_CleanPlateAccumulator_Pass";
                 pass.Output = c->rt;
                 pass.BindingCount = sizeof(bindings) / sizeof(bindings[0]);
                 pass.Bindings = bindings;
