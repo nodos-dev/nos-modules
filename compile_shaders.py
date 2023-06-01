@@ -21,7 +21,7 @@ def embed_binary(filepath):
 
 def compile_to_spv(filepath):
     logger.info(f"Compiling {filepath}")
-    re = run(["glslc", "-O", "-g", "-o",  f"{filepath}_.spv", filepath], stdout=stdout, stderr=stderr, universal_newlines=True)
+    re = run([f"{path}/tools/{platform.system()}/glslc", "-O", "-g", "-o",  f"{filepath}_.spv", filepath], stdout=stdout, stderr=stderr, universal_newlines=True)
     if re.returncode != 0:
         logger.error(f"Failed to compile {filepath}")
         return re.returncode
