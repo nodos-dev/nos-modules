@@ -62,7 +62,7 @@ if (NOT WITH_MEDIAZ)
     find_package(mzPluginSDK REQUIRED)
 endif()
 
-execute_process(COMMAND python3 "${CMAKE_SOURCE_DIR}/compile_shaders.py" RESULT_VARIABLE COMPILE_SHADERS_RESULT)
+execute_process(COMMAND python3 "${CMAKE_CURRENT_SOURCE_DIR}/compile_shaders.py" RESULT_VARIABLE COMPILE_SHADERS_RESULT)
 
 if (NOT ${COMPILE_SHADERS_RESULT} EQUAL "0")
     message(FATAL_ERROR "Failed to compile shaders. Process returned ${COMPILE_SHADERS_RESULT}.")
