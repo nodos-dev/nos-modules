@@ -15,7 +15,7 @@ namespace mz::utilities
 MZ_REGISTER_NAME2(Linear2SRGB_Pass);
 MZ_REGISTER_NAME2(Linear2SRGB_Shader);
 MZ_REGISTER_NAME2(Path);
-MZ_REGISTER_NAME2(Input);
+MZ_REGISTER_NAME2(In);
 
 static mzResult GetShaders(size_t* count, mzName* names, mzBuffer* spirv)
 {
@@ -57,12 +57,13 @@ static mzResult GetFunctions(size_t* count, const char** names, mzPfnNodeFunctio
     {
         auto values = GetPinValues(nodeArgs);
         std::filesystem::path path = GetPinValue<const char>(values, Path_Name);
-        if (std::filesystem::is_directory(path.parent_path()))
+        path = std::filesystem::canonical(path);
+        if (!std::filesystem::is_directory(path.parent_path()))
         {
-            mzEngine.LogE("Write Image cannot write to directory %s", path.parent_path().c_str());
+            mzEngine.LogE("Write Image cannot write to directory %s", path.parent_path().string().c_str());
             return;
         }
-        mzResourceShareInfo input = DeserializeTextureInfo(GetPinValue<void>(values, Input_Name));
+        mzResourceShareInfo input = DeserializeTextureInfo(values[In_Name]);
         mzResourceShareInfo srgb = input;
         srgb.Info.Texture.Format = MZ_FORMAT_R8G8B8A8_SRGB;
         srgb.Info.Texture.Usage = MZ_IMAGE_USAGE_NONE;
