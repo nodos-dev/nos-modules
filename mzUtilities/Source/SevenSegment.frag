@@ -7,8 +7,8 @@ layout(binding = 1) uniform UBO
 {
     vec4 Color;
     uint Number;
-    bool RenderFrameNo;
-    bool SampleInput;
+    uint RenderFrameNo;
+    uint SampleInput;
 }
 ubo;
 
@@ -96,7 +96,7 @@ void s7_segment(uint n, inout vec4 O, inout float x, float y, vec2 R)
 void main()
 {
     vec2 R = vec2(PC.RTSize);
-    uint N = mix(ubo.Number, uint(PC.frameNumber), ubo.RenderFrameNo);
+    uint N = mix(ubo.Number, uint(PC.frameNumber), bool(ubo.RenderFrameNo));
     uint D = uint(log(N) / log(10)) + 1;
 
     float x = (uv.x - 1)  * 32 / 4 - .25 - D/2. + 4;
@@ -114,7 +114,7 @@ void main()
     }
 
     rt = O * ubo.Color;
-    if(ubo.SampleInput)
+    if(ubo.SampleInput > 0)
     {
         rt = mix(texture(Input, uv), ubo.Color, O);
     }
