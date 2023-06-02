@@ -7,6 +7,7 @@
 namespace mz
 {
 
+
 struct UUID
 {
     fb::UUID id;
@@ -28,8 +29,8 @@ UUID const& CTGetID(rc<struct CopyThread> const& c);
 std::vector<u8> StringValue(std::string const& str);
 std::string GetQuadName(NTV2Channel channel);
 std::string GetChannelStr(NTV2Channel channel, AJADevice::Mode mode);
-const u8 *AddIfNotFound(std::string name, std::string tyName, std::vector<u8> val,
-                               std::unordered_map<std::string, const mz::fb::Pin *> &pins,
+const u8 *AddIfNotFound(Name name, std::string tyName, std::vector<u8> val,
+                               std::unordered_map<Name, const mz::fb::Pin *> &pins,
                                std::vector<flatbuffers::Offset<mz::fb::Pin>> &toAdd,
                                flatbuffers::FlatBufferBuilder &fbb, mz::fb::ShowAs showAs = mz::fb::ShowAs::PROPERTY,
                                mz::fb::CanShowAs canShowAs = mz::fb::CanShowAs::INPUT_PIN_OR_PROPERTY);
@@ -153,11 +154,11 @@ struct MZAPI_ATTR AJAClient
     u32 BitWidth() const;
 
     PinMapping *operator->();
-    fb::UUID GetPinId(std::string const &pinName) const;
+    fb::UUID GetPinId(Name pinName) const;
 
-    void GeneratePinIDSet(std::string const &pinName, AJADevice::Mode mode, std::vector<mz::fb::UUID> &ids);
+    void GeneratePinIDSet(Name pinName, AJADevice::Mode mode, std::vector<mz::fb::UUID> &ids);
     
-    std::vector<mz::fb::UUID> GeneratePinIDSet(std::string const &pinName, AJADevice::Mode mode);
+    std::vector<mz::fb::UUID> GeneratePinIDSet(Name pinName, AJADevice::Mode mode);
     std::shared_ptr<CopyThread> FindChannel(NTV2Channel channel);
     NTV2FrameBufferFormat FBFmt() const;
     void StopAll();
@@ -171,7 +172,7 @@ struct MZAPI_ATTR AJAClient
                       std::vector<flatbuffers::Offset<mz::fb::NodeStatusMessage>> &msg);
     void SetReference(std::string const &val);
     void OnNodeUpdate(mz::fb::Node const &event);
-    void OnNodeUpdate(PinMapping &&newMapping, std::unordered_map<std::string, const mz::fb::Pin *> &tmpPins,
+    void OnNodeUpdate(PinMapping &&newMapping, std::unordered_map<Name, const mz::fb::Pin *> &tmpPins,
                       std::vector<mz::fb::UUID> &pinsToDelete);
     void OnPinMenuFired(mzContextMenuRequest const &request);
 

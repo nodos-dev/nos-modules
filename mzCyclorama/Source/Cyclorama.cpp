@@ -39,10 +39,72 @@ typedef u32 uint;
 
 MZ_INIT();
 
+
+
 namespace mz
 {
 #undef near
 #undef far
+
+MZ_REGISTER_NAME2(CleanPlates);
+MZ_REGISTER_NAME2(CaptureFolder);
+MZ_REGISTER_NAME2(Video);
+MZ_REGISTER_NAME2(EdgeRoundness);
+MZ_REGISTER_NAME2(HasLeftWing);
+MZ_REGISTER_NAME2(HasRightWing);
+MZ_REGISTER_NAME2(RightWingAngle);
+MZ_REGISTER_NAME2(LeftWingAngle);
+MZ_REGISTER_NAME2(LeftWingLength);
+MZ_REGISTER_NAME2(RightWingLength);
+MZ_REGISTER_NAME2(Width);
+MZ_REGISTER_NAME2(Height);
+MZ_REGISTER_NAME2(BottomCrop);
+MZ_REGISTER_NAME2(LeftCrop);
+MZ_REGISTER_NAME2(RightCrop);
+MZ_REGISTER_NAME2(TopCrop);
+MZ_REGISTER_NAME2(BottomSmoothness);
+MZ_REGISTER_NAME2(LeftSmoothness);
+MZ_REGISTER_NAME2(RightSmoothness);
+MZ_REGISTER_NAME2(TopSmoothness);
+MZ_REGISTER_NAME2(DiagonalCrop);
+MZ_REGISTER_NAME2(DiagonalSmoothness);
+MZ_REGISTER_NAME2(SmoothnessCurve);
+MZ_REGISTER_NAME2(Wireframe);
+MZ_REGISTER_NAME2(Render);
+MZ_REGISTER_NAME2(Track);
+MZ_REGISTER_NAME2(Position);
+MZ_REGISTER_NAME2(Rotation);
+MZ_REGISTER_NAME2(OriginPreset);
+MZ_REGISTER_NAME2(CycloramaColor);
+MZ_REGISTER_NAME2(SharpEdges);
+MZ_REGISTER_NAME2(MVP);
+
+MZ_REGISTER_NAME2(Mask);
+MZ_REGISTER_NAME2(MaskColor);
+MZ_REGISTER_NAME2(VOffset);
+MZ_REGISTER_NAME2(Flags);
+MZ_REGISTER_NAME2(Smoothness);
+MZ_REGISTER_NAME2(SmoothnessCrop);
+MZ_REGISTER_NAME2(Scale);
+MZ_REGISTER_NAME2(Roundness);
+MZ_REGISTER_NAME2(Angle);
+MZ_REGISTER_NAME2(Diag);
+MZ_REGISTER_NAME2(UVSmoothness);
+MZ_REGISTER_NAME2(CP_MVP);
+MZ_REGISTER_NAME2(Source);
+
+MZ_REGISTER_NAME2(Cyclorama_CleanPlateAccumulator_Pass);
+MZ_REGISTER_NAME2(Cyclorama_Main_Pass);
+MZ_REGISTER_NAME2(Cyclorama_Mask_Pass);
+
+MZ_REGISTER_NAME2(Cyclorama_CleanPlateAccumulator_Shader);
+MZ_REGISTER_NAME2(Cyclorama_Main_Frag);
+MZ_REGISTER_NAME2(Cyclorama_Main_Vert);
+MZ_REGISTER_NAME2(Cyclorama_Mask_Frag);
+MZ_REGISTER_NAME2(Cyclorama_Mask_Vert);
+MZ_REGISTER_NAME2(lhs);
+MZ_REGISTER_NAME2(rhs);
+
 
 struct Vertex : glm::vec3
 {
@@ -63,13 +125,13 @@ bool NotSame(T a, T b) {
 }
 
 template<class...T>
-u32 MakeFlags(std::unordered_map<std::string, void*> const& pins, const char* var, u32 idx, T&&... tail)
+u32 MakeFlags(std::unordered_map<Name, void*> const& pins, Name var, u32 idx, T&&... tail)
 {
     return MakeFlags(pins, var, idx) | MakeFlags(pins, tail...);
 }
 
 template<>
-u32 MakeFlags<>(std::unordered_map<std::string, void*> const& pins, const char* var, u32 idx)
+u32 MakeFlags<>(std::unordered_map<Name, void*> const& pins, Name var, u32 idx)
 {
     auto val = GetPinValue<bool>(pins, var);
     return val ? (*val << idx) : 0;
@@ -209,7 +271,7 @@ static glm::mat4 MakeTransform(glm::vec3 pos, glm::vec3 rot)
 }
 
 template<class T>
-void AddParam(std::vector<mzShaderBinding>& inputs, std::unordered_map<std::string, void*> const& pins, const char* name)
+void AddParam(std::vector<mzShaderBinding>& inputs, std::unordered_map<Name, void*> const& pins, Name name)
 {
     if(auto val = GetPinValue<T>(pins, name))
     {
@@ -218,7 +280,7 @@ void AddParam(std::vector<mzShaderBinding>& inputs, std::unordered_map<std::stri
 }
 
 template<class T>
-bool GetValue(std::unordered_map<std::string, const mz::fb::Pin*>& pins, std::string const& name, T& dst)
+bool GetValue(std::unordered_map<Name, const mz::fb::Pin*>& pins, Name name, T& dst)
 {
     if(auto pin = pins[name])
     {
@@ -232,7 +294,7 @@ bool GetValue(std::unordered_map<std::string, const mz::fb::Pin*>& pins, std::st
 }
 
 template<class T>
-bool GetValue(std::unordered_map<std::string, const mz::fb::Pin*>& pins, std::string const& name, std::function<void(T*)>&& cb)
+bool GetValue(std::unordered_map<Name, const mz::fb::Pin*>& pins, Name name, std::function<void(T*)>&& cb)
 {
     if(auto pin = pins[name])
     {
@@ -244,6 +306,7 @@ bool GetValue(std::unordered_map<std::string, const mz::fb::Pin*>& pins, std::st
     }
     return false;
 }
+
 
 struct Cyclorama : PinMapping
 {
@@ -371,7 +434,7 @@ struct Cyclorama : PinMapping
         std::transform(CleanPlates.begin(), CleanPlates.end(), std::back_inserter(arr.data), [](auto& cp) { return cp; });
         
         std::vector<u8> buf = mz::Buffer::From(arr);
-        auto id = GetPinId("CleanPlates");
+        auto id = GetPinId(CleanPlates_Name);
         flatbuffers::FlatBufferBuilder fbb;
         mzEngine.HandleEvent(CreateAppEvent(fbb, mz::CreatePinValueChangedDirect(fbb, &id, &buf)));
     }
@@ -437,12 +500,12 @@ struct Cyclorama : PinMapping
 
         CleanCleanPlates();
 
-        GetValue<void>(name2pin, "CleanPlates", [this](auto captures) 
+        GetValue<void>(name2pin, CleanPlates_Name, [this](auto captures) 
         { 
             LoadCleanPlates(*flatbuffers::GetRoot<mz::fb::CaptureDataArray>(captures));
         });
 
-        GetValue<const char>(name2pin, "CaptureFolder", [this](const char* folder)
+        GetValue<const char>(name2pin, CaptureFolder_Name, [this](const char* folder)
         { 
             if (std::filesystem::is_directory(folder))
             {
@@ -451,7 +514,7 @@ struct Cyclorama : PinMapping
         });
 
         fb::TTexture src;
-        if (GetValue<void>(name2pin, "Video", 
+        if (GetValue<void>(name2pin, Video_Name, 
             [&src](auto* bufStart) { flatbuffers::GetRoot<mz::fb::Texture>(bufStart)->UnPackTo(&src); }))
         {
             lhs.Info.Texture.Height = src.height;
@@ -463,15 +526,15 @@ struct Cyclorama : PinMapping
             mzEngine.Create(&lhs);
             mzEngine.Create(&rt);
         }
-        GetValue(name2pin, "EdgeRoundness",  EdgeRoundness);
-        GetValue(name2pin, "HasLeftWing",    HasLeftWing);
-        GetValue(name2pin, "HasRightWing",   HasRightWing);
-        GetValue(name2pin, "RightWingAngle", RightWingAngle);
-        GetValue(name2pin, "LeftWingAngle",  LeftWingAngle);
-        GetValue(name2pin, "LeftWingLength",   LeftWingLength);
-        GetValue(name2pin, "RightWingLength",  RightWingLength);
-        GetValue(name2pin, "Width",  Width);
-        GetValue(name2pin, "Height",  Height);
+        GetValue(name2pin, EdgeRoundness_Name,  EdgeRoundness);
+        GetValue(name2pin, HasLeftWing_Name,    HasLeftWing);
+        GetValue(name2pin, HasRightWing_Name,   HasRightWing);
+        GetValue(name2pin, RightWingAngle_Name, RightWingAngle);
+        GetValue(name2pin, LeftWingAngle_Name,  LeftWingAngle);
+        GetValue(name2pin, LeftWingLength_Name,   LeftWingLength);
+        GetValue(name2pin, RightWingLength_Name,  RightWingLength);
+        GetValue(name2pin, Width_Name,  Width);
+        GetValue(name2pin, Height_Name,  Height);
 
         LoadVertices();
     }
@@ -513,9 +576,9 @@ struct Cyclorama : PinMapping
     }
 
 
-    void Validate(std::unordered_map<std::string, void*>& pins)
+    void Validate(std::unordered_map<Name, void*>& pins)
     {
-        auto clampAndBroadcast = [&](f32 lo, f32 hi, const char* name) -> f32
+        auto clampAndBroadcast = [&](f32 lo, f32 hi, mzName name) -> f32
         {
             f32& tmp = *GetPinValue<f32>(pins, name);
             if(tmp<lo||tmp>hi) 
@@ -526,38 +589,30 @@ struct Cyclorama : PinMapping
             return tmp;
         };
 
-        const f32 Cb = clampAndBroadcast(0, Width - EdgeRoundness, "BottomCrop");
-        const f32 Cl = clampAndBroadcast(0, LeftWingLength - EdgeRoundness, "LeftCrop");
-        const f32 Cr = clampAndBroadcast(0, RightWingLength - EdgeRoundness, "RightCrop");
-        const f32 Ct = clampAndBroadcast(0, Height - EdgeRoundness, "TopCrop");
-
-        clampAndBroadcast(0, Width - EdgeRoundness - Cb, "BottomSmoothness");
-        clampAndBroadcast(0, LeftWingLength - EdgeRoundness - Cl, "LeftSmoothness");
-        clampAndBroadcast(0, RightWingLength - EdgeRoundness - Cr, "RightSmoothness");
-        clampAndBroadcast(0, Height - EdgeRoundness - Ct, "TopSmoothness");
+        const f32 Cb = clampAndBroadcast(0, Width - EdgeRoundness, BottomCrop_Name);
+        const f32 Cl = clampAndBroadcast(0, LeftWingLength - EdgeRoundness, LeftCrop_Name);
+        const f32 Cr = clampAndBroadcast(0, RightWingLength - EdgeRoundness, RightCrop_Name);
+        const f32 Ct = clampAndBroadcast(0, Height - EdgeRoundness, TopCrop_Name);
+        clampAndBroadcast(0, Width - EdgeRoundness - Cb, BottomSmoothness_Name);
+        clampAndBroadcast(0, LeftWingLength - EdgeRoundness - Cl, LeftSmoothness_Name);
+        clampAndBroadcast(0, RightWingLength - EdgeRoundness - Cr, RightSmoothness_Name);
+        clampAndBroadcast(0, Height - EdgeRoundness - Ct, TopSmoothness_Name);
 
         const f32 DMax = glm::length(glm::vec2(LeftWingLength - EdgeRoundness - Cl, RightWingLength - EdgeRoundness - Cr)) * 0.5;
-        const f32 D = clampAndBroadcast(0, DMax, "DiagonalCrop");
-        clampAndBroadcast(0, DMax - D, "DiagonalSmoothness");
+        const f32 D = clampAndBroadcast(0, DMax, DiagonalCrop_Name);
+        clampAndBroadcast(0, DMax - D, DiagonalSmoothness_Name);
     }
 
     inline static std::pair<const char*, std::vector<u8>> spirvs[] = 
     {
-        {"Cyclorama_Frag",{std::begin(Cyclorama_frag_spv), std::end(Cyclorama_frag_spv)}},
-        {"Cyclorama_Vert",{std::begin(Cyclorama_vert_spv), std::end(Cyclorama_vert_spv)}},
+        {"Cyclorama_Main_Frag",{std::begin(Cyclorama_frag_spv), std::end(Cyclorama_frag_spv)}},
+        {"Cyclorama_Main_Vert",{std::begin(Cyclorama_vert_spv), std::end(Cyclorama_vert_spv)}},
         {"Cyclorama_Mask_Frag",{std::begin(CycloramaMask_frag_spv), std::end(CycloramaMask_frag_spv)}},
         {"Cyclorama_Mask_Vert",{std::begin(CycloramaMask_vert_spv), std::end(CycloramaMask_vert_spv)}},
-        {"Cyclorama_CleanPlateAccumulator",{std::begin(CleanPlateAcc_frag_spv), std::end(CleanPlateAcc_frag_spv)}},
+        {"Cyclorama_CleanPlateAccumulator_Shader",{std::begin(CleanPlateAcc_frag_spv), std::end(CleanPlateAcc_frag_spv)}},
     };
 
-    inline static mzPassInfo passes[] =
-    {
-        {.Key = "Cyclorama_CleanPlateAccumulator_Pass", .Shader = "Cyclorama_CleanPlateAccumulator", .MultiSample = 1},
-        {.Key = "Cyclorama_Main_Pass", .Shader = "Cyclorama_Frag", .VertexShader = "Cyclorama_Vert", .Blend = true, .MultiSample = 8, },
-        {.Key = "Cyclorama_Mask_Pass", .Shader = "Cyclorama_Mask_Frag", .VertexShader = "Cyclorama_Mask_Vert", .MultiSample = 1},
-    };
-
-    static mzResult GetShaders(size_t* outCount, const char** names, mzBuffer* outSpirvBufs)
+    static mzResult GetShaders(size_t* outCount, mzName* names, mzBuffer* outSpirvBufs)
     {
         *outCount = sizeof(spirvs) / sizeof(spirvs[0]);
         if (!outSpirvBufs)
@@ -565,7 +620,7 @@ struct Cyclorama : PinMapping
 
         for (auto& [name, spirv] : spirvs)
         {
-            *names++ = name;
+            *names++ = mzEngine.GetName(name);
             *outSpirvBufs++ = { spirv.data(), spirv.size() };
         }
 
@@ -574,6 +629,13 @@ struct Cyclorama : PinMapping
 
     static mzResult GetPasses(size_t* outCount, mzPassInfo* outMzPassInfos)
     {
+        mzPassInfo passes[] =
+        {
+            {.Key = Cyclorama_CleanPlateAccumulator_Pass_Name, .Shader = Cyclorama_CleanPlateAccumulator_Shader_Name, .MultiSample = 1},
+            {.Key = Cyclorama_Main_Pass_Name, .Shader = Cyclorama_Main_Frag_Name, .VertexShader = Cyclorama_Main_Vert_Name, .Blend = true, .MultiSample = 8, },
+            {.Key = Cyclorama_Mask_Pass_Name, .Shader = Cyclorama_Mask_Frag_Name, .VertexShader = Cyclorama_Mask_Vert_Name, .MultiSample = 1},
+        };
+
         *outCount = sizeof(passes) / sizeof(passes[0]);
 
         if (!outMzPassInfos)
@@ -637,13 +699,13 @@ struct Cyclorama : PinMapping
         CHECK_AND_SET(Position)
         CHECK_AND_SET(Rotation)
 
-        if ("CaptureFolder" == PinName)
+        if (CaptureFolder_Name == PinName)
         {
             c->CaptureFolder = (char*)value->Data;
             return;
         }
 
-        if ("CleanPlates" == PinName)
+        if (CleanPlates_Name == PinName)
         {
             // c->LoadCleanPlates(*value->As<mz::fb::CaptureDataArray>());
             return;
@@ -654,7 +716,7 @@ struct Cyclorama : PinMapping
             return;
         }
 
-        if ("Video" == c->GetPinName(id))
+        if (Video_Name == c->GetPinName(id))
         {
             auto video = DeserializeTextureInfo(value->Data);
             
@@ -662,12 +724,12 @@ struct Cyclorama : PinMapping
             {
                 mzShaderBinding bindings[] =
                 {
-                    ShaderBinding("lhs", c->lhs),
-                    ShaderBinding("rhs", video),
+                    ShaderBinding(lhs_Name, c->lhs),
+                    ShaderBinding(rhs_Name, video),
                 };
 
                 mzRunPassParams pass = {};
-                pass.PassKey = "Cyclorama_CleanPlateAccumulator_Pass";
+                pass.Key = Cyclorama_CleanPlateAccumulator_Pass_Name;
                 pass.Output = c->rt;
                 pass.BindingCount = sizeof(bindings) / sizeof(bindings[0]);
                 pass.Bindings = bindings;
@@ -757,18 +819,18 @@ struct Cyclorama : PinMapping
         std::vector<mzDrawCall> calls(1 + c->CleanPlates.size());
         std::vector<std::vector<mzShaderBinding>> inputs(calls.size());
 
-        pass.Wireframe = *GetPinValue<bool>(args, "Wireframe");
-        pass.PassKey = "Cyclorama_Main_Pass";
-        pass.Output = DeserializeTextureInfo(GetPinValue<void>(args, "Render"));;
-        auto track = GetPinValue<fb::TTrack>(args, "Track");
+        pass.Wireframe = *GetPinValue<bool>(args, Wireframe_Name);
+        pass.Key = Cyclorama_Main_Pass_Name;
+        pass.Output = DeserializeTextureInfo(GetPinValue<void>(args, Render_Name));;
+        auto track = GetPinValue<fb::TTrack>(args, Track_Name);
       
         glm::dvec3 pos = (glm::dvec3&)track.location;
         glm::dvec3 rot = (glm::dvec3&)track.rotation;
         auto view = MakeTransform(pos, rot);
         auto prj = Perspective((f32)track.fov, (f32)track.pixel_aspect_ratio, (glm::dvec2&)track.sensor_size, (glm::dvec2&)track.center_shift);
         // glm::vec3 msize = *pins.Get<glm::dvec3>("Size");
-        glm::vec3 mpos = *GetPinValue<glm::dvec3>(args, "Position");
-        glm::vec3 mrot = glm::radians(*GetPinValue<glm::dvec3>(args, "Rotation"));
+        glm::vec3 mpos = *GetPinValue<glm::dvec3>(args, Position_Name);
+        glm::vec3 mrot = glm::radians(*GetPinValue<glm::dvec3>(args, Rotation_Name));
 
         // c->Size = msize;
         c->Position = mpos;
@@ -780,19 +842,19 @@ struct Cyclorama : PinMapping
 
         glm::mat4 MVP = prj * view * model;
 
-        auto Offset = c->GetOrigin(*GetPinValue<u32>(args, "OriginPreset"));
-        inputs[0].push_back(ShaderBinding("VOffset", Offset));
-        inputs[0].push_back(ShaderBinding("MVP", MVP));
+        auto Offset = c->GetOrigin(*GetPinValue<u32>(args, OriginPreset_Name));
+        inputs[0].push_back(ShaderBinding(VOffset_Name, Offset));
+        inputs[0].push_back(ShaderBinding(MVP_Name, MVP));
 
-        AddParam<f32>(inputs[0], args, "SmoothnessCurve");
+        AddParam<f32>(inputs[0], args, SmoothnessCurve_Name);
         f32 zero = 0.f;
         f32 half = 0.5f;
 
         {
-            mzEngine.GetColorTexture(*GetPinValue<mzVec4>(args, "CycloramaColor"), &color);
-            inputs[0].push_back(ShaderBinding("UVSmoothness", zero));
-            inputs[0].push_back(ShaderBinding("CP_MVP", MVP));
-            inputs[0].push_back(ShaderBinding("Source", color));
+            mzEngine.GetColorTexture(*GetPinValue<mzVec4>(args, CycloramaColor_Name), &color);
+            inputs[0].push_back(ShaderBinding(UVSmoothness_Name, zero));
+            inputs[0].push_back(ShaderBinding(CP_MVP_Name, MVP));
+            inputs[0].push_back(ShaderBinding(Source_Name, color));
         }
 
         std::vector<glm::mat4> matrices(calls.size());
@@ -808,9 +870,9 @@ struct Cyclorama : PinMapping
             call->Vertices.DepthTest = 0;
             call->Vertices.DepthFunc = MZ_DEPTH_FUNCTION_NEVER;
 
-            input->push_back(ShaderBinding("UVSmoothness", half));
-            input->push_back(ShaderBinding("CP_MVP", *mat));
-            input->push_back(ShaderBinding("Source", last.Texture));
+            input->push_back(ShaderBinding(UVSmoothness_Name, half));
+            input->push_back(ShaderBinding(CP_MVP_Name, *mat));
+            input->push_back(ShaderBinding(Source_Name, last.Texture));
 
             glm::vec3 pos = (glm::dvec3&)last.Track.location;
             glm::vec3 rot = (glm::dvec3&)last.Track.rotation;
@@ -835,20 +897,20 @@ struct Cyclorama : PinMapping
             c->Validate(args);
 
             glm::vec4 smoothness = glm::vec4(
-                *GetPinValue<f32>(args, "BottomSmoothness"),
-                *GetPinValue<f32>(args, "LeftSmoothness"),
-                *GetPinValue<f32>(args, "TopSmoothness"),
-                *GetPinValue<f32>(args, "RightSmoothness")
+                *GetPinValue<f32>(args, BottomSmoothness_Name),
+                *GetPinValue<f32>(args, LeftSmoothness_Name),
+                *GetPinValue<f32>(args, TopSmoothness_Name),
+                *GetPinValue<f32>(args, RightSmoothness_Name)
             ) / 100.f;
             glm::vec4 crop = glm::vec4(
-                *GetPinValue<f32>(args, "BottomCrop"),
-                *GetPinValue<f32>(args, "LeftCrop"),
-                *GetPinValue<f32>(args, "TopCrop"),
-                *GetPinValue<f32>(args, "RightCrop")
+                *GetPinValue<f32>(args, BottomCrop_Name),
+                *GetPinValue<f32>(args, LeftCrop_Name),
+                *GetPinValue<f32>(args, TopCrop_Name),
+                *GetPinValue<f32>(args, RightCrop_Name)
             ) / 100.f;
             glm::vec2 diag = glm::vec2(
-                *GetPinValue<f32>(args, "DiagonalCrop"),
-                *GetPinValue<f32>(args, "DiagonalSmoothness")
+                *GetPinValue<f32>(args, DiagonalCrop_Name),
+                *GetPinValue<f32>(args, DiagonalSmoothness_Name)
             ) / 100.f;
 
             f32 roundness = c->EdgeRoundness / 100.f;
@@ -857,28 +919,28 @@ struct Cyclorama : PinMapping
             glm::vec2 angle = glm::radians(glm::vec2(c->LeftWingAngle, c->RightWingAngle));
 
             u32 flags = MakeFlags(args,
-                "SharpEdges", SHARP_EDGES_BIT,
-                "HasLeftWing", HAS_LEFT_WING_BIT,
-                "HasRightWing", HAS_RIGHT_WING_BIT);
+                SharpEdges_Name, SHARP_EDGES_BIT,
+                HasLeftWing_Name, HAS_LEFT_WING_BIT,
+                HasRightWing_Name, HAS_RIGHT_WING_BIT);
 
             std::vector<mzShaderBinding> maskInputs;
             mzRunPassParams maskPass;
-            maskPass.PassKey = "Cyclorama_Mask_Pass";
-            maskPass.Output = DeserializeTextureInfo(GetPinValue<void>(args, "Mask"));;
+            maskPass.Key = Cyclorama_Mask_Pass_Name;
+            maskPass.Output = DeserializeTextureInfo(GetPinValue<void>(args, Mask_Name));;
             maskPass.Vertices = c->Verts;
-            maskInputs.push_back(ShaderBinding("MVP", MVP));
+            maskInputs.push_back(ShaderBinding(MVP_Name, MVP));
 
-            
-            AddParam<f32>(maskInputs, args, "SmoothnessCurve");
-            AddParam<glm::vec4>(maskInputs, args, "MaskColor");
-            maskInputs.push_back(ShaderBinding("VOffset", Offset));
-            maskInputs.push_back(ShaderBinding("Flags", flags));
-            maskInputs.push_back(ShaderBinding("Smoothness", smoothness));
-            maskInputs.push_back(ShaderBinding("SmoothnessCrop", crop));
-            maskInputs.push_back(ShaderBinding("Scale", scale));
-            maskInputs.push_back(ShaderBinding("Roundness", roundness));
-            maskInputs.push_back(ShaderBinding("Angle", angle));
-            maskInputs.push_back(ShaderBinding("Diag", diag));
+       
+            AddParam<f32>(maskInputs, args, SmoothnessCurve_Name);
+            AddParam<glm::vec4>(maskInputs, args, MaskColor_Name);
+            maskInputs.push_back(ShaderBinding(VOffset_Name, Offset));
+            maskInputs.push_back(ShaderBinding(Flags_Name, flags));
+            maskInputs.push_back(ShaderBinding(Smoothness_Name, smoothness));
+            maskInputs.push_back(ShaderBinding(SmoothnessCrop_Name, crop));
+            maskInputs.push_back(ShaderBinding(Scale_Name, scale));
+            maskInputs.push_back(ShaderBinding(Roundness_Name, roundness));
+            maskInputs.push_back(ShaderBinding(Angle_Name, angle));
+            maskInputs.push_back(ShaderBinding(Diag_Name, diag));
 
             maskPass.Bindings = maskInputs.data();
             maskPass.BindingCount = maskInputs.size();
@@ -907,7 +969,7 @@ struct Cyclorama : PinMapping
         c->CapturedFrameCount = 0;
         c->UpdateStatus();
         flatbuffers::FlatBufferBuilder fbb;
-        auto id = c->GetPinId("Video");
+        auto id = c->GetPinId(Video_Name);
         mzEngine.HandleEvent(CreateAppEvent(fbb, mz::app::CreateScheduleRequest(fbb, mz::app::ScheduleRequestKind::PIN, &id)));
     };
 

@@ -3,3 +3,24 @@
 #include <MediaZ/PluginAPI.h>
 #include <MediaZ/Helpers.hpp>
 
+
+MZ_REGISTER_NAME2(Device);
+MZ_REGISTER_NAME2(ReferenceSource);
+MZ_REGISTER_NAME2(Debug);
+MZ_REGISTER_NAME(Dispatch_Size_Name, "Dispatch Size");
+MZ_REGISTER_NAME(Shader_Type_Name, "Shader Type");
+
+MZ_REGISTER_NAME2(AJA_RGB2YCbCr_Compute_Shader);
+MZ_REGISTER_NAME2(AJA_YCbCr2RGB_Compute_Shader);
+MZ_REGISTER_NAME2(AJA_RGB2YCbCr_Shader);
+MZ_REGISTER_NAME2(AJA_YCbCr2RGB_Shader);
+MZ_REGISTER_NAME2(AJA_RGB2YCbCr_Compute_Pass);
+MZ_REGISTER_NAME2(AJA_YCbCr2RGB_Compute_Pass);
+MZ_REGISTER_NAME2(AJA_RGB2YCbCr_Pass);
+MZ_REGISTER_NAME2(AJA_YCbCr2RGB_Pass);
+
+MZ_REGISTER_NAME2(Colorspace);
+MZ_REGISTER_NAME2(Source);
+MZ_REGISTER_NAME2(Interlaced);
+MZ_REGISTER_NAME2(ssbo);
+MZ_REGISTER_NAME2(Output);

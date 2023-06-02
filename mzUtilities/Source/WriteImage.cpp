@@ -12,14 +12,18 @@
 
 namespace mz::utilities
 {
+MZ_REGISTER_NAME2(Linear2SRGB_Pass);
+MZ_REGISTER_NAME2(Linear2SRGB_Shader);
+MZ_REGISTER_NAME2(Path);
+MZ_REGISTER_NAME2(Input);
 
-static mzResult GetShaders(size_t* count, const char** names, mzBuffer* spirv)
+static mzResult GetShaders(size_t* count, mzName* names, mzBuffer* spirv)
 {
     *count = 1;
     if (!names || !spirv)
         return MZ_RESULT_SUCCESS;
 
-    *names = "Linear2SRGB";
+    *names = Linear2SRGB_Shader_Name;
     spirv->Data = (void*)Linear2SRGB_frag_spv;
     spirv->Size = sizeof(Linear2SRGB_frag_spv);
     return MZ_RESULT_SUCCESS;
@@ -32,8 +36,8 @@ static mzResult GetPasses(size_t* count, mzPassInfo* passes)
         return MZ_RESULT_SUCCESS;
 
     *passes = mzPassInfo{
-        .Key = "Linear2SRGB_Pass",
-        .Shader = "Linear2SRGB",
+        .Key    = Linear2SRGB_Pass_Name,
+        .Shader = Linear2SRGB_Shader_Name,
         .Blend = 0,
         .MultiSample = 1,
     };
@@ -43,6 +47,7 @@ static mzResult GetPasses(size_t* count, mzPassInfo* passes)
 
 static mzResult GetFunctions(size_t* count, const char** names, mzPfnNodeFunctionExecute* fns)
 {
+
     *count = 1;
     if(!names || !fns)
         return MZ_RESULT_SUCCESS;
@@ -51,13 +56,13 @@ static mzResult GetFunctions(size_t* count, const char** names, mzPfnNodeFunctio
     *fns = [](void* ctx, const mzNodeExecuteArgs* nodeArgs, const mzNodeExecuteArgs* functionArgs)
     {
         auto values = GetPinValues(nodeArgs);
-        std::filesystem::path path = GetPinValue<const char>(values, "Path");
+        std::filesystem::path path = GetPinValue<const char>(values, Path_Name);
         if (std::filesystem::is_directory(path.parent_path()))
         {
             mzEngine.LogE("Write Image cannot write to directory %s", path.parent_path().c_str());
             return;
         }
-        mzResourceShareInfo input = DeserializeTextureInfo(GetPinValue<void>(values, "Input"));
+        mzResourceShareInfo input = DeserializeTextureInfo(GetPinValue<void>(values, Input_Name));
         mzResourceShareInfo srgb = input;
         srgb.Info.Texture.Format = MZ_FORMAT_R8G8B8A8_SRGB;
         srgb.Info.Texture.Usage = MZ_IMAGE_USAGE_NONE;

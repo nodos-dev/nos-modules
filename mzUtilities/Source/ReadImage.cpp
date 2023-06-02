@@ -17,13 +17,16 @@
 namespace mz::utilities
 {
 
-static mzResult GetShaders(size_t* count, const char** names, mzBuffer* spirv)
+MZ_REGISTER_NAME2(SRGB2Linear_Pass);
+MZ_REGISTER_NAME2(SRGB2Linear_Shader);
+
+static mzResult GetShaders(size_t* count, mzName* names, mzBuffer* spirv)
 {
 	*count = 1;
 	if (!names || !spirv)
 		return MZ_RESULT_SUCCESS;
 
-	*names = "ReadImage_SRGB2Linear";
+	*names = SRGB2Linear_Shader_Name;
 	spirv->Data = (void*)SRGB2Linear_frag_spv;
 	spirv->Size = sizeof(SRGB2Linear_frag_spv);
 	return MZ_RESULT_SUCCESS;
@@ -36,8 +39,8 @@ static mzResult GetPasses(size_t* count, mzPassInfo* passes)
 		return MZ_RESULT_SUCCESS;
 
 	*passes = mzPassInfo{
-		.Key = "SRGB2Linear_Pass",
-		.Shader = "ReadImage_SRGB2Linear",
+		.Key    = SRGB2Linear_Pass_Name,
+		.Shader = SRGB2Linear_Shader_Name,
 		.Blend = 0,
 		.MultiSample = 1,
 	};
@@ -45,6 +48,8 @@ static mzResult GetPasses(size_t* count, mzPassInfo* passes)
 	return MZ_RESULT_SUCCESS;
 }
 
+MZ_REGISTER_NAME2(Path);
+MZ_REGISTER_NAME2(Out);
 static mzResult GetFunctions(size_t* count, const char** names, mzPfnNodeFunctionExecute* fns)
 {
     *count = 1;
@@ -55,13 +60,13 @@ static mzResult GetFunctions(size_t* count, const char** names, mzPfnNodeFunctio
     *fns = [](void* ctx, const mzNodeExecuteArgs* nodeArgs, const mzNodeExecuteArgs* functionArgs)
     {
         auto values = GetPinValues(nodeArgs);
-        std::filesystem::path path = GetPinValue<const char>(values, "Path");
+        std::filesystem::path path = GetPinValue<const char>(values, Path_Name);
         if (std::filesystem::exists(path))
         {
             mzEngine.LogE("Read Image cannot load file %s", path.string().c_str());
             return;
         }
-        mzResourceShareInfo out = DeserializeTextureInfo(GetPinValue<void>(values, "Out"));
+        mzResourceShareInfo out = DeserializeTextureInfo(GetPinValue<void>(values, Out_Name));
         mzResourceShareInfo tmp = out;
 		
 		int w, h, n;

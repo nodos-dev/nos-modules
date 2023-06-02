@@ -399,7 +399,7 @@ void CopyThread::AJAInputProc()
         if (DropCount && framesSinceLastDrop == 50)
         {
             flatbuffers::FlatBufferBuilder fbb;
-            auto id = client->GetPinId(Name());
+            auto id = client->GetPinId(mz::Name(Name()));
             UByteSequence byteBuffer = Buffer::From(gpuRing->Size);
             mzEngine.HandleEvent(CreateAppEvent(fbb, app::CreateExecutePathCommandDirect(fbb, &id, app::PathCommand::NOTIFY_DROP, app::PathCommandType::NOTIFY_ALL_CONNECTIONS,  &byteBuffer)));
         }
@@ -459,7 +459,7 @@ void CopyThread::AJAOutputProc()
     mzEngine.HandleEvent(hungerSignal);
 
     Orphan(false);
-    auto id = client->GetPinId(Name());
+    auto id = client->GetPinId(mz::Name(Name()));
     {
         std::stringstream ss;
         ss << "AJAOut Thread: " << std::this_thread::get_id();
@@ -544,7 +544,7 @@ void CopyThread::AJAOutputProc()
 void CopyThread::SendDeleteRequest()
 {
     flatbuffers::FlatBufferBuilder fbb;
-    auto ids = client->GeneratePinIDSet(Name(), mode);
+    auto ids = client->GeneratePinIDSet(mz::Name(Name()), mode);
     mzEngine.HandleEvent(
         CreateAppEvent(fbb, mz::CreatePartialNodeUpdateDirect(fbb, &client->Mapping.NodeId, ClearFlags::NONE, &ids)));
 }
@@ -564,10 +564,10 @@ void CopyThread::InputConversionThread::Consume(CopyThread::Parameters const& pa
 
     uint32_t iflags = params.FieldIdx | ((Cpy->client->Shader == ShaderType::Comp10) << 2);
 
-    inputs.emplace_back(ShaderBinding("Colorspace", colorspace));
-    inputs.emplace_back(ShaderBinding("Source", Cpy->CompressedTex));
-    inputs.emplace_back(ShaderBinding("Interlaced", iflags));
-    inputs.emplace_back(ShaderBinding("ssbo", Cpy->SSBO));
+    inputs.emplace_back(ShaderBinding(Colorspace_Name, colorspace));
+    inputs.emplace_back(ShaderBinding(Source_Name, Cpy->CompressedTex));
+    inputs.emplace_back(ShaderBinding(Interlaced_Name, iflags));
+    inputs.emplace_back(ShaderBinding(ssbo_Name, Cpy->SSBO));
 
     auto MsgKey = "Input " + Cpy->Name() + " DMA";
 
@@ -578,9 +578,9 @@ void CopyThread::InputConversionThread::Consume(CopyThread::Parameters const& pa
 
     if (Cpy->client->Shader != ShaderType::Frag8)
     {
-        inputs.emplace_back(ShaderBinding("Output", res->Res));
+        inputs.emplace_back(ShaderBinding(Output_Name, res->Res));
         mzRunComputePassParams pass = {};
-        pass.PassKey = "AJA_YCbCr2RGB_Compute_Pass";
+        pass.Key = AJA_YCbCr2RGB_Compute_Pass_Name;
         pass.DispatchSize = Cpy->GetSuitableDispatchSize();
         pass.Bindings = inputs.data();
         pass.BindingCount = inputs.size();
@@ -590,7 +590,7 @@ void CopyThread::InputConversionThread::Consume(CopyThread::Parameters const& pa
     else
     {
         mzRunPassParams pass = {};
-        pass.PassKey = "AJA_YCbCr2RGB_Pass";
+        pass.Key = AJA_YCbCr2RGB_Pass_Name;
         pass.Output = res->Res;
         pass.Bindings = inputs.data();
         pass.BindingCount = inputs.size();
@@ -667,10 +667,10 @@ void CopyThread::OutputConversionThread::Consume(const Parameters& item)
     uint32_t iflags = (Cpy->client->Shader == ShaderType::Comp10) << 2;
 
     std::vector<mzShaderBinding> inputs;
-    inputs.emplace_back(ShaderBinding("Colorspace", colorspace));
-    inputs.emplace_back(ShaderBinding("Source", incoming->Res));
-    inputs.emplace_back(ShaderBinding("Interlaced", iflags));
-    inputs.emplace_back(ShaderBinding("ssbo", Cpy->SSBO));
+    inputs.emplace_back(ShaderBinding(Colorspace_Name, colorspace));
+    inputs.emplace_back(ShaderBinding(Source_Name, incoming->Res));
+    inputs.emplace_back(ShaderBinding(Interlaced_Name, iflags));
+    inputs.emplace_back(ShaderBinding(ssbo_Name, Cpy->SSBO));
 
     mzCmd cmd;
     mzEngine.Begin(&cmd);
@@ -678,9 +678,9 @@ void CopyThread::OutputConversionThread::Consume(const Parameters& item)
     // watch out for th members, they are not synced
     if (Cpy->client->Shader != ShaderType::Frag8)
     {
-        inputs.emplace_back(ShaderBinding("Output", Cpy->CompressedTex));
+        inputs.emplace_back(ShaderBinding(Output_Name, Cpy->CompressedTex));
         mzRunComputePassParams pass = {};
-        pass.PassKey = "AJA_RGB2YCbCr_Compute_Pass";
+        pass.Key = AJA_RGB2YCbCr_Compute_Pass_Name;
         pass.DispatchSize = Cpy->GetSuitableDispatchSize();
         pass.Bindings = inputs.data();
         pass.BindingCount = inputs.size();
@@ -690,7 +690,7 @@ void CopyThread::OutputConversionThread::Consume(const Parameters& item)
     else
     {
         mzRunPassParams pass = {};
-        pass.PassKey = "AJA_RGB2YCbCr_Pass";
+        pass.Key = AJA_RGB2YCbCr_Pass_Name;
         pass.Output = Cpy->CompressedTex;
         pass.Bindings = inputs.data();
         pass.BindingCount = inputs.size();
@@ -754,7 +754,7 @@ void CopyThread::Live(bool b)
 void CopyThread::PinUpdate(Action orphan, mz::Action live)
 {
     flatbuffers::FlatBufferBuilder fbb;
-    auto ids = client->GeneratePinIDSet(Name(), mode);
+    auto ids = client->GeneratePinIDSet(mz::Name(Name()), mode);
     std::vector<flatbuffers::Offset<PartialPinUpdate>> updates;
     std::transform(ids.begin(), ids.end(), std::back_inserter(updates),
                    [&fbb, orphan, live](auto id) { return mz::CreatePartialPinUpdate(fbb, &id, 0, orphan, live); });

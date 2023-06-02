@@ -17,6 +17,14 @@ using namespace ZD::Curve;
 namespace mz
 {
 
+MZ_REGISTER_NAME2(JSON);
+MZ_REGISTER_NAME2(Zoom);
+MZ_REGISTER_NAME2(Focus);
+MZ_REGISTER_NAME2(FOV);
+MZ_REGISTER_NAME2(k1k2);
+MZ_REGISTER_NAME(Focal_Length_Offset_Name, "Focal Length Offset");
+MZ_REGISTER_NAME(Nodal_Point_Name,"Nodal Point");
+MZ_REGISTER_NAME(Focus_Distance_Curve_Name,"Focus Distance Curve");
 struct Frustum: PinMapping
 {
     GenericCalibration calibrator;
@@ -51,8 +59,9 @@ struct Frustum: PinMapping
     
     void Load(fb::Node const& node)
     {
+       
         auto pins = PinMapping::Load(node);
-        if(auto pin = pins["JSON"])
+        if(auto pin = pins[JSON_Name])
         {
             if(flatbuffers::IsFieldPresent(pin, fb::Pin::VT_DATA))
             {
@@ -64,12 +73,12 @@ struct Frustum: PinMapping
     void ValueChanged(mz::fb::UUID id, void* val)
     {
         auto name = GetPinName(id);
-        if(name == "JSON")
+        if(name == JSON_Name)
         {
             Deser((const char*)val);
             return;
         }
-        if(name == "Focal Length Offset")
+        if(name == Focal_Length_Offset_Name)
         {
             calibrator.FocalLengthOffset = *(f64*)val;
             return;
@@ -105,15 +114,16 @@ MZAPI_ATTR mzResult MZAPI_CALL mzExportNodeFunctions(size_t* outSize, mzNodeFunc
 	};
 	funcs.ExecuteNode = [](void* ctx, mzNodeExecuteArgs const* args) {
 		auto values = GetPinValues(args);
-		auto zoom = (f64*)values["Zoom"];
-		auto focus = (f64*)values["Focus"];
+		auto zoom = (f64*)values[Zoom_Name];
+		auto focus = (f64*)values[Focus_Name];
+
 		if (zoom && focus)
 		{
 			auto& clb = ((Frustum*)ctx)->calibrator;
-			if (auto fov = (f64*)values["FOV"])                    *fov = clb.GetFoV(*zoom, *focus);
-			if (auto k1k2 = (mz::fb::vec2*)values["k1k2"]) (glm::vec2&)*k1k2 = clb.GetK1K2(*zoom, *focus);
-			if (auto np = (f64*)values["Nodal Point"])             *np = clb.NodalPointCurve.GetInterpolatedValue(*zoom);
-			if (auto fdc = (f64*)values["Focus Distance Curve"])   *fdc = clb.FocusDistanceCurve.GetInterpolatedValue(*focus);
+			if (auto fov = (f64*)values[FOV_Name])                    *fov = clb.GetFoV(*zoom, *focus);
+			if (auto k1k2 = (mz::fb::vec2*)values[k1k2_Name]) (glm::vec2&)*k1k2 = clb.GetK1K2(*zoom, *focus);
+			if (auto np = (f64*)values[Nodal_Point_Name])             *np = clb.NodalPointCurve.GetInterpolatedValue(*zoom);
+			if (auto fdc = (f64*)values[Focus_Distance_Curve_Name])   *fdc = clb.FocusDistanceCurve.GetInterpolatedValue(*focus);
 		}
 		return MZ_RESULT_SUCCESS;
 	};

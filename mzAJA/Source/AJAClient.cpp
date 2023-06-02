@@ -10,6 +10,8 @@
 namespace mz
 {
 
+
+
 fb::UUID GenerateUUID()
 {
     static std::mt19937 eng = std::mt19937(std::random_device()());
@@ -45,8 +47,8 @@ std::string GetChannelStr(NTV2Channel channel, AJADevice::Mode mode)
     }
 }
 
-const u8 *AddIfNotFound(std::string name, std::string tyName, std::vector<u8> val,
-                        std::unordered_map<std::string, const mz::fb::Pin *> &pins,
+const u8 *AddIfNotFound(Name name, std::string tyName, std::vector<u8> val,
+                        std::unordered_map<Name, const mz::fb::Pin *> &pins,
                         std::vector<flatbuffers::Offset<mz::fb::Pin>> &toAdd, flatbuffers::FlatBufferBuilder &fbb,
                         mz::fb::ShowAs showAs, mz::fb::CanShowAs canShowAs)
 {
@@ -55,7 +57,7 @@ const u8 *AddIfNotFound(std::string name, std::string tyName, std::vector<u8> va
         return pin->data()->Data();
     }
     toAdd.push_back(
-        mz::fb::CreatePinDirect(fbb, generator(), name.c_str(), tyName.c_str(), showAs, canShowAs, 0, 0, &val));
+        mz::fb::CreatePinDirect(fbb, generator(), name, tyName.c_str(), showAs, canShowAs, 0, 0, &val));
     return 0;
 }
 
@@ -153,27 +155,28 @@ PinMapping *AJAClient::operator->()
     return &Mapping;
 }
 
-fb::UUID AJAClient::GetPinId(std::string const &pinName) const
+fb::UUID AJAClient::GetPinId(Name pinName) const
 {
     return Mapping.GetPinId(pinName);
 }
 
-void AJAClient::GeneratePinIDSet(std::string const &pinName, AJADevice::Mode mode, std::vector<mz::fb::UUID> &ids)
+void AJAClient::GeneratePinIDSet(Name pinName, AJADevice::Mode mode, std::vector<mz::fb::UUID> &ids)
 {
+	auto pinStr = pinName.AsString();
 
     ids.push_back(GetPinId(pinName));
-    ids.push_back(GetPinId(pinName + " Ring Size"));
-    ids.push_back(GetPinId(pinName + " Ring Spare Count"));
-    ids.push_back(GetPinId(pinName + " Video Format"));
-    ids.push_back(GetPinId(pinName + " Colorspace"));
-    ids.push_back(GetPinId(pinName + " Gamma Curve"));
-    ids.push_back(GetPinId(pinName + " Narrow Range"));
+	ids.push_back(GetPinId(Name(pinStr + " Ring Size")));
+    ids.push_back(GetPinId(Name(pinStr + " Ring Spare Count")));
+    ids.push_back(GetPinId(Name(pinStr + " Video Format")));
+    ids.push_back(GetPinId(Name(pinStr + " Colorspace")));
+    ids.push_back(GetPinId(Name(pinStr + " Gamma Curve")));
+    ids.push_back(GetPinId(Name(pinStr + " Narrow Range")));
 
     if (AJADevice::IsQuad(mode))
-        ids.push_back(GetPinId(pinName + " Mode"));
+        ids.push_back(GetPinId(Name(pinStr + " Mode")));
 }
 
-std::vector<mz::fb::UUID> AJAClient::GeneratePinIDSet(std::string const &pinName, AJADevice::Mode mode)
+std::vector<mz::fb::UUID> AJAClient::GeneratePinIDSet(Name pinName, AJADevice::Mode mode)
 {
     std::vector<mz::fb::UUID> ids;
     GeneratePinIDSet(pinName, mode, ids);
@@ -228,7 +231,7 @@ void AJAClient::UpdateDeviceStatus()
 void AJAClient::UpdateDeviceValue()
 {
     flatbuffers::FlatBufferBuilder fbb;
-    auto pinId = GetPinId("Device");
+    auto pinId = GetPinId(Device_Name);
     std::vector<u8> value = StringValue(Device->GetDisplayName());
 	mzEngine.HandleEvent(CreateAppEvent(fbb, mz::CreatePinValueChangedDirect(fbb, &pinId, &value)));
     UpdateReferenceValue();
@@ -246,7 +249,7 @@ void AJAClient::UpdateReferenceValue()
 
     flatbuffers::FlatBufferBuilder fbb;
     mz::fb::UUID pinId;
-    if (auto id = Mapping.PinName2Id.right("ReferenceSource"))
+    if (auto id = Mapping.PinName2Id.right(ReferenceSource_Name))
         pinId = *id;
     else
         return;
@@ -320,7 +323,7 @@ void AJAClient::OnNodeUpdate(mz::fb::Node const &event)
     }
 }
 
-void AJAClient::OnNodeUpdate(PinMapping &&newMapping, std::unordered_map<std::string, const mz::fb::Pin *> &tmpPins,
+void AJAClient::OnNodeUpdate(PinMapping &&newMapping, std::unordered_map<Name, const mz::fb::Pin *> &tmpPins,
                              std::vector<mz::fb::UUID> &pinsToDelete)
 {
     Mapping = std::move(newMapping);
@@ -344,12 +347,13 @@ void AJAClient::OnNodeUpdate(PinMapping &&newMapping, std::unordered_map<std::st
         if (!pin)
             continue;
         const auto tyname = pin->type_name()->str();
-        NTV2Channel channel = ParseChannel(name);
-        if (name.ends_with("Ring Size"))
+		std::string str = name.AsString();
+		NTV2Channel channel = ParseChannel(str);
+		if (str.ends_with("Ring Size"))
         {
             prs[channel].size = pin;
         }
-        else if (name.ends_with("Ring Spare Count"))
+		else if (str.ends_with("Ring Spare Count"))
         {
             prs[channel].spare_count = pin;
         }
@@ -373,7 +377,7 @@ void AJAClient::OnNodeUpdate(PinMapping &&newMapping, std::unordered_map<std::st
         {
             prs[channel].curve = pin;
         }
-        else if (name.ends_with("Narrow Range"))
+		else if (str.ends_with("Narrow Range"))
         {
             prs[channel].narrow_range = pin;
         }
@@ -434,7 +438,7 @@ void AJAClient::OnNodeUpdate(PinMapping &&newMapping, std::unordered_map<std::st
             }
             else
             {
-                GeneratePinIDSet(pin->name()->str(), mode, pinsToDelete);
+                GeneratePinIDSet(Name(pin->name()->str()), mode, pinsToDelete);
                 auto it = Pins.find(id);
                 DeleteTexturePin(*it);
                 continue;
@@ -448,7 +452,7 @@ void AJAClient::OnPinMenuFired(mzContextMenuRequest const &request)
     flatbuffers::FlatBufferBuilder fbb;
     auto name = Mapping.GetPinName(*request.item_id());
 
-    if (auto pin = FindChannel(ParseChannel(name)))
+    if (auto pin = FindChannel(ParseChannel(name.AsString())))
     {
         std::vector<flatbuffers::Offset<mz::ContextMenuItem>> remove = {
             mz::CreateContextMenuItemDirect(fbb, "Remove",
@@ -731,7 +735,7 @@ void AJAClient::OnPathCommand(mz::fb::UUID pinID, app::PathCommand command, Buff
             // there is a new connection path
             // we need to send a restart signal
 		    flatbuffers::FlatBufferBuilder fbb;
-            auto id = GetPinId(ringThread->Name());
+            auto id = GetPinId(Name(ringThread->Name()));
             AjaRestartCommandParams restartParams;
             restartParams.RingSize = ringThread->gpuRing->Size;
             restartParams.UpdateFlags = AjaRestartCommandParams::UpdateRingSize;
@@ -750,7 +754,9 @@ void AJAClient::OnPinValueChanged(mz::fb::UUID id, void *value)
     }
     auto pinName = Mapping.GetPinName(id);
 
-    if (pinName == "Shader Type")
+    std::string pinNameStr = pinName.AsString();
+    
+    if (pinNameStr == "Shader Type")
     {
         StopAll();
         Shader = *(ShaderType *)value;
@@ -763,47 +769,47 @@ void AJAClient::OnPinValueChanged(mz::fb::UUID id, void *value)
         return;
     }
 
-    if (pinName == "Dispatch Size")
+    if (pinNameStr == "Dispatch Size")
     {
         DispatchSizeX = ((mz::fb::vec2u *)value)->x();
         DispatchSizeY = ((mz::fb::vec2u *)value)->y();
         return;
     }
 
-    if (pinName == "Debug")
+    if (pinNameStr == "Debug")
     {
         Debug = *(u32 *)value;
         return;
     }
 
-    if (!Input && pinName == "ReferenceSource")
+    if (!Input && pinNameStr == "ReferenceSource")
     {
         SetReference((char *)value);
         UpdateStatus();
         return;
     }
 
-    if (pinName.ends_with("Narrow Range"))
+    if (pinNameStr.ends_with("Narrow Range"))
     {
-        FindChannel(ParseChannel(pinName))->NarrowRange = *(bool *)value;
+		FindChannel(ParseChannel(pinNameStr))->NarrowRange = *(bool*)value;
         return;
     }
 
-    if (pinName.ends_with("Colorspace"))
+    if (pinNameStr.ends_with("Colorspace"))
     {
-        FindChannel(ParseChannel(pinName))->Colorspace = *(Colorspace *)value;
+		FindChannel(ParseChannel(pinNameStr))->Colorspace = *(Colorspace*)value;
         return;
     }
 
-    if (pinName.ends_with("Gamma Curve"))
+    if (pinNameStr.ends_with("Gamma Curve"))
     {
-        FindChannel(ParseChannel(pinName))->UpdateCurve(*(GammaCurve *)value);
+		FindChannel(ParseChannel(pinNameStr))->UpdateCurve(*(GammaCurve*)value);
         return;
     }
 
-    if (pinName.ends_with("Mode"))
+    if (pinNameStr.ends_with("Mode"))
     {
-        auto pin = FindChannel(ParseChannel(pinName));
+		auto pin = FindChannel(ParseChannel(pinNameStr));
         auto mode = *(AJADevice::Mode*)value;
         if (mode != pin->mode)
         {
@@ -815,19 +821,19 @@ void AJAClient::OnPinValueChanged(mz::fb::UUID id, void *value)
         return;
     }
 
-    if (pinName.ends_with("Ring Size"))
+    if (pinNameStr.ends_with("Ring Size"))
     {
         flatbuffers::FlatBufferBuilder fbb;
         AjaRestartCommandParams restartParams;
         restartParams.RingSize = *(u32*)value;
         restartParams.UpdateFlags = AjaRestartCommandParams::UpdateRingSize;
         UByteSequence byteBuffer = Buffer::From(restartParams);
-        auto id = GetPinId(std::string(pinName.begin(), pinName.end() - sizeof("Ring Size")));
+		auto id = GetPinId((Name)std::string(pinNameStr.begin(), pinNameStr.end() - sizeof("Ring Size")));
         mzEngine.HandleEvent(CreateAppEvent(fbb, app::CreateExecutePathCommandDirect(fbb, &id, app::PathCommand::RESTART, app::PathCommandType::WALKBACK, &byteBuffer)));
     }
-    if (pinName.ends_with("Ring Spare Count"))
+	if (pinNameStr.ends_with("Ring Spare Count"))
     {
-		auto channel = ParseChannel(pinName);
+		auto channel = ParseChannel(pinNameStr);
 		auto pin = FindChannel(channel);
         pin->SpareCount = *(u32*)value;
     }

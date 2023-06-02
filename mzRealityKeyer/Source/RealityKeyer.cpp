@@ -10,17 +10,85 @@ MZ_INIT()
 
 namespace mz
 {
+MZ_REGISTER_NAME2(Core_Matte);
+MZ_REGISTER_NAME2(Unblurred_Core_Matte);
+MZ_REGISTER_NAME2(Core_Matte_Texture_Size);
+MZ_REGISTER_NAME2(Output);
+MZ_REGISTER_NAME2(Hard_Mask);
+MZ_REGISTER_NAME2(Hard_Mask_Horz_Blur);
+MZ_REGISTER_NAME2(Input);
+MZ_REGISTER_NAME2(Clean_Plate);
+MZ_REGISTER_NAME2(Clean_Plate_Mask);
+MZ_REGISTER_NAME2(Key_High_Brightness);
+MZ_REGISTER_NAME2(Core_Matte_Clean_Plate_Gain);
+MZ_REGISTER_NAME2(Core_Matte_Gamma_1);
+MZ_REGISTER_NAME2(Core_Matte_Gamma_2);
+MZ_REGISTER_NAME2(Core_Matte_Red_Weight);
+MZ_REGISTER_NAME2(Core_Matte_Green_Weight);
+MZ_REGISTER_NAME2(Core_Matte_Blue_Weight);
+MZ_REGISTER_NAME2(Core_Matte_Black_Point);
+MZ_REGISTER_NAME2(Core_Matte_White_Point);
+MZ_REGISTER_NAME2(Master_Gamma);
+MZ_REGISTER_NAME2(Master_Exposure);
+MZ_REGISTER_NAME2(Master_Offset);
+MZ_REGISTER_NAME2(Master_Saturation);
+MZ_REGISTER_NAME2(Master_Contrast);
+MZ_REGISTER_NAME2(Master_Contrast_Center);
+MZ_REGISTER_NAME2(Gamma);
+MZ_REGISTER_NAME2(Exposure);
+MZ_REGISTER_NAME2(Offset);
+MZ_REGISTER_NAME2(Saturation);
+MZ_REGISTER_NAME2(Contrast);
+MZ_REGISTER_NAME2(Contrast_Center);
+MZ_REGISTER_NAME2(Erode);
+MZ_REGISTER_NAME2(Softness);
+MZ_REGISTER_NAME2(Soft_Matte_Red_Weight);
+MZ_REGISTER_NAME2(Soft_Matte_Blue_Weight);
+MZ_REGISTER_NAME2(Soft_Matte_Gamma_1);
+MZ_REGISTER_NAME2(Soft_Matte_Gamma_2);
+MZ_REGISTER_NAME2(Soft_Matte_Clean_Plate_Gain);
+MZ_REGISTER_NAME2(softMatte422Filtering);
+MZ_REGISTER_NAME2(Core_Matte_Blend);
+MZ_REGISTER_NAME2(edgeSpillReplaceColor);
+MZ_REGISTER_NAME2(coreSpillReplaceColor);
+MZ_REGISTER_NAME2(Spill_Matte_Gamma);
+MZ_REGISTER_NAME2(Spill_Matte_Red_Weight);
+MZ_REGISTER_NAME2(Spill_Matte_Blue_Weight);
+MZ_REGISTER_NAME2(Spill_Matte_Gain);
+MZ_REGISTER_NAME2(Spill_RB_Weight);
+MZ_REGISTER_NAME2(Spill_Suppress_Weight);
+MZ_REGISTER_NAME2(spill422Filtering);
+MZ_REGISTER_NAME2(Screen_Subtract_Edge);
+MZ_REGISTER_NAME2(Screen_Subtract_Core);
+MZ_REGISTER_NAME2(Keep_Edge_Luma);
+MZ_REGISTER_NAME2(Keep_Core_Luma);
+MZ_REGISTER_NAME2(Final_Matte_Black_Point);
+MZ_REGISTER_NAME2(Final_Matte_White_Point);
+MZ_REGISTER_NAME2(Final_Matte_Gamma);
+MZ_REGISTER_NAME2(Spill_422_Filtering);
+MZ_REGISTER_NAME2(Core_Spill_Replace_Color);
+MZ_REGISTER_NAME2(Edge_Spill_Replace_Color);
+MZ_REGISTER_NAME2(Soft_Matte_422_Filtering);
+MZ_REGISTER_NAME2(Output_Type);
+MZ_REGISTER_NAME2(IBK_Pass_1_Shader);
+MZ_REGISTER_NAME2(IBK_Pass_2_Shader);
+MZ_REGISTER_NAME2(IBK_Horz_Blur_Shader);
+MZ_REGISTER_NAME2(IBK_Pass_1_Pass);
+MZ_REGISTER_NAME2(IBK_Pass_2_Pass);
+MZ_REGISTER_NAME2(IBK_Horz_Blur_Pass);
+MZ_REGISTER_NAME2(Blur_Radius);
+MZ_REGISTER_NAME2(Input_Texture_Size);
 
 struct RealityKeyerContext : public NodeContext
 {
-	static mzResult GetShaders(size_t* outCount, const char** outShaderNames, mzBuffer* outSpirvBufs)
+	static mzResult GetShaders(size_t* outCount, mzName* outShaderNames, mzBuffer* outSpirvBufs)
 	{
 		*outCount = 3;
 		if (!outShaderNames || !outSpirvBufs)
 			return MZ_RESULT_SUCCESS;
-		outShaderNames[0] = "IBK_Pass_1_Shader";
-		outShaderNames[1] = "IBK_Pass_2_Shader";
-		outShaderNames[2] = "IBK_Horz_Blur_Pass_Shader";
+		outShaderNames[0] = IBK_Pass_1_Shader_Name;
+		outShaderNames[1] = IBK_Pass_2_Shader_Name;
+		outShaderNames[2] = IBK_Horz_Blur_Shader_Name;
 		outSpirvBufs[0] = mzBuffer{.Data = (void*)IBKPass1_frag_spv, .Size = sizeof(IBKPass1_frag_spv)};
 		outSpirvBufs[1] = mzBuffer{.Data = (void*)IBKPass2_frag_spv, .Size = sizeof(IBKPass2_frag_spv)};
 		outSpirvBufs[2] = mzBuffer{.Data = (void*)IBKHorizontalBlur_frag_spv, .Size = sizeof(IBKHorizontalBlur_frag_spv)};
@@ -32,39 +100,39 @@ struct RealityKeyerContext : public NodeContext
 		*outCount = 3;
 		if (!outMzPassInfos)
 			return MZ_RESULT_SUCCESS;
-		outMzPassInfos[0] = mzPassInfo{.Key = "IBK_Pass_1", .Shader = "IBK_Pass_1_Shader"};
-		outMzPassInfos[1] = mzPassInfo{.Key = "IBK_Pass_2", .Shader = "IBK_Pass_2_Shader"};
-		outMzPassInfos[2] = mzPassInfo{.Key = "IBK_Horz_Blur_Pass", .Shader = "IBK_Horz_Blur_Pass_Shader"};
+		outMzPassInfos[0] = mzPassInfo{.Key = IBK_Pass_1_Pass_Name, .Shader = IBK_Pass_1_Shader_Name};
+		outMzPassInfos[1] = mzPassInfo{.Key = IBK_Pass_2_Pass_Name, .Shader = IBK_Pass_2_Shader_Name};
+		outMzPassInfos[2] = mzPassInfo{.Key = IBK_Horz_Blur_Pass_Name, .Shader = IBK_Horz_Blur_Shader_Name};
 		return MZ_RESULT_SUCCESS;
 	}
 
 	void Run(const mzNodeExecuteArgs* args)
 	{
 		auto values = GetPinValues(args);
-		auto outputTextureInfo = DeserializeTextureInfo(values["Output"]);
-		auto hardMaskTextureInfo = DeserializeTextureInfo(values["Hard_Mask"]);
-		auto hardMaskHorzBlurTextureInfo = DeserializeTextureInfo(values["Hard_Mask_Horz_Blur"]);
-		auto inputTextureInfo = DeserializeTextureInfo(values["Input"]);
-		auto cleanPlate = DeserializeTextureInfo(values["Clean_Plate"]);
-		auto cleanPlateMask = DeserializeTextureInfo(values["Clean_Plate_Mask"]);
+		auto outputTextureInfo = DeserializeTextureInfo(values[Output_Name]);
+		auto hardMaskTextureInfo = DeserializeTextureInfo(values[Hard_Mask_Name]);
+		auto hardMaskHorzBlurTextureInfo = DeserializeTextureInfo(values[Hard_Mask_Horz_Blur_Name]);
+		auto inputTextureInfo = DeserializeTextureInfo(values[Input_Name]);
+		auto cleanPlate = DeserializeTextureInfo(values[Clean_Plate_Name]);
+		auto cleanPlateMask = DeserializeTextureInfo(values[Clean_Plate_Mask_Name]);
 
 		mzCmd cmd;
 		mzEngine.Begin(&cmd);
 		// Pass 1 begin
 		mzRunPassParams ibkPass1 = {};
-		ibkPass1.PassKey = "IBK_Pass_1"; 
+		ibkPass1.Key = IBK_Pass_1_Pass_Name; 
 		std::vector ibkPass1Bindings = {
-			ShaderBinding("Input", inputTextureInfo),
-			ShaderBinding("Clean_Plate", cleanPlate),
-			ShaderBinding("Key_High_Brightness", values["Key_High_Brightness"]),
-			ShaderBinding("Core_Matte_Clean_Plate_Gain", values["Core_Matte_Clean_Plate_Gain"]),
-			ShaderBinding("Core_Matte_Gamma_1", values["Core_Matte_Gamma_1"]),
-			ShaderBinding("Core_Matte_Gamma_2", values["Core_Matte_Gamma_2"]),
-			ShaderBinding("Core_Matte_Red_Weight", values["Core_Matte_Red_Weight"]),
-			ShaderBinding("Core_Matte_Green_Weight", values["Core_Matte_Green_Weight"]),
-			ShaderBinding("Core_Matte_Blue_Weight", values["Core_Matte_Blue_Weight"]),
-			ShaderBinding("Core_Matte_Black_Point", values["Core_Matte_Black_Point"]),
-			ShaderBinding("Core_Matte_White_Point", values["Core_Matte_White_Point"]),
+			ShaderBinding(Input_Name, inputTextureInfo),
+			ShaderBinding(Clean_Plate_Name, cleanPlate),
+			ShaderBinding(Key_High_Brightness_Name, values[Key_High_Brightness_Name]),
+			ShaderBinding(Core_Matte_Clean_Plate_Gain_Name, values[Core_Matte_Clean_Plate_Gain_Name]),
+			ShaderBinding(Core_Matte_Gamma_1_Name, values[Core_Matte_Gamma_1_Name]),
+			ShaderBinding(Core_Matte_Gamma_2_Name, values[Core_Matte_Gamma_2_Name]),
+			ShaderBinding(Core_Matte_Red_Weight_Name, values[Core_Matte_Red_Weight_Name]),
+			ShaderBinding(Core_Matte_Green_Weight_Name, values[Core_Matte_Green_Weight_Name]),
+			ShaderBinding(Core_Matte_Blue_Weight_Name, values[Core_Matte_Blue_Weight_Name]),
+			ShaderBinding(Core_Matte_Black_Point_Name, values[Core_Matte_Black_Point_Name]),
+			ShaderBinding(Core_Matte_White_Point_Name, values[Core_Matte_White_Point_Name]),
 		};
 		ibkPass1.Bindings = ibkPass1Bindings.data();
 		ibkPass1.BindingCount = ibkPass1Bindings.size();
@@ -74,13 +142,13 @@ struct RealityKeyerContext : public NodeContext
 
 		// Horz blur begin
 		mzRunPassParams ibkHorzBlurPass = {};
-		ibkHorzBlurPass.PassKey = "IBK_Horz_Blur_Pass";
-		float blurRadius = *(float*)values["Erode"] + *(float*)values["Softness"];
+		ibkHorzBlurPass.Key = IBK_Horz_Blur_Pass_Name;
+		float blurRadius = *(float*)values[Erode_Name] + *(float*)values[Softness_Name];
 		mz::fb::vec2 blurInputSize(hardMaskTextureInfo.Info.Texture.Width, hardMaskTextureInfo.Info.Texture.Height);
 		std::vector ibkHorzBlurPassBindings = {
-			ShaderBinding("Input", hardMaskTextureInfo),
-			ShaderBinding("Blur_Radius", blurRadius),
-			ShaderBinding("Input_Texture_Size", blurInputSize),
+			ShaderBinding(Input_Name, hardMaskTextureInfo),
+			ShaderBinding(Blur_Radius_Name, blurRadius),
+			ShaderBinding(Input_Texture_Size_Name, blurInputSize),
 		};
 		ibkHorzBlurPass.Bindings = ibkHorzBlurPassBindings.data();
 		ibkHorzBlurPass.BindingCount = ibkHorzBlurPassBindings.size();
@@ -90,38 +158,37 @@ struct RealityKeyerContext : public NodeContext
 
 		// Pass 2 begin
 		mzRunPassParams ibkPass2 = {};
-		ibkPass2.PassKey = "IBK_Pass_2";
+		ibkPass2.Key = IBK_Pass_2_Pass_Name;
 		mz::fb::vec2 coreMatteTextureSize(hardMaskTextureInfo.Info.Texture.Width, hardMaskTextureInfo.Info.Texture.Height);
 		
-		float softMatte422FilteringValue = *static_cast<float*>(values["Soft_Matte_422_Filtering"]);
+		float softMatte422FilteringValue = *static_cast<float*>(values[Soft_Matte_422_Filtering_Name]);
 		mz::fb::vec2 softMatte422Filtering(1.0f - softMatte422FilteringValue, softMatte422FilteringValue * .5f);
 		
-		mz::fb::vec3 edgeSpillReplaceColor = *static_cast<mz::fb::vec3*>(values["Edge_Spill_Replace_Color"]);
+		mz::fb::vec3 edgeSpillReplaceColor = *static_cast<mz::fb::vec3*>(values[Edge_Spill_Replace_Color_Name]);
 		edgeSpillReplaceColor.mutate_x(pow(2.0, edgeSpillReplaceColor.x()));
 		edgeSpillReplaceColor.mutate_y(pow(2.0, edgeSpillReplaceColor.y()));
 		edgeSpillReplaceColor.mutate_z(pow(2.0, edgeSpillReplaceColor.z()));
 
-		mz::fb::vec3 coreSpillReplaceColor = *static_cast<mz::fb::vec3*>(values["Core_Spill_Replace_Color"]);
+		mz::fb::vec3 coreSpillReplaceColor = *static_cast<mz::fb::vec3*>(values[Core_Spill_Replace_Color_Name]);
 		coreSpillReplaceColor.mutate_x(pow(2.0, coreSpillReplaceColor.x()));
 		coreSpillReplaceColor.mutate_y(pow(2.0, coreSpillReplaceColor.y()));
 		coreSpillReplaceColor.mutate_z(pow(2.0, coreSpillReplaceColor.z()));
 
-		float spill422FilteringValue = *static_cast<float*>(values["Spill_422_Filtering"]);
+		float spill422FilteringValue = *static_cast<float*>(values[Spill_422_Filtering_Name]);
 		mz::fb::vec2 spill422Filtering(1.0f - spill422FilteringValue, spill422FilteringValue * .5f);
 
-		float masterGamma = *static_cast<float*>(values["Master_Gamma"]);
-		float masterExposure = *static_cast<float*>(values["Master_Exposure"]);
-		float masterOffset = *static_cast<float*>(values["Master_Offset"]);
-		float masterSaturation = *static_cast<float*>(values["Master_Saturation"]);
-		float masterContrast = *static_cast<float*>(values["Master_Contrast"]);
-		float masterContrastCenter = *static_cast<float*>(values["Master_Contrast_Center"]);
-
-		fb::vec3 gamma = *static_cast<fb::vec3*>(values["Gamma"]);
-		fb::vec3 exposure = *static_cast<fb::vec3*>(values["Exposure"]);
-		fb::vec3 offset = *static_cast<fb::vec3*>(values["Offset"]);
-		fb::vec3 saturation = *static_cast<fb::vec3*>(values["Saturation"]);
-		fb::vec3 contrast = *static_cast<fb::vec3*>(values["Contrast"]);
-		fb::vec3 contrastCenter = *static_cast<fb::vec3*>(values["Contrast_Center"]);
+		float masterGamma = *static_cast<float*>(values[Master_Gamma_Name]);
+		float masterExposure = *static_cast<float*>(values[Master_Exposure_Name]);
+		float masterOffset = *static_cast<float*>(values[Master_Offset_Name]);
+		float masterSaturation = *static_cast<float*>(values[Master_Saturation_Name]);
+		float masterContrast = *static_cast<float*>(values[Master_Contrast_Name]);
+		float masterContrastCenter = *static_cast<float*>(values[Master_Contrast_Center_Name]);
+		fb::vec3 gamma = *static_cast<fb::vec3*>(values[Gamma_Name]);
+		fb::vec3 exposure = *static_cast<fb::vec3*>(values[Exposure_Name]);
+		fb::vec3 offset = *static_cast<fb::vec3*>(values[Offset_Name]);
+		fb::vec3 saturation = *static_cast<fb::vec3*>(values[Saturation_Name]);
+		fb::vec3 contrast = *static_cast<fb::vec3*>(values[Contrast_Name]);
+		fb::vec3 contrastCenter = *static_cast<fb::vec3*>(values[Contrast_Center_Name]);
 		
 		gamma.mutate_x(gamma.x() * masterGamma);
 		gamma.mutate_y(gamma.y() * masterGamma);
@@ -151,45 +218,45 @@ struct RealityKeyerContext : public NodeContext
 		contrastCenter.mutate_z(contrastCenter.z() + masterContrastCenter);
 
 		std::vector ibkPass2Bindings = {
-			ShaderBinding("Input", inputTextureInfo),
-			ShaderBinding("Clean_Plate", cleanPlate),
-			ShaderBinding("Clean_Plate_Mask", cleanPlateMask),
-			ShaderBinding("Core_Matte", hardMaskHorzBlurTextureInfo),
-			ShaderBinding("Unblurred_Core_Matte", hardMaskTextureInfo),
-			ShaderBinding("Core_Matte_Texture_Size", coreMatteTextureSize),
-			ShaderBinding("Erode", values["Erode"]),
-			ShaderBinding("Softness", values["Softness"]),
-			ShaderBinding("Soft_Matte_Red_Weight", values["Soft_Matte_Red_Weight"]),
-			ShaderBinding("Soft_Matte_Blue_Weight", values["Soft_Matte_Blue_Weight"]),
-			ShaderBinding("Soft_Matte_Gamma_1", values["Soft_Matte_Gamma_1"]),
-			ShaderBinding("Soft_Matte_Gamma_2", values["Soft_Matte_Gamma_2"]),
-			ShaderBinding("Soft_Matte_Clean_Plate_Gain", values["Soft_Matte_Clean_Plate_Gain"]),
-			ShaderBinding("Soft_Matte_422_Filtering", softMatte422Filtering),
-			ShaderBinding("Key_High_Brightness", values["Key_High_Brightness"]),
-			ShaderBinding("Core_Matte_Blend", values["Core_Matte_Blend"]),
-			ShaderBinding("Edge_Spill_Replace_Color", edgeSpillReplaceColor),
-			ShaderBinding("Core_Spill_Replace_Color", coreSpillReplaceColor),
-			ShaderBinding("Spill_Matte_Gamma", values["Spill_Matte_Gamma"]),
-			ShaderBinding("Spill_Matte_Red_Weight", values["Spill_Matte_Red_Weight"]),
-			ShaderBinding("Spill_Matte_Blue_Weight", values["Spill_Matte_Blue_Weight"]),
-			ShaderBinding("Spill_Matte_Gain", values["Spill_Matte_Gain"]),
-			ShaderBinding("Spill_RB_Weight", values["Spill_RB_Weight"]),
-			ShaderBinding("Spill_Suppress_Weight", values["Spill_Suppress_Weight"]),
-			ShaderBinding("Spill_422_Filtering", spill422Filtering),
-			ShaderBinding("Screen_Subtract_Edge", values["Screen_Subtract_Edge"]),
-			ShaderBinding("Screen_Subtract_Core", values["Screen_Subtract_Core"]),
-			ShaderBinding("Keep_Edge_Luma", values["Keep_Edge_Luma"]),
-			ShaderBinding("Keep_Core_Luma", values["Keep_Core_Luma"]),
-			ShaderBinding("Final_Matte_Black_Point", values["Final_Matte_Black_Point"]),
-			ShaderBinding("Final_Matte_White_Point", values["Final_Matte_White_Point"]),
-			ShaderBinding("Final_Matte_Gamma", values["Final_Matte_Gamma"]),
-			ShaderBinding("Gamma", gamma),
-			ShaderBinding("Exposure", exposure),
-			ShaderBinding("Offset", offset),
-			ShaderBinding("Saturation", saturation),
-			ShaderBinding("Contrast", contrast),
-			ShaderBinding("Contrast_Center", contrastCenter),
-			ShaderBinding("Output_Type", values["Output_Type"]),
+			ShaderBinding(Input_Name, inputTextureInfo),
+			ShaderBinding(Clean_Plate_Name, cleanPlate),
+			ShaderBinding(Clean_Plate_Mask_Name, cleanPlateMask),
+			ShaderBinding(Core_Matte_Name, hardMaskHorzBlurTextureInfo),
+			ShaderBinding(Unblurred_Core_Matte_Name, hardMaskTextureInfo),
+			ShaderBinding(Core_Matte_Texture_Size_Name, coreMatteTextureSize),
+			ShaderBinding(Erode_Name, values[Erode_Name]),
+			ShaderBinding(Softness_Name, values[Softness_Name]),
+			ShaderBinding(Soft_Matte_Red_Weight_Name, values[Soft_Matte_Red_Weight_Name]),
+			ShaderBinding(Soft_Matte_Blue_Weight_Name, values[Soft_Matte_Blue_Weight_Name]),
+			ShaderBinding(Soft_Matte_Gamma_1_Name, values[Soft_Matte_Gamma_1_Name]),
+			ShaderBinding(Soft_Matte_Gamma_2_Name, values[Soft_Matte_Gamma_2_Name]),
+			ShaderBinding(Soft_Matte_Clean_Plate_Gain_Name, values[Soft_Matte_Clean_Plate_Gain_Name]),
+			ShaderBinding(Soft_Matte_422_Filtering_Name,softMatte422Filtering),
+			ShaderBinding(Key_High_Brightness_Name, values[Key_High_Brightness_Name]),
+			ShaderBinding(Core_Matte_Blend_Name, values[Core_Matte_Blend_Name]),
+			ShaderBinding(Edge_Spill_Replace_Color_Name,edgeSpillReplaceColor),
+			ShaderBinding(Core_Spill_Replace_Color_Name,coreSpillReplaceColor),
+			ShaderBinding(Spill_Matte_Gamma_Name, values[Spill_Matte_Gamma_Name]),
+			ShaderBinding(Spill_Matte_Red_Weight_Name, values[Spill_Matte_Red_Weight_Name]),
+			ShaderBinding(Spill_Matte_Blue_Weight_Name, values[Spill_Matte_Blue_Weight_Name]),
+			ShaderBinding(Spill_Matte_Gain_Name, values[Spill_Matte_Gain_Name]),
+			ShaderBinding(Spill_RB_Weight_Name, values[Spill_RB_Weight_Name]),
+			ShaderBinding(Spill_Suppress_Weight_Name, values[Spill_Suppress_Weight_Name]),
+			ShaderBinding(Spill_422_Filtering_Name,spill422Filtering),
+			ShaderBinding(Screen_Subtract_Edge_Name, values[Screen_Subtract_Edge_Name]),
+			ShaderBinding(Screen_Subtract_Core_Name, values[Screen_Subtract_Core_Name]),
+			ShaderBinding(Keep_Edge_Luma_Name, values[Keep_Edge_Luma_Name]),
+			ShaderBinding(Keep_Core_Luma_Name, values[Keep_Core_Luma_Name]),
+			ShaderBinding(Final_Matte_Black_Point_Name, values[Final_Matte_Black_Point_Name]),
+			ShaderBinding(Final_Matte_White_Point_Name, values[Final_Matte_White_Point_Name]),
+			ShaderBinding(Final_Matte_Gamma_Name, values[Final_Matte_Gamma_Name]),
+			ShaderBinding(Gamma_Name, gamma),
+			ShaderBinding(Exposure_Name, exposure),
+			ShaderBinding(Offset_Name, offset),
+			ShaderBinding(Saturation_Name, saturation),
+			ShaderBinding(Contrast_Name, contrast),
+			ShaderBinding(Contrast_Center_Name, contrastCenter),
+			ShaderBinding(Output_Type_Name, values[Output_Type_Name]),
 		};
 		ibkPass2.BindingCount = ibkPass2Bindings.size();
 		ibkPass2.Bindings = ibkPass2Bindings.data();

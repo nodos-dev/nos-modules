@@ -24,6 +24,10 @@ uuids::uuid_random_generator generator(mtengine);
 
 namespace mz::utilities
 {
+MZ_REGISTER_NAME2(Out);
+MZ_REGISTER_NAME2(Texture_Count);
+MZ_REGISTER_NAME2(Merge_Pass);
+MZ_REGISTER_NAME2(Merge_Shader);
 
 struct MergeContext
 {
@@ -33,7 +37,7 @@ struct MergeContext
 	void Run(const mzNodeExecuteArgs* pins)
 	{
 		auto values = GetPinValues(pins);
-		const mzResourceShareInfo output = DeserializeTextureInfo(values["Out"]);
+		const mzResourceShareInfo output = DeserializeTextureInfo(values[Out_Name]);
 
 		std::vector<mzShaderBinding> bindings;
 		std::vector<mzResourceShareInfo> Textures(TextureCount);
@@ -41,20 +45,20 @@ struct MergeContext
 
 		for (size_t i = 0; i < pins->PinCount; ++i)
 		{
-			std::string name = pins->PinNames[i];
+			std::string name = Name(pins->PinNames[i]).AsString();
 			mzBuffer val = pins->PinValues[i];
 			if (name.starts_with("Texture_"))
 			{
-				bindings.emplace_back(ShaderBinding(pins->PinNames[i], Textures[curr++] = DeserializeTextureInfo(val.Data)));
+				bindings.emplace_back(ShaderBinding(Name(pins->PinNames[i]), Textures[curr++] = DeserializeTextureInfo(val.Data)));
 			}
 			else if (name != "Out")
-				bindings.emplace_back(mzShaderBinding{.Name = pins->PinNames[i], .FixedSize = val.Data});
+				bindings.emplace_back(mzShaderBinding{.Name = Name(pins->PinNames[i]), .FixedSize = val.Data});
 		}
 
-		bindings.emplace_back(ShaderBinding("Texture_Count", TextureCount));
+		bindings.emplace_back(ShaderBinding(Texture_Count_Name, TextureCount));
 
 		mzRunPassParams mergePass{
-			.PassKey = "Merge_Pass",
+			.Key = Merge_Pass_Name,
 			.Bindings = bindings.data(),
 			.BindingCount = static_cast<uint32_t>(bindings.size()),
 			.Output = output,
@@ -121,12 +125,12 @@ struct MergeContext
 		mzEngine.HandleEvent(CreateAppEvent(fbb, CreatePartialNodeUpdateDirect(fbb, &((MergeContext*)(ctx))->Id, ClearFlags::NONE,0,&pins)));
 	}
 
-	static mzResult GetShaders(size_t* outCount, const char** outShaderNames, mzBuffer* outSpirvBufs)
+	static mzResult GetShaders(size_t* outCount, mzName* outShaderNames, mzBuffer* outSpirvBufs)
 	{
 		*outCount = 1;
 		if (!outShaderNames || !outSpirvBufs)
 			return MZ_RESULT_SUCCESS;
-		*outShaderNames = "Merge_Shader";
+		*outShaderNames = Merge_Shader_Name;
 		outSpirvBufs->Data = (void*)(Merge_frag_spv);
 		outSpirvBufs->Size = sizeof(Merge_frag_spv);
 		return MZ_RESULT_SUCCESS;
@@ -138,8 +142,8 @@ struct MergeContext
 		if (!passes)
 			return MZ_RESULT_SUCCESS;
 		*passes = {
-			.Key = "Merge_Pass",
-			.Shader = "Merge_Shader",
+			.Key = Merge_Pass_Name,
+			.Shader = Merge_Shader_Name,
 			.Blend = 1,
 			.MultiSample = 1,
 		};

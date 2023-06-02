@@ -30,25 +30,11 @@ static mz::fb::String256 Str256(std::string const &str)
     return re;
 }
 
-static std::vector<std::pair<const char*, std::vector<u8>>> shaders =
-{
-    {"AJA_RGB2YCbCr_Compute_Shader", {std::begin(RGB2YCbCr_comp_spv), std::end(RGB2YCbCr_comp_spv)}},
-    {"AJA_YCbCr2RGB_Compute_Shader", {std::begin(YCbCr2RGB_comp_spv), std::end(YCbCr2RGB_comp_spv)}},
-    {"AJA_RGB2YCbCr_Shader",         {std::begin(RGB2YCbCr_frag_spv), std::end(RGB2YCbCr_frag_spv)}},
-    {"AJA_YCbCr2RGB_Shader",         {std::begin(YCbCr2RGB_frag_spv), std::end(YCbCr2RGB_frag_spv)}},
-};
-
-static std::vector<mzPassInfo> passes =
-{
-    {.Key = "AJA_RGB2YCbCr_Compute_Pass", .Shader = "AJA_RGB2YCbCr_Compute_Shader", .MultiSample = 1},
-    {.Key = "AJA_YCbCr2RGB_Compute_Pass", .Shader = "AJA_YCbCr2RGB_Compute_Shader", .MultiSample = 1},
-    {.Key = "AJA_YCbCr2RGB_Pass", .Shader = "AJA_YCbCr2RGB_Shader", .MultiSample = 1},
-    {.Key = "AJA_RGB2YCbCr_Pass", .Shader = "AJA_RGB2YCbCr_Shader", .MultiSample = 1}
-};
+static std::vector<std::pair<Name, std::vector<u8>>> shaders;
 
 struct AJA
 {
-    static mzResult GetShaders(size_t* outCount, const char** names, mzBuffer* outSpirvBufs)
+    static mzResult GetShaders(size_t* outCount, mzName* names, mzBuffer* outSpirvBufs)
     {
         *outCount = shaders.size();
         if(!outSpirvBufs) 
@@ -56,7 +42,7 @@ struct AJA
 
         for (auto& [name, spirv] : shaders)
         {
-            *(names++) = name;
+            *(names++) = mzEngine.GetName(name);
             *(outSpirvBufs++) = { spirv.data(), spirv.size() };
         }
 
@@ -65,12 +51,22 @@ struct AJA
 
     static mzResult GetPasses(size_t* outCount, mzPassInfo* outMzPassInfos)
     {
+        const std::vector<mzPassInfo> passes =
+        {
+            {.Key = AJA_RGB2YCbCr_Compute_Pass_Name, .Shader = AJA_RGB2YCbCr_Compute_Shader_Name, .MultiSample = 1},
+            {.Key = AJA_YCbCr2RGB_Compute_Pass_Name, .Shader = AJA_YCbCr2RGB_Compute_Shader_Name, .MultiSample = 1},
+            {.Key = AJA_YCbCr2RGB_Pass_Name, .Shader = AJA_YCbCr2RGB_Shader_Name, .MultiSample = 1},
+            {.Key = AJA_RGB2YCbCr_Pass_Name, .Shader = AJA_RGB2YCbCr_Shader_Name, .MultiSample = 1}
+        };
+
         *outCount = passes.size();
 
         if (!outMzPassInfos)
             return MZ_RESULT_SUCCESS;
-
-        memcpy(outMzPassInfos, passes.data(), passes.size() * sizeof(passes[0]));
+        for (auto& pass : passes)
+        {
+            *outMzPassInfos++ = pass;
+        }
 
         return MZ_RESULT_SUCCESS;
     }
@@ -153,27 +149,27 @@ struct AJA
         PinMapping mapping;
         auto loadedPins = mapping.Load(node);
 
-        AddIfNotFound("Device", "string", StringValue(dev->GetDisplayName()), loadedPins, pinsToAdd, fbb,
+        AddIfNotFound(Device_Name, "string", StringValue(dev->GetDisplayName()), loadedPins, pinsToAdd, fbb,
                       ShowAs::PROPERTY, CanShowAs::PROPERTY_ONLY);
-        if (auto val = AddIfNotFound("Dispatch Size", "mz.fb.vec2u", mz::Buffer::From(mz::fb::vec2u(c->DispatchSizeX, c->DispatchSizeY)),
+        if (auto val = AddIfNotFound(Dispatch_Size_Name, "mz.fb.vec2u", mz::Buffer::From(mz::fb::vec2u(c->DispatchSizeX, c->DispatchSizeY)),
                                      loadedPins, pinsToAdd, fbb))
         {
             c->DispatchSizeX = ((glm::uvec2 *)val)->x;
             c->DispatchSizeY = ((glm::uvec2 *)val)->y;
         }
 
-        if (auto val = AddIfNotFound("Shader Type", "AJA.Shader", mz::Buffer::From(ShaderType(c->Shader)), loadedPins,
+        if (auto val = AddIfNotFound(Shader_Type_Name, "AJA.Shader", mz::Buffer::From(ShaderType(c->Shader)), loadedPins,
                                      pinsToAdd, fbb))
         {
             c->Shader = *((ShaderType *)val);
         }
 
-        if (auto val = AddIfNotFound("Debug", "uint", mz::Buffer::From(u32(c->Debug)), loadedPins, pinsToAdd, fbb))
+        if (auto val = AddIfNotFound(Debug_Name, "uint", mz::Buffer::From(u32(c->Debug)), loadedPins, pinsToAdd, fbb))
         {
             c->Debug = *((u32 *)val);
         }
 
-        if (auto ref = loadedPins["ReferenceSource"])
+        if (auto ref = loadedPins[ReferenceSource_Name])
         {
             if (flatbuffers::IsFieldPresent(ref, fb::Pin::VT_DATA))
             {
@@ -249,10 +245,10 @@ struct AJA
             for (auto& p : c->Pins)
                 p->Stop();
    
-        shaders[0] = { "AJA_RGB2YCbCr_Compute_Shader", ReadSpirv(std::string(mzEngine.WorkFolder()) +  "/../RGB2YCbCr.comp") };
-        shaders[1] = { "AJA_YCbCr2RGB_Compute_Shader", ReadSpirv(std::string(mzEngine.WorkFolder()) +  "/../YCbCr2RGB.comp") };
-        shaders[2] = { "AJA_RGB2YCbCr_Shader", ReadSpirv(std::string(mzEngine.WorkFolder()) +  "/../RGB2YCbCr.frag") };
-        shaders[3] = { "AJA_YCbCr2RGB_Shader", ReadSpirv(std::string(mzEngine.WorkFolder()) +  "/../YCbCr2RGB.frag") };
+        shaders[0] = { AJA_RGB2YCbCr_Compute_Shader_Name, ReadSpirv(std::string(mzEngine.WorkFolder()) +  "/../RGB2YCbCr.comp") };
+        shaders[1] = { AJA_YCbCr2RGB_Compute_Shader_Name, ReadSpirv(std::string(mzEngine.WorkFolder()) +  "/../YCbCr2RGB.comp") };
+        shaders[2] = { AJA_RGB2YCbCr_Shader_Name, ReadSpirv(std::string(mzEngine.WorkFolder()) +  "/../RGB2YCbCr.frag") };
+        shaders[3] = { AJA_YCbCr2RGB_Shader_Name, ReadSpirv(std::string(mzEngine.WorkFolder()) +  "/../YCbCr2RGB.frag") };
         
         mzEngine.ReloadShaders(((AJAClient*)ctx)->Input ? "AJA.AJAIn" : "AJA.AJAOut");
                  
@@ -427,6 +423,13 @@ MZAPI_ATTR mzResult MZAPI_CALL mzExportNodeFunctions(size_t* outSize, mzNodeFunc
 
     outFunctions[0].TypeName = "AJA.AJAIn";
     outFunctions[1].TypeName = "AJA.AJAOut";
+
+    shaders = {
+		{AJA_RGB2YCbCr_Compute_Shader_Name, {std::begin(RGB2YCbCr_comp_spv), std::end(RGB2YCbCr_comp_spv)}},
+		{AJA_YCbCr2RGB_Compute_Shader_Name, {std::begin(YCbCr2RGB_comp_spv), std::end(YCbCr2RGB_comp_spv)}},
+		{AJA_RGB2YCbCr_Shader_Name, {std::begin(RGB2YCbCr_frag_spv), std::end(RGB2YCbCr_frag_spv)}},
+		{AJA_YCbCr2RGB_Shader_Name, {std::begin(YCbCr2RGB_frag_spv), std::end(YCbCr2RGB_frag_spv)}},
+	};
 
     return MZ_RESULT_SUCCESS;
 }

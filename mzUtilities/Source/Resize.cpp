@@ -7,6 +7,11 @@
 namespace mz::utilities
 {
 
+MZ_REGISTER_NAME2(Resize_Pass);
+MZ_REGISTER_NAME2(Resize_Shader);
+MZ_REGISTER_NAME2(Input);
+MZ_REGISTER_NAME2(Method);
+
 struct ResizeContext
 {
 	mzUUID NodeId;
@@ -29,21 +34,21 @@ struct ResizeContext
 		if(!infos)
 			return MZ_RESULT_SUCCESS;
 
-		infos->Key = "Resize_Pass";
-		infos->Shader = "Resize_Shader";
+		infos->Key    = Resize_Pass_Name;
+		infos->Shader = Resize_Shader_Name;
 		infos->Blend = false;
 		infos->MultiSample = 1;
 
 		return MZ_RESULT_SUCCESS;
 	}
 
-	static mzResult GetShaders(size_t* outCount, const char** outShaderNames, mzBuffer* outSpirvBufs)
+	static mzResult GetShaders(size_t* outCount, mzName* outShaderNames, mzBuffer* outSpirvBufs)
 	{
 		*outCount = 1;
 		if(!outSpirvBufs || !outShaderNames)
 			return MZ_RESULT_SUCCESS;
 		
-		*outShaderNames = "Resize_Shader";
+		*outShaderNames = Resize_Shader_Name;
 		outSpirvBufs->Data = (void*)(Resize_frag_spv);
 		outSpirvBufs->Size = sizeof(Resize_frag_spv);
 		return MZ_RESULT_SUCCESS;
@@ -53,12 +58,15 @@ struct ResizeContext
 	{
 		mzEngine.LogW("EXECUTE RESIZE NODE");
 		auto pins = GetPinValues(args);
-
-		auto inputTex = DeserializeTextureInfo(pins["Input"]);
-		auto method = GetPinValue<uint32_t>(pins, "Method");
+		MZ_REGISTER_NAME2(Input);
+		MZ_REGISTER_NAME2(Method);
+		MZ_REGISTER_NAME2(Output);
+		MZ_REGISTER_NAME2(Size);
+		auto inputTex = DeserializeTextureInfo(pins[Input_Name]);
+		auto method = GetPinValue<uint32_t>(pins, Method_Name);
 		
-		auto tex = DeserializeTextureInfo(pins["Output"]);
-		auto size = GetPinValue<mzVec2u>(pins, "Size");
+		auto tex = DeserializeTextureInfo(pins[Output_Name]);
+		auto size = GetPinValue<mzVec2u>(pins, Size_Name);
 		
 		if(size->x != tex.Info.Texture.Width ||
 			size->y != tex.Info.Texture.Height)
@@ -74,12 +82,12 @@ struct ResizeContext
 		}
 
 		std::vector bindings = {
-			ShaderBinding("Input", inputTex),
-			ShaderBinding("Method", method)
+			ShaderBinding(Input_Name, inputTex),
+			ShaderBinding(Method_Name, method)
 		};
 		
 		mzRunPassParams resizeParam {
-			.PassKey = "Resize_Pass",
+			.Key = Resize_Pass_Name,
 			.Bindings = bindings.data(),
 			.BindingCount = 2,
 			.Output = tex,

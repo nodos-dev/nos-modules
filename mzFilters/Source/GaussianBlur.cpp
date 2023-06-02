@@ -4,6 +4,14 @@
 namespace mz::utilities
 {
 
+MZ_REGISTER_NAME2(Input);
+MZ_REGISTER_NAME2(Output);
+MZ_REGISTER_NAME2(Softness);
+MZ_REGISTER_NAME2(Kernel_Size);
+MZ_REGISTER_NAME2(Pass_Type);
+MZ_REGISTER_NAME2(Gaussian_Blur_Pass);
+MZ_REGISTER_NAME2(Gaussian_Blur_Shader);
+
 struct GaussBlurContext
 {
 	mzResourceShareInfo IntermediateTexture = {};
@@ -23,13 +31,13 @@ struct GaussBlurContext
 	}
 
 
-	static mzResult GetShaders(size_t* outCount, const char** outShaderNames, mzBuffer* infos)
+	static mzResult GetShaders(size_t* outCount, mzName* outShaderNames, mzBuffer* infos)
 	{
 		*outCount = 1;
 		if (!infos)
 			return MZ_RESULT_SUCCESS;
 
-		outShaderNames[0] = "Gaussian_Blur";
+		outShaderNames[0] = Gaussian_Blur_Shader_Name;
 		infos->Data = (void*)GaussianBlur_frag_spv;
 		infos->Size = sizeof(GaussianBlur_frag_spv);
 
@@ -42,8 +50,8 @@ struct GaussBlurContext
 		if (!infos)
 			return MZ_RESULT_SUCCESS;
 
-		infos->Key = "Gaussian_Blur_Pass";
-		infos->Shader = "Gaussian_Blur";
+		infos->Key    = Gaussian_Blur_Pass_Name;
+		infos->Shader = Gaussian_Blur_Shader_Name;
 		infos->Blend = false;
 		infos->MultiSample = 1;
 
@@ -77,24 +85,24 @@ struct GaussBlurContext
 	{
 		auto values = GetPinValues(pins);
 
-		const mzResourceShareInfo input  = DeserializeTextureInfo(values["Input"]);
-		mzResourceShareInfo output = DeserializeTextureInfo(values["Output"]);
-		const f32 softness = *(f32*)values["Softness"];
-		const mzVec2 kernelSize = *(mzVec2*)values["Kernel_Size"];
+		const mzResourceShareInfo input  = DeserializeTextureInfo(values[Input_Name]);
+		mzResourceShareInfo output = DeserializeTextureInfo(values[Output_Name]);
+		const f32 softness = *(f32*)values[Softness_Name];
+		const mzVec2 kernelSize = *(mzVec2*)values[Kernel_Size_Name];
 		const mzVec2u passType = mzVec2u(0, 1);
 
 		SetupIntermediateTexture(&output);
 
 		std::vector<mzShaderBinding> bindings = {
-			ShaderBinding("Input", input),
-			ShaderBinding("Kernel_Size", kernelSize.x),
-			ShaderBinding("Pass_Type", passType.x),
-			ShaderBinding("Softness", softness),
+			ShaderBinding(Input_Name, input),
+			ShaderBinding(Kernel_Size_Name, kernelSize.x),
+			ShaderBinding(Pass_Type_Name, passType.x),
+			ShaderBinding(Softness_Name, softness),
 		};
 		
 		// Horz pass
 		mzRunPassParams pass = {
-			.PassKey = "Gaussian_Blur_Pass",
+			.Key = Gaussian_Blur_Pass_Name,
 			.Bindings = bindings.data(),
 			.BindingCount = (uint32_t)bindings.size(),
 			.Output = IntermediateTexture,

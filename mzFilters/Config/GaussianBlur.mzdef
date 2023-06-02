@@ -21,7 +21,7 @@
                     "type_name": "float",
                     "show_as": "PROPERTY",
                     "can_show_as": "INPUT_PIN_OR_PROPERTY",
-                    "data": 0.0,
+                    "data": 1.0,
                     "min": 0.0,
                     "max": 1.0
                 },
