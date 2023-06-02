@@ -1,0 +1,76 @@
+# This is a basic workflow to help you get started with Actions
+
+name: Release
+
+# Controls when the workflow will run
+on:
+  push:
+    branches: [ master ]
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+    inputs:
+      body:
+        description: 'Release notes'
+        required: false
+      clean:
+        description: 'Clean build'
+        required: false
+        default: "false"
+
+env:
+  BUILD_NUMBER: ${{ github.run_number }}
+  GH_USERNAME: "mediaz-bot"
+  GH_RELEASE_REPO: "https://github.com/mediaz/plugins-releases"
+  GIT_EMAIL: "bot@mediaz.io"
+  MZ_SDK_DIR: ${{ github.workspace }}/mzSDK
+
+# TODO: Support parallel runs
+concurrency:
+  group: single # For now, allow 1 run at a time.
+  cancel-in-progress: false # Queue up runs if one is already in progress.
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  configure:
+    name: Configure
+    runs-on: self-hosted
+    steps:
+      - uses: actions/checkout@v3 # checkout the repository content to github runner.
+        with:
+          submodules: recursive
+          token: ${{ secrets.CI_TOKEN }}
+          clean: true # Scripts are currently not idempotent, so we need to clean the repo before each run.
+
+      - name: Install Python Prerequisites
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Get MediaZ SDK
+        run: |
+          gh auth login --with-token < ${{ secrets.GH_TOKEN }}
+          gh release download --pattern 'mediaZ-SDK-*.zip'
+          7z x mediaZ-SDK-*.zip -o${{ env.MZ_SDK_DIR }}
+
+      - name: Configure
+        run: |
+          cmake -S . -B Build -DCMAKE_BUILD_TYPE=Release
+
+      - name: Checkout Release Target Repo
+        uses: actions/checkout@v3 # checkout the repository content to github runner.
+        with:
+          repository: ${{ env.RELEASE_REPO }}}
+          token: ${{ secrets.CI_TOKEN }}
+          path: release-target-repo
+          clean: true
+
+  run_release_tool:
+    name: Run Release Tool
+    runs-on: self-hosted
+    needs: configure
+    steps:
+      - name: Run Release Tool
+        run: |
+          git config user.email "${{ env.GIT_EMAIL }}"
+          git config user.name "${{ env.GH_USERNAME }}"
+          python actions.py --cmake-build-dir="./Build" --gh-release-repo="${{ env.GH_RELEASE_REPO }}" --build-number="${{ env.BUILD_NUMBER }}" --cloned-release-repo="./release-target-repo"
