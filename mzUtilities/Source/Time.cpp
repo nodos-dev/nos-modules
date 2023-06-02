@@ -2,13 +2,23 @@
 
 namespace mz::utilities
 {
+MZ_REGISTER_NAME2(Seconds);
+MZ_REGISTER_NAME2(Time_Pass);
+MZ_REGISTER_NAME2(Time_Shader);
 
 class TimeNodeContext
 {
 public:
 	TimeNodeContext() : TimeStart(std::chrono::high_resolution_clock::now()) {}
 
-	void Update() {}
+	mzResult Run(void* ctx,const mzNodeExecuteArgs* args)
+	{
+		auto pin = GetPinValues(args);
+		auto sec = GetPinValue<float>(pin, Seconds_Name);
+		float result = GetDeltaTime();
+		mzEngine.SetPinValue((mzUUID)args->PinIds[0], {.Data = &result, .Size = sizeof(float)});
+		return MZ_RESULT_SUCCESS;
+	}
 
 	float GetDeltaTime()
 	{
@@ -22,7 +32,17 @@ public:
 
 void RegisterTime(mzNodeFunctions* fn)
 {
-    fn->TypeName = "mz.utiltiies.Time";
+    fn->TypeName = "mz.utilities.Time";
+	fn->OnNodeCreated = [](const mzFbNode* node, void** outCtxPtr) {
+		*outCtxPtr = new TimeNodeContext();
+	};
+	fn->OnNodeDeleted = [](void* ctx, mzUUID nodeId) {
+		delete static_cast<TimeNodeContext*>(ctx);
+	};
+	fn->ExecuteNode = [](void* ctx, const mzNodeExecuteArgs* args)->mzResult {
+		return ((TimeNodeContext*)(ctx))->Run(ctx,args);
+	};
+	
 	// functions["mz.Time"].NodeCreated = [](auto const&, auto&, void** context) {
 	// 	*context = new TimeNodeContext();
 	// };
@@ -30,9 +50,8 @@ void RegisterTime(mzNodeFunctions* fn)
 	// 	*pins.Get<float>("Seconds") = static_cast<TimeNodeContext*>(ctx)->GetDeltaTime();
 	// 	return true;
 	// };
-	// functions["mz.Time"].NodeRemoved = [](void* context, auto const&) {
-	// 	delete static_cast<TimeNodeContext*>(context);
-	// };
+
+	
 	// functions["mz.CalculateNodalPoint"].EntryPoint = [](mz::Args& args, void* ctx){
 	// 	auto pos = args.Get<glm::dvec3>("Camera Position");
 	// 	auto rot = args.Get<glm::dvec3>("Camera Orientation");

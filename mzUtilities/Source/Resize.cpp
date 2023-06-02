@@ -18,13 +18,11 @@ struct ResizeContext
 	
 	static void OnNodeUpdated(void* ctx, const mzFbNode* updatedNode)
 	{
-		mzEngine.LogW("UPDATED RESIZE NODE");
 		updatedNode->UnPackTo((fb::TNode*)ctx);
 	}
 
 	static void OnNodeDeleted(void* ctx, mzUUID nodeId)
 	{
-		mzEngine.LogW("DELETED RESIZE NODE");
 		delete (fb::TNode*)ctx;
 	}
 
@@ -56,7 +54,6 @@ struct ResizeContext
 	
 	static mzResult ExecuteNode(void* ctx, const mzNodeExecuteArgs* args)
 	{
-		mzEngine.LogW("EXECUTE RESIZE NODE");
 		auto pins = GetPinValues(args);
 		MZ_REGISTER_NAME2(Input);
 		MZ_REGISTER_NAME2(Method);
