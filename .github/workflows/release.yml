@@ -8,14 +8,7 @@ on:
     branches: [ master ]
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
-    inputs:
-      body:
-        description: 'Release notes'
-        required: false
-      clean:
-        description: 'Clean build'
-        required: false
-        default: "false"
+    
 
 env:
   BUILD_NUMBER: ${{ github.run_number }}
