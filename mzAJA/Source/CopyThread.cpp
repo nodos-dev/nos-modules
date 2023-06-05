@@ -483,7 +483,6 @@ void CopyThread::AJAOutputProc()
 
     while (run && !cpuRing->Exit)
     {
-        mzEngine.Log((Name() + " ring count", std::to_string(cpuRing->ReadyFrames())).c_str(), "");
 
 		if (!(client->Device->WaitForOutputVerticalInterrupt(Channel)))
 			break;
@@ -640,7 +639,6 @@ void CopyThread::InputConversionThread::Consume(CopyThread::Parameters const& pa
     res->FrameNumber = params.FrameNumber;
     Cpy->gpuRing->EndPush(res);
     Cpy->cpuRing->EndPop(slot);
-    mzEngine.Log((Cpy->Name() + " ring count", std::to_string(Cpy->gpuRing->ReadyFrames())).c_str(), "");
 }
 
 CopyThread::ConversionThread::~ConversionThread()
