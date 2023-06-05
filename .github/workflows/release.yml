@@ -13,7 +13,7 @@ on:
 env:
   BUILD_NUMBER: ${{ github.run_number }}
   GH_USERNAME: "mediaz-bot"
-  GH_RELEASE_REPO: "https://github.com/mediaz/plugins-releases"
+  GH_RELEASE_REPO: "mediaz/plugins-releases"
   GIT_EMAIL: "bot@mediaz.io"
   MZ_SDK_DIR: ${{ github.workspace }}/mzSDK
 
