@@ -91,8 +91,13 @@ PLUGINS = {
 }
 
 def get_latest_release_tag():
+    # git fetch --prune --tags --recurse-submodules=no https://${{ env.GH_USERNAME }}:${{ secrets.CI_TOKEN }}@github.com/mediaz/mediaz.git
     # git describe --match "build-*" --abbrev=0 --tags $(git rev-list --tags --max-count=1)
-    re = run(["git", "describe", "--match", "build-*", "--abbrev=0", "--tags", "$(git rev-list --tags --max-count=1)"], stdout=PIPE, stderr=PIPE, universal_newlines=True)
+    re = run(["git", "fetch", "--prune", "--tags", "--recurse-submodules=no"], env=os.environ.copy())
+    if re.returncode != 0:
+        logger.error("Failed to fetch tags!")
+        exit(re.returncode)
+    re = run(["git", "describe", "--match", "build-*", "--abbrev=0", "--tags", "$(git rev-list --tags --max-count=1)"], env=os.environ.copy())
     if re.returncode != 0:
         logger.warning("No release tag found.")
         return None
