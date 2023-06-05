@@ -11,6 +11,8 @@ MZ_REGISTER_NAME2(Resize_Pass);
 MZ_REGISTER_NAME2(Resize_Shader);
 MZ_REGISTER_NAME2(Input);
 MZ_REGISTER_NAME2(Method);
+MZ_REGISTER_NAME2(Output);
+MZ_REGISTER_NAME2(Size);
 
 struct ResizeContext
 {
@@ -55,10 +57,6 @@ struct ResizeContext
 	static mzResult ExecuteNode(void* ctx, const mzNodeExecuteArgs* args)
 	{
 		auto pins = GetPinValues(args);
-		MZ_REGISTER_NAME2(Input);
-		MZ_REGISTER_NAME2(Method);
-		MZ_REGISTER_NAME2(Output);
-		MZ_REGISTER_NAME2(Size);
 		auto inputTex = DeserializeTextureInfo(pins[Input_Name]);
 		auto method = GetPinValue<uint32_t>(pins, Method_Name);
 		
