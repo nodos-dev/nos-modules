@@ -54,7 +54,7 @@ jobs:
       - name: Checkout Release Target Repo
         uses: actions/checkout@v3 # checkout the repository content to github runner.
         with:
-          repository: ${{ env.RELEASE_REPO }}}
+          repository: ${{ env.GH_RELEASE_REPO }}
           token: ${{ secrets.CI_TOKEN }}
           path: release-target-repo
           clean: true
