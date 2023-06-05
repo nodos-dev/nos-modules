@@ -109,6 +109,10 @@ struct MergeContext
 		std::string opacityPinName = "Opacity_" + count;
 		mzUUID opacityId = *(mzUUID*)mz::generator().as_bytes().data();
 		std::vector<uint8_t> opacityData = mz::Buffer::From(1.f);
+		std::vector<uint8_t> opacityMinData = mz::Buffer::From(0.f);
+		std::vector<uint8_t> opacityMaxData = mz::Buffer::From(1.f);
+
+
 
 		std::string blendPinName = "Blend_Mode_" + count;
 		mzUUID blendId = *(mzUUID*)mz::generator().as_bytes().data();
@@ -119,7 +123,7 @@ struct MergeContext
 		flatbuffers::FlatBufferBuilder fbb;
 		std::vector<flatbuffers::Offset<mz::fb::Pin>> pins = {
 			fb::CreatePinDirect(fbb, &texId, texPinName.c_str() ,"mz.fb.Texture", fb::ShowAs::INPUT_PIN, fb::CanShowAs::INPUT_PIN_ONLY, pinCategory.c_str(),0,&texData),
-			fb::CreatePinDirect(fbb, &opacityId, opacityPinName.c_str(), "float", fb::ShowAs::PROPERTY, fb::CanShowAs::OUTPUT_PIN_OR_PROPERTY, pinCategory.c_str(),0,&opacityData),
+			fb::CreatePinDirect(fbb, &opacityId, opacityPinName.c_str(), "float", fb::ShowAs::PROPERTY, fb::CanShowAs::OUTPUT_PIN_OR_PROPERTY, pinCategory.c_str(),0,&opacityData, 0, &opacityMinData, &opacityMaxData),
 			fb::CreatePinDirect(fbb, &blendId, blendPinName.c_str(), "mz.fb.BlendMode", fb::ShowAs::PROPERTY, fb::CanShowAs::OUTPUT_PIN_OR_PROPERTY, pinCategory.c_str(),0,&blendModeData),
 		};
 		mzEngine.HandleEvent(CreateAppEvent(fbb, CreatePartialNodeUpdateDirect(fbb, &((MergeContext*)(ctx))->Id, ClearFlags::NONE,0,&pins)));
