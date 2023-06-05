@@ -330,7 +330,7 @@ void CopyThread::AJAInputProc()
     {
         std::stringstream ss;
         ss << "AJAIn Thread: " << std::this_thread::get_id();
-        mzEngine.Log(ss.str().c_str(), "");
+        mzEngine.LogI(ss.str().c_str());
     }
 
     auto prevMode = client->Device->GetMode(Channel);
@@ -463,7 +463,7 @@ void CopyThread::AJAOutputProc()
     {
         std::stringstream ss;
         ss << "AJAOut Thread: " << std::this_thread::get_id();
-        mzEngine.Log(ss.str().c_str(), "");
+        mzEngine.LogI(ss.str().c_str());
     }
 
     u32 readyFrames = cpuRing->ReadyFrames();
@@ -610,7 +610,7 @@ void CopyThread::InputConversionThread::Consume(CopyThread::Parameters const& pa
         ss << "(AJATransfer)" << MsgKey << " took: " << t << " (" << std::chrono::duration_cast<Micro>(t) << ")"
             << " (" << std::chrono::duration_cast<Milli>(t) << ")"
             << "\n";
-        mzEngine.Log(ss.str().c_str(), "");
+        mzEngine.LogI(ss.str().c_str());
     }
 
     //if(Cpy->client->Debug)

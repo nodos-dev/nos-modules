@@ -110,7 +110,7 @@ namespace mz
 			if (DataQueue.size() <= Delay)
 			{
 				if (IsRunning())
-					mzEngine.Log("Thread active but no data in track queue", "");
+					mzEngine.LogI("Thread active but no data in track queue");
 				return false;
 			}
 

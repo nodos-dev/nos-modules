@@ -414,16 +414,14 @@ void AJAClient::OnNodeUpdate(PinMapping &&newMapping, std::unordered_map<Name, c
                 if (pr.frame_rate && flatbuffers::IsFieldPresent(pr.frame_rate, mz::fb::Pin::VT_DATA))
                 {
                     fmt = (NTV2VideoFormat)(*pr.frame_rate->data()->Data());
-                    mzEngine.Log(("AJA: Route output " + NTV2ChannelToString(channel, true) + " with framerate " +
-								  NTV2VideoFormatToString(fmt, true))
-									 .c_str(),
-                                 "");
+                    mzEngine.LogI("AJA: Route output %s with framerate %s", NTV2ChannelToString(channel, true).c_str(),
+								  NTV2VideoFormatToString(fmt, true).c_str());
                 }
                 break;
             }
 
             case mz::fb::ShowAs::OUTPUT_PIN:
-				mzEngine.Log(("AJA: Route input " + NTV2ChannelToString(channel, true)).c_str(), "");
+				mzEngine.LogI("AJA: Route input %s", NTV2ChannelToString(channel, true).c_str());
                 break;
             }
             auto mode = pr.quad_mode ? *(AJADevice::Mode *)pr.quad_mode->data()->Data() : AJADevice::SL;
@@ -713,7 +711,7 @@ void AJAClient::OnPathCommand(mz::fb::UUID pinID, app::PathCommand command, Buff
 	auto result = Pins.find(mz::UUID(pinID));
 	if (result == Pins.end())
 	{
-        mzEngine.Log("path command on unknown pin: %s", UUID2STR(pinID).c_str());
+        mzEngine.LogD("path command on unknown pin: %s", UUID2STR(pinID).c_str());
 		return;
 	}
     auto ringThread = *result;
