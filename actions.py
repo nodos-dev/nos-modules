@@ -97,7 +97,7 @@ def get_latest_release_tag():
     if re.returncode != 0:
         logger.error("Failed to fetch tags!")
         exit(re.returncode)
-    re = run(["git", "describe", "--match", "build-*", "--abbrev=0", "--tags", "$(git rev-list --tags --max-count=1)"], env=os.environ.copy())
+    re = run(["bash", "-c", "\"git describe --match build-* --abbrev=0 --tags $(git rev-list --tags --max-count=1)\""], env=os.environ.copy())
     if re.returncode != 0:
         logger.warning("No release tag found.")
         return None
