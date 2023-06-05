@@ -61,7 +61,7 @@ static mzResult GetFunctions(size_t* count, const char** names, mzPfnNodeFunctio
     {
         auto values = GetPinValues(nodeArgs);
         std::filesystem::path path = GetPinValue<const char>(values, Path_Name);
-        if (std::filesystem::exists(path))
+        if (!std::filesystem::exists(path))
         {
             mzEngine.LogE("Read Image cannot load file %s", path.string().c_str());
             return;
