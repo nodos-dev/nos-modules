@@ -40,8 +40,10 @@ jobs:
           pip install -r requirements.txt
 
       - name: Get MediaZ SDK
+        env:
+          GH_TOKEN: ${{ secrets.CI_TOKEN }}
         run: |
-          gh auth login --with-token < ${{ secrets.GH_TOKEN }}
+          gh auth login -h github.com
           gh release download --pattern 'mediaZ-SDK-*.zip'
           7z x mediaZ-SDK-*.zip -o${{ env.MZ_SDK_DIR }}
 
