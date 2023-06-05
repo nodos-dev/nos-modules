@@ -847,8 +847,8 @@ struct Cyclorama : PinMapping
         inputs[0].push_back(ShaderBinding(MVP_Name, MVP));
 
         AddParam<f32>(inputs[0], args, SmoothnessCurve_Name);
-        f32 zero = 0.f;
-        f32 half = 0.5f;
+        const f32 zero = 0.f;
+        const f32 half = 0.05f;
 
         {
             mzEngine.GetColorTexture(*GetPinValue<mzVec4>(args, CycloramaColor_Name), &color);
