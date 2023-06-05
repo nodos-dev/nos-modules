@@ -110,7 +110,7 @@ struct MergeContext
 		mzUUID opacityId = *(mzUUID*)mz::generator().as_bytes().data();
 		std::vector<uint8_t> opacityData = mz::Buffer::From(1.f);
 
-		std::string blendPinName = "Blend_" + count;
+		std::string blendPinName = "Blend_Mode_" + count;
 		mzUUID blendId = *(mzUUID*)mz::generator().as_bytes().data();
 		std::vector<uint8_t> blendModeData = mz::Buffer::From(0u);
 
