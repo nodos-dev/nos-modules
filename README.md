@@ -1,5 +1,12 @@
 # Plugins
 
+## Build Instructions
+```bash
+pip install -r requirements.txt
+cmake -S . -B Build
+cmake --build Build
+```
+
 This folder contains the plugins that will be distributed with MediaZ.
 
 A plugin structure is as follows:
