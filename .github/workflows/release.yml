@@ -44,7 +44,7 @@ jobs:
           GH_TOKEN: ${{ secrets.CI_TOKEN }}
         run: |
           gh auth login -h github.com
-          gh release download --pattern 'mediaZ-SDK-*.zip'
+          gh release download --repo mediaz/mediaz --pattern 'mediaZ-SDK-*.zip'
           7z x mediaZ-SDK-*.zip -o${{ env.MZ_SDK_DIR }}
 
       - name: Configure
