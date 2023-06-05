@@ -138,6 +138,25 @@ def upload_releases(gh_release_repo, cloned_release_repo):
         index["releases"].insert(0, { "version": plugin_version, "url": release_zip_download_url })
         with open(f"{plugin_name}/index.json", "w") as f:
             json.dump(index, f, indent=4)
+
+        author_email = os.getenv("GIT_EMAIL")
+        author_name = os.getenv("GH_USERNAME")
+        if author_email is None:
+            logger.error("GIT_EMAIL not set")
+            exit(1)
+        if author_name is None:
+            logger.error("GH_USERNAME not set")
+            exit(1)
+
+        re = run(["git", "config", "user.email", author_email], capture_output=True, text=True, env=os.environ.copy())
+        if re.returncode != 0:
+            logger.error(f"Failed to set git user email: {re.stderr}")
+            exit(re.returncode)
+        re = run(["git", "config", "user.name", author_name], capture_output=True, text=True, env=os.environ.copy())
+        if re.returncode != 0:
+            logger.error(f"Failed to set git user name: {re.stderr}")
+            exit(re.returncode)
+
         # Commit the result and create a release
         re = run(["git", "add", f"{plugin_name}/index.json"], capture_output=True, text=True, env=os.environ.copy())
         if re.returncode != 0:
