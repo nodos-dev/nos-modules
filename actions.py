@@ -9,7 +9,7 @@ from subprocess import PIPE, run, call, Popen
 
 parser = argparse.ArgumentParser(description="MZ Plugin Bundle Release Tool")
 
-parser.add_argument('--cloned-release-repo',
+parser.add_argument('--cloned-release-repo-dir',
                     action='store',
                     required=True,
                     help="Directory of the cloned release repo.")
@@ -127,8 +127,8 @@ if __name__ == "__main__":
     logger.info(f"Target: {args.gh_release_repo}")
     logger.info(f"Build number: {args.build_number}")
 
-    if not os.path.exists(args.cloned_release_repo):
-        logger.error(f"Cloned release repo {args.cloned_release_repo} does not exist.")
+    if not os.path.exists(args.cloned_release_repo_dir):
+        logger.error(f"Cloned release repo {args.cloned_release_repo_dir} does not exist.")
         exit(1)
 
     if not os.path.exists(args.cmake_build_dir):
@@ -181,7 +181,7 @@ if __name__ == "__main__":
     
     # Upload releases
     logger.info(f"Uploading releases of plugins {plugins_to_release} to {args.gh_release_repo_url}")
-    re = run(["python", "release.py", "upload", "--cloned-release-repo", args.cloned_release_repo, 
+    re = run(["python", "release.py", "upload", "--cloned-release-repo", args.cloned_release_repo_dir, 
               "--repo-url", args.repo_url, "--repo-org", args.repo_org, "--repo-name", args.repo_name],
              env=os.environ.copy())
     if re.returncode != 0:
