@@ -6,8 +6,6 @@
 
 namespace mz
 {
-
-
 struct UUID
 {
     fb::UUID id;
@@ -20,6 +18,7 @@ struct UUID
     const fb::UUID* operator &() const { return &id; }
 };
 }
+
 template<> struct std::hash<mz::UUID>{ size_t operator()(mz::UUID const& val) const { return mz::UUIDHash(val); } };
 
 namespace mz
