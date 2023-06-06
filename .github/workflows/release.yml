@@ -13,7 +13,9 @@ on:
 env:
   BUILD_NUMBER: ${{ github.run_number }}
   GH_USERNAME: "mediaz-bot"
-  GH_RELEASE_REPO: "mediaz/plugins-releases"
+  GH_RELEASE_REPO_URL: "https://github.com/mediaz/plugins-releases"
+  GH_RELEASE_REPO_ORG: "mediaz"
+  GH_RELEASE_REPO_NAME: "plugins-releases"
   GIT_EMAIL: "bot@mediaz.io"
   MZ_SDK_DIR: ${{ github.workspace }}/mzSDK
   GH_TOKEN: ${{ secrets.CI_TOKEN }}
@@ -53,7 +55,7 @@ jobs:
       - name: Checkout Release Target Repo
         uses: actions/checkout@v3 # checkout the repository content to github runner.
         with:
-          repository: ${{ env.GH_RELEASE_REPO }}
+          repository: ${{ env.GH_RELEASE_REPO_ORG }}/${{ env.GH_RELEASE_REPO_NAME }}
           token: ${{ secrets.CI_TOKEN }}
           path: release-target-repo
           clean: true
@@ -67,4 +69,4 @@ jobs:
         run: |
           git config user.email "${{ env.GIT_EMAIL }}"
           git config user.name "${{ env.GH_USERNAME }}"
-          python actions.py --cmake-build-dir="./Build" --gh-release-repo="${{ env.GH_RELEASE_REPO }}" --build-number="${{ env.BUILD_NUMBER }}" --cloned-release-repo="./release-target-repo"
+          python actions.py --cmake-build-dir="./Build" --build-number="${{ env.BUILD_NUMBER }}" --cloned-release-repo="./release-target-repo"

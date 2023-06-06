@@ -9,11 +9,6 @@ from subprocess import PIPE, run, call, Popen
 
 parser = argparse.ArgumentParser(description="Generate releases for MZ Plugin Bundle")
 
-parser.add_argument('--gh-release-repo',
-                    action='store',
-                    required=True,
-                    help="The repo of the release.")
-
 subparsers = parser.add_subparsers(dest="command", help="Subcommands")
 
 make = subparsers.add_parser("make", help="Create a release zip for a plugin")
@@ -46,15 +41,30 @@ make.add_argument('--exclude',
 
 upload = subparsers.add_parser("upload", help="Create a release at GitHub")
 
-upload.add_argument('--cloned-release-repo', 
+upload.add_argument('--cloned-release-repo-dir', 
                     action='store',
                     required=True,
                     help="Directory of the cloned release repo.")
 
+upload.add_argument('--repo-url',
+                    action='store',
+                    required=True,
+                    help="The URL of the GitHub repo to create releases in.")
+
+upload.add_argument('--repo-org',
+                    action='store',
+                    required=True,
+                    help="The GitHub organization name of the release repo.")
+
+upload.add_argument('--repo-name',
+                    action='store',
+                    required=True,
+                    help="The GitHub repo name of the release repo.")
+
+
 def make_release(args):
-    logger.debug(f"Creating release for {args.release_target} in {args.gh_release_repo}")
+    logger.debug(f"Creating release zip for {args.release_target}")
     logger.info(f"Target: {args.release_target}")
-    logger.info(f"Repo: {args.gh_release_repo}")
 
     logger.info(f"Building {args.release_target}")
     re = run(["cmake", "--build", args.cmake_build_dir, "--config", "Release", "--target", args.release_target], universal_newlines=True)
@@ -110,7 +120,8 @@ def make_release(args):
     logger.info(f"Created release zip: {os.path.join('Releases', f'{zip_name}.zip')}")
 
 
-def upload_releases(gh_release_repo, cloned_release_repo):
+def upload_releases(repo_url, org_name, repo_name, cloned_release_repo):
+    repo_org_name = f"{org_name}/{repo_name}"
     # Collect zip files under "./Releases"
     zip_files = []
     for root, dirs, files in os.walk("Releases"):
@@ -118,7 +129,7 @@ def upload_releases(gh_release_repo, cloned_release_repo):
             if file.endswith(".zip"):
                 zip_files.append(os.path.join(root, file))
     logger.debug(f"Found zip files: {zip_files}")
-    logger.info(f"GitHub Release: Pushing release artifacts to repo {gh_release_repo}")
+    logger.info(f"GitHub Release: Pushing release artifacts to repo {repo_org_name}")
     artifacts = zip_files
     # https://github.com/mediaz/mediaz/releases/download/v0.1.0.b1769/mediaZ-SDK-v0.1.0.b1769.zip
     for artifact in artifacts:
@@ -134,7 +145,7 @@ def upload_releases(gh_release_repo, cloned_release_repo):
         if os.path.exists(f"{plugin_name}/index.json"):
             with open(f"{plugin_name}/index.json", "r") as f:
                 index = json.load(f)
-        release_zip_download_url = f"{gh_release_repo}/releases/download/{tag}/{filename}"
+        release_zip_download_url = f"{repo_url}/releases/download/{tag}/{filename}"
         index["releases"].insert(0, { "version": plugin_version, "url": release_zip_download_url })
         with open(f"{plugin_name}/index.json", "w") as f:
             json.dump(index, f, indent=4)
@@ -170,7 +181,7 @@ def upload_releases(gh_release_repo, cloned_release_repo):
 
         os.chdir("..")
 
-        re = run(["gh", "release", "create", tag, *artifacts, "--repo", args.gh_release_repo, "--title", tag], 
+        re = run(["gh", "release", "create", tag, *artifacts, "--repo", repo_org_name, "--title", tag], 
                     capture_output=True, text=True, env=os.environ.copy())
         if re.returncode != 0:
             logger.error(f"Failed to create release: {re.stderr}")
@@ -190,4 +201,7 @@ if __name__ == "__main__":
     if args.command == "make":
         make_release(args)
     elif args.command == "upload":
-        upload_releases(args.gh_release_repo, args.cloned_release_repo)
+        upload_releases(args.repo_url,
+                        args.repo_org,
+                        args.repo_name,
+                        args.cloned_release_repo_dir)

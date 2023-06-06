@@ -9,11 +9,6 @@ from subprocess import PIPE, run, call, Popen
 
 parser = argparse.ArgumentParser(description="MZ Plugin Bundle Release Tool")
 
-parser.add_argument('--gh-release-repo',
-                    action='store',
-                    required=True,
-                    help="URL to the release repo that contains index files and release artifacts.")
-
 parser.add_argument('--cloned-release-repo',
                     action='store',
                     required=True,
@@ -24,9 +19,20 @@ parser.add_argument('--cmake-build-dir',
                     required=True,
                     help="The CMake build directory of the release.")
 
-parser.add_argument('--build-number',
+parser.add_argument('--repo-url',
                     action='store',
-                    required=True)
+                    required=True,
+                    help="The URL of the GitHub repo to create releases in.")
+
+parser.add_argument('--repo-org',
+                    action='store',
+                    required=True,
+                    help="The GitHub organization name of the release repo.")
+
+parser.add_argument('--repo-name',
+                    action='store',
+                    required=True,
+                    help="The GitHub repo name of the release repo.")
 
 PLUGINS = {
    "AJA":{
@@ -159,8 +165,7 @@ if __name__ == "__main__":
     ok = True
     for plugin_name in plugins_to_release:
         plugin_info = PLUGINS[plugin_name]
-        proc_args = ["python", "release.py", 
-                      "--gh-release-repo", args.gh_release_repo, 
+        proc_args = ["python", "release.py",
                       "make", "--build-number", args.build_number, 
                       "--release-target", plugin_info["target_name"], 
                       "--cmake-build-dir", args.cmake_build_dir, 
@@ -175,8 +180,9 @@ if __name__ == "__main__":
         exit(1)
     
     # Upload releases
-    logger.info(f"Uploading releases of plugins {plugins_to_release} to {args.gh_release_repo}")
-    re = run(["python", "release.py", "--gh-release-repo", args.gh_release_repo, "upload", "--cloned-release-repo", args.cloned_release_repo],
+    logger.info(f"Uploading releases of plugins {plugins_to_release} to {args.gh_release_repo_url}")
+    re = run(["python", "release.py", "upload", "--cloned-release-repo", args.cloned_release_repo, 
+              "--repo-url", args.repo_url, "--repo-org", args.repo_org, "--repo-name", args.repo_name],
              env=os.environ.copy())
     if re.returncode != 0:
         logger.error(f"Failed to upload releases")
