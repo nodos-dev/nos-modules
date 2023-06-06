@@ -41,7 +41,8 @@ parser.add_argument('--repo-name',
 parser.add_argument('--dry-run',
                     action='store_true',
                     required=False,
-                    help="Dry run, do not upload anything.")
+                    help="Dry run, do not upload anything.",
+                    default=False)
 
 PLUGINS = {
    "AJA":{
@@ -116,7 +117,11 @@ def custom_run(args, dry_run):
 def get_latest_release_tag():
     # git fetch --prune --tags --recurse-submodules=no https://${{ env.GH_USERNAME }}:${{ secrets.CI_TOKEN }}@github.com/mediaz/mediaz.git
     # git describe --match "build-*" --abbrev=0 --tags $(git rev-list --tags --max-count=1)
-    re = run(["git", "fetch", "--prune", "--tags", "--recurse-submodules=no"], env=os.environ.copy())
+    re = run(["git", "fetch", "--prune", "--prune-tags"], env=os.environ.copy())
+    if re.returncode != 0:
+        logger.error("Failed to prune tags!")
+        exit(re.returncode)
+    re = run(["git", "fetch", "--tags", "--recurse-submodules=no"], env=os.environ.copy())
     if re.returncode != 0:
         logger.error("Failed to fetch tags!")
         exit(re.returncode)

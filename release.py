@@ -61,6 +61,11 @@ upload.add_argument('--repo-name',
                     required=True,
                     help="The GitHub repo name of the release repo.")
 
+upload.add_argument('--dry-run',
+                    action='store_true',
+                    required=False,
+                    help="Dry run. Do not upload anything to GitHub. Only print the commands that would be executed.",
+                    default=False)
 
 def custom_run(args, dry_run):
     if dry_run:
