@@ -5,7 +5,7 @@ import os
 import shutil
 import fnmatch
 import json
-from subprocess import PIPE, run, call, Popen
+from subprocess import PIPE, CompletedProcess, run, call, Popen
 
 parser = argparse.ArgumentParser(description="Generate releases for MZ Plugin Bundle")
 
@@ -62,6 +62,13 @@ upload.add_argument('--repo-name',
                     help="The GitHub repo name of the release repo.")
 
 
+def custom_run(args, dry_run):
+    if dry_run:
+        logger.info("Dry run: %s" % " ".join(args))
+        return CompletedProcess(args, 0, "", "")
+    return run(args, env=os.environ.copy())
+
+
 def make_release(args):
     logger.debug(f"Creating release zip for {args.release_target}")
     logger.info(f"Target: {args.release_target}")
@@ -110,7 +117,7 @@ def make_release(args):
         dst = os.path.join("Stage", file)
         logger.debug(f"Copying {file} to {dst}")
         shutil.copy(file, dst)
-
+    
     logger.info(f"Creating release zip")
     plugin_name = mzcfg["info"]["id"]["name"]
     zip_name = f"{plugin_name}-{plugin_version}"
@@ -119,8 +126,11 @@ def make_release(args):
     shutil.move(f"{zip_name}.zip", os.path.join("Releases", f"{zip_name}.zip"))
     logger.info(f"Created release zip: {os.path.join('Releases', f'{zip_name}.zip')}")
 
+    logger.info(f"Cleaning up")
+    shutil.rmtree("Stage")
 
-def upload_releases(repo_url, org_name, repo_name, cloned_release_repo):
+
+def upload_releases(repo_url, org_name, repo_name, cloned_release_repo, dry_run):
     repo_org_name = f"{org_name}/{repo_name}"
     # Collect zip files under "./Releases"
     zip_files = []
@@ -159,30 +169,29 @@ def upload_releases(repo_url, org_name, repo_name, cloned_release_repo):
             logger.error("GH_USERNAME not set")
             exit(1)
 
-        re = run(["git", "config", "user.email", author_email], capture_output=True, text=True, env=os.environ.copy())
+        re = custom_run(["git", "config", "user.email", author_email], dry_run)
         if re.returncode != 0:
             logger.error(f"Failed to set git user email: {re.stderr}")
             exit(re.returncode)
-        re = run(["git", "config", "user.name", author_name], capture_output=True, text=True, env=os.environ.copy())
+        re = custom_run(["git", "config", "user.name", author_name], dry_run)
         if re.returncode != 0:
             logger.error(f"Failed to set git user name: {re.stderr}")
             exit(re.returncode)
 
         # Commit the result and create a release
-        re = run(["git", "add", f"{plugin_name}/index.json"], capture_output=True, text=True, env=os.environ.copy())
+        re = custom_run(["git", "add", f"{plugin_name}/index.json"], dry_run)
         if re.returncode != 0:
             logger.error(f"Failed to add index file: {re.stderr}")
             exit(re.returncode)
-        re = run(["git", "commit", "-m", f"Update index file for {plugin_name} {plugin_version}"], capture_output=True, text=True, env=os.environ.copy())
+        re = custom_run(["git", "commit", "-m", f"Update index file for {plugin_name} {plugin_version}"], dry_run)
         if re.returncode != 0:
             logger.error(f"Failed to commit index file: {re.stderr}")
             exit(re.returncode)
-        re = run(["git", "push"], capture_output=True, text=True, env=os.environ.copy())
+        re = custom_run(["git", "push"], dry_run)
 
         os.chdir("..")
 
-        re = run(["gh", "release", "create", tag, *artifacts, "--repo", repo_org_name, "--title", tag], 
-                    capture_output=True, text=True, env=os.environ.copy())
+        re = custom_run(["gh", "release", "create", tag, *artifacts, "--repo", repo_org_name, "--title", tag], dry_run)
         if re.returncode != 0:
             logger.error(f"Failed to create release: {re.stderr}")
             exit(re.returncode)
@@ -204,4 +213,5 @@ if __name__ == "__main__":
         upload_releases(args.repo_url,
                         args.repo_org,
                         args.repo_name,
-                        args.cloned_release_repo_dir)
+                        args.cloned_release_repo_dir,
+                        args.dry_run)

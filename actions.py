@@ -5,7 +5,7 @@ import os
 import shutil
 import fnmatch
 import json
-from subprocess import PIPE, run, call, Popen
+from subprocess import PIPE, CompletedProcess, run, call, Popen
 
 parser = argparse.ArgumentParser(description="MZ Plugin Bundle Release Tool")
 
@@ -37,6 +37,11 @@ parser.add_argument('--repo-name',
                     action='store',
                     required=True,
                     help="The GitHub repo name of the release repo.")
+
+parser.add_argument('--dry-run',
+                    action='store_true',
+                    required=False,
+                    help="Dry run, do not upload anything.")
 
 PLUGINS = {
    "AJA":{
@@ -100,6 +105,14 @@ PLUGINS = {
    }
 }
 
+
+def custom_run(args, dry_run):
+    if dry_run:
+        logger.info("Dry run: %s" % " ".join(args))
+        return CompletedProcess(args, 0, "", "")
+    return run(args, env=os.environ.copy())
+
+
 def get_latest_release_tag():
     # git fetch --prune --tags --recurse-submodules=no https://${{ env.GH_USERNAME }}:${{ secrets.CI_TOKEN }}@github.com/mediaz/mediaz.git
     # git describe --match "build-*" --abbrev=0 --tags $(git rev-list --tags --max-count=1)
@@ -107,7 +120,15 @@ def get_latest_release_tag():
     if re.returncode != 0:
         logger.error("Failed to fetch tags!")
         exit(re.returncode)
-    re = run(["bash", "-c", "\"git describe --match build-* --abbrev=0 --tags $(git rev-list --tags --max-count=1)\""], env=os.environ.copy())
+    latest_tag = run(["git", "rev-list", "--tags", "--max-count=1"], stdout=PIPE, stderr=PIPE, universal_newlines=True, env=os.environ.copy())
+    if latest_tag.returncode != 0:
+        logger.error("Failed to get latest tag!")
+        exit(latest_tag.returncode)
+    latest_tag = latest_tag.stdout.strip()
+    re = run(["git", "describe", "--match", "build-*", "--abbrev=0", "--tags", latest_tag], stdout=PIPE, stderr=PIPE, universal_newlines=True, env=os.environ.copy())
+    if re.returncode != 0:
+        logger.error("Failed to get latest tag!")
+        exit(re.returncode)
     if re.returncode != 0:
         logger.warning("No release tag found.")
         return None
@@ -175,7 +196,7 @@ if __name__ == "__main__":
                       "--cmake-build-dir", args.cmake_build_dir, 
                       "--plugin-dir", plugin_info["path"]]
         logger.info(f"Creating plugin release for {plugin_name} with command: {' '.join(proc_args)}")
-        re = run(proc_args, env=os.environ.copy())
+        re = custom_run(proc_args, args.dry_run)
         if re.returncode != 0:
             logger.error(f"Failed to release plugin {plugin_name}")
             ok = False
@@ -185,9 +206,9 @@ if __name__ == "__main__":
     
     # Upload releases
     logger.info(f"Uploading releases of plugins {plugins_to_release} to {args.repo_url}")
-    re = run(["python", "release.py", "upload", "--cloned-release-repo", args.cloned_release_repo_dir, 
+    re = custom_run(["python", "release.py", "upload", "--cloned-release-repo", args.cloned_release_repo_dir, 
               "--repo-url", args.repo_url, "--repo-org", args.repo_org, "--repo-name", args.repo_name],
-             env=os.environ.copy())
+             args.dry_run)
     if re.returncode != 0:
         logger.error(f"Failed to upload releases")
         exit(re.returncode)
@@ -197,11 +218,11 @@ if __name__ == "__main__":
     tag_msg += "Plugins in this release:\n"
     for plugin_name in plugins_to_release:
         tag_msg += f"\n{plugin_name}"
-    re = run(["git" ,"tag", "-a", f"build-{args.build_number}", "-m", tag_msg], env=os.environ.copy())
+    re = custom_run(["git" ,"tag", "-a", f"build-{args.build_number}", "-m", tag_msg], args.dry_run)
     if re.returncode != 0:
         logger.error(f"Failed to create tag")
         exit(re.returncode)
-    re = run(["git", "push", "--tags"], env=os.environ.copy())
+    re = custom_run(["git", "push", "--tags"], args.dry_run)
     if re.returncode != 0:
         logger.error(f"Failed to push tags")
         exit(re.returncode)
