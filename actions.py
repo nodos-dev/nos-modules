@@ -128,7 +128,7 @@ if __name__ == "__main__":
     logger.add(sys.stdout, format="<green>[Plugin Bundle Release Tool]</green> <level>{time:HH:mm:ss.SSS}</level> <level>{level}</level> <level>{message}</level>")
 
     args = parser.parse_args()
-    logger.info(f"Target: {args.gh_release_repo_url}")
+    logger.info(f"Target: {args.repo_url}")
     logger.info(f"Build number: {args.build_number}")
 
     if not os.path.exists(args.cloned_release_repo_dir):
@@ -184,7 +184,7 @@ if __name__ == "__main__":
         exit(1)
     
     # Upload releases
-    logger.info(f"Uploading releases of plugins {plugins_to_release} to {args.gh_release_repo_url}")
+    logger.info(f"Uploading releases of plugins {plugins_to_release} to {args.repo_url}")
     re = run(["python", "release.py", "upload", "--cloned-release-repo", args.cloned_release_repo_dir, 
               "--repo-url", args.repo_url, "--repo-org", args.repo_org, "--repo-name", args.repo_name],
              env=os.environ.copy())
