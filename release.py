@@ -115,13 +115,12 @@ def make_release(args):
     os.makedirs("Stage", exist_ok=True)
     logger.debug(f"Collected files: {collected_files}")
     logger.info(f"Copying files to staging folder")
-    # Copy files to "./Stage", while preserving the directory structure. Eg. "./Stage/PluginName/..."
+    # Copy files to "./Stage", while preserving the directory structure. Eg. "./Stage/..."
     # Create directories if they don't exist.
     for file in collected_files:
-        os.makedirs(os.path.join("Stage", os.path.dirname(file)), exist_ok=True)
-        dst = os.path.join("Stage", file)
-        logger.debug(f"Copying {file} to {dst}")
-        shutil.copy(file, dst)
+        target_dir = os.path.join("Stage", os.path.dirname(os.path.relpath(file, args.plugin_dir)))
+        os.makedirs(target_dir, exist_ok=True)
+        shutil.copy(file, target_dir)
     
     logger.info(f"Creating release zip")
     plugin_name = mzcfg["info"]["id"]["name"]
