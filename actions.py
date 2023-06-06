@@ -19,6 +19,10 @@ parser.add_argument('--cmake-build-dir',
                     required=True,
                     help="The CMake build directory of the release.")
 
+parser.add_argument('--build-number',
+                    action='store',
+                    required=True)
+
 parser.add_argument('--repo-url',
                     action='store',
                     required=True,
