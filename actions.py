@@ -128,7 +128,7 @@ if __name__ == "__main__":
     logger.add(sys.stdout, format="<green>[Plugin Bundle Release Tool]</green> <level>{time:HH:mm:ss.SSS}</level> <level>{level}</level> <level>{message}</level>")
 
     args = parser.parse_args()
-    logger.info(f"Target: {args.gh_release_repo}")
+    logger.info(f"Target: {args.gh_release_repo_url}")
     logger.info(f"Build number: {args.build_number}")
 
     if not os.path.exists(args.cloned_release_repo_dir):
