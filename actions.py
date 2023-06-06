@@ -5,7 +5,7 @@ import os
 import shutil
 import fnmatch
 import json
-from subprocess import PIPE, CompletedProcess, run, call, Popen
+from subprocess import PIPE, CompletedProcess, run, call, Popen, check_output
 
 parser = argparse.ArgumentParser(description="MZ Plugin Bundle Release Tool")
 
@@ -115,25 +115,32 @@ def custom_run(args, dry_run):
 
 
 def get_latest_release_tag():
-    # git fetch --prune --tags --recurse-submodules=no https://${{ env.GH_USERNAME }}:${{ secrets.CI_TOKEN }}@github.com/mediaz/mediaz.git
-    # git describe --match "build-*" --abbrev=0 --tags $(git rev-list --tags --max-count=1)
-    re = run(["git", "fetch", "--prune", "--prune-tags"], env=os.environ.copy())
+    '''
+    Returns the latest release tag in the repo. 
+    Release tags are prefixed with "build-".
+    Uses git to get the tags in the repo in current working directory.
+    At first, fetches all tags just in case.
+    Then returns the latest tag name with prefix "build-".
+    Returns None if no tags with prefix "build-" are found.
+    '''
+    # Fetch all tags
+    re = run(["git", "fetch", "--tags"])
     if re.returncode != 0:
-        logger.error("Failed to prune tags!")
+        logger.error("Failed to fetch tags.")
         exit(re.returncode)
-    latest_tag = run(["git", "rev-list", "--tags", "--max-count=1"], stdout=PIPE, stderr=PIPE, universal_newlines=True, env=os.environ.copy())
-    if latest_tag.returncode != 0:
-        logger.error("Failed to get latest tag!")
-        exit(latest_tag.returncode)
-    latest_tag = latest_tag.stdout.strip()
-    re = run(["git", "describe", "--match", "build-*", "--abbrev=0", "--tags", latest_tag], stdout=PIPE, stderr=PIPE, universal_newlines=True, env=os.environ.copy())
-    if re.returncode != 0:
-        logger.error("Failed to get latest tag!")
-        exit(re.returncode)
-    if re.returncode != 0:
-        logger.warning("No release tag found.")
+
+    # Get the tags using git command
+    git_tags = check_output(["git", "tag"]).decode().splitlines()
+
+    # Filter tags with prefix "build-"
+    release_tags = [tag for tag in git_tags if tag.startswith("build-")]
+
+    if release_tags:
+        # Sort the tags and get the latest one
+        latest_tag = sorted(release_tags)[-1]
+        return latest_tag
+    else:
         return None
-    return re.stdout.strip()
 
 
 def get_list_of_changed_files_between(prev_tag, cur_tag):
