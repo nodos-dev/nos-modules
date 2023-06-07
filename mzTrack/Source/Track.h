@@ -38,9 +38,9 @@ static glm::dvec3 GetEulers(glm::dmat4 mat)
     return glm::degrees(glm::dvec3(-x, -y, z));
 }
 
-MZ_REGISTER_NAME2(UDP_Port);
-MZ_REGISTER_NAME2(Enable);
-MZ_REGISTER_NAME2(Track);
+MZ_REGISTER_NAME(UDP_Port);
+MZ_REGISTER_NAME(Enable);
+MZ_REGISTER_NAME(Track);
 
 namespace mz
 {
@@ -118,7 +118,7 @@ namespace mz
 // <<<<<<< HEAD
 // 			ProcessNextMessage(std::move(DataQueue.front()), args);
 			mz::Buffer trackBuf = UpdateTrackOut(DataQueue.front());
-			mzEngine.SetPinValueByName(NodeId, Track_Name, {.Data = trackBuf.data(), .Size = trackBuf.size()});
+			mzEngine.SetPinValueByName(NodeId, MZN_Track, {.Data = trackBuf.data(), .Size = trackBuf.size()});
 			DataQueue.pop();
 			return true;
         }
@@ -152,7 +152,7 @@ namespace mz
 				return;
 			}
 
-			if (pinName == Enable_Name)
+			if (pinName == MZN_Enable)
 			{
 				Restart();
 				auto enable = *(bool*)value;
@@ -174,7 +174,7 @@ namespace mz
                 return;
 			}
 
-			if (pinName == UDP_Port_Name)
+			if (pinName == MZN_UDP_Port)
 			{
 				if (IsRunning())
 				{

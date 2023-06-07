@@ -563,10 +563,10 @@ void CopyThread::InputConversionThread::Consume(CopyThread::Parameters const& pa
 
     uint32_t iflags = params.FieldIdx | ((Cpy->client->Shader == ShaderType::Comp10) << 2);
 
-    inputs.emplace_back(ShaderBinding(Colorspace_Name, colorspace));
-    inputs.emplace_back(ShaderBinding(Source_Name, Cpy->CompressedTex));
-    inputs.emplace_back(ShaderBinding(Interlaced_Name, iflags));
-    inputs.emplace_back(ShaderBinding(ssbo_Name, Cpy->SSBO));
+    inputs.emplace_back(ShaderBinding(MZN_Colorspace, colorspace));
+	inputs.emplace_back(ShaderBinding(MZN_Source, Cpy->CompressedTex));
+	inputs.emplace_back(ShaderBinding(MZN_Interlaced, iflags));
+	inputs.emplace_back(ShaderBinding(MZN_ssbo, Cpy->SSBO));
 
     auto MsgKey = "Input " + Cpy->Name() + " DMA";
 
@@ -577,9 +577,9 @@ void CopyThread::InputConversionThread::Consume(CopyThread::Parameters const& pa
 
     if (Cpy->client->Shader != ShaderType::Frag8)
     {
-        inputs.emplace_back(ShaderBinding(Output_Name, res->Res));
+		inputs.emplace_back(ShaderBinding(MZN_Output, res->Res));
         mzRunComputePassParams pass = {};
-        pass.Key = AJA_YCbCr2RGB_Compute_Pass_Name;
+		pass.Key = MZN_AJA_YCbCr2RGB_Compute_Pass;
         pass.DispatchSize = Cpy->GetSuitableDispatchSize();
         pass.Bindings = inputs.data();
         pass.BindingCount = inputs.size();
@@ -589,7 +589,7 @@ void CopyThread::InputConversionThread::Consume(CopyThread::Parameters const& pa
     else
     {
         mzRunPassParams pass = {};
-        pass.Key = AJA_YCbCr2RGB_Pass_Name;
+		pass.Key = MZN_AJA_YCbCr2RGB_Pass;
         pass.Output = res->Res;
         pass.Bindings = inputs.data();
         pass.BindingCount = inputs.size();
@@ -665,10 +665,10 @@ void CopyThread::OutputConversionThread::Consume(const Parameters& item)
     uint32_t iflags = (Cpy->client->Shader == ShaderType::Comp10) << 2;
 
     std::vector<mzShaderBinding> inputs;
-    inputs.emplace_back(ShaderBinding(Colorspace_Name, colorspace));
-    inputs.emplace_back(ShaderBinding(Source_Name, incoming->Res));
-    inputs.emplace_back(ShaderBinding(Interlaced_Name, iflags));
-    inputs.emplace_back(ShaderBinding(ssbo_Name, Cpy->SSBO));
+	inputs.emplace_back(ShaderBinding(MZN_Colorspace, colorspace));
+	inputs.emplace_back(ShaderBinding(MZN_Source, incoming->Res));
+	inputs.emplace_back(ShaderBinding(MZN_Interlaced, iflags));
+	inputs.emplace_back(ShaderBinding(MZN_ssbo, Cpy->SSBO));
 
     mzCmd cmd;
     mzEngine.Begin(&cmd);
@@ -676,9 +676,9 @@ void CopyThread::OutputConversionThread::Consume(const Parameters& item)
     // watch out for th members, they are not synced
     if (Cpy->client->Shader != ShaderType::Frag8)
     {
-        inputs.emplace_back(ShaderBinding(Output_Name, Cpy->CompressedTex));
+		inputs.emplace_back(ShaderBinding(MZN_Output, Cpy->CompressedTex));
         mzRunComputePassParams pass = {};
-        pass.Key = AJA_RGB2YCbCr_Compute_Pass_Name;
+		pass.Key = MZN_AJA_RGB2YCbCr_Compute_Pass;
         pass.DispatchSize = Cpy->GetSuitableDispatchSize();
         pass.Bindings = inputs.data();
         pass.BindingCount = inputs.size();
@@ -688,7 +688,7 @@ void CopyThread::OutputConversionThread::Consume(const Parameters& item)
     else
     {
         mzRunPassParams pass = {};
-        pass.Key = AJA_RGB2YCbCr_Pass_Name;
+		pass.Key = MZN_AJA_RGB2YCbCr_Pass;
         pass.Output = Cpy->CompressedTex;
         pass.Bindings = inputs.data();
         pass.BindingCount = inputs.size();

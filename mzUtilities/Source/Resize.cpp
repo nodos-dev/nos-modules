@@ -7,13 +7,13 @@
 namespace mz::utilities
 {
 
-MZ_REGISTER_NAME2(Resize_Pass);
-MZ_REGISTER_NAME2(Resize_Shader);
-MZ_REGISTER_NAME2(Input);
-MZ_REGISTER_NAME2(Method);
-MZ_REGISTER_NAME2(Output);
-MZ_REGISTER_NAME2(Size);
-
+MZ_REGISTER_NAME(Resize_Pass);
+MZ_REGISTER_NAME(Resize_Shader);
+MZ_REGISTER_NAME(Input);
+MZ_REGISTER_NAME(Method);
+MZ_REGISTER_NAME(Output);
+MZ_REGISTER_NAME(Size);
+MZ_REGISTER_NAME_SPACED(Mz_Utilities_Resize, "mz.utilities.Resize")
 struct ResizeContext
 {
 	mzUUID NodeId;
@@ -34,8 +34,8 @@ struct ResizeContext
 		if(!infos)
 			return MZ_RESULT_SUCCESS;
 
-		infos->Key    = Resize_Pass_Name;
-		infos->Shader = Resize_Shader_Name;
+		infos->Key = MZN_Resize_Pass;
+		infos->Shader = MZN_Resize_Shader;
 		infos->Blend = false;
 		infos->MultiSample = 1;
 
@@ -48,7 +48,7 @@ struct ResizeContext
 		if(!outSpirvBufs || !outShaderNames)
 			return MZ_RESULT_SUCCESS;
 		
-		*outShaderNames = Resize_Shader_Name;
+		*outShaderNames = MZN_Resize_Shader;
 		outSpirvBufs->Data = (void*)(Resize_frag_spv);
 		outSpirvBufs->Size = sizeof(Resize_frag_spv);
 		return MZ_RESULT_SUCCESS;
@@ -57,11 +57,11 @@ struct ResizeContext
 	static mzResult ExecuteNode(void* ctx, const mzNodeExecuteArgs* args)
 	{
 		auto pins = GetPinValues(args);
-		auto inputTex = DeserializeTextureInfo(pins[Input_Name]);
-		auto method = GetPinValue<uint32_t>(pins, Method_Name);
+		auto inputTex = DeserializeTextureInfo(pins[MZN_Input]);
+		auto method = GetPinValue<uint32_t>(pins, MZN_Method);
 		
-		auto tex = DeserializeTextureInfo(pins[Output_Name]);
-		auto size = GetPinValue<mzVec2u>(pins, Size_Name);
+		auto tex = DeserializeTextureInfo(pins[MZN_Output]);
+		auto size = GetPinValue<mzVec2u>(pins, MZN_Size);
 		
 		if(size->x != tex.Info.Texture.Width ||
 			size->y != tex.Info.Texture.Height)
@@ -76,13 +76,11 @@ struct ResizeContext
 			mzEngine.SetPinValue(((mzUUID)(args->PinIds[1])), {.Data = texFbBuf.data(), .Size = texFbBuf.size()});
 		}
 
-		std::vector bindings = {
-			ShaderBinding(Input_Name, inputTex),
-			ShaderBinding(Method_Name, method)
+		std::vector bindings = {ShaderBinding(MZN_Input, inputTex), ShaderBinding(MZN_Method, method)
 		};
 		
 		mzRunPassParams resizeParam {
-			.Key = Resize_Pass_Name,
+			.Key = MZN_Resize_Pass,
 			.Bindings = bindings.data(),
 			.BindingCount = 2,
 			.Output = tex,
@@ -99,7 +97,7 @@ struct ResizeContext
 
 void RegisterResize(mzNodeFunctions* out)
 {
-	out->TypeName = MZ_NAME_STATIC("mz.utilities.Resize");
+	out->TypeName = MZN_Mz_Utilities_Resize;
 	out->GetPasses = mz::utilities::ResizeContext::GetPasses;
 	out->GetShaders = mz::utilities::ResizeContext::GetShaders;
 	out->ExecuteNode = [](void* ctx, const mzNodeExecuteArgs* args)-> mzResult {

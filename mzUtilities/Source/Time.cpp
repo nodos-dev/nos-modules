@@ -2,10 +2,10 @@
 
 namespace mz::utilities
 {
-MZ_REGISTER_NAME2(Seconds);
-MZ_REGISTER_NAME2(Time_Pass);
-MZ_REGISTER_NAME2(Time_Shader);
-
+MZ_REGISTER_NAME(Seconds);
+MZ_REGISTER_NAME(Time_Pass);
+MZ_REGISTER_NAME(Time_Shader);
+MZ_REGISTER_NAME_SPACED(Mz_Utilities_Time, "mz.utilities.Time")
 class TimeNodeContext
 {
 public:
@@ -14,7 +14,7 @@ public:
 	mzResult Run(void* ctx,const mzNodeExecuteArgs* args)
 	{
 		auto pin = GetPinValues(args);
-		auto sec = GetPinValue<float>(pin, Seconds_Name);
+		auto sec = GetPinValue<float>(pin, MZN_Seconds);
 		float result = GetDeltaTime();
 		mzEngine.SetPinValue((mzUUID)args->PinIds[0], {.Data = &result, .Size = sizeof(float)});
 		return MZ_RESULT_SUCCESS;
@@ -32,7 +32,7 @@ public:
 
 void RegisterTime(mzNodeFunctions* fn)
 {
-	fn->TypeName = MZ_NAME_STATIC("mz.utilities.Time");
+	fn->TypeName = MZN_Mz_Utilities_Time;
 	fn->OnNodeCreated = [](const mzFbNode* node, void** outCtxPtr) {
 		*outCtxPtr = new TimeNodeContext();
 	};
@@ -42,15 +42,6 @@ void RegisterTime(mzNodeFunctions* fn)
 	fn->ExecuteNode = [](void* ctx, const mzNodeExecuteArgs* args)->mzResult {
 		return ((TimeNodeContext*)(ctx))->Run(ctx,args);
 	};
-	
-	// functions["mz.Time"].NodeCreated = [](auto const&, auto&, void** context) {
-	// 	*context = new TimeNodeContext();
-	// };
-	// functions["mz.Time"].EntryPoint = [](mz::Args& pins, void* ctx) {
-	// 	*pins.Get<float>("Seconds") = static_cast<TimeNodeContext*>(ctx)->GetDeltaTime();
-	// 	return true;
-	// };
-
 	
 	// functions["mz.CalculateNodalPoint"].EntryPoint = [](mz::Args& args, void* ctx){
 	// 	auto pos = args.Get<glm::dvec3>("Camera Position");
@@ -64,7 +55,6 @@ void RegisterTime(mzNodeFunctions* fn)
 	// 	*out = *pos + f **sca;
 	// 	return true;
 	// };
-	// RegisterImageIO(functions);
 }
 
 } // namespace mz

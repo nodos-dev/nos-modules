@@ -191,14 +191,14 @@ void RegisterStypeNode(mzNodeFunctions &functions)
 		auto context = new Stype();
 		*ctx = context;
 		auto pins = context->Load(*node);
-		if (auto pin = pins[UDP_Port_Name])
+		if (auto pin = pins[MZN_UDP_Port])
 		{
 			if (flatbuffers::IsFieldPresent(pin, fb::Pin::VT_DATA))
 			{
 				context->Port = *(uint16_t*)pin->data()->data();
 			}
 		}
-		if (auto pin = pins[Enable_Name])
+		if (auto pin = pins[MZN_Enable])
 		{
 			if (flatbuffers::IsFieldPresent(pin, fb::Pin::VT_DATA))
 			{

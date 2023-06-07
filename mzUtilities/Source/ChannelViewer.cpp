@@ -4,13 +4,13 @@
 #include <glm/glm.hpp>
 
 
-MZ_REGISTER_NAME2(Input);
-MZ_REGISTER_NAME2(Output);
-MZ_REGISTER_NAME2(Channel);
-MZ_REGISTER_NAME2(Format);
-MZ_REGISTER_NAME2(Channel_Viewer_Pass);
-MZ_REGISTER_NAME2(Channel_Viewer_Shader);
-
+MZ_REGISTER_NAME(Input);
+MZ_REGISTER_NAME(Output);
+MZ_REGISTER_NAME(Channel);
+MZ_REGISTER_NAME(Format);
+MZ_REGISTER_NAME(Channel_Viewer_Pass);
+MZ_REGISTER_NAME(Channel_Viewer_Shader);
+MZ_REGISTER_NAME_SPACED(Mz_Utilities_ChannelViewer, "mz.utilities.ChannelViewer")
 namespace mz::utilities
 {
 
@@ -20,7 +20,7 @@ static mzResult GetShaders(size_t* outCount, mzName* outShaderNames, mzBuffer* i
 	if (!infos)
 		return MZ_RESULT_SUCCESS;
 
-	outShaderNames[0] = Channel_Viewer_Shader_Name;
+	outShaderNames[0] = MZN_Channel_Viewer_Shader;
 	infos->Data = (void*)ChannelViewer_frag_spv;
 	infos->Size = sizeof(ChannelViewer_frag_spv);
 
@@ -33,8 +33,8 @@ static mzResult GetPasses(size_t* outCount, mzPassInfo* infos)
 	if (!infos)
 		return MZ_RESULT_SUCCESS;
 
-	infos->Key    = Channel_Viewer_Pass_Name;
-	infos->Shader = Channel_Viewer_Shader_Name;
+	infos->Key = MZN_Channel_Viewer_Pass;
+	infos->Shader = MZN_Channel_Viewer_Shader;
 	infos->Blend = false;
 	infos->MultiSample = 1;
 
@@ -44,11 +44,11 @@ static mzResult GetPasses(size_t* outCount, mzPassInfo* infos)
 static mzResult Run(void* ctx, const mzNodeExecuteArgs* pins)
 {
 	auto values = GetPinValues(pins);
-	const mzResourceShareInfo input = DeserializeTextureInfo(values[Input_Name]);
-	const mzResourceShareInfo output = DeserializeTextureInfo(values[Output_Name]);
+	const mzResourceShareInfo input = DeserializeTextureInfo(values[MZN_Input]);
+	const mzResourceShareInfo output = DeserializeTextureInfo(values[MZN_Output]);
 
-	auto channel = *(u32*)values[Channel_Name];
-	auto format = *(u32*)values[Format_Name];
+	auto channel = *(u32*)values[MZN_Channel];
+	auto format = *(u32*)values[MZN_Format];
 
 	glm::vec4 val{};
 	val[channel & 3] = 1;
@@ -57,10 +57,12 @@ static mzResult Run(void* ctx, const mzNodeExecuteArgs* pins)
 
 	glm::vec4 multipliers = glm::vec4(coeffs[format], channel > 3);
 	std::vector<mzShaderBinding> bindings = {
-		ShaderBinding(Input_Name, input), ShaderBinding(Channel_Name, val), ShaderBinding(Format_Name, multipliers)};
+											ShaderBinding(MZN_Input, input),
+											 ShaderBinding(MZN_Channel, val), 
+											 ShaderBinding(MZN_Format, multipliers)};
 
 	mzRunPassParams pass = {
-		.Key = Channel_Viewer_Pass_Name,
+		.Key = MZN_Channel_Viewer_Pass,
 		.Bindings = bindings.data(),
 		.BindingCount = (u32)bindings.size(),
 		.Output = output,
@@ -72,7 +74,7 @@ static mzResult Run(void* ctx, const mzNodeExecuteArgs* pins)
 
 void RegisterChannelViewer(mzNodeFunctions* out)
 {
-	out->TypeName = MZ_NAME_STATIC("mz.utilities.ChannelViewer");
+	out->TypeName = MZN_Mz_Utilities_ChannelViewer;
 	out->GetShaders = mz::utilities::GetShaders;
 	out->GetPasses = mz::utilities::GetPasses;
 	out->ExecuteNode = mz::utilities::Run;

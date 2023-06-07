@@ -231,7 +231,7 @@ void AJAClient::UpdateDeviceStatus()
 void AJAClient::UpdateDeviceValue()
 {
     flatbuffers::FlatBufferBuilder fbb;
-    auto pinId = GetPinId(Device_Name);
+    auto pinId = GetPinId(MZN_Device);
     std::vector<u8> value = StringValue(Device->GetDisplayName());
 	mzEngine.HandleEvent(CreateAppEvent(fbb, mz::CreatePinValueChangedDirect(fbb, &pinId, &value)));
     UpdateReferenceValue();
@@ -249,7 +249,7 @@ void AJAClient::UpdateReferenceValue()
 
     flatbuffers::FlatBufferBuilder fbb;
     mz::fb::UUID pinId;
-    if (auto id = Mapping.PinName2Id.right(ReferenceSource_Name))
+    if (auto id = Mapping.PinName2Id.right(MZN_ReferenceSource))
         pinId = *id;
     else
         return;

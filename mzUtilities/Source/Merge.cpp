@@ -24,10 +24,11 @@ uuids::uuid_random_generator generator(mtengine);
 
 namespace mz::utilities
 {
-MZ_REGISTER_NAME2(Out);
-MZ_REGISTER_NAME2(Texture_Count);
-MZ_REGISTER_NAME2(Merge_Pass);
-MZ_REGISTER_NAME2(Merge_Shader);
+MZ_REGISTER_NAME(Out);
+MZ_REGISTER_NAME(Texture_Count);
+MZ_REGISTER_NAME(Merge_Pass);
+MZ_REGISTER_NAME(Merge_Shader);
+MZ_REGISTER_NAME_SPACED(Mz_Utilities_Merge, "mz.utilities.Merge")
 
 struct MergePin
 {
@@ -45,7 +46,7 @@ struct MergeContext
 	void Run(const mzNodeExecuteArgs* pins)
 	{
 		auto values = GetPinValues(pins);
-		const mzResourceShareInfo output = DeserializeTextureInfo(values[Out_Name]);
+		const mzResourceShareInfo output = DeserializeTextureInfo(values[MZN_Out]);
 
 		std::vector<mzShaderBinding> bindings;
 		std::vector<mzResourceShareInfo> Textures(TextureCount);
@@ -64,10 +65,10 @@ struct MergeContext
 				bindings.emplace_back(mzShaderBinding{.Name = Name(pins->PinNames[i]), .FixedSize = val.Data});
 		}
 
-		bindings.emplace_back(ShaderBinding(Texture_Count_Name, TextureCount));
+		bindings.emplace_back(ShaderBinding(MZN_Texture_Count, TextureCount));
 
 		mzRunPassParams mergePass{
-			.Key = Merge_Pass_Name,
+			.Key = MZN_Merge_Pass,
 			.Bindings = bindings.data(),
 			.BindingCount = static_cast<uint32_t>(bindings.size()),
 			.Output = output,
@@ -229,7 +230,7 @@ struct MergeContext
 		*outCount = 1;
 		if (!outShaderNames || !outSpirvBufs)
 			return MZ_RESULT_SUCCESS;
-		*outShaderNames = Merge_Shader_Name;
+		*outShaderNames = MZN_Merge_Shader;
 		outSpirvBufs->Data = (void*)(Merge_frag_spv);
 		outSpirvBufs->Size = sizeof(Merge_frag_spv);
 		return MZ_RESULT_SUCCESS;
@@ -241,8 +242,8 @@ struct MergeContext
 		if (!passes)
 			return MZ_RESULT_SUCCESS;
 		*passes = {
-			.Key = Merge_Pass_Name,
-			.Shader = Merge_Shader_Name,
+			.Key = MZN_Merge_Pass,
+			.Shader = MZN_Merge_Shader,
 			.Blend = 1,
 			.MultiSample = 1,
 		};
@@ -257,7 +258,7 @@ struct MergeContext
 
 void RegisterMerge(mzNodeFunctions* out)
 {
-	out->TypeName = MZ_NAME_STATIC("mz.utilities.Merge");
+	out->TypeName = MZN_Mz_Utilities_Merge;
 	out->OnMenuRequested = MergeContext::OnMenuRequested;
 	out->OnNodeCreated = MergeContext::OnNodeCreated;
 	out->OnMenuCommand = MergeContext::OnMenuCommand;

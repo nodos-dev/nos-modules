@@ -7,9 +7,9 @@
 
 namespace mz
 {
-MZ_REGISTER_NAME2(Impulse);
-MZ_REGISTER_NAME2(Decay);
-MZ_REGISTER_NAME2(Track);
+MZ_REGISTER_NAME(Impulse);
+MZ_REGISTER_NAME(Decay);
+MZ_REGISTER_NAME(Track);
 
 void RegisterController(mzNodeFunctions& functions)
 {
@@ -130,11 +130,11 @@ void RegisterController(mzNodeFunctions& functions)
 
         auto c = (UserTrack*)ctx;
     	auto values = GetPinValues(args);
-        c->impulse = glm::max(*(f64*)values[Impulse_Name], 1.);
-        c->decay   = glm::max(*(f64*)values[Decay_Name], 0.);
+		c->impulse = glm::max(*(f64*)values[MZN_Impulse], 1.);
+		c->decay = glm::max(*(f64*)values[MZN_Decay], 0.);
         c->p += c->v;
         c->v *= exp(-c->decay);
-    	auto track = GetPinValue<fb::TTrack>(values, Track_Name);
+		auto track = GetPinValue<fb::TTrack>(values, MZN_Track);
         c->fill(track);
         return MZ_RESULT_SUCCESS;
     };

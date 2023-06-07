@@ -17,8 +17,11 @@
 namespace mz::utilities
 {
 
-MZ_REGISTER_NAME2(SRGB2Linear_Pass);
-MZ_REGISTER_NAME2(SRGB2Linear_Shader);
+MZ_REGISTER_NAME(SRGB2Linear_Pass);
+MZ_REGISTER_NAME(SRGB2Linear_Shader);
+MZ_REGISTER_NAME(Path);
+MZ_REGISTER_NAME(Out);
+MZ_REGISTER_NAME_SPACED(Mz_Utilities_ReadImage, "mz.utilities.ReadImage")
 
 static mzResult GetShaders(size_t* count, mzName* names, mzBuffer* spirv)
 {
@@ -26,7 +29,7 @@ static mzResult GetShaders(size_t* count, mzName* names, mzBuffer* spirv)
 	if (!names || !spirv)
 		return MZ_RESULT_SUCCESS;
 
-	*names = SRGB2Linear_Shader_Name;
+	*names = MZN_SRGB2Linear_Shader;
 	spirv->Data = (void*)SRGB2Linear_frag_spv;
 	spirv->Size = sizeof(SRGB2Linear_frag_spv);
 	return MZ_RESULT_SUCCESS;
@@ -39,8 +42,8 @@ static mzResult GetPasses(size_t* count, mzPassInfo* passes)
 		return MZ_RESULT_SUCCESS;
 
 	*passes = mzPassInfo{
-		.Key    = SRGB2Linear_Pass_Name,
-		.Shader = SRGB2Linear_Shader_Name,
+		.Key = MZN_SRGB2Linear_Pass,
+		.Shader = MZN_SRGB2Linear_Shader,
 		.Blend = 0,
 		.MultiSample = 1,
 	};
@@ -48,8 +51,6 @@ static mzResult GetPasses(size_t* count, mzPassInfo* passes)
 	return MZ_RESULT_SUCCESS;
 }
 
-MZ_REGISTER_NAME2(Path);
-MZ_REGISTER_NAME2(Out);
 static mzResult GetFunctions(size_t* count, mzName* names, mzPfnNodeFunctionExecute* fns)
 {
     *count = 1;
@@ -60,13 +61,13 @@ static mzResult GetFunctions(size_t* count, mzName* names, mzPfnNodeFunctionExec
     *fns = [](void* ctx, const mzNodeExecuteArgs* nodeArgs, const mzNodeExecuteArgs* functionArgs)
     {
         auto values = GetPinValues(nodeArgs);
-        std::filesystem::path path = GetPinValue<const char>(values, Path_Name);
+		std::filesystem::path path = GetPinValue<const char>(values, MZN_Path);
         if (!std::filesystem::exists(path))
         {
             mzEngine.LogE("Read Image cannot load file %s", path.string().c_str());
             return;
         }
-        mzResourceShareInfo out = DeserializeTextureInfo(GetPinValue<void>(values, Out_Name));
+		mzResourceShareInfo out = DeserializeTextureInfo(GetPinValue<void>(values, MZN_Out));
         mzResourceShareInfo tmp = out;
 		
 		int w, h, n;
@@ -88,7 +89,7 @@ static mzResult GetFunctions(size_t* count, mzName* names, mzPfnNodeFunctionExec
 void RegisterReadImage(mzNodeFunctions* fn)
 {
     *fn = {
-		.TypeName = MZ_NAME_STATIC("mz.utilities.ReadImage"),
+		.TypeName = MZN_Mz_Utilities_ReadImage,
         .GetFunctions = GetFunctions,
         .GetShaders = GetShaders,
         .GetPasses = GetPasses,

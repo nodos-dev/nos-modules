@@ -53,10 +53,10 @@ struct AJA
     {
         const std::vector<mzPassInfo> passes =
         {
-            {.Key = AJA_RGB2YCbCr_Compute_Pass_Name, .Shader = AJA_RGB2YCbCr_Compute_Shader_Name, .MultiSample = 1},
-            {.Key = AJA_YCbCr2RGB_Compute_Pass_Name, .Shader = AJA_YCbCr2RGB_Compute_Shader_Name, .MultiSample = 1},
-            {.Key = AJA_YCbCr2RGB_Pass_Name, .Shader = AJA_YCbCr2RGB_Shader_Name, .MultiSample = 1},
-            {.Key = AJA_RGB2YCbCr_Pass_Name, .Shader = AJA_RGB2YCbCr_Shader_Name, .MultiSample = 1}
+			{.Key = MZN_AJA_RGB2YCbCr_Compute_Pass, .Shader = MZN_AJA_RGB2YCbCr_Compute_Shader, .MultiSample = 1},
+			{.Key = MZN_AJA_YCbCr2RGB_Compute_Pass, .Shader = MZN_AJA_YCbCr2RGB_Compute_Shader, .MultiSample = 1},
+			{.Key = MZN_AJA_YCbCr2RGB_Pass, .Shader = MZN_AJA_YCbCr2RGB_Shader, .MultiSample = 1},
+			{.Key = MZN_AJA_RGB2YCbCr_Pass, .Shader = MZN_AJA_RGB2YCbCr_Shader, .MultiSample = 1}
         };
 
         *outCount = passes.size();
@@ -149,27 +149,36 @@ struct AJA
         PinMapping mapping;
         auto loadedPins = mapping.Load(node);
 
-        AddIfNotFound(Device_Name, "string", StringValue(dev->GetDisplayName()), loadedPins, pinsToAdd, fbb,
+        AddIfNotFound(MZN_Device,
+					  "string",
+					  StringValue(dev->GetDisplayName()),
+					  loadedPins,
+					  pinsToAdd,
+					  fbb,
                       ShowAs::PROPERTY, CanShowAs::PROPERTY_ONLY);
-        if (auto val = AddIfNotFound(Dispatch_Size_Name, "mz.fb.vec2u", mz::Buffer::From(mz::fb::vec2u(c->DispatchSizeX, c->DispatchSizeY)),
+		if (auto val = AddIfNotFound(MZN_Dispatch_Size,
+									 "mz.fb.vec2u",
+									 mz::Buffer::From(mz::fb::vec2u(c->DispatchSizeX, c->DispatchSizeY)),
                                      loadedPins, pinsToAdd, fbb))
         {
             c->DispatchSizeX = ((glm::uvec2 *)val)->x;
             c->DispatchSizeY = ((glm::uvec2 *)val)->y;
         }
 
-        if (auto val = AddIfNotFound(Shader_Type_Name, "AJA.Shader", mz::Buffer::From(ShaderType(c->Shader)), loadedPins,
+        if (auto val = AddIfNotFound(
+				MZN_Shader_Type, "AJA.Shader", mz::Buffer::From(ShaderType(c->Shader)), loadedPins,
                                      pinsToAdd, fbb))
         {
             c->Shader = *((ShaderType *)val);
         }
 
-        if (auto val = AddIfNotFound(Debug_Name, "uint", mz::Buffer::From(u32(c->Debug)), loadedPins, pinsToAdd, fbb))
+        if (auto val =
+				AddIfNotFound(MZN_Debug, "uint", mz::Buffer::From(u32(c->Debug)), loadedPins, pinsToAdd, fbb))
         {
             c->Debug = *((u32 *)val);
         }
 
-        if (auto ref = loadedPins[ReferenceSource_Name])
+        if (auto ref = loadedPins[MZN_ReferenceSource])
         {
             if (flatbuffers::IsFieldPresent(ref, fb::Pin::VT_DATA))
             {
@@ -259,12 +268,12 @@ struct AJA
             for (auto& p : c->Pins)
                 p->Stop();
    
-        shaders[0] = {AJA_RGB2YCbCr_Compute_Shader_Name, YCbCr2RGBComp};
-		shaders[1] = {AJA_YCbCr2RGB_Compute_Shader_Name, RGB2YCbCrComp};
-		shaders[2] = {AJA_RGB2YCbCr_Shader_Name, RGB2YCbCrFrag};
-		shaders[3] = {AJA_YCbCr2RGB_Shader_Name, YCbCr2RGBFrag};
+        shaders[0] = {MZN_AJA_RGB2YCbCr_Compute_Shader, YCbCr2RGBComp};
+		shaders[1] = {MZN_AJA_YCbCr2RGB_Compute_Shader, RGB2YCbCrComp};
+		shaders[2] = {MZN_AJA_RGB2YCbCr_Shader, RGB2YCbCrFrag};
+		shaders[3] = {MZN_AJA_YCbCr2RGB_Shader, YCbCr2RGBFrag};
         
-        mzEngine.ReloadShaders(((AJAClient*)ctx)->Input ? MZ_NAME_STATIC("AJA.AJAIn") : MZ_NAME_STATIC("AJA.AJAOut"));
+        mzEngine.ReloadShaders(((AJAClient*)ctx)->Input ? MZN_AJA_AJAIn : MZN_AJA_AJAOut);
                  
         for (auto c : AJAClient::Ctx.Clients)
             for (auto& p : c->Pins)
@@ -442,14 +451,14 @@ MZAPI_ATTR mzResult MZAPI_CALL mzExportNodeFunctions(size_t* outSize, mzNodeFunc
         .OnKeyEvent = AJA::OnKeyEvent
     };
 
-    outFunctions[0].TypeName = MZ_NAME_STATIC("AJA.AJAIn");
-    outFunctions[1].TypeName = MZ_NAME_STATIC("AJA.AJAOut");
+    outFunctions[0].TypeName = MZN_AJA_AJAIn;
+    outFunctions[1].TypeName = MZN_AJA_AJAOut;
 
     shaders = {
-		{AJA_RGB2YCbCr_Compute_Shader_Name, {std::begin(RGB2YCbCr_comp_spv), std::end(RGB2YCbCr_comp_spv)}},
-		{AJA_YCbCr2RGB_Compute_Shader_Name, {std::begin(YCbCr2RGB_comp_spv), std::end(YCbCr2RGB_comp_spv)}},
-		{AJA_RGB2YCbCr_Shader_Name, {std::begin(RGB2YCbCr_frag_spv), std::end(RGB2YCbCr_frag_spv)}},
-		{AJA_YCbCr2RGB_Shader_Name, {std::begin(YCbCr2RGB_frag_spv), std::end(YCbCr2RGB_frag_spv)}},
+		{MZN_AJA_RGB2YCbCr_Compute_Shader, {std::begin(RGB2YCbCr_comp_spv), std::end(RGB2YCbCr_comp_spv)}},
+		{MZN_AJA_YCbCr2RGB_Compute_Shader, {std::begin(YCbCr2RGB_comp_spv), std::end(YCbCr2RGB_comp_spv)}},
+		{MZN_AJA_RGB2YCbCr_Shader, {std::begin(RGB2YCbCr_frag_spv), std::end(RGB2YCbCr_frag_spv)}},
+		{MZN_AJA_YCbCr2RGB_Shader, {std::begin(YCbCr2RGB_frag_spv), std::end(YCbCr2RGB_frag_spv)}},
 	};
 
     return MZ_RESULT_SUCCESS;
