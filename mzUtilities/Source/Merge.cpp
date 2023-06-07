@@ -41,7 +41,7 @@ struct MergeContext
 	mzUUID Id;
 	uint32_t TextureCount = 2;
 	std::vector<MergePin> AddedPins;
-	
+
 	void Run(const mzNodeExecuteArgs* pins)
 	{
 		auto values = GetPinValues(pins);
@@ -57,11 +57,11 @@ struct MergeContext
 			mzBuffer val = pins->PinValues[i];
 			if (name.starts_with("Texture_"))
 			{
-				bindings.emplace_back(ShaderBinding(Name(pins->PinNames[i]), Textures[curr++] = DeserializeTextureInfo(val.Data)));
+				bindings.emplace_back(ShaderBinding(Name(pins->PinNames[i]),
+				                                    Textures[curr++] = DeserializeTextureInfo(val.Data)));
 			}
 			else if (name != "Out")
 				bindings.emplace_back(mzShaderBinding{.Name = Name(pins->PinNames[i]), .FixedSize = val.Data});
-			mzEngine.LogW("%d",TextureCount);
 		}
 
 		bindings.emplace_back(ShaderBinding(Texture_Count_Name, TextureCount));
@@ -72,7 +72,7 @@ struct MergeContext
 			.BindingCount = static_cast<uint32_t>(bindings.size()),
 			.Output = output,
 		};
-		
+
 		mzEngine.RunPass(nullptr, &mergePass);
 	}
 
@@ -83,17 +83,17 @@ struct MergeContext
 		std::vector<flatbuffers::Offset<mz::ContextMenuItem>> items = {
 			mz::CreateContextMenuItemDirect(fbb, "Add Texture", 1),
 		};
-		if(static_cast<MergeContext*>(ctx)->TextureCount > 2)
+		if (static_cast<MergeContext*>(ctx)->TextureCount > 2)
 			items.push_back(mz::CreateContextMenuItemDirect(fbb, "Delete Last Texture", 2));
-		
-		auto event = CreateAppEvent(fbb,
-		                             CreateContextMenuUpdate(fbb,
-		                                                         &static_cast<MergeContext*>(ctx)->Id,
-		                                                         request->pos(),
-		                                                         request->instigator(), fbb.CreateVector(items)
-		                                                         ));
 
-		
+		auto event = CreateAppEvent(fbb,
+		                            CreateContextMenuUpdate(fbb,
+		                                                    &static_cast<MergeContext*>(ctx)->Id,
+		                                                    request->pos(),
+		                                                    request->instigator(),
+		                                                    fbb.CreateVector(items)
+			                            ));
+
 		mzEngine.HandleEvent(event);
 	}
 
@@ -101,14 +101,44 @@ struct MergeContext
 	{
 		*outCtxPtr = new MergeContext();
 		static_cast<MergeContext*>(*outCtxPtr)->Id = *node->id();
+		static_cast<MergeContext*>(*outCtxPtr)->TextureCount = (node->pins()->size() - 2) / 3;
+		
+		if (static_cast<MergeContext*>(*outCtxPtr)->TextureCount > 2)
+		{
+			flatbuffers::FlatBufferBuilder fbb;
+			std::vector<flatbuffers::Offset<PartialPinUpdate>> updatePins;
+			
+			for (int i = 0; i < node->pins()->size(); ++i)
+			{
+				if (node->pins()->Get(i)->orphan())
+				{
+					updatePins.emplace_back(
+						mz::CreatePartialPinUpdate(fbb, node->pins()->Get(i)->id(), 0, Action::RESET, Action::NOP));
+				}
+			}
+
+			mzEngine.HandleEvent(
+				CreateAppEvent(fbb,
+				               mz::CreatePartialNodeUpdateDirect(fbb,
+				                                                 node->id(),
+				                                                 ClearFlags::NONE,
+				                                                 0,
+				                                                 0,
+				                                                 0,
+				                                                 0,
+				                                                 0,
+				                                                 0,
+				                                                 0,
+				                                                 &updatePins)));
+		}
 	}
-	
+
 	static void OnMenuCommand(void* ctx, uint32_t cmd)
 	{
-		if(!cmd)
+		if (!cmd)
 			return;
 
-		if(cmd == 1)
+		if (cmd == 1)
 		{
 			auto c = static_cast<MergeContext*>(ctx);
 			auto count = std::to_string(c->TextureCount++);
@@ -132,24 +162,63 @@ struct MergeContext
 			std::string pinCategory = "Layer (" + count + ")";
 
 			c->AddedPins.push_back({texId, opacityId, blendId});
-			
+
 			flatbuffers::FlatBufferBuilder fbb;
 			std::vector<flatbuffers::Offset<mz::fb::Pin>> pins = {
-				fb::CreatePinDirect(fbb, &texId, texPinName.c_str() ,"mz.fb.Texture", fb::ShowAs::INPUT_PIN, fb::CanShowAs::INPUT_PIN_ONLY, pinCategory.c_str(),0,&texData),
-				fb::CreatePinDirect(fbb, &opacityId, opacityPinName.c_str(), "float", fb::ShowAs::PROPERTY, fb::CanShowAs::OUTPUT_PIN_OR_PROPERTY, pinCategory.c_str(),0,&opacityData, 0, &opacityMinData, &opacityMaxData),
-				fb::CreatePinDirect(fbb, &blendId, blendPinName.c_str(), "mz.fb.BlendMode", fb::ShowAs::PROPERTY, fb::CanShowAs::OUTPUT_PIN_OR_PROPERTY, pinCategory.c_str(),0,&blendModeData),
+				fb::CreatePinDirect(fbb,
+				                    &texId,
+				                    texPinName.c_str(),
+				                    "mz.fb.Texture",
+				                    fb::ShowAs::INPUT_PIN,
+				                    fb::CanShowAs::INPUT_PIN_ONLY,
+				                    pinCategory.c_str(),
+				                    0,
+				                    &texData),
+				fb::CreatePinDirect(fbb,
+				                    &opacityId,
+				                    opacityPinName.c_str(),
+				                    "float",
+				                    fb::ShowAs::PROPERTY,
+				                    fb::CanShowAs::OUTPUT_PIN_OR_PROPERTY,
+				                    pinCategory.c_str(),
+				                    0,
+				                    &opacityData,
+				                    0,
+				                    &opacityMinData,
+				                    &opacityMaxData),
+				fb::CreatePinDirect(fbb,
+				                    &blendId,
+				                    blendPinName.c_str(),
+				                    "mz.fb.BlendMode",
+				                    fb::ShowAs::PROPERTY,
+				                    fb::CanShowAs::OUTPUT_PIN_OR_PROPERTY,
+				                    pinCategory.c_str(),
+				                    0,
+				                    &blendModeData),
 			};
-			mzEngine.HandleEvent(CreateAppEvent(fbb, CreatePartialNodeUpdateDirect(fbb, &((MergeContext*)(ctx))->Id, ClearFlags::NONE,0,&pins)));
+			mzEngine.HandleEvent(CreateAppEvent(fbb,
+			                                    CreatePartialNodeUpdateDirect(
+				                                    fbb,
+				                                    &((MergeContext*)(ctx))->Id,
+				                                    ClearFlags::NONE,
+				                                    0,
+				                                    &pins)));
 		}
-		if(cmd == 2)
+		if (cmd == 2)
 		{
 			auto c = static_cast<MergeContext*>(ctx);
-			if(c->TextureCount > 2)
+			if (c->TextureCount > 2)
 			{
 				c->TextureCount--;
 				flatbuffers::FlatBufferBuilder fbb;
-				std::vector<mzUUID> ids = {c->AddedPins.back().TextureId, c->AddedPins.back().OpacityId, c->AddedPins.back().BlendId};
-				mzEngine.HandleEvent(CreateAppEvent(fbb, CreatePartialNodeUpdateDirect(fbb, &((MergeContext*)(ctx))->Id, ClearFlags::NONE, &ids)));
+				std::vector<mzUUID> ids = {c->AddedPins.back().TextureId, c->AddedPins.back().OpacityId,
+				                           c->AddedPins.back().BlendId};
+				mzEngine.HandleEvent(CreateAppEvent(fbb,
+				                                    CreatePartialNodeUpdateDirect(
+					                                    fbb,
+					                                    &((MergeContext*)(ctx))->Id,
+					                                    ClearFlags::NONE,
+					                                    &ids)));
 				c->AddedPins.pop_back();
 			}
 		}
@@ -166,7 +235,7 @@ struct MergeContext
 		return MZ_RESULT_SUCCESS;
 	}
 
-	static mzResult GetPasses(size_t* outCount,  mzPassInfo* passes)
+	static mzResult GetPasses(size_t* outCount, mzPassInfo* passes)
 	{
 		*outCount = 1;
 		if (!passes)
