@@ -72,7 +72,7 @@ static mzResult Run(void* ctx, const mzNodeExecuteArgs* pins)
 
 void RegisterChannelViewer(mzNodeFunctions* out)
 {
-	out->TypeName = "mz.utilities.ChannelViewer";
+	out->TypeName = MZ_NAME_STATIC("mz.utilities.ChannelViewer");
 	out->GetShaders = mz::utilities::GetShaders;
 	out->GetPasses = mz::utilities::GetPasses;
 	out->ExecuteNode = mz::utilities::Run;

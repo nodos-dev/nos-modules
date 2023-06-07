@@ -127,7 +127,7 @@ namespace mz
         {
 			const auto& pinName = GetPinName(id);
 
-            #define SET_VALUE(ty, name, var) if(pinName == #name) args.##var = *(ty*)value;
+            #define SET_VALUE(ty, name, var) if(pinName ==MZ_NAME_STATIC(#name)) args.##var = *(ty*)value;
             
             SET_VALUE(bool, NegateX, NegatePos.x);
             SET_VALUE(bool, NegateY, NegatePos.y);
@@ -145,7 +145,7 @@ namespace mz
             SET_VALUE(glm::dvec3, CameraPosition, CameraPosition);
             SET_VALUE(glm::dvec3, CameraRotation, CameraRotation);
 			
-            if (pinName == "Delay")
+            if (pinName == MZ_NAME_STATIC("Delay"))
 			{
 				Delay = *(u32*)value;
 				Restart();
@@ -191,7 +191,7 @@ namespace mz
                 return;
 			}
 			
-            if (pinName == "Spare Count")
+            if (pinName == MZ_NAME_STATIC("Spare Count"))
 			{
 				SpareCount = *(uint32_t*)value;
 				Restart();
@@ -331,7 +331,7 @@ namespace mz
 				}
 				u8 buf[4096];
 				mzBuffer defaultTrackData;
-				mzEngine.GetDefaultValueOfType("mz.fb.Track", &defaultTrackData);
+				mzEngine.GetDefaultValueOfType(MZ_NAME_STATIC("mz.fb.Track"), &defaultTrackData);
 				mz::Buffer defaultTrackBuffer = mz::Buffer((uint8_t*)defaultTrackData.Data, defaultTrackData.Size);
 				fb::TTrack defaultTrack = defaultTrackBuffer.As<fb::TTrack>();
 				while (!ShouldStop)

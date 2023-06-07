@@ -50,13 +50,13 @@ static mzResult GetPasses(size_t* count, mzPassInfo* passes)
 
 MZ_REGISTER_NAME2(Path);
 MZ_REGISTER_NAME2(Out);
-static mzResult GetFunctions(size_t* count, const char** names, mzPfnNodeFunctionExecute* fns)
+static mzResult GetFunctions(size_t* count, mzName* names, mzPfnNodeFunctionExecute* fns)
 {
     *count = 1;
     if(!names || !fns)
         return MZ_RESULT_SUCCESS;
     
-    *names = "ReadImage_Load";
+    *names = MZ_NAME_STATIC("ReadImage_Load");
     *fns = [](void* ctx, const mzNodeExecuteArgs* nodeArgs, const mzNodeExecuteArgs* functionArgs)
     {
         auto values = GetPinValues(nodeArgs);
@@ -88,7 +88,7 @@ static mzResult GetFunctions(size_t* count, const char** names, mzPfnNodeFunctio
 void RegisterReadImage(mzNodeFunctions* fn)
 {
     *fn = {
-        .TypeName = "mz.utilities.ReadImage",
+		.TypeName = MZ_NAME_STATIC("mz.utilities.ReadImage"),
         .GetFunctions = GetFunctions,
         .GetShaders = GetShaders,
         .GetPasses = GetPasses,

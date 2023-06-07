@@ -277,7 +277,7 @@ MZAPI_ATTR mzResult MZAPI_CALL mzExportNodeFunctions(size_t* outCount, mzNodeFun
 		return MZ_RESULT_SUCCESS;
 	auto& keyer = outFunctions[0];
 	
-	keyer.TypeName = "mz.realitykeyer.RealityKeyer";
+	keyer.TypeName = MZ_NAME_STATIC("mz.realitykeyer.RealityKeyer");
 	keyer.OnNodeCreated = [](const mzFbNode* node, void** ctx) {
 		*ctx = new RealityKeyerContext();
 		auto* RealityKeyerCtx = static_cast<RealityKeyerContext*>(*ctx);

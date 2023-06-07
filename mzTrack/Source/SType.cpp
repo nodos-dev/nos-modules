@@ -184,7 +184,7 @@ struct Stype : public TrackNodeContext
 
 void RegisterStypeNode(mzNodeFunctions &functions)
 {
-	functions.TypeName = "mz.track.Stype";
+	functions.TypeName = MZ_NAME_STATIC("mz.track.Stype");
     RegisterTrackCommon(functions);
 
 	functions.OnNodeCreated = [](fb::Node const* node, void** ctx) {

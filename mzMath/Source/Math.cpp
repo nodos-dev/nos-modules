@@ -7,6 +7,7 @@
 #include <glm/gtx/euler_angles.hpp>
 
 #include <chrono>
+#include <MediaZ/Helpers.hpp>
 
 MZ_INIT();
 
@@ -128,7 +129,7 @@ mzResult VecBinopExecute(void* ctx, const mzNodeExecuteArgs* args)
 
 #define GEN_CASE_SCALAR(op, t, sz) \
 	case MathNodeTypes::NODE_NAME(op, t, sz, ): { \
-		functions->TypeName = "mz.math." #op "_" #t #sz; \
+		functions->TypeName = MZ_NAME_STATIC("mz.math." #op "_" #t #sz); \
 		functions->ExecuteNode = ScalarBinopExecute<t ##sz, op<t ##sz>>; \
 		break; \
 	}
@@ -149,7 +150,7 @@ mzResult VecBinopExecute(void* ctx, const mzNodeExecuteArgs* args)
 
 #define GEN_CASE_VEC(op, namePostfix, t, dim) \
 	case MathNodeTypes::NODE_NAME(op, vec, dim, namePostfix): { \
-		functions->TypeName = "mz.math." #op "_vec" #dim #namePostfix; \
+		functions->TypeName = MZ_NAME_STATIC("mz.math." #op "_vec" #dim #namePostfix); \
 		functions->ExecuteNode = VecBinopExecute<t, dim, op>; \
 		break; \
 	}
@@ -209,12 +210,12 @@ MZAPI_ATTR mzResult MZAPI_CALL mzExportNodeFunctions(size_t* outCount, mzNodeFun
 		{
 		GEN_ALL_CASES()
 		case MathNodeTypes::U32ToString: {
-			functions->TypeName = "mz.math.U32ToString";
+			functions->TypeName = MZ_NAME_STATIC("mz.math.U32ToString");
 			functions->ExecuteNode = ToString<u32>;
 			break;
 		}
 		case MathNodeTypes::SineWave: {
-			functions->TypeName = "mz.math.SineWave";
+			functions->TypeName = MZ_NAME_STATIC("mz.math.SineWave");
 			functions->ExecuteNode = [](void* ctx, const mzNodeExecuteArgs* args) {
 				constexpr uint32_t PIN_AMPLITUDE = 0;
 				constexpr uint32_t PIN_FREQUENCY = 1;
@@ -232,7 +233,7 @@ MZAPI_ATTR mzResult MZAPI_CALL mzExportNodeFunctions(size_t* outCount, mzNodeFun
 			break;
 		}
 		case MathNodeTypes::Clamp: {
-			functions->TypeName = "mz.math.Clamp";
+			functions->TypeName = MZ_NAME_STATIC("mz.math.Clamp");
 			functions->ExecuteNode = [](void* ctx, const mzNodeExecuteArgs* args) {
 				constexpr uint32_t PIN_IN = 0;
 				constexpr uint32_t PIN_MIN = 1;
@@ -251,7 +252,7 @@ MZAPI_ATTR mzResult MZAPI_CALL mzExportNodeFunctions(size_t* outCount, mzNodeFun
 			break;
 		}
 		case MathNodeTypes::Absolute: {
-			functions->TypeName = "mz.math.Absolute";
+			functions->TypeName = MZ_NAME_STATIC("mz.math.Absolute");
 			functions->ExecuteNode = [](void* ctx, const mzNodeExecuteArgs* args) {
 				constexpr uint32_t PIN_IN = 0;
 				constexpr uint32_t PIN_OUT = 1;

@@ -301,7 +301,7 @@ struct MoSys : public TrackNodeContext
 
 void RegisterMoSysNode(mzNodeFunctions &functions)
 {
-	functions.TypeName = "mz.track.MoSys";
+	functions.TypeName = MZ_NAME_STATIC("mz.track.MoSys");
     RegisterTrackCommon(functions);
 
     functions.OnNodeCreated = [](fb::Node const* node, void **ctx) {

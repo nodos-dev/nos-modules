@@ -32,7 +32,7 @@ public:
 
 void RegisterTime(mzNodeFunctions* fn)
 {
-    fn->TypeName = "mz.utilities.Time";
+	fn->TypeName = MZ_NAME_STATIC("mz.utilities.Time");
 	fn->OnNodeCreated = [](const mzFbNode* node, void** outCtxPtr) {
 		*outCtxPtr = new TimeNodeContext();
 	};

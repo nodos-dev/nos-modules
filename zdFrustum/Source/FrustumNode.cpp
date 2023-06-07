@@ -97,7 +97,7 @@ MZAPI_ATTR mzResult MZAPI_CALL mzExportNodeFunctions(size_t* outSize, mzNodeFunc
 		return MZ_RESULT_SUCCESS;
 	}
 	auto& funcs = outFunctions[0];
-	funcs.TypeName = "zd.frustum.Frustum";
+	funcs.TypeName = MZ_NAME_STATIC("zd.frustum.Frustum");
 	funcs.OnNodeCreated = [](auto *node,void **ctx) {
 		Frustum* f = new Frustum();
 		f->Load(*node);

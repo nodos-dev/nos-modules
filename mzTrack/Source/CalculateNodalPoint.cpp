@@ -10,7 +10,7 @@ MZ_REGISTER_NAME(Nodal_Point_Name, "Nodal Point");
 
 void RegisterCalculateNodalPoint(mzNodeFunctions& out)
 {
-	out.TypeName = "mz.track.CalculateNodalPoint";
+	out.TypeName = MZ_NAME_STATIC("mz.track.CalculateNodalPoint");
 	out.ExecuteNode = [](auto ctx, auto args) {
 		auto pins = GetPinValues(args);
 		auto pos = (glm::dvec3*)pins[Camera_Position_Name];

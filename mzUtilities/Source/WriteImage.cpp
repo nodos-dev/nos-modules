@@ -45,14 +45,14 @@ static mzResult GetPasses(size_t* count, mzPassInfo* passes)
     return MZ_RESULT_SUCCESS;
 }
 
-static mzResult GetFunctions(size_t* count, const char** names, mzPfnNodeFunctionExecute* fns)
+static mzResult GetFunctions(size_t* count, mzName* names, mzPfnNodeFunctionExecute* fns)
 {
 
     *count = 1;
     if(!names || !fns)
         return MZ_RESULT_SUCCESS;
 
-    *names = "WriteImage_Save";
+    *names = MZ_NAME_STATIC("WriteImage_Save");
     *fns = [](void* ctx, const mzNodeExecuteArgs* nodeArgs, const mzNodeExecuteArgs* functionArgs)
     {
         auto values = GetPinValues(nodeArgs);
@@ -89,7 +89,7 @@ static mzResult GetFunctions(size_t* count, const char** names, mzPfnNodeFunctio
 void RegisterWriteImage(mzNodeFunctions* fn)
 {
     *fn = {
-        .TypeName = "mz.utilities.WriteImage",
+		.TypeName = MZ_NAME_STATIC("mz.utilities.WriteImage"),
         .GetFunctions = GetFunctions,
         .GetShaders = GetShaders,
         .GetPasses = GetPasses,

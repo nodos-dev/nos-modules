@@ -67,7 +67,7 @@ MZAPI_ATTR mzResult MZAPI_CALL mzExportNodeFunctions(size_t* outSize, mzNodeFunc
 
 #define REGISTER_FILTER(name) \
     funcs[Utilities::##name] = mzNodeFunctions{ \
-        .TypeName = "mz.utilities." #name, \
+        .TypeName = MZ_NAME_STATIC("mz.utilities." #name), \
         .GetShaderSource = [](mzBuffer* spirv) { \
 				*spirv = { (void*)(name##_frag_spv), sizeof (name##_frag_spv) }; \
 				return MZ_RESULT_SUCCESS; \

@@ -440,7 +440,7 @@ namespace mz
 
 void RegisterXyncNode(mzNodeFunctions& functions)
 {
-	functions.TypeName = "mz.track.Xync";
+	functions.TypeName = MZ_NAME_STATIC("mz.track.Xync");
 	RegisterTrackCommon(functions);
 
     functions.OnNodeCreated = [](fb::Node const* node, void** ctx) {

@@ -42,7 +42,7 @@ struct AJA
 
         for (auto& [name, spirv] : shaders)
         {
-            *(names++) = mzEngine.GetName(name);
+            *(names++) = name;
             *(outSpirvBufs++) = { spirv.data(), spirv.size() };
         }
 
@@ -88,7 +88,7 @@ struct AJA
                 break;
             }
         }
-        if (AJADevice::GetAvailableDevice(node->class_name()->str() == "AJA.AJAIn"))
+		if (AJADevice::GetAvailableDevice(node->class_name()->str() == "AJA.AJAIn"))
         {
             return MZ_RESULT_SUCCESS;
         }
@@ -264,7 +264,7 @@ struct AJA
 		shaders[2] = {AJA_RGB2YCbCr_Shader_Name, RGB2YCbCrFrag};
 		shaders[3] = {AJA_YCbCr2RGB_Shader_Name, YCbCr2RGBFrag};
         
-        mzEngine.ReloadShaders(((AJAClient*)ctx)->Input ? "AJA.AJAIn" : "AJA.AJAOut");
+        mzEngine.ReloadShaders(((AJAClient*)ctx)->Input ? MZ_NAME_STATIC("AJA.AJAIn") : MZ_NAME_STATIC("AJA.AJAOut"));
                  
         for (auto c : AJAClient::Ctx.Clients)
             for (auto& p : c->Pins)
@@ -274,13 +274,13 @@ struct AJA
             }
     }
 
-    static mzResult GetFunctions(size_t * outCount, const char** pName, mzPfnNodeFunctionExecute * fns) 
+    static mzResult GetFunctions(size_t * outCount, mzName* pName, mzPfnNodeFunctionExecute * fns) 
     {
         *outCount = 1;
         if(!pName || !fns)
             return MZ_RESULT_SUCCESS;
         *fns = ReloadShaders;
-        *pName = "ReloadShaders";
+		*pName = MZ_NAME_STATIC("ReloadShaders");
         return MZ_RESULT_SUCCESS;
 	    // auto &actions = functions["AJA.AJAIn"];
 	    //
@@ -398,6 +398,13 @@ struct AJA
     }
 
     static void OnKeyEvent(void* ctx, const mzKeyEvent * keyEvent) { }
+
+    static void OnModuleUnload(void* ctx) 
+    { 
+        auto client = (AJAClient*)ctx;
+		client->OnNodeRemoved();
+		delete client;
+    }
 };
 
 extern "C"
@@ -432,11 +439,11 @@ MZAPI_ATTR mzResult MZAPI_CALL mzExportNodeFunctions(size_t* outSize, mzNodeFunc
         .GetPasses = AJA::GetPasses,
         .OnMenuRequested = AJA::OnMenuRequested,
         .OnMenuCommand = AJA::OnMenuCommand,
-        .OnKeyEvent = AJA::OnKeyEvent,
+        .OnKeyEvent = AJA::OnKeyEvent
     };
 
-    outFunctions[0].TypeName = "AJA.AJAIn";
-    outFunctions[1].TypeName = "AJA.AJAOut";
+    outFunctions[0].TypeName = MZ_NAME_STATIC("AJA.AJAIn");
+    outFunctions[1].TypeName = MZ_NAME_STATIC("AJA.AJAOut");
 
     shaders = {
 		{AJA_RGB2YCbCr_Compute_Shader_Name, {std::begin(RGB2YCbCr_comp_spv), std::end(RGB2YCbCr_comp_spv)}},

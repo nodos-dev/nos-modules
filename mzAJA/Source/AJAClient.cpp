@@ -57,7 +57,7 @@ const u8 *AddIfNotFound(Name name, std::string tyName, std::vector<u8> val,
         return pin->data()->Data();
     }
     toAdd.push_back(
-        mz::fb::CreatePinDirect(fbb, generator(), name, tyName.c_str(), showAs, canShowAs, 0, 0, &val));
+		mz::fb::CreatePinDirect(fbb, generator(), name.AsCStr(), tyName.c_str(), showAs, canShowAs, 0, 0, &val));
     return 0;
 }
 

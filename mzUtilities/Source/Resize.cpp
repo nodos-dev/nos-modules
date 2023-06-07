@@ -99,7 +99,7 @@ struct ResizeContext
 
 void RegisterResize(mzNodeFunctions* out)
 {
-	out->TypeName = "mz.utilities.Resize";
+	out->TypeName = MZ_NAME_STATIC("mz.utilities.Resize");
 	out->GetPasses = mz::utilities::ResizeContext::GetPasses;
 	out->GetShaders = mz::utilities::ResizeContext::GetShaders;
 	out->ExecuteNode = [](void* ctx, const mzNodeExecuteArgs* args)-> mzResult {

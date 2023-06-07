@@ -113,7 +113,7 @@ struct MergeContext
 			auto c = static_cast<MergeContext*>(ctx);
 			auto count = std::to_string(c->TextureCount++);
 			mzBuffer buffer;
-			mzEngine.GetDefaultValueOfType("mz.fb.Texture", &buffer);
+			mzEngine.GetDefaultValueOfType(MZ_NAME_STATIC("mz.fb.Texture"), &buffer);
 
 			std::string texPinName = "Texture_" + count;
 			mzUUID texId = *(mzUUID*)mz::generator().as_bytes().data();
@@ -188,7 +188,7 @@ struct MergeContext
 
 void RegisterMerge(mzNodeFunctions* out)
 {
-	out->TypeName = "mz.utilities.Merge";
+	out->TypeName = MZ_NAME_STATIC("mz.utilities.Merge");
 	out->OnMenuRequested = MergeContext::OnMenuRequested;
 	out->OnNodeCreated = MergeContext::OnNodeCreated;
 	out->OnMenuCommand = MergeContext::OnMenuCommand;

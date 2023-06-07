@@ -13,7 +13,7 @@ MZ_REGISTER_NAME2(Track);
 
 void RegisterController(mzNodeFunctions& functions)
 {
-    functions.TypeName = "mz.track.UserTrack";
+	functions.TypeName = MZ_NAME_STATIC("mz.track.UserTrack");
     struct UserTrack {
          //union
          //{

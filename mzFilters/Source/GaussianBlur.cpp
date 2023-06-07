@@ -124,7 +124,7 @@ struct GaussBlurContext
 
 void RegisterGaussianBlur(mzNodeFunctions* out)
 {
-	out->TypeName = "mz.filters.GaussianBlur";
+	out->TypeName = MZ_NAME_STATIC("mz.filters.GaussianBlur");
 	out->OnNodeCreated = [](const mzFbNode* node, void** outCtxPtr) {
 		*outCtxPtr = new mz::utilities::GaussBlurContext(*node);
 	};

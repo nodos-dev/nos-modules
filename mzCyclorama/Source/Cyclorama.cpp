@@ -556,7 +556,7 @@ struct Cyclorama : PinMapping
     Cyclorama() 
     {
         mzBuffer val;
-        switch (mzEngine.GetDefaultValueOfType("mz.fb.Track", &val))
+		switch (mzEngine.GetDefaultValueOfType(MZ_NAME_STATIC("mz.fb.Track"), &val))
         {
         case MZ_RESULT_SUCCESS:
             flatbuffers::GetRoot<fb::Track>(val.Data)->UnPackTo(&Track);
@@ -662,7 +662,8 @@ struct Cyclorama : PinMapping
         auto PinName = c->GetPinName(id);
 
 #define CHECK_DIFF_AND_LOAD_VERTS(name) \
-        if(#name == PinName) { \
+        if (MZ_NAME_STATIC(#name) == PinName)                                                                         \
+	{ \
             auto& val = *(std::remove_reference_t<decltype(c->name)>*)(value->Data);\
             if(NotSame(c->name, val)) { \
                 c->name = val; \
@@ -672,13 +673,15 @@ struct Cyclorama : PinMapping
         }
 
 #define CHECK_AND_SET(name) \
-        if(#name == PinName) { \
+        if (MZ_NAME_STATIC(#name) == PinName)                                                                         \
+	{ \
             c->name = *(std::remove_reference_t<decltype(c->name)>*)(value->Data);\
             return;\
         }
 
 #define CHECK_AND_SET_TABLE(name, type) \
-        if(#name == PinName) { \
+        if (MZ_NAME_STATIC(#name) == PinName)                                                                         \
+	{ \
             flatbuffers::GetRoot<type>(value->Data)->UnPackTo(&c->name);\
             return;\
         }
@@ -997,19 +1000,14 @@ struct Cyclorama : PinMapping
         spirvs[3].second = ReadSpirv(std::string(mzEngine.WorkFolder()) + "/cyclo_mask.vert");
         spirvs[4].second = ReadSpirv(std::string(mzEngine.WorkFolder()) + "/cp.frag");
 
-        mzEngine.ReloadShaders("Cyclorama.Cyclorama");
+        mzEngine.ReloadShaders(MZ_NAME_STATIC("Cyclorama.Cyclorama"));
 
     }
 
-    inline static std::pair<const char*, mzPfnNodeFunctionExecute> Functions[] = 
-    {
-        {"AddProjection", AddProjection},
-        {"ClearProjection", ClearProjection},
-        {"ReloadShaders", ReloadShaders}
-    };
+    inline static std::pair<mz::Name, mzPfnNodeFunctionExecute> Functions[3];
 
     // Function Nodes
-    static mzResult GetFunctions(size_t* outCount, const char** pName, mzPfnNodeFunctionExecute* outFunction)
+    static mzResult GetFunctions(size_t* outCount, mzName* pName, mzPfnNodeFunctionExecute* outFunction)
     {
         *outCount = sizeof(Functions)/sizeof(Functions[0]);
 
@@ -1215,7 +1213,7 @@ extern "C"
 
         using namespace mz;
         *outFunctions = {
-            .TypeName = "Cyclorama.Cyclorama",
+			.TypeName = MZ_NAME_STATIC("Cyclorama.Cyclorama"),
             .CanCreateNode = Cyclorama::CanCreateNode,
             .OnNodeCreated = Cyclorama::OnNodeCreated,
             .OnNodeUpdated = Cyclorama::OnNodeUpdated,
@@ -1239,6 +1237,10 @@ extern "C"
             .OnMenuCommand = Cyclorama::OnMenuCommand,
             .OnKeyEvent = Cyclorama::OnKeyEvent,
         };
+
+        Cyclorama::Functions[0] = {MZ_NAME_STATIC("AddProjection"), Cyclorama::AddProjection};
+		Cyclorama::Functions[1] = {MZ_NAME_STATIC("ClearProjection"), Cyclorama::ClearProjection},
+		Cyclorama::Functions[2] = {MZ_NAME_STATIC("ReloadShaders"), Cyclorama::ReloadShaders};
 
         return MZ_RESULT_SUCCESS;
     }

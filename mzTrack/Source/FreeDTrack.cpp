@@ -256,7 +256,7 @@ struct FreeDNodeContext : public TrackNodeContext
 
 void RegisterFreeDNode(mzNodeFunctions& functions)
 {
-	functions.TypeName = "mz.track.FreeD";
+	functions.TypeName = MZ_NAME_STATIC("mz.track.FreeD");
 	RegisterTrackCommon(functions);
 
 	functions.OnNodeCreated = [](fb::Node const* node, void** ctx) {
