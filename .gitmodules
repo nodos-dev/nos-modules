@@ -7,3 +7,6 @@
 [submodule "tools"]
 	path = tools
 	url = https://github.com/mediaz/tools
+[submodule "Shaders"]
+	path = Shaders
+	url = https://github.com/mediaz/shaders
