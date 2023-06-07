@@ -229,26 +229,40 @@ struct AJA
         aja->OnPathCommand(params->Id, (app::PathCommand)params->CommandType, mz::Buffer((u8*)params->Args.Data, params->Args.Size));
     }
 
-
     static void ReloadShaders(void* ctx, const mzNodeExecuteArgs* nodeArgs, const mzNodeExecuteArgs* functionArgs)
     {
-        system(("glslc -O -g " + std::string(mzEngine.WorkFolder()) +  "/../Plugins/mzAJA/Source/YCbCr2RGB.frag -c -o " + std::string(mzEngine.WorkFolder()) + "/../YCbCr2RGB_.frag").c_str());
-        system(("glslc -O -g " + std::string(mzEngine.WorkFolder()) +  "/../Plugins/mzAJA/Source/RGB2YCbCr.frag -c -o " + std::string(mzEngine.WorkFolder()) + "/../RGB2YCbCr_.frag").c_str());
-        system(("glslc -O -g " + std::string(mzEngine.WorkFolder()) +  "/../Plugins/mzAJA/Source/RGB2YCbCr.comp -c -o " + std::string(mzEngine.WorkFolder()) + "/../RGB2YCbCr_.comp").c_str());
-        system(("glslc -O -g " + std::string(mzEngine.WorkFolder()) +  "/../Plugins/mzAJA/Source/YCbCr2RGB.comp -c -o " + std::string(mzEngine.WorkFolder()) + "/../YCbCr2RGB_.comp").c_str());
-        system(("spirv-opt -O " + std::string(mzEngine.WorkFolder()) +  "/../YCbCr2RGB_.frag -o " + std::string(mzEngine.WorkFolder()) +  "/../YCbCr2RGB.frag").c_str());
-        system(("spirv-opt -O " + std::string(mzEngine.WorkFolder()) +  "/../RGB2YCbCr_.frag -o " + std::string(mzEngine.WorkFolder()) +  "/../RGB2YCbCr.frag").c_str());
-        system(("spirv-opt -O " + std::string(mzEngine.WorkFolder()) +  "/../RGB2YCbCr_.comp -o " + std::string(mzEngine.WorkFolder()) +  "/../RGB2YCbCr.comp").c_str());
-        system(("spirv-opt -O " + std::string(mzEngine.WorkFolder()) +  "/../YCbCr2RGB_.comp -o " + std::string(mzEngine.WorkFolder()) +  "/../YCbCr2RGB.comp").c_str());
-            
+		std::string workFolder = mzEngine.WorkFolder();
+		std::string sources = workFolder + "/../Plugins/mzAJA/Source";
+		std::string tempOutPrefix = workFolder + "/../Plugins/mzAJA/Source";
+        auto genSpirv = [](std::string const& workFolder,
+							std::string const& sources,
+							std::string const& intermediateFolder,
+							std::string const& shaderName) {
+			system(
+				("glslc -O -g " + sources + "/" + shaderName + " -c -o " + intermediateFolder + "/" + shaderName + ".spv.temp")
+					.c_str());
+			system(("spirv-opt -O " + intermediateFolder + "/" + shaderName + ".spv.temp" + " -o " + intermediateFolder +
+					"/" + shaderName + ".spv.opt.temp")
+					   .c_str());
+			std::remove((intermediateFolder + "/" + shaderName + ".spv.temp").c_str());
+			auto spirv = ReadSpirv(intermediateFolder + "/" + shaderName + ".spv.opt.temp");
+			std::remove((intermediateFolder + "/" + shaderName + ".spv.opt.temp").c_str());
+			return spirv;
+        };
+
+        auto YCbCr2RGBFrag = genSpirv(workFolder, sources, tempOutPrefix, "YCbCr2RGB.frag");
+		auto RGB2YCbCrFrag = genSpirv(workFolder, sources, tempOutPrefix, "RGB2YCbCr.frag");
+		auto RGB2YCbCrComp = genSpirv(workFolder, sources, tempOutPrefix, "RGB2YCbCr.comp");
+		auto YCbCr2RGBComp = genSpirv(workFolder, sources, tempOutPrefix, "YCbCr2RGB.comp");
+
         for (auto c : AJAClient::Ctx.Clients)
             for (auto& p : c->Pins)
                 p->Stop();
    
-        shaders[0] = { AJA_RGB2YCbCr_Compute_Shader_Name, ReadSpirv(std::string(mzEngine.WorkFolder()) +  "/../RGB2YCbCr.comp") };
-        shaders[1] = { AJA_YCbCr2RGB_Compute_Shader_Name, ReadSpirv(std::string(mzEngine.WorkFolder()) +  "/../YCbCr2RGB.comp") };
-        shaders[2] = { AJA_RGB2YCbCr_Shader_Name, ReadSpirv(std::string(mzEngine.WorkFolder()) +  "/../RGB2YCbCr.frag") };
-        shaders[3] = { AJA_YCbCr2RGB_Shader_Name, ReadSpirv(std::string(mzEngine.WorkFolder()) +  "/../YCbCr2RGB.frag") };
+        shaders[0] = {AJA_RGB2YCbCr_Compute_Shader_Name, YCbCr2RGBComp};
+		shaders[1] = {AJA_YCbCr2RGB_Compute_Shader_Name, RGB2YCbCrComp};
+		shaders[2] = {AJA_RGB2YCbCr_Shader_Name, RGB2YCbCrFrag};
+		shaders[3] = {AJA_YCbCr2RGB_Shader_Name, YCbCr2RGBFrag};
         
         mzEngine.ReloadShaders(((AJAClient*)ctx)->Input ? "AJA.AJAIn" : "AJA.AJAOut");
                  
