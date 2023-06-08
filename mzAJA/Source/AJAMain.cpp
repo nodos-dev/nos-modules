@@ -407,13 +407,6 @@ struct AJA
     }
 
     static void OnKeyEvent(void* ctx, const mzKeyEvent * keyEvent) { }
-
-    static void OnModuleUnload(void* ctx) 
-    { 
-        auto client = (AJAClient*)ctx;
-		client->OnNodeRemoved();
-		delete client;
-    }
 };
 
 extern "C"
