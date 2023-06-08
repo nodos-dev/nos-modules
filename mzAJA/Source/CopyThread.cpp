@@ -7,9 +7,9 @@
 namespace mz
 {
 
-UUID const& CTGetID(rc<CopyThread> const& c)
+mz::Name const& CTGetName(rc<CopyThread> const& c)
 {
-    return c->id;
+    return c->Name();
 }
 
 static std::set<u32> const& FindDivisors(const u32 N)
@@ -77,13 +77,9 @@ u32 CopyThread::GetRingSize()
     return cpuRing->Size;
 }
 
-std::string CopyThread::Name() const
+mz::Name const& CopyThread::Name() const
 {
-    if (IsQuad())
-    {
-        return GetQuadName(Channel);
-    }
-    return "SingleLink " + std::to_string(Channel + 1);
+    return name;
 }
 
 bool CopyThread::IsInput() const
@@ -130,7 +126,7 @@ void CopyThread::StartThread()
     flatbuffers::FlatBufferBuilder fbb;
     std::string threadName("AJA ");
     threadName += IsInput() ? "In" : "Out";
-    threadName += ": " + Name();
+    threadName += ": " + Name().AsString();
 
     mzEngine.HandleEvent(
         CreateAppEvent(fbb, mz::app::CreateSetThreadNameDirect(fbb, (u64)th.native_handle(), threadName.c_str())));
@@ -455,11 +451,12 @@ void CopyThread::AJAOutputProc()
 {
 	flatbuffers::FlatBufferBuilder fbb;
 	auto frameDuration = GetFrameDurationFromFrameRate(GetNTV2FrameRateFromVideoFormat(Format));
+    auto id = client->GetPinId(name);
+
 	auto hungerSignal = CreateAppEvent(fbb, mz::app::CreateScheduleRequest(fbb, mz::app::ScheduleRequestKind::PIN, &id, false, frameDuration));
     mzEngine.HandleEvent(hungerSignal);
-
+    
     Orphan(false);
-    auto id = client->GetPinId(mz::Name(Name()));
     {
         std::stringstream ss;
         ss << "AJAOut Thread: " << std::this_thread::get_id();
@@ -527,7 +524,7 @@ void CopyThread::AJAOutputProc()
         }
         else
         {
-            mzEngine.LogW((Name() + " dropped 1 frame").c_str(), "");
+            mzEngine.LogW((Name().AsString() + " dropped 1 frame").c_str(), "");
         }
     }
     gpuRing->Stop();
@@ -568,7 +565,7 @@ void CopyThread::InputConversionThread::Consume(CopyThread::Parameters const& pa
 	inputs.emplace_back(ShaderBinding(MZN_Interlaced, iflags));
 	inputs.emplace_back(ShaderBinding(MZN_ssbo, Cpy->SSBO));
 
-    auto MsgKey = "Input " + Cpy->Name() + " DMA";
+    auto MsgKey = "Input " + Cpy->Name().AsString() + " DMA";
 
     mzCmd cmd;
     mzEngine.Begin(&cmd);
@@ -703,11 +700,11 @@ void CopyThread::OutputConversionThread::Consume(const Parameters& item)
     Cpy->gpuRing->EndPop(incoming);
 }
 
-CopyThread::CopyThread(mz::fb::UUID id, struct AJAClient *client, u32 ringSize, u32 spareCount, mz::fb::ShowAs kind, 
+CopyThread::CopyThread(struct AJAClient *client, u32 ringSize, u32 spareCount, mz::fb::ShowAs kind, 
                        NTV2Channel channel, NTV2VideoFormat initalFmt,
                        AJADevice::Mode mode, enum class Colorspace colorspace, enum class GammaCurve curve,
                        bool narrowRange, const fb::Texture* tex)
-    : id(id), client(client), kind(kind), Channel(channel), SpareCount(spareCount), mode(mode),
+    : name(GetChannelStr(channel, mode)), client(client), kind(kind), Channel(channel), SpareCount(spareCount), mode(mode),
       Colorspace(colorspace), GammaCurve(curve), NarrowRange(narrowRange), Format(initalFmt)
 {
 

@@ -387,7 +387,7 @@ void AJAClient::OnNodeUpdate(PinMapping &&newMapping, std::unordered_map<Name, c
         auto tmp = Pins;
         for (auto &th : tmp)
         {
-            if (!Mapping.PinName2Id.left(th->id))
+            if (!Mapping.PinName2Id.right(th->name))
             {
                 DeleteTexturePin(th);
             }
@@ -397,9 +397,10 @@ void AJAClient::OnNodeUpdate(PinMapping &&newMapping, std::unordered_map<Name, c
     for (auto [channel, pr] : prs)
     {
         auto pin = pr.pin;
+        mz::Name name(pin->name()->c_str());
         auto tex = flatbuffers::GetRoot<mz::fb::Texture>(pin->data()->Data());
         auto id = *pin->id();
-        auto it = Pins.find(id);
+        auto it = Pins.find(name);
 
         if (it != Pins.end())
         {
@@ -436,8 +437,8 @@ void AJAClient::OnNodeUpdate(PinMapping &&newMapping, std::unordered_map<Name, c
             }
             else
             {
-                GeneratePinIDSet(Name(pin->name()->str()), mode, pinsToDelete);
-                auto it = Pins.find(id);
+                GeneratePinIDSet(name, mode, pinsToDelete);
+                auto it = Pins.find(name);
                 DeleteTexturePin(*it);
                 continue;
             }
@@ -706,12 +707,19 @@ struct AjaRestartCommandParams {
     u32 SpareCount;
 };
 
-void AJAClient::OnPathCommand(mz::fb::UUID pinID, app::PathCommand command, Buffer params)
+void AJAClient::OnPathCommand(mzUUID pinId, app::PathCommand command, Buffer params)
 {
-	auto result = Pins.find(mz::UUID(pinID));
+    auto pinNameOpt = Mapping.PinName2Id.left(pinId);
+    if (!pinNameOpt)
+    {
+        mzEngine.LogD("path command on unknown pin: %s", UUID2STR(pinId).c_str());
+        return;
+    }
+    auto pinName = *pinNameOpt;
+	auto result = Pins.find(pinName);
 	if (result == Pins.end())
 	{
-        mzEngine.LogD("path command on unknown pin: %s", UUID2STR(pinID).c_str());
+        mzEngine.LogD("path command on unknown pin: %s", pinName.AsCStr());
 		return;
 	}
     auto ringThread = *result;
@@ -744,13 +752,12 @@ void AJAClient::OnPathCommand(mz::fb::UUID pinID, app::PathCommand command, Buff
     }
 }
 
-void AJAClient::OnPinValueChanged(mz::fb::UUID id, void *value)
+void AJAClient::OnPinValueChanged(mz::Name pinName, void *value)
 {
     if (!value)
     {
         return;
     }
-    auto pinName = Mapping.GetPinName(id);
 
     std::string pinNameStr = pinName.AsString();
     
@@ -844,7 +851,7 @@ void AJAClient::OnExecute()
 bool AJAClient::BeginCopyFrom(mzCopyInfo &cpy)
 {
     GPURing::Resource *slot = 0;
-    auto it = Pins.find(cpy.ID); 
+    auto it = Pins.find(cpy.Name); 
     if (it == Pins.end()) 
         return true;
     
@@ -870,7 +877,7 @@ bool AJAClient::BeginCopyFrom(mzCopyInfo &cpy)
 bool AJAClient::BeginCopyTo(mzCopyInfo &cpy)
 {
     GPURing::Resource *slot = 0;
-    auto it = Pins.find(cpy.ID); 
+    auto it = Pins.find(cpy.Name); 
     if (it == Pins.end()) 
         return true;
     
@@ -893,7 +900,7 @@ void AJAClient::EndCopyFrom(mzCopyInfo &cpy)
 {
     if(!cpy.Data) 
         return;
-    auto it = Pins.find(cpy.ID); 
+    auto it = Pins.find(cpy.Name); 
     if (it == Pins.end()) 
         return;
 
@@ -906,7 +913,7 @@ void AJAClient::EndCopyTo(mzCopyInfo &cpy)
 {
     if(!cpy.Data) 
         return;
-    auto it = Pins.find(cpy.ID); 
+    auto it = Pins.find(cpy.Name); 
     if (it == Pins.end()) 
         return;
 
@@ -921,7 +928,7 @@ void AJAClient::EndCopyTo(mzCopyInfo &cpy)
 void AJAClient::AddTexturePin(const mz::fb::Pin* pin, u32 ringSize, NTV2Channel channel,
     const fb::Texture* tex, NTV2VideoFormat fmt, AJADevice::Mode mode, Colorspace cs, GammaCurve gc, bool range, unsigned spareCount)
 {
-    auto th = MakeShared<CopyThread>(*pin->id(), this, ringSize, spareCount, 
+    auto th = MakeShared<CopyThread>(this, ringSize, spareCount, 
                                      pin->show_as(), channel, fmt, mode, cs, gc, range, tex);
     Pins.insert(std::move(th));
 }

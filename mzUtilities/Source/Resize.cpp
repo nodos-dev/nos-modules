@@ -73,7 +73,7 @@ struct ResizeContext
 			auto texFb = ConvertTextureInfo(tex);
 			texFb.unscaled = true;
 			auto texFbBuf = mz::Buffer::From(texFb);
-			mzEngine.SetPinValue(((mzUUID)(args->PinIds[1])), {.Data = texFbBuf.data(), .Size = texFbBuf.size()});
+			mzEngine.SetPinValue(args->PinIds[1], {.Data = texFbBuf.data(), .Size = texFbBuf.size()});
 		}
 
 		std::vector bindings = {ShaderBinding(MZN_Input, inputTex), ShaderBinding(MZN_Method, method)

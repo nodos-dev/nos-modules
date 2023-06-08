@@ -669,13 +669,12 @@ struct Cyclorama : PinMapping
     }
     static void OnNodeUpdated(void* ctx, const mzFbNode* updatedNode) { }
     static void OnNodeDeleted(void* ctx, mzUUID nodeId) { delete (Cyclorama*)ctx; }
-    static void OnPinValueChanged(void* ctx, mzUUID id, mzBuffer* value) 
+    static void OnPinValueChanged(void* ctx, mzName pinName, mzBuffer* value) 
     { 
         auto c = static_cast<Cyclorama*>(ctx);
-        auto PinName = c->GetPinName(id);
-
+        mz::Name pinMzName = pinName;
 #define CHECK_DIFF_AND_LOAD_VERTS(name) \
-        if (MZ_NAME_STATIC(#name) == PinName)                                                                         \
+        if (MZ_NAME_STATIC(#name) == pinMzName)                                                                         \
 	{ \
             auto& val = *(std::remove_reference_t<decltype(c->name)>*)(value->Data);\
             if(NotSame(c->name, val)) { \
@@ -686,14 +685,14 @@ struct Cyclorama : PinMapping
         }
 
 #define CHECK_AND_SET(name) \
-        if (MZ_NAME_STATIC(#name) == PinName)                                                                         \
+        if (MZ_NAME_STATIC(#name) == pinMzName)                                                                         \
 	{ \
             c->name = *(std::remove_reference_t<decltype(c->name)>*)(value->Data);\
             return;\
         }
 
 #define CHECK_AND_SET_TABLE(name, type) \
-        if (MZ_NAME_STATIC(#name) == PinName)                                                                         \
+        if (MZ_NAME_STATIC(#name) == pinMzName)                                                                         \
 	{ \
             flatbuffers::GetRoot<type>(value->Data)->UnPackTo(&c->name);\
             return;\
@@ -715,13 +714,13 @@ struct Cyclorama : PinMapping
         CHECK_AND_SET(Position)
         CHECK_AND_SET(Rotation)
 
-        if (MZN_CaptureFolder == PinName)
+        if (MZN_CaptureFolder == pinMzName)
         {
             c->CaptureFolder = (char*)value->Data;
             return;
         }
 
-        if (MZN_CleanPlates == PinName)
+        if (MZN_CleanPlates == pinMzName)
         {
             // c->LoadCleanPlates(*value->As<mz::fb::CaptureDataArray>());
             return;
@@ -732,7 +731,7 @@ struct Cyclorama : PinMapping
             return;
         }
 
-        if (MZN_Video == c->GetPinName(id))
+        if (MZN_Video == pinMzName)
         {
             auto video = DeserializeTextureInfo(value->Data);
             
@@ -812,13 +811,14 @@ struct Cyclorama : PinMapping
                 c->UpdateStatus();
                 c->UpdateCleanPlatesValue();
 				flatbuffers::FlatBufferBuilder fbb;
+                auto id = c->GetPinId(pinMzName);
                 mzEngine.HandleEvent(CreateAppEvent(fbb, mz::app::CreateScheduleRequest(fbb, mz::app::ScheduleRequestKind::PIN, &id, true)));
             }
         }
     }
-    static void OnPinConnected(void* ctx, mzUUID pinId) { }
-    static void OnPinDisconnected(void* ctx, mzUUID pinId) { }
-    static void OnPinShowAsChanged(void* ctx, mzUUID pinId, mzFbShowAs showAs) { }
+    static void OnPinConnected(void* ctx, mzName pinName) { }
+    static void OnPinDisconnected(void* ctx, mzName pinName) { }
+    static void OnPinShowAsChanged(void* ctx, mzName pinName, mzFbShowAs showAs) { }
     static void OnNodeSelected(mzUUID graphId, mzUUID selectedNodeId) { }
     static void OnPathCommand(void* ctx, const mzPathCommand* command) { }
 

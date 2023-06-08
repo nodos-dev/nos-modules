@@ -70,15 +70,14 @@ struct Frustum: PinMapping
         }
     }
 
-    void ValueChanged(mz::fb::UUID id, void* val)
+    void ValueChanged(mz::Name pinName, void* val)
     {
-        auto name = GetPinName(id);
-        if(name == MZN_JSON)
+        if(pinName == MZN_JSON)
         {
             Deser((const char*)val);
             return;
         }
-		if (name == MZN_Focal_Length_Offset)
+		if (pinName == MZN_Focal_Length_Offset)
         {
             calibrator.FocalLengthOffset = *(f64*)val;
             return;
@@ -109,8 +108,8 @@ MZAPI_ATTR mzResult MZAPI_CALL mzExportNodeFunctions(size_t* outSize, mzNodeFunc
 	funcs.OnNodeDeleted = [](void *ctx, mzUUID nodeId) {
 		delete (Frustum*)ctx;
 	};
-	funcs.OnPinValueChanged = [](void *ctx, mzUUID pinId, mzBuffer *value) {
-		((Frustum*)ctx)->ValueChanged(pinId, value->Data);
+	funcs.OnPinValueChanged = [](void *ctx, mzName pinName, mzBuffer *value) {
+		((Frustum*)ctx)->ValueChanged(pinName, value->Data);
 	};
 	funcs.ExecuteNode = [](void* ctx, mzNodeExecuteArgs const* args) {
 		auto values = GetPinValues(args);

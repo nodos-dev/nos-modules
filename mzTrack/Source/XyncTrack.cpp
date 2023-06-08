@@ -467,10 +467,10 @@ void RegisterXyncNode(mzNodeFunctions& functions)
 		//context->Start();
     };
 
-	functions.OnPinValueChanged = [](auto ctx, auto id, mzBuffer* value) 
+	functions.OnPinValueChanged = [](auto ctx, mzName pinName, mzBuffer* value) 
 	{ 
 		XyncNodeContext* fnctx = (XyncNodeContext*)ctx;
-		fnctx->OnPinValueChanged(id, value->Data);
+		fnctx->OnPinValueChanged(pinName, value->Data);
 	};
 
 	functions.OnNodeDeleted = [](auto ctx, auto id) {

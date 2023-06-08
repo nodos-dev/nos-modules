@@ -218,15 +218,15 @@ struct AJA
         c->OnNodeRemoved();
         delete c;
     }
-    static void OnPinValueChanged(void* ctx, const mzUUID id, mzBuffer * value)
+    static void OnPinValueChanged(void* ctx, const mzName pinName, mzBuffer * value)
     { 
-        return ((AJAClient *)ctx)->OnPinValueChanged(id, value->Data);
+        return ((AJAClient *)ctx)->OnPinValueChanged(pinName, value->Data);
     }
 
-    static void OnPinConnected(void* ctx, const mzUUID pinId) { }
-    static void OnPinDisconnected(void* ctx, const mzUUID pinId) { }
+    static void OnPinConnected(void* ctx, const mzName pinName) { }
+    static void OnPinDisconnected(void* ctx, const mzName pinName) { }
 
-    static void OnPinShowAsChanged(void* ctx, const mzUUID id, mzFbShowAs showAs) 
+    static void OnPinShowAsChanged(void* ctx, const mzName pinName, mzFbShowAs showAs) 
     { 
     }
 
@@ -235,7 +235,7 @@ struct AJA
     static void OnPathCommand(void* ctx, const mzPathCommand* params)
     { 
         auto aja = ((AJAClient *)ctx);
-        aja->OnPathCommand(params->Id, (app::PathCommand)params->CommandType, mz::Buffer((u8*)params->Args.Data, params->Args.Size));
+        aja->OnPathCommand(params->PinId, (app::PathCommand)params->CommandType, mz::Buffer((u8*)params->Args.Data, params->Args.Size));
     }
 
     static void ReloadShaders(void* ctx, const mzNodeExecuteArgs* nodeArgs, const mzNodeExecuteArgs* functionArgs)

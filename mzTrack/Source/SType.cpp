@@ -210,10 +210,10 @@ void RegisterStypeNode(mzNodeFunctions &functions)
 		}
     };
 
-	functions.OnPinValueChanged = [](auto ctx, auto id, mzBuffer* value) 
+	functions.OnPinValueChanged = [](auto ctx, mzName pinName, mzBuffer* value) 
 	{ 
 		Stype* fnctx = (Stype*)ctx;
-		fnctx->OnPinValueChanged(id, value->Data);
+		fnctx->OnPinValueChanged(pinName, value->Data);
 	};
 	functions.OnNodeDeleted = [](auto ctx, auto id) {
 		delete (Stype*)ctx;

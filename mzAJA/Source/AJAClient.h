@@ -2,7 +2,6 @@
 
 #include "AJAMain.h"
 #include "AJADevice.h"
-#include "AJADevice.h"
 
 namespace mz
 {
@@ -24,7 +23,7 @@ template<> struct std::hash<mz::UUID>{ size_t operator()(mz::UUID const& val) co
 namespace mz
 {
 
-UUID const& CTGetID(rc<struct CopyThread> const& c);
+mz::Name const& CTGetName(rc<struct CopyThread> const& c);
 std::vector<u8> StringValue(std::string const& str);
 std::string GetQuadName(NTV2Channel channel);
 std::string GetChannelStr(NTV2Channel channel, AJADevice::Mode mode);
@@ -141,7 +140,7 @@ struct MZAPI_ATTR AJAClient
     std::atomic_uint DispatchSizeX = 80, DispatchSizeY = 135;
     std::atomic_uint Debug = 0;
 
-    LightSetCB<rc<CopyThread>, CTGetID> Pins;
+    LightSetCB<rc<CopyThread>, CTGetName> Pins;
     AJADevice *Device = 0;
 
     NTV2ReferenceSource Ref;
@@ -180,8 +179,8 @@ struct MZAPI_ATTR AJAClient
 
     void OnNodeRemoved();
 
-    void OnPathCommand(mz::fb::UUID pinID, app::PathCommand command, Buffer params);
-    void OnPinValueChanged(mz::fb::UUID id, void *value);
+    void OnPathCommand(mzUUID pinName, app::PathCommand command, Buffer params);
+    void OnPinValueChanged(mz::Name pinName, void* value);
     void OnExecute();
 
     bool BeginCopyFrom(mzCopyInfo &cpy);

@@ -16,7 +16,7 @@ public:
 		auto pin = GetPinValues(args);
 		auto sec = GetPinValue<float>(pin, MZN_Seconds);
 		float result = GetDeltaTime();
-		mzEngine.SetPinValue((mzUUID)args->PinIds[0], {.Data = &result, .Size = sizeof(float)});
+		mzEngine.SetPinValue(args->PinIds[0], {.Data = &result, .Size = sizeof(float)});
 		return MZ_RESULT_SUCCESS;
 	}
 

@@ -29,7 +29,7 @@ struct TrackSync
 
 
     virtual u32 GetRingSize() = 0;
-    virtual std::string Name() const = 0;
+    virtual mz::Name const& Name() const = 0;
 
 	void UpdateLastFrameID() // called from scheduler thread
 	{
@@ -41,7 +41,7 @@ struct TrackSync
 
 		//if (true)
 		{
-			mzEngine.LogI("Resetting AJA %s", Name().c_str());
+			mzEngine.LogI("Resetting AJA %s", Name().AsCStr());
 		}
 	}
 	void UpdateDropCount() // called from scheduler thread
@@ -58,7 +58,7 @@ struct TrackSync
 				totalDrops += dropCount;
 			}
 
-			mzEngine.LogI("Drop on %s: %ul", Name().c_str(), totalDrops);
+			mzEngine.LogI("Drop on %s: %ul", Name().AsCStr(), totalDrops);
 		}
 		else
 		{
@@ -87,7 +87,7 @@ struct TrackSync
 
 struct CopyThread : TrackSync
 {
-    UUID id;
+	mz::Name name;
     std::atomic_bool run = true;
     mz::fb::ShowAs kind;
     rc<GPURing> gpuRing;
@@ -138,13 +138,13 @@ struct CopyThread : TrackSync
 
 	ru<ConversionThread> Worker;
 
-    CopyThread(mz::fb::UUID id, struct AJAClient *client, u32 ringSize, u32 spareCount, mz::fb::ShowAs kind, NTV2Channel channel, 
+    CopyThread(struct AJAClient *client, u32 ringSize, u32 spareCount, mz::fb::ShowAs kind, NTV2Channel channel, 
                 NTV2VideoFormat initalFmt, 
                 AJADevice::Mode mode,
                 enum class Colorspace colorspace, enum class GammaCurve curve, bool narrowRange, const fb::Texture* tex);
 
     virtual u32 GetRingSize() override;
-    virtual std::string Name() const override;
+    virtual mz::Name const& Name() const override;
 	mzVec2u GetSuitableDispatchSize() const;
 	mzVec2u Extent() const;
     bool IsInput() const;

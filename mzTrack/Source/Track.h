@@ -81,7 +81,7 @@ namespace mz
 	
         virtual bool Parse(std::vector<u8> const& data, fb::TTrack& out) = 0;
 
-		void OnPathCommand(mz::fb::UUID pinID, app::PathCommand command, Buffer* params)
+		void OnPathCommand(mzUUID pinId, app::PathCommand command, Buffer* params)
 		{
 			switch (command)
 			{
@@ -123,10 +123,8 @@ namespace mz
 			return true;
         }
 
-		virtual void OnPinValueChanged(mz::fb::UUID const& id, void* value) 
+		virtual void OnPinValueChanged(mz::Name pinName, void* value) 
         {
-			const auto& pinName = GetPinName(id);
-
             #define SET_VALUE(ty, name, var) if(pinName ==MZ_NAME_STATIC(#name)) args.##var = *(ty*)value;
             
             SET_VALUE(bool, NegateX, NegatePos.x);
@@ -373,10 +371,10 @@ namespace mz
 		{
 			TrackNodeContext* trkCtx = (TrackNodeContext*)ctx;
 			mz::Buffer val((u8*)command->Args.Data, command->Args.Size);
-			trkCtx->OnPathCommand(command->Id, (app::PathCommand)command->CommandType, &val);
+			trkCtx->OnPathCommand(command->PinId, (app::PathCommand)command->CommandType, &val);
 		};
 
-		functions.OnPinConnected = functions.OnPinDisconnected = [](void* ctx, fb::UUID pinId) {
+		functions.OnPinConnected = functions.OnPinDisconnected = [](void* ctx, mzName pinName) {
 			TrackNodeContext* trkCtx = (TrackNodeContext*)ctx;
 			trkCtx->Restart();
 		};
