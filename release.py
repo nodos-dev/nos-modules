@@ -195,21 +195,16 @@ def upload_releases(repo_url, org_name, repo_name, cloned_release_repo, dry_run)
 
         os.chdir("..")
 
-        re = custom_run(["gh", "release", "create", tag, *artifacts, "--repo", repo_org_name, "--title", tag], dry_run)
+        re = custom_run(["gh", "release", "create", tag, artifact, "--repo", repo_org_name, "--title", tag], dry_run)
         if re.returncode != 0:
             logger.error(f"Failed to create release: {re.stderr}")
             exit(re.returncode)
         logger.info(f"Created release: {tag}")
 
-    if re.returncode != 0:
-        logger.error(f"Failed to create release: {re.stderr}")
-        exit(re.returncode)
-    logger.info(f"Created release: {tag}")
-
 
 if __name__ == "__main__":
     logger.remove()
-    logger.add(sys.stdout, format="<green>[MZ Plugin Bundle Source]</green> <level>{time:HH:mm:ss.SSS}</level> <level>{level}</level> <level>{message}</level>")
+    logger.add(sys.stdout, format="<green>[Plugin Bundle Release Tool]</green> <level>{time:HH:mm:ss.SSS}</level> <level>{level}</level> <level>{message}</level>")
     args = parser.parse_args()
     if args.command == "make":
         make_release(args)
