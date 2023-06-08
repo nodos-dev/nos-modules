@@ -18,7 +18,7 @@
         "Sobel.mzdef",
         "Thresholder.mzdef"
     ],
-    "fb_includes" :[
+    "custom_types" :[
       "Thresholder.fbs"  
     ],
     "binary_path": "../Binaries/mzFilters",

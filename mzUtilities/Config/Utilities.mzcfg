@@ -22,7 +22,7 @@
         "Time.mzdef",
         "ImageIO.mzdef"
     ],
-    "fb_includes": [
+    "custom_types": [
         "Merge.fbs",
         "Gradient.fbs",
         "Resize.fbs",

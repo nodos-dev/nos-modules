@@ -9,7 +9,7 @@
     "node_definitions": [
         "AJA.mzdef"
     ],
-    "fb_includes" :[
+    "custom_types" :[
       "AJA.fbs"
     ],
     "binary_path": "../Binaries/mzAJA",

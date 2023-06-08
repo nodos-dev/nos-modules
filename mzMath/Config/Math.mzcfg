@@ -6,7 +6,7 @@
         },
         "display_name": "Math"
     },
-    "fb_includes": [],
+    "custom_types": [],
     "node_definitions": [
         "Math.mzdef"
     ],

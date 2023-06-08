@@ -10,7 +10,7 @@
         "Track.mzdef",
         "CalculateNodalPoint.mzdef"
     ],
-    "fb_includes": [],
+    "custom_types": [],
     "binary_path": "../Binaries/mzTrack",
     "associated_nodes": [
         {

@@ -9,7 +9,7 @@
     "node_definitions": [
         "Cyclorama.mzdef"
     ],
-    "fb_includes" :[
+    "custom_types" :[
       "Cyclorama.fbs"
     ],
     "binary_path": "../Binaries/mzCyclorama",

@@ -9,7 +9,7 @@
     "node_definitions": [
         "Config/RealityKeyer.mzdef"
     ],
-    "fb_includes" :[
+    "custom_types" :[
       "Config/RealityKeyer.fbs"
     ],
     "binary_path": "Binaries/mzRealityKeyer",

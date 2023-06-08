@@ -9,7 +9,7 @@
     "node_definitions": [
         "Frustum.mzdef"
     ],
-    "fb_includes" :[
+    "custom_types" :[
       "Frustum.fbs"
     ],
     "binary_path": "../Binaries/zdFrustum",
