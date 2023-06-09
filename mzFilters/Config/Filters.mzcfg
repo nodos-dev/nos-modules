@@ -2,7 +2,7 @@
     "info": {
         "id": {
             "name": "mz.filters",
-            "version": "0.1.0"
+            "version": "0.1.1"
         },
         "display_name": "Filters"
     },
