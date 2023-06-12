@@ -43,6 +43,7 @@ enum Utilities
 	Time,
 	ReadImage,
 	WriteImage,
+	Array,
 	Count
 };
 
@@ -52,7 +53,7 @@ void RegisterReadImage(mzNodeFunctions*);
 void RegisterWriteImage(mzNodeFunctions*);
 void RegisterChannelViewer(mzNodeFunctions*);
 void RegisterResize(mzNodeFunctions*);
-
+void RegisterArray(mzNodeFunctions* fn);
 
 extern "C"
 {
@@ -91,6 +92,7 @@ MZAPI_ATTR mzResult MZAPI_CALL mzExportNodeFunctions(size_t* outSize, mzNodeFunc
     RegisterWriteImage(&funcs[Utilities::WriteImage]);
     RegisterChannelViewer(&funcs[Utilities::ChannelViewer]);
 	RegisterResize(&funcs[Utilities::Resize]);
+	RegisterArray(&funcs[Utilities::Array]);
 	return MZ_RESULT_SUCCESS;
 }
 }

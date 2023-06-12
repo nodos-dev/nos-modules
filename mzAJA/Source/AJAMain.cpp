@@ -223,15 +223,6 @@ struct AJA
         return ((AJAClient *)ctx)->OnPinValueChanged(pinName, value->Data);
     }
 
-    static void OnPinConnected(void* ctx, const mzName pinName) { }
-    static void OnPinDisconnected(void* ctx, const mzName pinName) { }
-
-    static void OnPinShowAsChanged(void* ctx, const mzName pinName, mzFbShowAs showAs) 
-    { 
-    }
-
-    static void OnNodeSelected(const mzUUID graphId, const mzUUID selectedNodeId) { }
-
     static void OnPathCommand(void* ctx, const mzPathCommand* params)
     { 
         auto aja = ((AJAClient *)ctx);
@@ -424,10 +415,6 @@ MZAPI_ATTR mzResult MZAPI_CALL mzExportNodeFunctions(size_t* outSize, mzNodeFunc
         .OnNodeUpdated = AJA::OnNodeUpdated,
         .OnNodeDeleted = AJA::OnNodeDeleted,
         .OnPinValueChanged = AJA::OnPinValueChanged,
-        .OnPinConnected = AJA::OnPinConnected,
-        .OnPinDisconnected = AJA::OnPinDisconnected,
-        .OnPinShowAsChanged = AJA::OnPinShowAsChanged,
-        .OnNodeSelected = AJA::OnNodeSelected,
         .OnPathCommand = AJA::OnPathCommand,
         .GetFunctions = AJA::GetFunctions,
         .ExecuteNode = AJA::ExecuteNode,
