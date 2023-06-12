@@ -52,13 +52,6 @@ PLUGINS = {
          "mzAJA/*"
       ]
    },
-   "Cyclorama":{
-      "target_name":"mzCyclorama",
-      "path": "mzCyclorama",
-      "deps":[
-         "mzCyclorama/*"
-      ]
-   },
    "mz.filters":{
       "target_name":"mzFilters",
       "path": "mzFilters",
@@ -74,21 +67,6 @@ PLUGINS = {
          "mzMath/*"
       ]
    },
-   "mz.realitykeyer":{
-      "target_name":"mzRealityKeyer",
-      "path": "mzRealityKeyer",
-      "deps":[
-         "mzRealityKeyer/*",
-         "Shaders/ShaderCommon.glsl"
-      ]
-   },
-   "mz.track":{
-      "target_name":"mzTrack",
-      "path": "mzTrack",
-      "deps":[
-         "mzTrack/*"
-      ]
-   },
    "mz.utilities":{
       "target_name":"mzUtilities",
       "path": "mzUtilities",
@@ -97,13 +75,6 @@ PLUGINS = {
          "Shaders/*"
       ]
    },
-   "zd.frustum":{
-      "target_name":"zdFrustum",
-      "path": "zdFrustum",
-      "deps":[
-         "zdFrustum/*"
-      ]
-   }
 }
 
 
