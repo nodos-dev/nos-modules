@@ -4,6 +4,7 @@ namespace mz::utilities
 {
 
 MZ_REGISTER_NAME_SPACED(Array, "mz.utilities.Array")
+MZ_REGISTER_NAME(Output, "Output");
 
 struct ArrayCtx
 {
@@ -40,6 +41,87 @@ struct ArrayCtx
     }
 
 };
+
+flatbuffers::uoffset_t GenerateOffset(
+    flatbuffers::FlatBufferBuilder& fbb,
+    const mzTypeInfo* type,
+    const void* data);
+
+
+flatbuffers::uoffset_t CopyStruct(
+    flatbuffers::FlatBufferBuilder& fbb,
+    uint32_t ByteSize,
+    uint32_t FieldCount,
+    decltype(mzTypeInfo::Fields) Fields,
+    const void* data)
+{
+    auto tbl = ByteSize ? (flatbuffers::Table*)data : flatbuffers::GetRoot<flatbuffers::Table>(data);
+
+    std::vector<flatbuffers::uoffset_t> offsets;
+
+    for (int i = 0; i < FieldCount; ++i)
+    {
+        if (!tbl->CheckField(Fields[i].Offset) || Fields[i].Type->ByteSize) continue;
+        if (auto offset = GenerateOffset(fbb, Fields[i].Type, tbl->GetPointer<u8*>(Fields[i].Offset)))
+            offsets.push_back(offset);
+    }
+
+    // Now we can build the actual table from either offsets or scalar data.
+    auto start = ByteSize ? fbb.StartStruct(1) : fbb.StartTable();
+    size_t offset_idx = 0;
+
+    for (int i = 0; i < FieldCount; ++i)
+    {
+        if (!tbl->CheckField(Fields[i].Offset)) continue;
+        if (Fields[i].Type->ByteSize)
+        {
+            fbb.PushBytes(tbl->GetStruct<const uint8_t*>(Fields[i].Offset), Fields[i].Type->ByteSize);
+            fbb.TrackField(Fields[i].Offset, fbb.GetSize());
+        }
+        else
+        {
+            fbb.AddOffset(Fields[i].Offset, flatbuffers::Offset<void>(offsets[offset_idx++]));
+        }
+    }
+    
+    FLATBUFFERS_ASSERT(offset_idx == offsets.size());
+    if (ByteSize) {
+        fbb.ClearOffsets();
+        return fbb.EndStruct();
+    }
+    else {
+        return fbb.EndTable(start);
+    }
+}
+
+flatbuffers::uoffset_t GenerateOffset(
+    flatbuffers::FlatBufferBuilder& fbb,
+    const mzTypeInfo* type,
+    const void* data)
+{
+    switch (type->BaseType)
+    {
+    case MZ_BASE_TYPE_STRUCT:
+        return CopyStruct(fbb, type->ByteSize, type->FieldCount, type->Fields, flatbuffers::GetRoot<flatbuffers::Table>(data));
+    case MZ_BASE_TYPE_STRING:
+        return fbb.CreateString((const flatbuffers::String*)data).o;
+    case MZ_BASE_TYPE_ARRAY: {
+        auto vec = (flatbuffers::Vector<void*>*)(data);
+        if(type->ElementType->ByteSize)
+        {
+            fbb.StartVector(vec->size(), type->ElementType->ByteSize, 1);
+            fbb.PushBytes(vec->Data(), type->ElementType->ByteSize * vec->size());
+            return fbb.EndVector(vec->size());
+        }
+        std::vector<flatbuffers::uoffset_t> elements(vec->size());
+        for (int i = 0; i < vec->size(); i++) {
+            elements[i] = GenerateOffset(fbb, type->ElementType, vec->Get(i));
+        }
+        return fbb.CreateVector(elements).o;
+    }
+    }
+    return 0;
+}
 
 void RegisterArray(mzNodeFunctions* fn)
 {
@@ -85,6 +167,46 @@ void RegisterArray(mzNodeFunctions* fn)
 
 	fn->ExecuteNode = [](void* ctx, const mzNodeExecuteArgs* args) -> mzResult 
     {
+        auto c = (ArrayCtx*)ctx;
+        if(!c->type) return MZ_RESULT_SUCCESS;
+        mzTypeInfo info = {};
+        mzEngine.GetTypeInfo(*c->type, &info);
+        auto pins = NodeExecuteArgs(args);
+        flatbuffers::FlatBufferBuilder fbb;
+        pins.erase(MZN_Output);
+        
+        flatbuffers::uoffset_t offset = 0;
+        if (info.ByteSize)
+        {
+            fbb.StartVector(pins.size(), info.ByteSize, 1);
+            for (auto& [name, pin] : pins)
+            {
+                if (!pin.Buf.Size)
+                {
+                    std::vector<u8> zero(info.ByteSize);
+                    fbb.PushBytes(zero.data(), info.ByteSize);
+                }
+                else 
+                {
+                    assert(info.ByteSize == pin.Buf.Size);
+                    fbb.PushBytes((u8*)pin.Buf.Data, info.ByteSize);
+                }
+
+            }
+            offset = fbb.EndVector(pins.size());
+        }
+        else
+        {
+            std::vector<flatbuffers::uoffset_t> offsets;
+            for (auto& [name, pin] : pins)
+                offsets.push_back(GenerateOffset(fbb, &info, pin.Buf.Data));
+            offset = fbb.CreateVector(offsets).o;
+        }
+
+        fbb.Finish(flatbuffers::Offset<uint8_t>(offset));
+        mz::Buffer buf = fbb.Release();
+        const u8* vec = flatbuffers::GetRoot<u8>(buf.data());
+        mzEngine.SetPinValue(*c->output, {(void*)vec,size_t(buf.data()+buf.size()-vec)});
         return MZ_RESULT_SUCCESS;
 	};
 
