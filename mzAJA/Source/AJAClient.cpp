@@ -289,7 +289,10 @@ void AJAClient::UpdateStatus(flatbuffers::FlatBufferBuilder &fbb,
 void AJAClient::SetReference(std::string const &val)
 {
     auto src = NTV2_REFERENCE_INVALID;
-    if (isdigit(val.back()))
+    if (val.empty()) {
+        mzEngine.LogE("Empty value received for reference pin!");
+    }
+    else if (isdigit(val.back()))
     {
         src = AJADevice::ChannelToRefSrc(NTV2Channel(val.back() - '1'));
     }
