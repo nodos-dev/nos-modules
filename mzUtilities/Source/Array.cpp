@@ -4,7 +4,7 @@ namespace mz::utilities
 {
 
 MZ_REGISTER_NAME_SPACED(Array, "mz.utilities.Array")
-MZ_REGISTER_NAME(Output, "Output");
+MZ_REGISTER_NAME(Output);
 
 struct ArrayCtx
 {
@@ -47,51 +47,120 @@ flatbuffers::uoffset_t GenerateOffset(
     const mzTypeInfo* type,
     const void* data);
 
+static void CopyInline(flatbuffers::FlatBufferBuilder& fbb, decltype(mzTypeInfo::Fields) fielddef,
+    const flatbuffers::Table* table, size_t align, size_t size) {
+    fbb.Align(align);
+    fbb.PushBytes(table->GetStruct<const uint8_t*>(fielddef->Offset), size);
+    fbb.TrackField(fielddef->Offset, fbb.GetSize());
+}
 
-flatbuffers::uoffset_t CopyStruct(
-    flatbuffers::FlatBufferBuilder& fbb,
-    uint32_t ByteSize,
-    uint32_t FieldCount,
-    decltype(mzTypeInfo::Fields) Fields,
-    const void* data)
+flatbuffers::uoffset_t CopyTable(
+	flatbuffers::FlatBufferBuilder& fbb,
+	const mzTypeInfo* type,
+	const flatbuffers::Table* table)
 {
-    auto tbl = ByteSize ? (flatbuffers::Table*)data : flatbuffers::GetRoot<flatbuffers::Table>(data);
+	// Before we can construct the table, we have to first generate any
+	// subobjects, and collect their offsets.
+	std::vector<flatbuffers::uoffset_t> offsets;
 
-    std::vector<flatbuffers::uoffset_t> offsets;
+    for(int i = 0; i < type->FieldCount; ++i)
+	{
+        auto field = &type->Fields[i];
+		// Skip if field is not present in the source.
+		if (!table->CheckField(field->Offset)) continue;
+		flatbuffers::uoffset_t offset = 0;
+		switch (field->Type->BaseType) {
+		case MZ_BASE_TYPE_STRING: {
+			offset = fbb.CreateString(table->GetPointer<const flatbuffers::String*>(field->Offset)).o;
+			break;
+		}
+		case MZ_BASE_TYPE_STRUCT: {
+			if (!field->Type->ByteSize) {
+				offset = CopyTable(fbb, field->Type, table->GetPointer<flatbuffers::Table*>(field->Offset));
+			}
+			break;
+		}
+		//case MZ_BASE_TYPE_UNION: {
+		//	offset = CopyTable2(fbb, GetUnionType(objectdef, field, table), table->GetPointer<flatbuffers::Table*>(field->Offset));
+		//	break;
+		//}
+		case MZ_BASE_TYPE_ARRAY: {
+			auto vec =
+				table->GetPointer<const flatbuffers::Vector<flatbuffers::Offset<flatbuffers::Table>> *>(field->Offset);
+			auto element_base_type = field->Type->ElementType->BaseType;
+			// auto elemobjectdef = element_base_type == MZ_BASE_TYPE_STRUCT ? field->Type->struct_def : 0;
+			
+			switch (element_base_type) {
+			case MZ_BASE_TYPE_STRING: {
+				std::vector<flatbuffers::Offset<const flatbuffers::String*>> elements(vec->size());
+				auto vec_s = reinterpret_cast<const flatbuffers::Vector<flatbuffers::Offset<flatbuffers::String>> *>(vec);
+				for (flatbuffers::uoffset_t i = 0; i < vec_s->size(); i++) {
+					elements[i] = fbb.CreateString(vec_s->Get(i)).o;
+				}
+				offset = fbb.CreateVector(elements).o;
+				break;
+			}
+			case MZ_BASE_TYPE_STRUCT: {
+				if (!field->Type->ElementType->ByteSize) {
+					std::vector<flatbuffers::Offset<const flatbuffers::Table*>> elements(vec->size());
+					for (flatbuffers::uoffset_t i = 0; i < vec->size(); i++) {
+						elements[i] = CopyTable(fbb, field->Type->ElementType, vec->Get(i));
+					}
+					offset = fbb.CreateVector(elements).o;
+					break;
+				}
+			}
+								FLATBUFFERS_FALLTHROUGH();  // fall thru
+			default: {                    // Scalars and structs.
+				fbb.StartVector(vec->size(), field->Type->ByteSize, field->Type->Alignment);
+				fbb.PushBytes(vec->Data(), field->Type->ByteSize * vec->size());
+				offset = fbb.EndVector(vec->size());
+				break;
+			}
+			}
+			break;
+		}
+		default:  // Scalars.
+			break;
+		}
+		if (offset) { offsets.push_back(offset); }
+	}
+	// Now we can build the actual table from either offsets or scalar data.
+	auto start = type->ByteSize ? fbb.StartStruct(type->Alignment)
+		: fbb.StartTable();
+	size_t offset_idx = 0;
 
-    for (int i = 0; i < FieldCount; ++i)
+    for (int i = 0; i < type->FieldCount; ++i)
     {
-        if (!tbl->CheckField(Fields[i].Offset) || Fields[i].Type->ByteSize) continue;
-        if (auto offset = GenerateOffset(fbb, Fields[i].Type, tbl->GetPointer<u8*>(Fields[i].Offset)))
-            offsets.push_back(offset);
-    }
-
-    // Now we can build the actual table from either offsets or scalar data.
-    auto start = ByteSize ? fbb.StartStruct(1) : fbb.StartTable();
-    size_t offset_idx = 0;
-
-    for (int i = 0; i < FieldCount; ++i)
-    {
-        if (!tbl->CheckField(Fields[i].Offset)) continue;
-        if (Fields[i].Type->ByteSize)
-        {
-            fbb.PushBytes(tbl->GetStruct<const uint8_t*>(Fields[i].Offset), Fields[i].Type->ByteSize);
-            fbb.TrackField(Fields[i].Offset, fbb.GetSize());
-        }
-        else
-        {
-            fbb.AddOffset(Fields[i].Offset, flatbuffers::Offset<void>(offsets[offset_idx++]));
-        }
-    }
-    
-    FLATBUFFERS_ASSERT(offset_idx == offsets.size());
-    if (ByteSize) {
-        fbb.ClearOffsets();
-        return fbb.EndStruct();
-    }
-    else {
-        return fbb.EndTable(start);
-    }
+        auto field = &type->Fields[i];
+		if (!table->CheckField(field->Offset)) continue;
+		auto base_type = field->Type->BaseType;
+		switch (base_type) {
+		case MZ_BASE_TYPE_STRUCT: {
+			if (field->Type->ByteSize) {
+				CopyInline(fbb, field, table, field->Type->Alignment, field->Type->ByteSize);
+				break;
+			}
+		}
+		// case MZ_BASE_TYPE_UNION:
+		case MZ_BASE_TYPE_STRING:
+		case MZ_BASE_TYPE_ARRAY:
+			fbb.AddOffset(field->Offset, flatbuffers::Offset<void>(offsets[offset_idx++]));
+			break;
+		default: {  // Scalars.
+            CopyInline(fbb, field, table, field->Type->Alignment, field->Type->ByteSize);
+			break;
+		}
+		}
+	}
+	FLATBUFFERS_ASSERT(offset_idx == offsets.size());
+	if (type->ByteSize) {
+		fbb.ClearOffsets();
+		return fbb.EndStruct();
+	}
+	else {
+		return fbb.EndTable(start);
+	}
 }
 
 flatbuffers::uoffset_t GenerateOffset(
@@ -99,10 +168,12 @@ flatbuffers::uoffset_t GenerateOffset(
     const mzTypeInfo* type,
     const void* data)
 {
+    if(type->ByteSize) 
+        return 0;
     switch (type->BaseType)
     {
     case MZ_BASE_TYPE_STRUCT:
-        return CopyStruct(fbb, type->ByteSize, type->FieldCount, type->Fields, flatbuffers::GetRoot<flatbuffers::Table>(data));
+        return CopyTable(fbb, type, flatbuffers::GetRoot<flatbuffers::Table>(data));
     case MZ_BASE_TYPE_STRING:
         return fbb.CreateString((const flatbuffers::String*)data).o;
     case MZ_BASE_TYPE_ARRAY: {
@@ -148,14 +219,31 @@ void RegisterArray(mzNodeFunctions* fn)
         auto typeName = mzEngine.GetString(info.TypeName);
         auto outputType = "[" + std::string(typeName) + "]";
 
+        mzBuffer value;
+        std::vector<u8> data;
+        std::vector<u8> outData;
+
+        if (MZ_RESULT_SUCCESS == mzEngine.GetDefaultValueOfType(info.TypeName, &value))
+        {
+            data = std::vector<u8>{ (u8*)value.Data, (u8*)value.Data + value.Size };
+        }
+
+        if (MZ_RESULT_SUCCESS == mzEngine.GetDefaultValueOfType(mzEngine.GetName(outputType.c_str()), &value))
+        {
+            outData = std::vector<u8>{ (u8*)value.Data, (u8*)value.Data + value.Size };
+        }
+
         flatbuffers::FlatBufferBuilder fbb;
 
+        mzBuffer val;
+        mzEngine.GetDefaultValueOfType(info.TypeName, &val);
         mzUUID id0, id1;
         mzEngine.GenerateID(&id0);
         mzEngine.GenerateID(&id1);
+
         std::vector<::flatbuffers::Offset<mz::fb::Pin>> pins = {
-            fb::CreatePinDirect(fbb, &id0, "Input 0", typeName, fb::ShowAs::INPUT_PIN, fb::CanShowAs::INPUT_PIN_OR_PROPERTY),
-            fb::CreatePinDirect(fbb, &id1, "Output",  outputType.c_str(), fb::ShowAs::OUTPUT_PIN, fb::CanShowAs::OUTPUT_PIN_ONLY),
+            fb::CreatePinDirect(fbb, &id0, "Input 0", typeName, fb::ShowAs::INPUT_PIN, fb::CanShowAs::INPUT_PIN_OR_PROPERTY, 0, 0, &data),
+            fb::CreatePinDirect(fbb, &id1, "Output",  outputType.c_str(), fb::ShowAs::OUTPUT_PIN, fb::CanShowAs::OUTPUT_PIN_ONLY, 0, 0, &outData),
         };
         mzEngine.HandleEvent(CreateAppEvent(fbb, mz::CreatePartialNodeUpdateDirect(fbb, &c->id, ClearFlags::ANY, 0, &pins)));
     };
@@ -171,42 +259,63 @@ void RegisterArray(mzNodeFunctions* fn)
         if(!c->type) return MZ_RESULT_SUCCESS;
         mzTypeInfo info = {};
         mzEngine.GetTypeInfo(*c->type, &info);
-        auto pins = NodeExecuteArgs(args);
+        //auto pins = NodeExecuteArgs(args);
+        //pins.erase(MZN_Output);
         flatbuffers::FlatBufferBuilder fbb;
-        pins.erase(MZN_Output);
-        
+
         flatbuffers::uoffset_t offset = 0;
         if (info.ByteSize)
         {
-            fbb.StartVector(pins.size(), info.ByteSize, 1);
-            for (auto& [name, pin] : pins)
+            fbb.StartVector(args->PinCount-1, info.ByteSize, 1);
+            for (int i = 0; i < args->PinCount; ++i)
             {
-                if (!pin.Buf.Size)
+                if(args->PinNames[i] == MZN_Output) continue;
+                if (!args->PinValues[i].Size)
                 {
                     std::vector<u8> zero(info.ByteSize);
                     fbb.PushBytes(zero.data(), info.ByteSize);
                 }
-                else 
+                else
                 {
-                    assert(info.ByteSize == pin.Buf.Size);
-                    fbb.PushBytes((u8*)pin.Buf.Data, info.ByteSize);
+                    assert(info.ByteSize == args->PinValues[i].Size);
+                    fbb.PushBytes((u8*)args->PinValues[i].Data, info.ByteSize);
                 }
-
             }
-            offset = fbb.EndVector(pins.size());
+            offset = fbb.EndVector(args->PinCount - 1);
         }
         else
         {
-            std::vector<flatbuffers::uoffset_t> offsets;
-            for (auto& [name, pin] : pins)
-                offsets.push_back(GenerateOffset(fbb, &info, pin.Buf.Data));
-            offset = fbb.CreateVector(offsets).o;
+			switch (info.BaseType) 
+            {
+			case MZ_BASE_TYPE_STRING: {
+				std::vector<flatbuffers::Offset<flatbuffers::String>> elements;
+                for (int i = 0; i < args->PinCount; ++i) 
+                {
+                    if(args->PinNames[i] == MZN_Output) continue;
+					elements.push_back(fbb.CreateString((const char*)args->PinValues[i].Data));
+				}
+                offset = fbb.CreateVector(elements).o;
+				break;
+			}
+			case MZ_BASE_TYPE_STRUCT: {
+                std::vector<flatbuffers::Offset<const flatbuffers::Table*>> elements;
+                for (int i = 0; i < args->PinCount; ++i)
+                {
+                    if (args->PinNames[i] == MZN_Output) continue;
+                    elements.push_back(CopyTable(fbb, &info, flatbuffers::GetRoot<flatbuffers::Table>(args->PinValues[i].Data)));
+                }
+                offset = fbb.CreateVector(elements).o;
+                break;
+			}
+			default: {                    // Scalars and structs.
+				assert(0);
+			}
+			}
         }
-
-        fbb.Finish(flatbuffers::Offset<uint8_t>(offset));
+        
+        fbb.Finish(flatbuffers::Offset<flatbuffers::Vector<uint8_t>>(offset));
         mz::Buffer buf = fbb.Release();
-        const u8* vec = flatbuffers::GetRoot<u8>(buf.data());
-        mzEngine.SetPinValue(*c->output, {(void*)vec,size_t(buf.data()+buf.size()-vec)});
+        mzEngine.SetPinValue(*c->output, {(void*)buf.data(),buf.size()});
         return MZ_RESULT_SUCCESS;
 	};
 
@@ -251,6 +360,7 @@ void RegisterArray(mzNodeFunctions* fn)
 
             mzBuffer value;
             std::vector<u8> data;
+
             if (MZ_RESULT_SUCCESS == mzEngine.GetDefaultValueOfType(*c->type, &value))
             {
                 data = std::vector<u8>{ (u8*)value.Data, (u8*)value.Data + value.Size};
