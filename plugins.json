@@ -1,0 +1,32 @@
+{
+    "AJA": {
+        "target_name": "mzAJA",
+        "path": "mzAJA",
+        "deps": [
+            "mzAJA/*"
+        ]
+    },
+    "mz.filters": {
+        "target_name": "mzFilters",
+        "path": "mzFilters",
+        "deps": [
+            "mzFilters/*",
+            "Shaders/*"
+        ]
+    },
+    "mz.math": {
+        "target_name": "mzMath",
+        "path": "mzMath",
+        "deps": [
+            "mzMath/*"
+        ]
+    },
+    "mz.utilities": {
+        "target_name": "mzUtilities",
+        "path": "mzUtilities",
+        "deps": [
+            "mzUtilities/*",
+            "Shaders/*"
+        ]
+    }
+}

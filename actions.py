@@ -7,7 +7,7 @@ import fnmatch
 import json
 from subprocess import PIPE, CompletedProcess, run, call, Popen, check_output
 
-parser = argparse.ArgumentParser(description="MZ Plugin Bundle Release Tool")
+parser = argparse.ArgumentParser(description="Plugin Bundle Release Tool")
 
 parser.add_argument('--cloned-release-repo-dir',
                     action='store',
@@ -44,39 +44,18 @@ parser.add_argument('--dry-run',
                     help="Dry run, do not upload anything.",
                     default=False)
 
-PLUGINS = {
-   "AJA":{
-      "target_name":"mzAJA",
-      "path": "mzAJA",
-      "deps":[
-         "mzAJA/*"
-      ]
-   },
-   "mz.filters":{
-      "target_name":"mzFilters",
-      "path": "mzFilters",
-      "deps":[
-         "mzFilters/*",
-         "Shaders/*"
-      ]
-   },
-   "mz.math":{
-      "target_name":"mzMath",
-      "path": "mzMath",
-      "deps":[
-         "mzMath/*"
-      ]
-   },
-   "mz.utilities":{
-      "target_name":"mzUtilities",
-      "path": "mzUtilities",
-      "deps":[
-         "mzUtilities/*",
-         "Shaders/*"
-      ]
-   },
-}
+parser.add_argument('--plugins-file', 
+                    action='store',
+                    default="plugins.json",
+                    help="The path to the JSON file that contains the list of plugins to release. Default: plugins.json")
 
+parser.add_argument('--build-all',
+                    action='store_true',
+                    required=False,
+                    default=False,
+                    help="Build all plugins.",)
+
+PLUGINS = {}
 
 def custom_run(args, dry_run):
     if dry_run:
@@ -128,6 +107,10 @@ if __name__ == "__main__":
     logger.add(sys.stdout, format="<green>[Plugin Bundle Release Tool]</green> <level>{time:HH:mm:ss.SSS}</level> <level>{level}</level> <level>{message}</level>")
 
     args = parser.parse_args()
+
+    with open(args.plugins_file, "r") as f:
+        PLUGINS = json.load(f)
+
     logger.info(f"Target: {args.repo_url}")
     logger.info(f"Build number: {args.build_number}")
 
@@ -145,21 +128,24 @@ if __name__ == "__main__":
     if os.path.exists("./Releases"):
         shutil.rmtree("./Releases")
 
-    latest_tag = get_latest_release_tag()
-    logger.info(f"Latest release tag: {latest_tag}")
     plugins_to_release = []
-    if latest_tag is None:
-        logger.info("Including all plugins in the release")
+    if args.build_all:
         plugins_to_release = list(PLUGINS.keys())
     else:
-        changed_files = get_list_of_changed_files_between(latest_tag, "HEAD")
-        logger.debug(f"Changed files: {changed_files}")
-        for plugin_name, plugin_info in PLUGINS.items():
-            for dep in plugin_info["deps"]:
-                for changed_file in changed_files:
-                    if fnmatch.fnmatch(changed_file, dep):
-                        plugins_to_release.append(plugin_name)
-                        break
+        latest_tag = get_latest_release_tag()
+        logger.info(f"Latest release tag: {latest_tag}")
+        if latest_tag is None:
+            logger.info("Including all plugins in the release")
+            plugins_to_release = list(PLUGINS.keys())
+        else:
+            changed_files = get_list_of_changed_files_between(latest_tag, "HEAD")
+            logger.debug(f"Changed files: {changed_files}")
+            for plugin_name, plugin_info in PLUGINS.items():
+                for dep in plugin_info["deps"]:
+                    for changed_file in changed_files:
+                        if fnmatch.fnmatch(changed_file, dep):
+                            plugins_to_release.append(plugin_name)
+                            break
 
     logger.info(f"Plugins to release: {plugins_to_release}")
 
