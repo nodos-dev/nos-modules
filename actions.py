@@ -147,11 +147,15 @@ if __name__ == "__main__":
                             plugins_to_release.append(plugin_name)
                             break
 
+    if len(plugins_to_release) == 0:
+        logger.info("None of the plugins have changed. No need to release.")
+        exit(0)
+
     logger.info(f"Plugins to release: {plugins_to_release}")
 
     # Run python release.py --gh-release-repo="{args.gh_release_repo}" make --build-number="{args.build_number}"  
     #       --release-target={target_name} --cmake-build-dir={args.cmake_build_dir} --plugin-dir="{plugin_folder}" 
-    # at parallel & print their output if failed. Max 4 processes at a time.
+    # TODO: release.py is not parallelizable yet, so we run it sequentially for each plugin. Make it parallel.
     ok = True
     for plugin_name in plugins_to_release:
         plugin_info = PLUGINS[plugin_name]

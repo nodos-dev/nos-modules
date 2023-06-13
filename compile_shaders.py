@@ -53,5 +53,5 @@ def compile_shaders():
 
 if __name__ == "__main__":
     logger.remove()
-    logger.add(sys.stdout, format="<green>[MZ Plugin Bundle Source]</green> <level>{time:HH:mm:ss.SSS}</level> <level>{level}</level> <level>{message}</level>")
+    logger.add(sys.stdout, format="<green>[Plugin Bundle Source]</green> <level>{time:HH:mm:ss.SSS}</level> <level>{level}</level> <level>{message}</level>")
     compile_shaders()
