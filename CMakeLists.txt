@@ -48,7 +48,7 @@ endfunction()
 # ------------
 
 # stb
-if (NOT WITH_MEDIAZ)
+if (NOT WITH_MEDIAZ AND NOT TARGET stb)
     add_subdirectory(${EXTERNAL_DIR}/stb "${CMAKE_CURRENT_BINARY_DIR}/stb")
 endif()
 
