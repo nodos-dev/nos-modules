@@ -118,6 +118,11 @@
             "category": "Type",
             "class_name": "Array",
             "display_name": "Array"
+        },
+        {
+            "category": "Type",
+            "class_name": "Disarray",
+            "display_name": "Disarray"
         }
     ]
 }
