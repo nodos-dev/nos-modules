@@ -235,17 +235,18 @@ void RegisterArray(mzNodeFunctions* fn)
 
         flatbuffers::FlatBufferBuilder fbb;
 
-        mzBuffer val;
-        mzEngine.GetDefaultValueOfType(info.TypeName, &val);
-        mzUUID id0, id1;
-        mzEngine.GenerateID(&id0);
-        mzEngine.GenerateID(&id1);
+        mzUUID id;
+        mzEngine.GenerateID(&id);
+
+        std::vector<::flatbuffers::Offset<mz::PartialPinUpdate>> updates = {
+            CreatePartialPinUpdateDirect(fbb, &c->inputs.front(), 0, mz::Action::NOP, mz::Action::NOP, mz::Action::NOP, typeName)
+        };
 
         std::vector<::flatbuffers::Offset<mz::fb::Pin>> pins = {
-            fb::CreatePinDirect(fbb, &id0, "Input 0", typeName, fb::ShowAs::INPUT_PIN, fb::CanShowAs::INPUT_PIN_OR_PROPERTY, 0, 0, &data),
-            fb::CreatePinDirect(fbb, &id1, "Output",  outputType.c_str(), fb::ShowAs::OUTPUT_PIN, fb::CanShowAs::OUTPUT_PIN_ONLY, 0, 0, &outData),
+            fb::CreatePinDirect(fbb, &id, "Output",  outputType.c_str(), fb::ShowAs::OUTPUT_PIN, fb::CanShowAs::OUTPUT_PIN_ONLY, 0, 0, &outData),
         };
-        mzEngine.HandleEvent(CreateAppEvent(fbb, mz::CreatePartialNodeUpdateDirect(fbb, &c->id, ClearFlags::ANY, 0, &pins)));
+
+        mzEngine.HandleEvent(CreateAppEvent(fbb, mz::CreatePartialNodeUpdateDirect(fbb, &c->id, ClearFlags::NONE, 0, &pins, 0, 0, 0, 0, 0, &updates)));
     };
     
 	fn->OnNodeDeleted = [](void* ctx, mzUUID nodeId) 
