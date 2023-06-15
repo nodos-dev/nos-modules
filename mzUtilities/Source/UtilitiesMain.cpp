@@ -45,6 +45,7 @@ enum Utilities
 	WriteImage,
 	Array,
 	Disarray,
+	Indexer,
 	Count
 };
 
@@ -56,6 +57,7 @@ void RegisterChannelViewer(mzNodeFunctions*);
 void RegisterResize(mzNodeFunctions*);
 void RegisterArray(mzNodeFunctions* fn);
 void RegisterDisarray(mzNodeFunctions* fn);
+void RegisterIndexer(mzNodeFunctions* fn);
 
 extern "C"
 {
@@ -96,6 +98,7 @@ MZAPI_ATTR mzResult MZAPI_CALL mzExportNodeFunctions(size_t* outSize, mzNodeFunc
 	RegisterResize(&funcs[Utilities::Resize]);
 	RegisterArray(&funcs[Utilities::Array]);
 	RegisterDisarray(&funcs[Utilities::Disarray]);
+	RegisterIndexer(&funcs[Utilities::Indexer]);
 	return MZ_RESULT_SUCCESS;
 }
 }

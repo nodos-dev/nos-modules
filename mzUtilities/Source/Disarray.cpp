@@ -22,18 +22,11 @@ struct Disarray
         {
             if (pin->show_as() == fb::ShowAs::OUTPUT_PIN)
             {
-                auto ty = mzEngine.GetName(pin->type_name()->c_str());
-        /*        if (!type)
-                {
-                    if (ty != MZN_VOID)
-                        type = ty;
-                }
-                else
-                    assert(*type == ty);*/
                 outputs.push_back(*pin->id());
             }
             else
             {
+                type = mzEngine.GetName(pin->type_name()->c_str());
                 input = *pin->id();
             }
         }
@@ -63,6 +56,16 @@ struct Disarray
         }
         mzEngine.HandleEvent(CreateAppEvent(fbb, mz::CreatePartialNodeUpdateDirect(fbb, &id, ClearFlags::NONE, &deleted, &pins)));
     }
+
+    void Reset()
+    {
+        type = {};
+        flatbuffers::FlatBufferBuilder fbb;
+        std::vector<::flatbuffers::Offset<mz::fb::Pin>> pins = {
+            fb::CreatePinDirect(fbb, &input, "Input",  "mz.fb.Void", fb::ShowAs::INPUT_PIN, fb::CanShowAs::INPUT_PIN_OR_PROPERTY),
+        };
+        mzEngine.HandleEvent(CreateAppEvent(fbb, mz::CreatePartialNodeUpdateDirect(fbb, &id, ClearFlags::ANY, 0, &pins)));
+    }
 };
 
 void RegisterDisarray(mzNodeFunctions* fn)
@@ -88,7 +91,7 @@ void RegisterDisarray(mzNodeFunctions* fn)
     {
         auto c = (Disarray*)ctx;
         auto pins = NodeExecuteArgs(args);
-        auto vec = (flatbuffers::Vector<u8>*)pins[MZN_Input].Buf.Data;
+        auto vec = flatbuffers::GetRoot<flatbuffers::Vector<u8>>(pins[MZN_Input].Buf.Data);
         c->SetOutputs(vec->size());
         return MZ_RESULT_SUCCESS;
 	};
@@ -96,6 +99,7 @@ void RegisterDisarray(mzNodeFunctions* fn)
 
     fn->OnPinValueChanged = [](void* ctx, mzName pinName, mzBuffer* value)
     {
+
         auto c = (Disarray*)ctx;
         if(pinName != MZN_Input || !c->type)
             return;
@@ -104,12 +108,7 @@ void RegisterDisarray(mzNodeFunctions* fn)
         mzEngine.GetTypeInfo(*c->type, &info);
         if (info.BaseType != MZ_BASE_TYPE_ARRAY)
         {
-            return;
-            flatbuffers::FlatBufferBuilder fbb;
-            std::vector<::flatbuffers::Offset<mz::fb::Pin>> pins = {
-                fb::CreatePinDirect(fbb, &c->input, "Input",  "mz.fb.Void", fb::ShowAs::INPUT_PIN, fb::CanShowAs::INPUT_PIN_ONLY),
-            };
-            mzEngine.HandleEvent(CreateAppEvent(fbb, mz::CreatePartialNodeUpdateDirect(fbb, &c->id, ClearFlags::ANY, 0, &pins)));
+            c->Reset();
             return;
         }
         auto vec = flatbuffers::GetRoot<flatbuffers::Vector<u8>>(value->Data);
@@ -120,34 +119,25 @@ void RegisterDisarray(mzNodeFunctions* fn)
     {
         auto c = (Disarray*)ctx;
 
-        if ("Input" != std::string(mzEngine.GetString(pinName)))
-        {
+        if (MZN_Input != pinName)
             return;
-        }
         
         mzTypeInfo info = {};
         mzEngine.GetPinType(connector, &info);
-        if (info.BaseType == MZ_BASE_TYPE_ARRAY)
+        if (info.BaseType != MZ_BASE_TYPE_ARRAY)
         {
-            if (!c->type)
-            {
-       
-                c->type = info.TypeName;
-
-                flatbuffers::FlatBufferBuilder fbb;
-                std::vector<::flatbuffers::Offset<mz::PartialPinUpdate>> updates = {
-                    CreatePartialPinUpdateDirect(fbb, &c->input, 0, mz::Action::NOP, mz::Action::NOP, mz::Action::NOP, mzEngine.GetString(info.TypeName))
-                };
-                mzEngine.HandleEvent(CreateAppEvent(fbb, mz::CreatePartialNodeUpdateDirect(fbb, &c->id, ClearFlags::NONE, 0, 0, 0, 0, 0, 0, 0, &updates)));
-            }
+            c->Reset();
             return;
         }
-
-        flatbuffers::FlatBufferBuilder fbb;
-        std::vector<::flatbuffers::Offset<mz::fb::Pin>> pins = {
-            fb::CreatePinDirect(fbb, &c->input, "Input",  "mz.fb.Void", fb::ShowAs::INPUT_PIN, fb::CanShowAs::INPUT_PIN_ONLY),
-        };
-        mzEngine.HandleEvent(CreateAppEvent(fbb, mz::CreatePartialNodeUpdateDirect(fbb, &c->id, ClearFlags::ANY, 0, &pins)));
+        if (!c->type)
+        {
+            c->type = info.TypeName;
+            flatbuffers::FlatBufferBuilder fbb;
+            std::vector<::flatbuffers::Offset<mz::PartialPinUpdate>> updates = {
+                CreatePartialPinUpdateDirect(fbb, &c->input, 0, mz::Action::NOP, mz::Action::NOP, mz::Action::NOP, mzEngine.GetString(info.TypeName))
+            };
+            mzEngine.HandleEvent(CreateAppEvent(fbb, mz::CreatePartialNodeUpdateDirect(fbb, &c->id, ClearFlags::NONE, 0, 0, 0, 0, 0, 0, 0, &updates)));
+        }
     };
 }
 

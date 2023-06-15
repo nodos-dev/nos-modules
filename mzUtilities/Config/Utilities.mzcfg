@@ -123,6 +123,11 @@
             "category": "Type",
             "class_name": "Disarray",
             "display_name": "Disarray"
+        },
+        {
+            "category": "Type",
+            "class_name": "Indexer",
+            "display_name": "Indexer"
         }
     ]
 }
