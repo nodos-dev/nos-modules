@@ -12,7 +12,7 @@ struct Disarray
     fb::UUID id;
     std::vector<fb::UUID> outputs;
     fb::UUID input;
-    std::optional<mzName> type;
+    mzName type = MZN_VOID;
 
     Disarray(const mzFbNode* inNode)
     {
@@ -31,13 +31,40 @@ struct Disarray
             }
         }
     }
+    
+    void SetOutputs(const mzTypeInfo* structdef)
+    {
+        if(structdef->BaseType != MZ_BASE_TYPE_STRUCT) 
+            return;
+        
+        flatbuffers::FlatBufferBuilder fbb;
+        std::vector<::flatbuffers::Offset<mz::fb::Pin>> pins;
+        std::vector<fb::UUID> deleted = std::move(outputs);
+
+        for(int i = 0; i < structdef->FieldCount; ++i)
+        {
+            auto& field = structdef->Fields[i];
+            mzUUID id;
+            mzEngine.GenerateID(&id);
+            outputs.push_back(id);
+            pins.push_back(fb::CreatePinDirect(fbb, &id, 
+                            mzEngine.GetString(field.Name), 
+                            mzEngine.GetString(field.Type->TypeName), 
+                            fb::ShowAs::OUTPUT_PIN, fb::CanShowAs::OUTPUT_PIN_ONLY));
+        }
+        mzEngine.HandleEvent(CreateAppEvent(fbb, mz::CreatePartialNodeUpdateDirect(fbb, &id, ClearFlags::NONE, &deleted, &pins)));
+    }
 
     void SetOutputs(u32 sz)
     {
         const u32 curr = outputs.size();
         if(curr == sz) return;
 
-        std::string typeName = mzEngine.GetString(*type) + 1;
+        std::string arrayType = mzEngine.GetString(type);
+        if(!(arrayType.starts_with('[') && arrayType.ends_with(']')))
+            return;
+        
+        std::string typeName = std::string(arrayType.begin() + 1, arrayType.end() - 1);
         typeName.pop_back();
         flatbuffers::FlatBufferBuilder fbb;
         std::vector<::flatbuffers::Offset<mz::fb::Pin>> pins;
@@ -59,13 +86,14 @@ struct Disarray
 
     void Reset()
     {
-        type = {};
+        type = MZN_VOID;
         flatbuffers::FlatBufferBuilder fbb;
         std::vector<::flatbuffers::Offset<mz::fb::Pin>> pins = {
             fb::CreatePinDirect(fbb, &input, "Input",  "mz.fb.Void", fb::ShowAs::INPUT_PIN, fb::CanShowAs::INPUT_PIN_OR_PROPERTY),
         };
         mzEngine.HandleEvent(CreateAppEvent(fbb, mz::CreatePartialNodeUpdateDirect(fbb, &id, ClearFlags::ANY, 0, &pins)));
     }
+    
 };
 
 void RegisterDisarray(mzNodeFunctions* fn)
@@ -90,29 +118,46 @@ void RegisterDisarray(mzNodeFunctions* fn)
 	fn->ExecuteNode = [](void* ctx, const mzNodeExecuteArgs* args) -> mzResult 
     {
         auto c = (Disarray*)ctx;
+        if(MZN_VOID == c->type)
+            return MZ_RESULT_SUCCESS;
         auto pins = NodeExecuteArgs(args);
-        auto vec = flatbuffers::GetRoot<flatbuffers::Vector<u8>>(pins[MZN_Input].Buf.Data);
-        c->SetOutputs(vec->size());
+
+        mzTypeInfo info = {};
+        mzEngine.GetTypeInfo(c->type, &info);
+        auto input = pins[MZN_Input].Buf.Data;
+        switch(info.BaseType)
+        {
+            case MZ_BASE_TYPE_ARRAY:
+                c->SetOutputs(flatbuffers::GetRoot<flatbuffers::Vector<u8>>(input)->size());
+                break;
+            case MZ_BASE_TYPE_STRUCT:
+                c->SetOutputs(&info);
+                break;
+            default:
+                c->Reset();
+        }
         return MZ_RESULT_SUCCESS;
 	};
 
-
     fn->OnPinValueChanged = [](void* ctx, mzName pinName, mzBuffer* value)
     {
-
         auto c = (Disarray*)ctx;
-        if(pinName != MZN_Input || !c->type)
+        if(pinName != MZN_Input || MZN_VOID == c->type)
             return;
 
         mzTypeInfo info = {};
-        mzEngine.GetTypeInfo(*c->type, &info);
-        if (info.BaseType != MZ_BASE_TYPE_ARRAY)
+        mzEngine.GetTypeInfo(c->type, &info);
+        switch(info.BaseType)
         {
-            c->Reset();
-            return;
+            case MZ_BASE_TYPE_ARRAY:
+                c->SetOutputs(flatbuffers::GetRoot<flatbuffers::Vector<u8>>(value->Data)->size());
+                break;
+            case MZ_BASE_TYPE_STRUCT:
+                c->SetOutputs(&info);
+                break;
+            default:
+                c->Reset();
         }
-        auto vec = flatbuffers::GetRoot<flatbuffers::Vector<u8>>(value->Data);
-        c->SetOutputs(vec->size());
     };
 
     fn->OnPinConnected = [](void* ctx, mzName pinName, mzUUID connector)
@@ -124,12 +169,13 @@ void RegisterDisarray(mzNodeFunctions* fn)
         
         mzTypeInfo info = {};
         mzEngine.GetPinType(connector, &info);
-        if (info.BaseType != MZ_BASE_TYPE_ARRAY)
+        if (info.BaseType != MZ_BASE_TYPE_ARRAY && info.BaseType != MZ_BASE_TYPE_STRUCT)
         {
             c->Reset();
             return;
         }
-        if (!c->type)
+
+        if (MZN_VOID == c->type)
         {
             c->type = info.TypeName;
             flatbuffers::FlatBufferBuilder fbb;
