@@ -1,4 +1,4 @@
-#include <MediaZ/Helpers.hpp>
+#include "TypeCommon.h"
 
 namespace mz::utilities
 {
@@ -36,7 +36,9 @@ struct Disarray
     {
         if(structdef->BaseType != MZ_BASE_TYPE_STRUCT) 
             return;
-        
+        if(outputs.size() == structdef->FieldCount)
+            return;
+
         flatbuffers::FlatBufferBuilder fbb;
         std::vector<::flatbuffers::Offset<mz::fb::Pin>> pins;
         std::vector<fb::UUID> deleted = std::move(outputs);
@@ -65,7 +67,6 @@ struct Disarray
             return;
         
         std::string typeName = std::string(arrayType.begin() + 1, arrayType.end() - 1);
-        typeName.pop_back();
         flatbuffers::FlatBufferBuilder fbb;
         std::vector<::flatbuffers::Offset<mz::fb::Pin>> pins;
         std::vector<fb::UUID> deleted;
@@ -128,10 +129,50 @@ void RegisterDisarray(mzNodeFunctions* fn)
         switch(info.BaseType)
         {
             case MZ_BASE_TYPE_ARRAY:
-                c->SetOutputs(flatbuffers::GetRoot<flatbuffers::Vector<u8>>(input)->size());
+                {
+                    auto vec  = flatbuffers::GetRoot<flatbuffers::Vector<u8>>(input);
+                    auto vect = flatbuffers::GetRoot<flatbuffers::Vector<flatbuffers::Offset<flatbuffers::Table>>>(input);
+                    c->SetOutputs(vec->size());
+                    if(!input) break;
+                    for(int i = 0; i < vec->size(); ++i)
+                    {
+                        if(info.ElementType->ByteSize)
+                        {
+                            auto data = vec->data() + i * info.ElementType->ByteSize;
+                            mzEngine.SetPinValue(c->outputs[i], { (void*)data, info.ElementType->ByteSize });
+                        }
+                        else
+                        {
+                            flatbuffers::FlatBufferBuilder fbb;
+                            fbb.Finish(flatbuffers::Offset<flatbuffers::Table>(CopyTable(fbb, info.ElementType, vect->Get(i))));
+                            mz::Buffer buf = fbb.Release();
+                            mzEngine.SetPinValue(c->outputs[i], {(void*)buf.data(), buf.size()});
+                        }
+                    }
+                }
                 break;
             case MZ_BASE_TYPE_STRUCT:
                 c->SetOutputs(&info);
+                if(!input) break;
+                {
+                    auto root = flatbuffers::GetRoot<flatbuffers::Table>(input);
+                    for (int i = 0; i < info.FieldCount; ++i)
+                    {
+                        auto& field = info.Fields[i];
+                        if(!field.Type->ByteSize)
+                        {
+                            flatbuffers::FlatBufferBuilder fbb;
+                            fbb.Finish(flatbuffers::Offset<flatbuffers::Table>(CopyTable(fbb, field.Type, root->GetPointer<flatbuffers::Table*>(field.Offset))));
+                            mz::Buffer buf = fbb.Release();
+                            mzEngine.SetPinValue(c->outputs[i], {(void*)buf.data(), buf.size()});
+                        }
+                        else
+                        {
+                            auto data = root->GetStruct<u8*>(field.Offset);
+                            mzEngine.SetPinValue(c->outputs[i], { (void*)data, field.Type->ByteSize });
+                        }
+                    }
+                }
                 break;
             default:
                 c->Reset();
@@ -150,7 +191,7 @@ void RegisterDisarray(mzNodeFunctions* fn)
         switch(info.BaseType)
         {
             case MZ_BASE_TYPE_ARRAY:
-                c->SetOutputs(flatbuffers::GetRoot<flatbuffers::Vector<u8>>(value->Data)->size());
+                c->SetOutputs(value->Data ? flatbuffers::GetRoot<flatbuffers::Vector<u8>>(value->Data)->size() : 0);
                 break;
             case MZ_BASE_TYPE_STRUCT:
                 c->SetOutputs(&info);
