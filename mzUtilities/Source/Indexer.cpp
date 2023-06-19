@@ -1,10 +1,11 @@
-#include <MediaZ/Helpers.hpp>
+#include "TypeCommon.h"
 
 namespace mz::utilities
 {
 
 MZ_REGISTER_NAME_SPACED(Indexer, "mz.utilities.Indexer")
 MZ_REGISTER_NAME(Input);
+MZ_REGISTER_NAME(Output);
 MZ_REGISTER_NAME(Index);
 MZ_REGISTER_NAME_SPACED(VOID, "mz.fb.Void");
 
@@ -108,7 +109,27 @@ void RegisterIndexer(mzNodeFunctions* fn)
 
         auto pins = NodeExecuteArgs(args);
         auto vec = flatbuffers::GetRoot<flatbuffers::Vector<u8>>(pins[MZN_Input].Buf.Data);
-        //c->SetOutputs(vec->size());
+        c->Index = *(u32*)pins[MZN_Index].Buf.Data;
+        c->ArraySize = vec->size();
+        if(c->Index < c->ArraySize)
+        {
+            mzTypeInfo info = {};
+            mzEngine.GetTypeInfo(c->type, &info);
+            auto ID = pins[MZN_Output].ID;
+            if (info.ElementType->ByteSize)
+            {
+                auto data = vec->data() + c->Index * info.ElementType->ByteSize;
+                mzEngine.SetPinValue(ID, { (void*)data, info.ElementType->ByteSize });
+            }
+            else
+            {
+                flatbuffers::FlatBufferBuilder fbb;
+                auto vect = flatbuffers::GetRoot<flatbuffers::Vector<flatbuffers::Offset<flatbuffers::Table>>>(pins[MZN_Input].Buf.Data);
+                fbb.Finish(flatbuffers::Offset<flatbuffers::Table>(CopyTable(fbb, info.ElementType, vect->Get(c->Index))));
+                mz::Buffer buf = fbb.Release();
+                mzEngine.SetPinValue(ID, { (void*)buf.data(), buf.size() });
+            }
+        }
         return MZ_RESULT_SUCCESS;
 	};
 
