@@ -23,13 +23,6 @@ static mzBuffer Blob2Buf(std::vector<u8> const& v)
     return { (void*)v.data(), v.size() }; 
 };
 
-static mz::fb::String256 Str256(std::string const &str)
-{
-    mz::fb::String256 re = {};
-    memcpy(re.mutable_val()->data(), str.data(), str.size());
-    return re;
-}
-
 static std::vector<std::pair<Name, std::vector<u8>>> shaders;
 
 struct AJA
@@ -123,17 +116,16 @@ struct AJA
 
         for (auto dev : AJADevice::Devices)
         {
-            const auto str256 = Str256(dev->GetDisplayName() + "-AJAOut-Reference-Source");
+            const auto str = dev->GetDisplayName() + "-AJAOut-Reference-Source";
             flatbuffers::FlatBufferBuilder fbb;
-            std::vector<mz::fb::String256> list = {Str256("Reference In"), Str256("Free Run")};
-
+            std::vector<std::string> list{"Reference In", "Free Run"};
             for (int i = 1; i <= NTV2DeviceGetNumVideoInputs(dev->ID); ++i)
             {
-                list.push_back(Str256("SDI In " + std::to_string(i)));
+                list.push_back("SDI In " + std::to_string(i));
             }
-
+            
             mzEngine.HandleEvent(CreateAppEvent(
-                fbb, mz::app::CreateUpdateStringList(fbb, mz::fb::CreateString256ListDirect(fbb, &str256, &list))));
+                fbb, mz::app::CreateUpdateStringList(fbb, mz::fb::CreateStringList(fbb, fbb.CreateString(str), fbb.CreateVectorOfStrings(list)))));
         }
 
         AJAClient *c = new AJAClient(isIn, dev);
