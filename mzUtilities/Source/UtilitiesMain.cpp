@@ -43,9 +43,6 @@ enum Utilities
 	Time,
 	ReadImage,
 	WriteImage,
-	Array,
-	Disarray,
-	Indexer,
 	Count
 };
 
@@ -96,9 +93,6 @@ MZAPI_ATTR mzResult MZAPI_CALL mzExportNodeFunctions(size_t* outSize, mzNodeFunc
     RegisterWriteImage(&funcs[Utilities::WriteImage]);
     RegisterChannelViewer(&funcs[Utilities::ChannelViewer]);
 	RegisterResize(&funcs[Utilities::Resize]);
-	RegisterArray(&funcs[Utilities::Array]);
-	RegisterDisarray(&funcs[Utilities::Disarray]);
-	RegisterIndexer(&funcs[Utilities::Indexer]);
 	return MZ_RESULT_SUCCESS;
 }
 }

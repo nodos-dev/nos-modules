@@ -20,8 +20,7 @@
         "TextureSwitcher.mzdef",
         "ChannelViewer.mzdef",
         "Time.mzdef",
-        "ImageIO.mzdef",
-        "Array.mzdef"
+        "ImageIO.mzdef"
     ],
     "custom_types": [
         "Merge.fbs",
@@ -113,21 +112,6 @@
             "category": "Utilities",
             "class_name": "Time",
             "display_name": "Time"
-        },
-        {
-            "category": "Type",
-            "class_name": "Array",
-            "display_name": "Array"
-        },
-        {
-            "category": "Type",
-            "class_name": "Disarray",
-            "display_name": "Disarray"
-        },
-        {
-            "category": "Type",
-            "class_name": "Indexer",
-            "display_name": "Indexer"
         }
     ]
 }
