@@ -62,11 +62,11 @@ jobs:
           gh release download ${{ github.event.inputs.mediaz_sdk_version }} --repo mediaz/mediaz --pattern "mediaZ-SDK-*.zip" --clobber
 
       - name: Download MediaZ SDK (Latest Stable)
+        shell: pwsh
         if: ${{  github.event_name != 'workflow_dispatch' || github.event.inputs.mediaz_sdk_version == '' }}
-        shell: bash
         run: |
-          release_tag=$(gh release list --repo mediaz/mediaz | grep -i stable | head -n 1 | awk '{print $1}')
-          gh release download $release_tag --repo mediaz/mediaz --pattern "mediaZ-SDK-*.zip" --clobber
+          $ReleaseTag = (gh release list --repo mediaz/mediaz | Select-String -Pattern 'stable' | Select-Object -First 1).Line.Split()[0]
+          gh release download $ReleaseTag --repo mediaz/mediaz --pattern "mediaZ-SDK-*.zip"
 
       - name: Unzip MediaZ SDK
         run: |
