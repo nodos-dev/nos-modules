@@ -66,7 +66,7 @@ jobs:
         shell: bash
         run: |
           release_tag=$(gh release list --repo mediaz/mediaz | grep -i stable | head -n 1 | awk '{print $1}')
-          gh release download --repo mediaz/mediaz --pattern "mediaZ-SDK-*.zip" --clobber
+          gh release download $release_tag --repo mediaz/mediaz --pattern "mediaZ-SDK-*.zip" --clobber
 
       - name: Unzip MediaZ SDK
         run: |
