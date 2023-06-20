@@ -59,6 +59,7 @@ jobs:
 
       - name: Download MediaZ SDK (Latest)
         if: ${{  github.event_name != 'workflow_dispatch' || github.event.inputs.mediaz_sdk_version == '' }}
+        shell: bash
         run: |
           gh auth login -h github.com
           release_tag=$(gh release list --repo mediaz/mediaz | grep -i stable | head -n 1 | awk '{print $1}')
