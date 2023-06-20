@@ -13,6 +13,10 @@ on:
         description: 'Build all plugins'
         required: false
         default: 'false'
+      mediaz_sdk_version:
+        description: 'MediaZ SDK Version'
+        required: false
+        default: ''
 
 env:
   BUILD_NUMBER: ${{ github.run_number }}
@@ -47,10 +51,21 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Get MediaZ SDK
+      - name: Download MediaZ SDK (Specific Version)
+        if: ${{  github.event_name == 'workflow_dispatch' && github.event.inputs.mediaz_sdk_version != '' }}
         run: |
           gh auth login -h github.com
-          gh release download --repo mediaz/mediaz --pattern 'mediaZ-SDK-*.zip'
+          gh release download ${{ github.event.inputs.mediaz_sdk_version }} --repo mediaz/mediaz --pattern "mediaZ-SDK-*.zip"
+
+      - name: Download MediaZ SDK (Latest)
+        if: ${{  github.event_name != 'workflow_dispatch' || github.event.inputs.mediaz_sdk_version == '' }}
+        run: |
+          gh auth login -h github.com
+          release_tag=$(gh release list --repo mediaz/mediaz | grep -i stable | head -n 1 | awk '{print $1}')
+          gh release download --repo mediaz/mediaz --pattern "mediaZ-SDK-*.zip"
+
+      - name: Unzip MediaZ SDK
+        run: |
           7z x mediaZ-SDK-*.zip -o${{ env.MZ_SDK_DIR }}
 
       - name: Configure
