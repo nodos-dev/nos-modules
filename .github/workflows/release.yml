@@ -51,11 +51,16 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
+      - name: Cleanup SDK files if any
+        run: |
+          Remove-Item -Recurse -Force -ErrorAction SilentlyContinue mediaZ-SDK*
+        shell: pwsh
+
       - name: Download MediaZ SDK (Specific Version)
         if: ${{  github.event_name == 'workflow_dispatch' && github.event.inputs.mediaz_sdk_version != '' }}
         run: |
           gh auth login -h github.com
-          gh release download ${{ github.event.inputs.mediaz_sdk_version }} --repo mediaz/mediaz --pattern "mediaZ-SDK-*.zip"
+          gh release download ${{ github.event.inputs.mediaz_sdk_version }} --repo mediaz/mediaz --pattern "mediaZ-SDK-*.zip" --clobber
 
       - name: Download MediaZ SDK (Latest)
         if: ${{  github.event_name != 'workflow_dispatch' || github.event.inputs.mediaz_sdk_version == '' }}
@@ -63,7 +68,7 @@ jobs:
         run: |
           gh auth login -h github.com
           release_tag=$(gh release list --repo mediaz/mediaz | grep -i stable | head -n 1 | awk '{print $1}')
-          gh release download --repo mediaz/mediaz --pattern "mediaZ-SDK-*.zip"
+          gh release download --repo mediaz/mediaz --pattern "mediaZ-SDK-*.zip" --clobber
 
       - name: Unzip MediaZ SDK
         run: |
