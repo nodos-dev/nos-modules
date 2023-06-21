@@ -74,6 +74,33 @@ def custom_run(args, dry_run):
     return run(args, env=os.environ.copy())
 
 
+def get_plugin_api_version():
+    sdk_dir = os.getenv("MZ_SDK_DIR")
+    if sdk_dir is None or sdk_dir == "":
+        logger.error("MZ_SDK_DIR is not set.")
+        exit(1)
+    mz_plugin_api_h = os.path.join(sdk_dir, "include", "MediaZ", "PluginAPI.h")
+    if not os.path.exists(mz_plugin_api_h):
+        logger.error("MZ_SDK_DIR is not set correctly.")
+        exit(1)
+    with open(mz_plugin_api_h, "r") as f:
+        major = None
+        minor = None
+        patch = None
+        for line in f.readlines():
+            # 👏👏👏
+            if line.startswith("#define MZ_PLUGIN_API_VERSION_MAJOR"):
+                major = int(line.split(" ")[-1])
+            if line.startswith("#define MZ_PLUGIN_API_VERSION_MINOR"):
+                minor = int(line.split(" ")[-1])
+            if line.startswith("#define MZ_PLUGIN_API_VERSION_PATCH"):
+                patch = int(line.split(" ")[-1])
+        if major is None or minor is None or patch is None:
+            logger.error("Failed to parse MZ_PLUGIN_API_VERSION")
+            exit(1)
+        return f"{major}.{minor}.{patch}"
+
+
 def make_release(args):
     logger.debug(f"Creating release zip for {args.release_target}")
     logger.info(f"Target: {args.release_target}")
@@ -135,6 +162,7 @@ def make_release(args):
 
 
 def upload_releases(repo_url, org_name, repo_name, cloned_release_repo, dry_run):
+    plugin_api_ver = get_plugin_api_version()
     repo_org_name = f"{org_name}/{repo_name}"
     # Collect zip files under "./Releases"
     zip_files = []
@@ -160,7 +188,7 @@ def upload_releases(repo_url, org_name, repo_name, cloned_release_repo, dry_run)
             with open(f"{plugin_name}/index.json", "r") as f:
                 index = json.load(f)
         release_zip_download_url = f"{repo_url}/releases/download/{tag}/{filename}"
-        index["releases"].insert(0, { "version": plugin_version, "url": release_zip_download_url })
+        index["releases"].insert(0, { "version": plugin_version, "url": release_zip_download_url, "plugin_api_version": plugin_api_ver })
         with open(f"{plugin_name}/index.json", "w") as f:
             json.dump(index, f, indent=4)
 
