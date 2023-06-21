@@ -98,7 +98,7 @@ def get_plugin_api_version():
         if major is None or minor is None or patch is None:
             logger.error("Failed to parse MZ_PLUGIN_API_VERSION")
             exit(1)
-        return f"{major}.{minor}.{patch}"
+        return {"major": major, "minor": minor, "patch": patch}
 
 
 def make_release(args):
