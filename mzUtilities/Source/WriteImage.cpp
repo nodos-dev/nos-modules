@@ -58,30 +58,38 @@ static mzResult GetFunctions(size_t* count, mzName* names, mzPfnNodeFunctionExec
     {
         auto values = GetPinValues(nodeArgs);
 		std::filesystem::path path = GetPinValue<const char>(values, MZN_Path);
-        path = std::filesystem::canonical(path);
+        
         if (!std::filesystem::is_directory(path.parent_path()))
         {
             mzEngine.LogE("Write Image cannot write to directory %s", path.parent_path().string().c_str());
             return;
         }
 		mzResourceShareInfo input = DeserializeTextureInfo(values[MZN_In]);
-        mzResourceShareInfo srgb = input;
-        srgb.Info.Texture.Format = MZ_FORMAT_R8G8B8A8_SRGB;
-        srgb.Info.Texture.Usage = MZ_IMAGE_USAGE_NONE;
-        mzEngine.Create(&srgb);
-        mzResourceShareInfo buf = {};
-        mzCmd cmd;
-        mzEngine.Begin(&cmd);
-        mzEngine.Blit(cmd, &input, &srgb);
-        mzEngine.Download(cmd, &srgb, &buf);
-        mzEngine.End(cmd);
 
-        if (auto buf2write = mzEngine.Map(&buf))
-            if (!stbi_write_png(path.string().c_str(), input.Info.Texture.Width, input.Info.Texture.Height, 4, buf2write, input.Info.Texture.Width * 4))
-                mzEngine.LogE("WriteImage: Unable to write frame to file", "");
+        struct Captures
+        {
+            mzResourceShareInfo srgb;
+            mzResourceShareInfo buf = {};
+            std::filesystem::path path;
+        }* captures = new Captures{.srgb=input,.path=std::move(path)};
+      
+        captures->srgb.Info.Texture.Format = MZ_FORMAT_R8G8B8A8_SRGB;
+        captures->srgb.Info.Texture.Usage = mzImageUsage(MZ_IMAGE_USAGE_TRANSFER_SRC | MZ_IMAGE_USAGE_TRANSFER_DST);
+        mzEngine.Create(&captures->srgb);
 
-        mzEngine.Destroy(&buf);
-        mzEngine.Destroy(&srgb);
+        mzEngine.Blit(0, &input, &captures->srgb);
+        mzEngine.Download(0, &captures->srgb, &captures->buf);
+
+        mzEngine.RegisterCommandFinishedCallback(0, captures, [](void* data) {
+            auto captures = (Captures*)data;
+            if (auto buf2write = mzEngine.Map(&captures->buf))
+                if (!stbi_write_png(captures->path.string().c_str(), captures->srgb.Info.Texture.Width, captures->srgb.Info.Texture.Height, 4, buf2write, captures->srgb.Info.Texture.Width * 4))
+                    mzEngine.LogE("WriteImage: Unable to write frame to file", "");
+            mzEngine.Destroy(&captures->buf);
+            mzEngine.Destroy(&captures->srgb);
+            delete captures;
+        });
+
     };
     
     return MZ_RESULT_SUCCESS;
