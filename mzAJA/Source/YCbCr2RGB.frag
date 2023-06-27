@@ -16,8 +16,11 @@ void main()
     const vec2 Size        = textureSize(Source, 0);
     const vec2 InvSize     = 1.0 / Size;
     const bool OddLine     = 0 != (uint(gl_FragCoord.y) & 1);
-	vec2 uv0 = uv;
-    
+    const bool OddColumn   = 0 != (uint(gl_FragCoord.x) & 1);
+
+	vec2 uv0 = gl_FragCoord.xy * InvSize * vec2(0.5,1);
+    //uv0 += InvSize * vec2(1, 0.5);
+
     if(OddFrame) uv0.y -= InvSize.y;
     
     float X = fract(floor(uv0.x * Size.x * 2.0) / 2.0);
@@ -25,11 +28,11 @@ void main()
 
     if(!(X > 0.0))
     {
-        rt = SDR_In_8(uvec3(C0.gbr * 255));
+        rt = SDR_In_8(uvec3((OddColumn ? C0.gbr : C0.abr) * 255));
         return;
     }
     
-    vec2 uv1 = uv0 + vec2(InvSize.x, 0);
+    vec2 uv1 = (gl_FragCoord.xy + vec2(1, 0)) * InvSize * vec2(0.5,1);
     vec4 C2 = texture(Source, uv1).bgra / 255.0;
 
     const float Y0 = C0.g;
