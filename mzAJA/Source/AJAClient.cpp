@@ -888,13 +888,9 @@ bool AJAClient::BeginCopyTo(mzCopyInfo &cpy)
 	if ((slot = th->gpuRing->TryPush()))
 	{
 		slot->FrameNumber = cpy.FrameNumber;
-		if (-1 != *cpy.PathState)
-		{
-            // slot->Res->mutate_field_type(fb::FieldType(*cpy.PathState));
-		}
-
         cpy.CopyTextureFrom = DeserializeTextureInfo(cpy.SrcPinData.Data);
         cpy.CopyTextureTo = slot->Res;
+		cpy.ShouldSubmitAndWait = true;
 	}
     return cpy.ShouldCopyTexture = !!(cpy.Data = slot);
 }
