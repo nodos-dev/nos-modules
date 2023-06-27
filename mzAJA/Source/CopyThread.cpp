@@ -472,21 +472,45 @@ void CopyThread::AJAOutputProc()
     } while (run && !cpuRing->Exit && !cpuRing->IsFull());
 
     u32 FB = 0;
-    u32 prev;
     SetFrame(FB);
-    client->Device->WaitForOutputVerticalInterrupt(Channel);
-    client->Device->GetOutputVerticalInterruptCount(prev, Channel);
-    client->Device->WaitForOutputVerticalInterrupt(Channel);
+
+    DropCount = 0;
+	u32 framesSinceLastDrop = 0;
 
     while (run && !cpuRing->Exit)
     {
-
 		if (!(client->Device->WaitForOutputVerticalInterrupt(Channel)))
 			break;
 
-        if (auto res = cpuRing->BeginPop())
+        ULWord lastVBLCount;
+		client->Device->GetOutputVerticalInterruptCount(lastVBLCount, Channel);
+
+		if (auto res = cpuRing->BeginPop())
         {
-            u32 FieldIdx = 0;
+			ULWord vblCount;
+			client->Device->GetOutputVerticalInterruptCount(vblCount, Channel);
+			
+            if (vblCount != lastVBLCount)
+            {
+				framesSinceLastDrop = 0;
+				DropCount += vblCount - lastVBLCount;
+            }
+			else
+			{
+				if (++framesSinceLastDrop == 50)
+				{
+					flatbuffers::FlatBufferBuilder fbb;
+					auto id = client->GetPinId(mz::Name(Name()));
+					UByteSequence byteBuffer = Buffer::From(gpuRing->Size);
+					mzEngine.HandleEvent(CreateAppEvent(fbb, app::CreateExecutePathCommandDirect(fbb,
+																		   &id,
+																		   app::PathCommand::RESTART,
+																		   app::PathCommandType::WALKBACK,
+																		   &byteBuffer)));
+				}
+			}
+
+			u32 FieldIdx = 0;
             if (Interlaced())
             {
                 NTV2FieldID field = NTV2_FIELD0;
