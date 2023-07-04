@@ -25,9 +25,9 @@ MZ_INIT();
 namespace mz::utilities
 {
 
-enum Utilities
+enum Utilities : int
 {
-	Checkerboard,
+	Checkerboard = 0,
 	Color,
 	Gradient,
 	Offset,
@@ -52,47 +52,56 @@ void RegisterReadImage(mzNodeFunctions*);
 void RegisterWriteImage(mzNodeFunctions*);
 void RegisterChannelViewer(mzNodeFunctions*);
 void RegisterResize(mzNodeFunctions*);
-void RegisterArray(mzNodeFunctions* fn);
-void RegisterDisarray(mzNodeFunctions* fn);
-void RegisterIndexer(mzNodeFunctions* fn);
 
 extern "C"
 {
 
-MZAPI_ATTR mzResult MZAPI_CALL mzExportNodeFunctions(size_t* outSize, mzNodeFunctions* funcs)
+MZAPI_ATTR mzResult MZAPI_CALL mzExportNodeFunctions(size_t* outSize, mzNodeFunctions* outList)
 {
     *outSize = Utilities::Count;
-	if (!funcs)
+	if (!outList)
 	{
 		return MZ_RESULT_SUCCESS;
 	}
 
-#define REGISTER_FILTER(name) \
-    funcs[Utilities::##name] = mzNodeFunctions{ \
-        .TypeName = MZ_NAME_STATIC("mz.utilities." #name), \
-        .GetShaderSource = [](mzBuffer* spirv) { \
-				*spirv = { (void*)(name##_frag_spv), sizeof (name##_frag_spv) }; \
-				return MZ_RESULT_SUCCESS; \
-			},\
-    };
+#define GEN_CASE_GPU_NODE(name)                                     \
+	case Utilities::name: {                                         \
+			node->TypeName = MZ_NAME_STATIC("mz.utilities." #name); \
+			node->GetShaderSource = [](mzBuffer* spirv) {           \
+				*spirv = {(void*)(name##_frag_spv),                 \
+						sizeof(name##_frag_spv)};                   \
+				return MZ_RESULT_SUCCESS;                           \
+			};                                                      \
+			break;                                                  \
+	}
+#define GEN_CASE_CPU_NODE(name) \
+	case Utilities::name: {     \
+            Register##name(node);\
+			break;              \
+	}
 
-    REGISTER_FILTER(Checkerboard);
-    REGISTER_FILTER(Color);
-    REGISTER_FILTER(Gradient);
-    REGISTER_FILTER(Offset);
-    REGISTER_FILTER(QuadMerge);
-    REGISTER_FILTER(SevenSegment);
-    REGISTER_FILTER(Distort);
-    REGISTER_FILTER(Undistort);
-    REGISTER_FILTER(Swizzle);
-    REGISTER_FILTER(TextureSwitcher);
-
-    RegisterMerge(&funcs[Utilities::Merge]);
-    RegisterTime(&funcs[Utilities::Time]);
-    RegisterReadImage(&funcs[Utilities::ReadImage]);
-    RegisterWriteImage(&funcs[Utilities::WriteImage]);
-    RegisterChannelViewer(&funcs[Utilities::ChannelViewer]);
-	RegisterResize(&funcs[Utilities::Resize]);
+	auto* node = outList;
+	int i = 0;
+	do {
+		switch ((Utilities)i++) {
+			GEN_CASE_GPU_NODE(Checkerboard)
+			GEN_CASE_GPU_NODE(Color)
+			GEN_CASE_GPU_NODE(Gradient)
+			GEN_CASE_GPU_NODE(Offset)
+			GEN_CASE_GPU_NODE(QuadMerge)
+			GEN_CASE_GPU_NODE(SevenSegment)
+			GEN_CASE_GPU_NODE(Distort)
+			GEN_CASE_GPU_NODE(Undistort)
+			GEN_CASE_GPU_NODE(Swizzle)
+			GEN_CASE_GPU_NODE(TextureSwitcher)
+			GEN_CASE_CPU_NODE(Merge)
+			GEN_CASE_CPU_NODE(Time)
+			GEN_CASE_CPU_NODE(ReadImage)
+			GEN_CASE_CPU_NODE(WriteImage)
+			GEN_CASE_CPU_NODE(ChannelViewer)
+			GEN_CASE_CPU_NODE(Resize)
+		};
+	} while (node = node->Next);
 	return MZ_RESULT_SUCCESS;
 }
 }

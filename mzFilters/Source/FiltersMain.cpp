@@ -25,28 +25,18 @@ MZ_INIT();
 namespace mz::filters
 {
 
-enum Filters
+enum Filters : int
 {
-	ColorCorrect,
-	// Done
+	ColorCorrect = 0,
 	Diff,
-	// Done
 	Kuwahara,
-	// Done
 	GaussianBlur,
-	// Done
 	KawaseLightStreak,
-	// Done
 	PremultiplyAlpha,
-	// Done
 	Sharpen,
-	// Done
 	Sobel,
-	// Done
 	Thresholder,
-	// Done
 	Sampler,
-	// Done
 	Count
 };
 
@@ -56,22 +46,23 @@ enum Filters
 extern "C"
 {
 
-MZAPI_ATTR mzResult MZAPI_CALL mzExportNodeFunctions(size_t* outSize, mzNodeFunctions* outFunctions)
+MZAPI_ATTR mzResult MZAPI_CALL mzExportNodeFunctions(size_t* outSize, mzNodeFunctions* outList)
 {
-	if (!outFunctions)
+	if (!outList)
 	{
 		*outSize = Filters::Count;
 		return MZ_RESULT_SUCCESS;
 	}
-	for (size_t i = 0; i < Filters::Count; ++i)
+	auto* node = outList;
+	int i = 0;
+	do
 	{
-		auto* funcs = &outFunctions[i];
-		switch ((Filters)i)
+		switch ((Filters)i++)
 		{
 		// COLOR CORRECT FILTER
 		case Filters::ColorCorrect: {
-			funcs->TypeName = MZ_NAME_STATIC("mz.filters.ColorCorrect");
-			funcs->GetShaderSource = [](mzBuffer* outSpirvBuf) -> mzResult {
+			node->TypeName = MZ_NAME_STATIC("mz.filters.ColorCorrect");
+			node->GetShaderSource = [](mzBuffer* outSpirvBuf) -> mzResult {
 				outSpirvBuf->Data = (void*)(ColorCorrect_frag_spv);
 				outSpirvBuf->Size = sizeof(ColorCorrect_frag_spv);
 				return MZ_RESULT_SUCCESS;
@@ -80,8 +71,8 @@ MZAPI_ATTR mzResult MZAPI_CALL mzExportNodeFunctions(size_t* outSize, mzNodeFunc
 		}
 		// DIFF FILTER
 		case Filters::Diff: {
-			funcs->TypeName = MZ_NAME_STATIC("mz.filters.Diff");
-			funcs->GetShaderSource = [](mzBuffer* outSpirvBuf) -> mzResult {
+			node->TypeName = MZ_NAME_STATIC("mz.filters.Diff");
+			node->GetShaderSource = [](mzBuffer* outSpirvBuf) -> mzResult {
 				outSpirvBuf->Data = (void*)(Diff_frag_spv);
 				outSpirvBuf->Size = sizeof(Diff_frag_spv);
 				return MZ_RESULT_SUCCESS;
@@ -90,8 +81,8 @@ MZAPI_ATTR mzResult MZAPI_CALL mzExportNodeFunctions(size_t* outSize, mzNodeFunc
 		}
 		// KUWAHARA FILTER
 		case Filters::Kuwahara: {
-			funcs->TypeName = MZ_NAME_STATIC("mz.filters.Kuwahara");
-			funcs->GetShaderSource = [](mzBuffer* outSpirvBuf) -> mzResult {
+			node->TypeName = MZ_NAME_STATIC("mz.filters.Kuwahara");
+			node->GetShaderSource = [](mzBuffer* outSpirvBuf) -> mzResult {
 				outSpirvBuf->Data = (void*)(Kuwahara_frag_spv);
 				outSpirvBuf->Size = sizeof(Kuwahara_frag_spv);
 				return MZ_RESULT_SUCCESS;
@@ -100,14 +91,13 @@ MZAPI_ATTR mzResult MZAPI_CALL mzExportNodeFunctions(size_t* outSize, mzNodeFunc
 		}
 		// GAUSSIAN BLUR FILTER
 		case Filters::GaussianBlur: {
-
-			RegisterGaussianBlur(funcs);
+			RegisterGaussianBlur(node);
 			break;
 		}
 		// MERGE FILTER
 		case Filters::KawaseLightStreak: {
-			funcs->TypeName = MZ_NAME_STATIC("mz.filters.KawaseLightStreak");
-			funcs->GetShaderSource = [](mzBuffer* outSpirvBuf)-> mzResult {
+			node->TypeName = MZ_NAME_STATIC("mz.filters.KawaseLightStreak");
+			node->GetShaderSource = [](mzBuffer* outSpirvBuf)-> mzResult {
 				outSpirvBuf->Data = (void*)(KawaseLightStreak_frag_spv);
 				outSpirvBuf->Size = sizeof(KawaseLightStreak_frag_spv);
 				return MZ_RESULT_SUCCESS;
@@ -116,8 +106,8 @@ MZAPI_ATTR mzResult MZAPI_CALL mzExportNodeFunctions(size_t* outSize, mzNodeFunc
 		}
 		// PREMULTIPLY ALPHA FILTER
 		case Filters::PremultiplyAlpha: {
-			funcs->TypeName = MZ_NAME_STATIC("mz.filters.PremultiplyAlpha");
-			funcs->GetShaderSource = [](mzBuffer* outSpirvBuf)-> mzResult {
+			node->TypeName = MZ_NAME_STATIC("mz.filters.PremultiplyAlpha");
+			node->GetShaderSource = [](mzBuffer* outSpirvBuf)-> mzResult {
 				outSpirvBuf->Data = (void*)(PremultiplyAlpha_frag_spv);
 				outSpirvBuf->Size = sizeof(PremultiplyAlpha_frag_spv);
 				return MZ_RESULT_SUCCESS;
@@ -126,8 +116,8 @@ MZAPI_ATTR mzResult MZAPI_CALL mzExportNodeFunctions(size_t* outSize, mzNodeFunc
 		}
 		// SHARPEN FILTER
 		case Filters::Sharpen: {
-			funcs->TypeName = MZ_NAME_STATIC("mz.filters.Sharpen");
-			funcs->GetShaderSource = [](mzBuffer* outSpirvBuf)-> mzResult {
+			node->TypeName = MZ_NAME_STATIC("mz.filters.Sharpen");
+			node->GetShaderSource = [](mzBuffer* outSpirvBuf)-> mzResult {
 				outSpirvBuf->Data = (void*)(Sharpen_frag_spv);
 				outSpirvBuf->Size = sizeof(Sharpen_frag_spv);
 				return MZ_RESULT_SUCCESS;
@@ -136,8 +126,8 @@ MZAPI_ATTR mzResult MZAPI_CALL mzExportNodeFunctions(size_t* outSize, mzNodeFunc
 		}
 		// SOBEL FILTER
 		case Filters::Sobel: {
-			funcs->TypeName = MZ_NAME_STATIC("mz.filters.Sobel");
-			funcs->GetShaderSource = [](mzBuffer* outSpirvBuf)-> mzResult {
+			node->TypeName = MZ_NAME_STATIC("mz.filters.Sobel");
+			node->GetShaderSource = [](mzBuffer* outSpirvBuf)-> mzResult {
 				outSpirvBuf->Data = (void*)(Sobel_frag_spv);
 				outSpirvBuf->Size = sizeof(Sobel_frag_spv);
 				return MZ_RESULT_SUCCESS;
@@ -146,8 +136,8 @@ MZAPI_ATTR mzResult MZAPI_CALL mzExportNodeFunctions(size_t* outSize, mzNodeFunc
 		}
 		// THRESHOLDER FILTER
 		case Filters::Thresholder: {
-			funcs->TypeName = MZ_NAME_STATIC("mz.filters.Thresholder");
-			funcs->GetShaderSource = [](mzBuffer* outSpirvBuf)-> mzResult {
+			node->TypeName = MZ_NAME_STATIC("mz.filters.Thresholder");
+			node->GetShaderSource = [](mzBuffer* outSpirvBuf)-> mzResult {
 				outSpirvBuf->Data = (void*)(Thresholder_frag_spv);
 				outSpirvBuf->Size = sizeof(Thresholder_frag_spv);
 				return MZ_RESULT_SUCCESS;
@@ -156,8 +146,8 @@ MZAPI_ATTR mzResult MZAPI_CALL mzExportNodeFunctions(size_t* outSize, mzNodeFunc
 		}
 		// SAMPLER FILTER
 		case Filters::Sampler: {
-			funcs->TypeName = MZ_NAME_STATIC("mz.filters.Sampler");
-			funcs->GetShaderSource = [](mzBuffer* outSpirvBuf)-> mzResult {
+			node->TypeName = MZ_NAME_STATIC("mz.filters.Sampler");
+			node->GetShaderSource = [](mzBuffer* outSpirvBuf)-> mzResult {
 				outSpirvBuf->Data = (void*)(Sampler_frag_spv);
 				outSpirvBuf->Size = sizeof(Sampler_frag_spv);
 				return MZ_RESULT_SUCCESS;
@@ -166,7 +156,7 @@ MZAPI_ATTR mzResult MZAPI_CALL mzExportNodeFunctions(size_t* outSize, mzNodeFunc
 		}
 		default: break;
 		}
-	}
+	} while (node = node->Next);
 	return MZ_RESULT_SUCCESS;
 }
 }

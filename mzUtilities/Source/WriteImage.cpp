@@ -59,37 +59,43 @@ static mzResult GetFunctions(size_t* count, mzName* names, mzPfnNodeFunctionExec
         auto values = GetPinValues(nodeArgs);
 		std::filesystem::path path = GetPinValue<const char>(values, MZN_Path);
         
-        if (!std::filesystem::is_directory(path.parent_path()))
-        {
-            mzEngine.LogE("Write Image cannot write to directory %s", path.parent_path().string().c_str());
-            return;
-        }
+        try {
+            if (!std::filesystem::exists(path) || std::filesystem::is_directory(path))
+            {
+                mzEngine.LogE("Write Image cannot write to path %s", path.string().c_str());
+                return;
+            }
+        } catch (std::filesystem::filesystem_error& e) {
+			mzEngine.LogE("Error checking path %s: %s", path.string().c_str(), e.what());
+			return;
+		}
 		mzResourceShareInfo input = DeserializeTextureInfo(values[MZN_In]);
 
         struct Captures
         {
-            mzResourceShareInfo srgb;
-            mzResourceShareInfo buf = {};
-            std::filesystem::path path;
-        }* captures = new Captures{.srgb=input,.path=std::move(path)};
+            mzResourceShareInfo SRGB;
+            mzResourceShareInfo Buf = {};
+            std::filesystem::path Path;
+        }* captures = new Captures{.SRGB=input,.Path=std::move(path)};
       
-        captures->srgb.Info.Texture.Format = MZ_FORMAT_R8G8B8A8_SRGB;
-        captures->srgb.Info.Texture.Usage = mzImageUsage(MZ_IMAGE_USAGE_TRANSFER_SRC | MZ_IMAGE_USAGE_TRANSFER_DST);
-        mzEngine.Create(&captures->srgb);
+        captures->SRGB.Info.Texture.Format = MZ_FORMAT_R8G8B8A8_SRGB;
+        captures->SRGB.Info.Texture.Usage = mzImageUsage(MZ_IMAGE_USAGE_TRANSFER_SRC | MZ_IMAGE_USAGE_TRANSFER_DST);
+        mzEngine.Create(&captures->SRGB);
 
-        mzEngine.Blit(0, &input, &captures->srgb);
-        mzEngine.Download(0, &captures->srgb, &captures->buf);
+        mzEngine.Blit(0, &input, &captures->SRGB);
+        mzEngine.Download(0, &captures->SRGB, &captures->Buf);
 
         mzEngine.RegisterCommandFinishedCallback(0, captures, [](void* data) {
             auto captures = (Captures*)data;
-            if (auto buf2write = mzEngine.Map(&captures->buf))
-                if (!stbi_write_png(captures->path.string().c_str(), captures->srgb.Info.Texture.Width, captures->srgb.Info.Texture.Height, 4, buf2write, captures->srgb.Info.Texture.Width * 4))
+            if (auto buf2write = mzEngine.Map(&captures->Buf))
+                if (!stbi_write_png(captures->Path.string().c_str(), captures->SRGB.Info.Texture.Width, captures->SRGB.Info.Texture.Height, 4, buf2write, captures->SRGB.Info.Texture.Width * 4))
                     mzEngine.LogE("WriteImage: Unable to write frame to file", "");
-            mzEngine.Destroy(&captures->buf);
-            mzEngine.Destroy(&captures->srgb);
+                else 
+                    mzEngine.LogI("WriteImage: Wrote frame to file %s", captures->Path.string().c_str());
+            mzEngine.Destroy(&captures->Buf);
+            mzEngine.Destroy(&captures->SRGB);
             delete captures;
         });
-
     };
     
     return MZ_RESULT_SUCCESS;
@@ -97,12 +103,10 @@ static mzResult GetFunctions(size_t* count, mzName* names, mzPfnNodeFunctionExec
 
 void RegisterWriteImage(mzNodeFunctions* fn)
 {
-    *fn = {
-		.TypeName = MZN_Mz_Utilities_WriteImage,
-        .GetFunctions = GetFunctions,
-        .GetShaders = GetShaders,
-        .GetPasses = GetPasses,
-    };
+	fn->TypeName = MZN_Mz_Utilities_WriteImage;
+    fn->GetFunctions = GetFunctions;
+    fn->GetShaders = GetShaders;
+    fn->GetPasses = GetPasses;
 }
 
 } // namespace mz

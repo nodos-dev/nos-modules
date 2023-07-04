@@ -23,17 +23,17 @@ static mzBuffer Blob2Buf(std::vector<u8> const& v)
     return { (void*)v.data(), v.size() }; 
 };
 
-static std::vector<std::pair<Name, std::vector<u8>>> shaders;
+static std::vector<std::pair<Name, std::vector<u8>>> GShaders;
 
 struct AJA
 {
     static mzResult GetShaders(size_t* outCount, mzName* names, mzBuffer* outSpirvBufs)
     {
-        *outCount = shaders.size();
+        *outCount = GShaders.size();
         if(!outSpirvBufs) 
             return MZ_RESULT_SUCCESS;
 
-        for (auto& [name, spirv] : shaders)
+        for (auto& [name, spirv] : GShaders)
         {
             *(names++) = name;
             *(outSpirvBufs++) = { spirv.data(), spirv.size() };
@@ -251,10 +251,10 @@ struct AJA
             for (auto& p : c->Pins)
                 p->Stop();
    
-        shaders[0] = {MZN_AJA_RGB2YCbCr_Compute_Shader, YCbCr2RGBComp};
-		shaders[1] = {MZN_AJA_YCbCr2RGB_Compute_Shader, RGB2YCbCrComp};
-		shaders[2] = {MZN_AJA_RGB2YCbCr_Shader, RGB2YCbCrFrag};
-		shaders[3] = {MZN_AJA_YCbCr2RGB_Shader, YCbCr2RGBFrag};
+        GShaders[0] = {MZN_AJA_RGB2YCbCr_Compute_Shader, YCbCr2RGBComp};
+        GShaders[1] = {MZN_AJA_YCbCr2RGB_Compute_Shader, RGB2YCbCrComp};
+        GShaders[2] = {MZN_AJA_RGB2YCbCr_Shader, RGB2YCbCrFrag};
+        GShaders[3] = {MZN_AJA_YCbCr2RGB_Shader, YCbCr2RGBFrag};
         
         mzEngine.ReloadShaders(((AJAClient*)ctx)->Input ? MZN_AJA_AJAIn : MZN_AJA_AJAOut);
                  
@@ -395,38 +395,36 @@ struct AJA
 extern "C"
 {
 
-MZAPI_ATTR mzResult MZAPI_CALL mzExportNodeFunctions(size_t* outSize, mzNodeFunctions* outFunctions)
+MZAPI_ATTR mzResult MZAPI_CALL mzExportNodeFunctions(size_t* outSize, mzNodeFunctions* outList)
 {
     *outSize = 2;
-    if (!outFunctions)
+    if (!outList)
         return MZ_RESULT_SUCCESS;
+    auto* ajaIn = outList;
+    auto* ajaOut = ajaIn->Next;
+    ajaIn->TypeName = MZN_AJA_AJAIn;
+    ajaOut->TypeName = MZN_AJA_AJAOut;
+    ajaIn->CanCreateNode = ajaOut->CanCreateNode = AJA::CanCreateNode;
+    ajaIn->OnNodeCreated = ajaOut->OnNodeCreated = AJA::OnNodeCreated;
+    ajaIn->OnNodeUpdated = ajaOut->OnNodeUpdated = AJA::OnNodeUpdated;
+    ajaIn->OnNodeDeleted = ajaOut->OnNodeDeleted = AJA::OnNodeDeleted;
+    ajaIn->OnPinValueChanged = ajaOut->OnPinValueChanged = AJA::OnPinValueChanged;
+    ajaIn->OnPathCommand = ajaOut->OnPathCommand = AJA::OnPathCommand;
+    ajaIn->GetFunctions = ajaOut->GetFunctions = AJA::GetFunctions;
+    ajaIn->ExecuteNode = ajaOut->ExecuteNode = AJA::ExecuteNode;
+    ajaIn->CanCopy = ajaOut->CanCopy = AJA::CanCopy;
+    ajaIn->BeginCopyFrom = ajaOut->BeginCopyFrom = AJA::BeginCopyFrom;
+    ajaIn->BeginCopyTo = ajaOut->BeginCopyTo = AJA::BeginCopyTo;
+    ajaIn->EndCopyFrom = ajaOut->EndCopyFrom = AJA::EndCopyFrom;
+    ajaIn->EndCopyTo = ajaOut->EndCopyTo = AJA::EndCopyTo;
+    ajaIn->GetShaderSource = ajaOut->GetShaderSource = AJA::GetShaderSource;
+    ajaIn->GetShaders = ajaOut->GetShaders = AJA::GetShaders;
+    ajaIn->GetPasses = ajaOut->GetPasses = AJA::GetPasses;
+    ajaIn->OnMenuRequested = ajaOut->OnMenuRequested = AJA::OnMenuRequested;
+    ajaIn->OnMenuCommand = ajaOut->OnMenuCommand = AJA::OnMenuCommand;
+    ajaIn->OnKeyEvent = ajaOut->OnKeyEvent = AJA::OnKeyEvent;
 
-    outFunctions[0] = outFunctions[1] = mzNodeFunctions {
-        .CanCreateNode = AJA::CanCreateNode,
-        .OnNodeCreated = AJA::OnNodeCreated,
-        .OnNodeUpdated = AJA::OnNodeUpdated,
-        .OnNodeDeleted = AJA::OnNodeDeleted,
-        .OnPinValueChanged = AJA::OnPinValueChanged,
-        .OnPathCommand = AJA::OnPathCommand,
-        .GetFunctions = AJA::GetFunctions,
-        .ExecuteNode = AJA::ExecuteNode,
-        .CanCopy = AJA::CanCopy,
-        .BeginCopyFrom = AJA::BeginCopyFrom,
-        .BeginCopyTo = AJA::BeginCopyTo,
-        .EndCopyFrom = AJA::EndCopyFrom,
-        .EndCopyTo = AJA::EndCopyTo,
-        .GetShaderSource = AJA::GetShaderSource,
-        .GetShaders = AJA::GetShaders,
-        .GetPasses = AJA::GetPasses,
-        .OnMenuRequested = AJA::OnMenuRequested,
-        .OnMenuCommand = AJA::OnMenuCommand,
-        .OnKeyEvent = AJA::OnKeyEvent
-    };
-
-    outFunctions[0].TypeName = MZN_AJA_AJAIn;
-    outFunctions[1].TypeName = MZN_AJA_AJAOut;
-
-    shaders = {
+    GShaders = {
 		{MZN_AJA_RGB2YCbCr_Compute_Shader, {std::begin(RGB2YCbCr_comp_spv), std::end(RGB2YCbCr_comp_spv)}},
 		{MZN_AJA_YCbCr2RGB_Compute_Shader, {std::begin(YCbCr2RGB_comp_spv), std::end(YCbCr2RGB_comp_spv)}},
 		{MZN_AJA_RGB2YCbCr_Shader, {std::begin(RGB2YCbCr_frag_spv), std::end(RGB2YCbCr_frag_spv)}},

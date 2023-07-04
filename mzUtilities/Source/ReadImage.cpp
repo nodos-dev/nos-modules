@@ -88,12 +88,10 @@ static mzResult GetFunctions(size_t* count, mzName* names, mzPfnNodeFunctionExec
 
 void RegisterReadImage(mzNodeFunctions* fn)
 {
-    *fn = {
-		.TypeName = MZN_Mz_Utilities_ReadImage,
-        .GetFunctions = GetFunctions,
-        .GetShaders = GetShaders,
-        .GetPasses = GetPasses,
-    };
+	fn->TypeName = MZN_Mz_Utilities_ReadImage;
+	fn->GetFunctions = GetFunctions;
+    fn->GetShaders = GetShaders;
+    fn->GetPasses = GetPasses;
 }
 
 // void RegisterReadImage(mzNodeFunctions* fn)

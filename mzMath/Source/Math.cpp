@@ -129,8 +129,8 @@ mzResult VecBinopExecute(void* ctx, const mzNodeExecuteArgs* args)
 
 #define GEN_CASE_SCALAR(op, t, sz) \
 	case MathNodeTypes::NODE_NAME(op, t, sz, ): { \
-		functions->TypeName = MZ_NAME_STATIC("mz.math." #op "_" #t #sz); \
-		functions->ExecuteNode = ScalarBinopExecute<t ##sz, op<t ##sz>>; \
+		node->TypeName = MZ_NAME_STATIC("mz.math." #op "_" #t #sz); \
+		node->ExecuteNode = ScalarBinopExecute<t ##sz, op<t ##sz>>; \
 		break; \
 	}
 
@@ -150,8 +150,8 @@ mzResult VecBinopExecute(void* ctx, const mzNodeExecuteArgs* args)
 
 #define GEN_CASE_VEC(op, namePostfix, t, dim) \
 	case MathNodeTypes::NODE_NAME(op, vec, dim, namePostfix): { \
-		functions->TypeName = MZ_NAME_STATIC("mz.math." #op "_vec" #dim #namePostfix); \
-		functions->ExecuteNode = VecBinopExecute<t, dim, op>; \
+		node->TypeName = MZ_NAME_STATIC("mz.math." #op "_vec" #dim #namePostfix); \
+		node->ExecuteNode = VecBinopExecute<t, dim, op>; \
 		break; \
 	}
 
@@ -177,7 +177,7 @@ mzResult VecBinopExecute(void* ctx, const mzNodeExecuteArgs* args)
 	GEN_CASES(Mul) \
 	GEN_CASES(Div)
 
-enum class MathNodeTypes {
+enum class MathNodeTypes : int {
 	ENUM_GEN_NODE_NAMES_ALL_OPS()
 	U32ToString, // TODO: Generate other ToString nodes too.
 	SineWave,
@@ -197,26 +197,26 @@ mzResult ToString(void* ctx, const mzNodeExecuteArgs* args)
 extern "C"
 {
 
-MZAPI_ATTR mzResult MZAPI_CALL mzExportNodeFunctions(size_t* outCount, mzNodeFunctions* outFunctions)
+MZAPI_ATTR mzResult MZAPI_CALL mzExportNodeFunctions(size_t* outCount, mzNodeFunctions* outList)
 {
 	*outCount = (size_t)(MathNodeTypes::Count);
-	if (!outFunctions)
+	if (!outList)
 		return MZ_RESULT_SUCCESS;
-
-	for (int nodeTypeIndex = 0; nodeTypeIndex < (int)(MathNodeTypes::Count); ++nodeTypeIndex)
+	auto* node = outList;
+	int i = 0;
+	do
 	{
-		auto* functions = &outFunctions[nodeTypeIndex];
-		switch ((MathNodeTypes)nodeTypeIndex)
+		switch ((MathNodeTypes)i++)
 		{
 		GEN_ALL_CASES()
 		case MathNodeTypes::U32ToString: {
-			functions->TypeName = MZ_NAME_STATIC("mz.math.U32ToString");
-			functions->ExecuteNode = ToString<u32>;
-			break;
-		}
+				node->TypeName = MZ_NAME_STATIC("mz.math.U32ToString");
+				node->ExecuteNode = ToString<u32>;
+				break;
+			}
 		case MathNodeTypes::SineWave: {
-			functions->TypeName = MZ_NAME_STATIC("mz.math.SineWave");
-			functions->ExecuteNode = [](void* ctx, const mzNodeExecuteArgs* args) {
+			node->TypeName = MZ_NAME_STATIC("mz.math.SineWave");
+			node->ExecuteNode = [](void* ctx, const mzNodeExecuteArgs* args) {
 				constexpr uint32_t PIN_AMPLITUDE = 0;
 				constexpr uint32_t PIN_FREQUENCY = 1;
 				constexpr uint32_t PIN_OUT = 2;
@@ -233,8 +233,8 @@ MZAPI_ATTR mzResult MZAPI_CALL mzExportNodeFunctions(size_t* outCount, mzNodeFun
 			break;
 		}
 		case MathNodeTypes::Clamp: {
-			functions->TypeName = MZ_NAME_STATIC("mz.math.Clamp");
-			functions->ExecuteNode = [](void* ctx, const mzNodeExecuteArgs* args) {
+			node->TypeName = MZ_NAME_STATIC("mz.math.Clamp");
+			node->ExecuteNode = [](void* ctx, const mzNodeExecuteArgs* args) {
 				constexpr uint32_t PIN_IN = 0;
 				constexpr uint32_t PIN_MIN = 1;
 				constexpr uint32_t PIN_MAX = 2;
@@ -252,8 +252,8 @@ MZAPI_ATTR mzResult MZAPI_CALL mzExportNodeFunctions(size_t* outCount, mzNodeFun
 			break;
 		}
 		case MathNodeTypes::Absolute: {
-			functions->TypeName = MZ_NAME_STATIC("mz.math.Absolute");
-			functions->ExecuteNode = [](void* ctx, const mzNodeExecuteArgs* args) {
+			node->TypeName = MZ_NAME_STATIC("mz.math.Absolute");
+			node->ExecuteNode = [](void* ctx, const mzNodeExecuteArgs* args) {
 				constexpr uint32_t PIN_IN = 0;
 				constexpr uint32_t PIN_OUT = 1;
 				auto valueBuf = &args->PinValues[PIN_IN];
@@ -267,7 +267,7 @@ MZAPI_ATTR mzResult MZAPI_CALL mzExportNodeFunctions(size_t* outCount, mzNodeFun
 		default:
 			break;
 		}
-	}
+	} while (node = node->Next);
 	return MZ_RESULT_SUCCESS;
 }
 }
