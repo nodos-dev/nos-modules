@@ -450,10 +450,9 @@ mzVec2u CopyThread::GetSuitableDispatchSize() const
 void CopyThread::AJAOutputProc()
 {
 	flatbuffers::FlatBufferBuilder fbb;
-	auto frameDuration = GetFrameDurationFromFrameRate(GetNTV2FrameRateFromVideoFormat(Format));
     auto id = client->GetPinId(name);
 
-	auto hungerSignal = CreateAppEvent(fbb, mz::app::CreateScheduleRequest(fbb, mz::app::ScheduleRequestKind::PIN, &id, false, frameDuration));
+	auto hungerSignal = CreateAppEvent(fbb, mz::app::CreateScheduleRequest(fbb, mz::app::ScheduleRequestKind::PIN, &id, false));
     mzEngine.HandleEvent(hungerSignal);
     
     Orphan(false);
