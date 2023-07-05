@@ -743,13 +743,17 @@ void AJAClient::OnPathCommand(mzUUID pinId, app::PathCommand command, Buffer par
 
             // there is a new connection path
             // we need to send a restart signal
-		    flatbuffers::FlatBufferBuilder fbb;
             auto id = GetPinId(Name(ringThread->Name()));
             AjaRestartCommandParams restartParams;
             restartParams.RingSize = ringThread->gpuRing->Size;
             restartParams.UpdateFlags = AjaRestartCommandParams::UpdateRingSize;
-		    UByteSequence byteBuffer = Buffer::From(restartParams);
-		    mzEngine.HandleEvent(CreateAppEvent(fbb, app::CreateExecutePathCommandDirect(fbb, &id, app::PathCommand::RESTART, app::PathCommandType::WALKBACK,  &byteBuffer)));
+            auto args = Buffer::From(restartParams);
+            mzEngine.SendPathCommand(mzPathCommand {
+                .PinId = id,
+                .Command = MZ_PATH_COMMAND_TYPE_RESTART,
+                .Execution = MZ_PATH_COMMAND_EXECUTION_TYPE_WALKBACK,
+                .Args = mzBuffer { args.data(), args.size() }
+            });
             break;
         }
     }
@@ -835,9 +839,14 @@ void AJAClient::OnPinValueChanged(mz::Name pinName, void *value)
         AjaRestartCommandParams restartParams;
         restartParams.RingSize = *(u32*)value;
         restartParams.UpdateFlags = AjaRestartCommandParams::UpdateRingSize;
-        UByteSequence byteBuffer = Buffer::From(restartParams);
+        auto args = Buffer::From(restartParams);
 		auto id = GetPinId((Name)std::string(pinNameStr.begin(), pinNameStr.end() - sizeof("Ring Size")));
-        mzEngine.HandleEvent(CreateAppEvent(fbb, app::CreateExecutePathCommandDirect(fbb, &id, app::PathCommand::RESTART, app::PathCommandType::WALKBACK, &byteBuffer)));
+        mzEngine.SendPathCommand(mzPathCommand{
+            .PinId = id,
+            .Command = MZ_PATH_COMMAND_TYPE_RESTART,
+            .Execution = MZ_PATH_COMMAND_EXECUTION_TYPE_WALKBACK,
+            .Args = mzBuffer { args.data(), args.size() }
+        });
     }
 	if (pinNameStr.ends_with("Ring Spare Count"))
     {

@@ -218,7 +218,7 @@ struct AJA
     static void OnPathCommand(void* ctx, const mzPathCommand* params)
     { 
         auto aja = ((AJAClient *)ctx);
-        aja->OnPathCommand(params->PinId, (app::PathCommand)params->CommandType, mz::Buffer((u8*)params->Args.Data, params->Args.Size));
+        aja->OnPathCommand(params->PinId, (app::PathCommand)params->Command, mz::Buffer((u8*)params->Args.Data, params->Args.Size));
     }
 
     static void ReloadShaders(void* ctx, const mzNodeExecuteArgs* nodeArgs, const mzNodeExecuteArgs* functionArgs)
