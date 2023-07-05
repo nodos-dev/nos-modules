@@ -24,6 +24,7 @@ layout(binding = 3) buffer SSBO
 #define N10 ((1<<10)-1)
 #define N8  ((1<< 8)-1)
 
+
 vec4 LinearToRec709(in vec4 c)
 {
     c = clamp(c, vec4(0), vec4(1));
@@ -90,8 +91,21 @@ Out:
     f16 -> Idx -> Mul -> u8/10
 */
 
-vec4  SDR_In_N (in uvec3 c, float N) { return  vec4(IDXff((ubo.Colorspace * vec4(c / N, 1)).xyz), 1); }
-uvec3 SDR_Out_N(in vec3 c, float N)  { return uvec3(round((ubo.Colorspace * vec4(IDXff(c), 1)).xyz * N)); }
+
+vec4  SDR_In (in vec3 c) 
+{ 
+    return  vec4(IDXff((ubo.Colorspace * vec4(c, 1)).xyz), 1); 
+}
+
+vec4  SDR_In_N (in uvec3 c, float N) 
+{ 
+    return  vec4(IDXff((ubo.Colorspace * vec4(c / N, 1)).xyz), 1); 
+}
+
+uvec3 SDR_Out_N(in vec3 c, float N)  
+{ 
+    return uvec3(round((ubo.Colorspace * vec4(IDXff(c), 1)).xyz * N)); 
+}
 
 vec4  SDR_In_10 (in uvec3 c) { return SDR_In_N (c, N10); }
 vec4  SDR_In_8  (in uvec3 c) { return SDR_In_N (c, N8); }

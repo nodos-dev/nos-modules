@@ -5,6 +5,15 @@ layout (local_size_x = 8, local_size_y = 9) in;
 layout (binding = 0, rgba8ui) uniform readonly  uimage2D Source;
 layout (binding = 1, rgba16)  uniform writeonly  image2D Output;
 
+void Construct2(vec4 T0, vec4 T1, out vec4 X[2])
+{
+    vec3 Lin = IDXff(vec3(T0.yw, T1.y));
+	vec2 Diff = abs(Lin.xz - Lin.yy);
+    vec2 C2 = mix(T0.rb, T1.rb, Diff.x + Diff.y > 0.0 ? clamp(Diff.x / (Diff.x + Diff.y), 0, 1) : 0.5);
+    X[0] = SDR_In(T0.yxz);
+    X[1] = SDR_In(vec3(T0.a, C2));
+}
+
 void Store2(const vec4 C[2], ivec2 Base)
 {
     imageStore(Output, Base + ivec2(0, 0), C[0]);
@@ -21,11 +30,10 @@ void Store(const vec4 C[6], ivec2 Base)
     imageStore(Output, Base + ivec2(5, 0), C[5]);
 }
 
-void yuv8(const ivec2 dst, const ivec2 src, const bool interlaced)
+void yuv8(const ivec2 dst, uvec4 U0, uvec4 U1, const bool interlaced)
 {
-    uvec4 Y = imageLoad(Source, src);
-    vec4 X[2] = vec4[2](SDR_In_8(Y.yxz), SDR_In_8(Y.wxz));
-    
+    vec4 X[2];
+    Construct2(U0 / 255.0, U1 / 255.0, X);
     Store2(X, dst);
     if(interlaced) Store2(X, dst + ivec2(0, 1));
 }
@@ -33,17 +41,34 @@ void yuv8(const ivec2 dst, const ivec2 src, const bool interlaced)
 void main_yuv8()
 {
     const int   Interlaced = int((InterlacedFlags & 3) != 0);
-    const ivec2 N          = imageSize(Source) / ivec2(gl_NumWorkGroups * gl_WorkGroupSize).xy;
+    const ivec2 D = ivec2(gl_NumWorkGroups * gl_WorkGroupSize).xy;
+    const ivec2 Q = imageSize(Source);
+
+    const ivec2 N          = Q / D;
     const ivec2 uv         = ivec2(gl_GlobalInvocationID.xy) * N;
     
-    for(int i = 0; i < N.x; ++i)
+    for(int j = 0; j < N.y; ++j)
     {
-        for(int j = 0; j < N.y; ++j)
+        uvec4 U0;
+        uvec4 U1 = imageLoad(Source, uv + ivec2(0, j));
+        for(int i = 0; i < N.x; ++i)
         {
             const ivec2 ij = uv + ivec2(i, j);
-            yuv8(ij * ivec2(2, 1 + Interlaced), ij, Interlaced != 0);
+            U0 = U1;
+            U1 = imageLoad(Source, ij + ivec2(1, 0));
+            yuv8(ij * ivec2(2, 1 + Interlaced), U0, U1, Interlaced != 0);
         }
     }
+}
+
+uint ToDword(uvec4 C)
+{
+    return ((C.w & 0x3F) << 24) | (C.z << 16) | (C.y << 8)  | C.x;
+}
+
+uint Get10Bits(uint B, uint lo)
+{
+    return (B >> lo) & 0x3FF;
 }
 
 void Unpack(ivec2 uv, out uvec4 Y[3])
@@ -66,15 +91,18 @@ void Unpack(ivec2 uv, out uvec4 Y[3])
 void v210(const ivec2 dst, const ivec2 src, const bool interlaced)
 {
     uvec4 M[3];
+    uvec4 N[3];
     Unpack(src, M);
-
-    const vec4 X[6] = vec4[6](SDR_In_10(uvec3(M[1][0], M[0][0], M[2][0])),
-                              SDR_In_10(uvec3(M[0][1], M[0][0], M[2][0])),
-                              SDR_In_10(uvec3(M[2][1], M[1][1], M[0][2])),
-                              SDR_In_10(uvec3(M[1][2], M[1][1], M[0][2])),
-                              SDR_In_10(uvec3(M[0][3], M[2][2], M[1][3])),
-                              SDR_In_10(uvec3(M[2][3], M[2][2], M[1][3])));
-
+    Unpack(src + ivec2(4, 0), N);
+    vec4 Q[3][2];
+    vec4 M0 = uvec4(M[0][0], M[1][0], M[2][0], M[0][1]) / 1023.0;
+    vec4 M1 = uvec4(M[1][1], M[2][1], M[0][2], M[1][2]) / 1023.0;
+    vec4 M2 = uvec4(M[2][2], M[0][3], M[1][3], M[2][3]) / 1023.0;
+    vec4 M3 = uvec4(N[0][0], N[1][0], N[2][0], N[0][1]) / 1023.0;
+    Construct2(M0, M1, Q[0]);
+    Construct2(M1, M2, Q[1]);
+    Construct2(M2, M3, Q[2]);
+    const vec4 X[6] = vec4[6](Q[0][0],Q[0][1],Q[1][0],Q[1][1],Q[2][0],Q[2][1]);
     Store(X, dst);
     if(interlaced) Store(X, dst + ivec2(0, 1));
 }

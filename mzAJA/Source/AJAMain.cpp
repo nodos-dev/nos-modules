@@ -224,8 +224,8 @@ struct AJA
     static void ReloadShaders(void* ctx, const mzNodeExecuteArgs* nodeArgs, const mzNodeExecuteArgs* functionArgs)
     {
 		std::string workFolder = mzEngine.WorkFolder();
-		std::string sources = workFolder + "/../Plugins/mzAJA/Source";
-		std::string tempOutPrefix = workFolder + "/../Plugins/mzAJA/Source";
+		std::string sources = workFolder + "/../../plugins/mzAJA/Source";
+		std::string tempOutPrefix = workFolder + "/../../plugins/mzAJA/Source";
         auto genSpirv = [](std::string const& workFolder,
 							std::string const& sources,
 							std::string const& intermediateFolder,
@@ -250,11 +250,11 @@ struct AJA
         for (auto c : AJAClient::Ctx.Clients)
             for (auto& p : c->Pins)
                 p->Stop();
-   
-        GShaders[0] = {MZN_AJA_RGB2YCbCr_Compute_Shader, YCbCr2RGBComp};
-        GShaders[1] = {MZN_AJA_YCbCr2RGB_Compute_Shader, RGB2YCbCrComp};
-        GShaders[2] = {MZN_AJA_RGB2YCbCr_Shader, RGB2YCbCrFrag};
-        GShaders[3] = {MZN_AJA_YCbCr2RGB_Shader, YCbCr2RGBFrag};
+
+        GShaders[0] = {MZN_AJA_RGB2YCbCr_Compute_Shader, RGB2YCbCrComp};
+		GShaders[1] = {MZN_AJA_YCbCr2RGB_Compute_Shader, YCbCr2RGBComp};
+		GShaders[2] = {MZN_AJA_RGB2YCbCr_Shader, RGB2YCbCrFrag};
+		GShaders[3] = {MZN_AJA_YCbCr2RGB_Shader, YCbCr2RGBFrag};
         
         mzEngine.ReloadShaders(((AJAClient*)ctx)->Input ? MZN_AJA_AJAIn : MZN_AJA_AJAOut);
                  

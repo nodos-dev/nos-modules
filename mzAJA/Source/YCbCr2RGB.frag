@@ -8,40 +8,42 @@ layout(location = 0) in vec2 uv;
 layout (binding = 1, rgba8)  uniform writeonly image2D Output;
 
 
+
 void main()
 {
-    const bool Interlaced  = (InterlacedFlags & 3) != 0;
-    const bool OddFrame    = (InterlacedFlags & 2) != 0;
-    const bool EvenFrame   = (InterlacedFlags & 1) != 0;
-    const vec2 Size        = textureSize(Source, 0);
-    const vec2 InvSize     = 1.0 / Size;
-    const bool OddLine     = 0 != (uint(gl_FragCoord.y) & 1);
-    const bool OddColumn   = 0 != (uint(gl_FragCoord.x) & 1);
 
-	vec2 uv0 = gl_FragCoord.xy * InvSize * vec2(0.5,1);
-    //uv0 += InvSize * vec2(1, 0.5);
-
-    if(OddFrame) uv0.y -= InvSize.y;
+    vec4 Color     = (texelFetch(Source, ivec2((gl_FragCoord.xy - 0.5) / vec2(2, 1)) + ivec2(0, 0), 0) / 255.0).bgra;
+	vec4 NextColor = (texelFetch(Source, ivec2((gl_FragCoord.xy - 0.5) / vec2(2, 1)) + ivec2(1, 0), 0) / 255.0).bgra;
     
-    float X = fract(floor(uv0.x * Size.x * 2.0) / 2.0);
-    vec4 C0 = texture(Source, uv0).bgra / 255.0;
+	float Y1 = Color.g;
+	vec2 C1 = Color.br;
 
-    if(!(X > 0.0))
-    {
-        rt = SDR_In_8(uvec3((OddColumn ? C0.gbr : C0.abr) * 255));
-        return;
-    }
+	float Y2 = Color.a;
+	vec2 C2  = C1;	// We do not have this data. Aim is to calculate this.
+
+	float Y3 = NextColor.g;
+	vec2 C3 = NextColor.br;
     
-    vec2 uv1 = (gl_FragCoord.xy + vec2(1, 0)) * InvSize * vec2(0.5,1);
-    vec4 C2 = texture(Source, uv1).bgra / 255.0;
+    vec3 Lin = IDXff(vec3(Y1, Y2, Y3));
 
-    const float Y0 = C0.g;
-    const float Y1 = C0.a;
-    const float Y2 = C2.g;
-    const vec4 YY = IDX4(uvec4(round(vec4(Y0, Y2, Y1, Y1) * 255))) / 255.0;
-	const vec2 Diff = abs(YY.xy - YY.zw);
-    const float TotalDiff = Diff.x + Diff.y;
-    const vec2 CbCr = mix(C0.br, C2.br, TotalDiff > 0.0 ? clamp(Diff.x / TotalDiff, 0, 1) : 0.5);
+	float Amount = 1.0;
+	vec2 Diff = abs(Lin.xz - Lin.yy);
+	float TotalDiff = Diff.x + Diff.y;
+    
+	if (TotalDiff == 0.0)
+		Amount = 0.5;
+	else
+		Amount = Diff.x / TotalDiff;
+	
+	C2 = mix(C1, C3, 0.5);
+	if (Amount < 0.5)
+		C2 = mix(C1, C2, Amount * 2);
+	else
+		C2 = mix(C2, C3, (Amount - 0.5) * 2);
+    
+	// float X = fract(floor(uv.x * InInputTextureSize.x * 2.0) / 2.0);
+	float Y = (int(gl_FragCoord.x) % 2) != 0 ? Y2 : Y1;
+	vec2 C  = (int(gl_FragCoord.x) % 2) != 0 ? C2 : C1;
 
-    rt =  SDR_In_8(uvec3(Y1  * 255, CbCr  * 255));
+	rt = vec4(IDXff((ubo.Colorspace * vec4(Y, C, 1)).xyz), 1);
 }
