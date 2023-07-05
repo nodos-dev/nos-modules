@@ -60,13 +60,10 @@ static mzResult GetFunctions(size_t* count, mzName* names, mzPfnNodeFunctionExec
 		std::filesystem::path path = GetPinValue<const char>(values, MZN_Path);
         
         try {
-            if (!std::filesystem::exists(path) || std::filesystem::is_directory(path))
-            {
-                mzEngine.LogE("Write Image cannot write to path %s", path.string().c_str());
-                return;
-            }
+            if (!std::filesystem::exists(path.parent_path()))
+                std::filesystem::create_directories(path.parent_path());
         } catch (std::filesystem::filesystem_error& e) {
-			mzEngine.LogE("Error checking path %s: %s", path.string().c_str(), e.what());
+			mzEngine.LogE("WriteImage - %s: %s", path.string().c_str(), e.what());
 			return;
 		}
 		mzResourceShareInfo input = DeserializeTextureInfo(values[MZN_In]);
