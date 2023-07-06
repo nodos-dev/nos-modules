@@ -51,7 +51,7 @@ struct MergeContext
 		std::vector<mzShaderBinding> bindings;
 		std::vector<mzResourceShareInfo> Textures(TextureCount);
 		u32 curr = 0;
-
+		
 		for (size_t i = 0; i < pins->PinCount; ++i)
 		{
 			std::string name = Name(pins->PinNames[i]).AsString();
@@ -63,6 +63,13 @@ struct MergeContext
 			}
 			else if (name != "Out")
 				bindings.emplace_back(mzShaderBinding{.Name = Name(pins->PinNames[i]), .FixedSize = val.Data});
+		}
+		mzResourceShareInfo dummy = {};
+		mzEngine.GetColorTexture({}, &dummy);
+		for (size_t i = TextureCount; i < 16; ++i)
+		{
+			auto name = mzEngine.GetName(("Texture_" + std::to_string(i)).c_str());
+			bindings.emplace_back(ShaderBinding(name, dummy));
 		}
 
 		bindings.emplace_back(ShaderBinding(MZN_Texture_Count, TextureCount));
