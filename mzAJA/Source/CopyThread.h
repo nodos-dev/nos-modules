@@ -176,6 +176,9 @@ struct CopyThread : TrackSync
 
     template<class T>
     glm::mat<4,4,T> GetMatrix() const;
+
+
+	void PathRestart();
 };
 
 } // namespace mz

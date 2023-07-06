@@ -151,7 +151,8 @@ void CopyThread::Stop()
 void CopyThread::Resize(u32 size)
 {
     assert(size && size < 200);
-
+    if(size == GetRingSize())
+        return;
     Stop();
     CreateRings(size);
     StartThread();
@@ -322,13 +323,7 @@ void CopyThread::InputUpdate(AJADevice::Mode &prevMode)
 
 void CopyThread::AJAInputProc()
 {
-    {
-        flatbuffers::FlatBufferBuilder fbb;
-        auto id = client->GetPinId(mz::Name(Name()));
-        UByteSequence byteBuffer = Buffer::From(gpuRing->Size);
-        mzEngine.HandleEvent(CreateAppEvent(fbb, app::CreateExecutePathCommandDirect(fbb, &id, app::PathCommand::NOTIFY_DROP, app::PathCommandType::NOTIFY_ALL_CONNECTIONS,  &byteBuffer)));
-    }
-            
+    PathRestart();
     Orphan(false);
     {
         std::stringstream ss;
@@ -401,10 +396,7 @@ void CopyThread::AJAInputProc()
         framesSinceLastDrop++;
         if (DropCount && framesSinceLastDrop == 50)
         {
-            flatbuffers::FlatBufferBuilder fbb;
-            auto id = client->GetPinId(mz::Name(Name()));
-            UByteSequence byteBuffer = Buffer::From(gpuRing->Size);
-            mzEngine.HandleEvent(CreateAppEvent(fbb, app::CreateExecutePathCommandDirect(fbb, &id, app::PathCommand::NOTIFY_DROP, app::PathCommandType::NOTIFY_ALL_CONNECTIONS,  &byteBuffer)));
+            PathRestart();
         }
             
         NTV2RegisterReads Regs = { NTV2RegInfo(kRegRXSDI1FrameCountLow + Channel * (kRegRXSDI2FrameCountLow - kRegRXSDI1FrameCountLow)) };
@@ -454,25 +446,35 @@ mzVec2u CopyThread::GetSuitableDispatchSize() const
                      BestFit(y + .5, CompressedTex.Info.Texture.Height / 9));
 }
 
+void CopyThread::PathRestart()
+{
+    flatbuffers::FlatBufferBuilder fbb;
+    auto id = client->GetPinId(mz::Name(Name()));
+    auto cmd     = app::PathCommand::RESTART;
+    auto cmdType = app::PathCommandType::WALKBACK;
+    UByteSequence byteBuffer = Buffer::From(AjaRestartCommandParams{
+        .UpdateFlags = u32(AjaRestartCommandParams::UpdateRingSize | AjaRestartCommandParams::UpdateSpareCount),
+        .RingSize = gpuRing->Size,
+        .SpareCount = SpareCount,
+        });
+
+    if(IsInput())
+    {
+        cmd = app::PathCommand::NOTIFY_DROP;
+        cmdType = app::PathCommandType::NOTIFY_ALL_CONNECTIONS;
+        return;
+    }
+
+    mzEngine.HandleEvent(CreateAppEvent(fbb, app::CreateExecutePathCommandDirect(fbb, &id, cmd, cmdType, &byteBuffer)));
+
+}
 void CopyThread::AJAOutputProc()
 {
+   
 	flatbuffers::FlatBufferBuilder fbb;
     auto id = client->GetPinId(name);
-
 	auto hungerSignal = CreateAppEvent(fbb, mz::app::CreateScheduleRequest(fbb, mz::app::ScheduleRequestKind::PIN, &id, false));
     mzEngine.HandleEvent(hungerSignal);
-
-    {
-        flatbuffers::FlatBufferBuilder fbb;
-        auto id = client->GetPinId(mz::Name(Name()));
-        UByteSequence byteBuffer = Buffer::From(gpuRing->Size);
-        mzEngine.HandleEvent(CreateAppEvent(fbb, app::CreateExecutePathCommandDirect(fbb,
-                                                                &id,
-                                                                app::PathCommand::RESTART,
-                                                                app::PathCommandType::WALKBACK,
-                                                                &byteBuffer)));
-    }
-    
     Orphan(false);
     {
         std::stringstream ss;
@@ -516,14 +518,7 @@ void CopyThread::AJAOutputProc()
 			{
 				if (++framesSinceLastDrop == 50)
 				{
-					flatbuffers::FlatBufferBuilder fbb;
-					auto id = client->GetPinId(mz::Name(Name()));
-					UByteSequence byteBuffer = Buffer::From(gpuRing->Size);
-					mzEngine.HandleEvent(CreateAppEvent(fbb, app::CreateExecutePathCommandDirect(fbb,
-																		   &id,
-																		   app::PathCommand::RESTART,
-																		   app::PathCommandType::WALKBACK,
-																		   &byteBuffer)));
+					PathRestart();
 				}
 			}
 

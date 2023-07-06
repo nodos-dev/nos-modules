@@ -700,15 +700,6 @@ void AJAClient::OnNodeRemoved()
     (Input ? Device->HasInput : Device->HasOutput) = false;
 }
 
-struct AjaRestartCommandParams {
-    enum Flags : u32 {
-        UpdateRingSize = 1 << 0,
-        UpdateSpareCount = 1 << 1,
-    };
-    u32 UpdateFlags;
-    u32 RingSize;
-    u32 SpareCount;
-};
 
 void AJAClient::OnPathCommand(mzUUID pinId, app::PathCommand command, Buffer params)
 {
@@ -778,6 +769,8 @@ void AJAClient::OnPinValueChanged(mz::Name pinName, void *value)
             th->UpdateCurve(th->GammaCurve);
         }
         StartAll();
+        for (auto& th : Pins)
+            th->PathRestart();
         return;
     }
 

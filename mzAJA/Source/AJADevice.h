@@ -28,6 +28,16 @@
 
 #define AJA_ASSERT(x) { if(!(x)) { printf("%s:%d\n", __FILE__, __LINE__); abort();} }
 
+struct AjaRestartCommandParams {
+    enum Flags : uint32_t {
+        UpdateRingSize = 1 << 0,
+        UpdateSpareCount = 1 << 1,
+    };
+    uint32_t UpdateFlags;
+    uint32_t RingSize;
+    uint32_t SpareCount;
+};
+
 struct AJADevice : CNTV2Card
 {
     enum Mode: uint32_t
