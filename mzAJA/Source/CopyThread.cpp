@@ -322,6 +322,13 @@ void CopyThread::InputUpdate(AJADevice::Mode &prevMode)
 
 void CopyThread::AJAInputProc()
 {
+    {
+        flatbuffers::FlatBufferBuilder fbb;
+        auto id = client->GetPinId(mz::Name(Name()));
+        UByteSequence byteBuffer = Buffer::From(gpuRing->Size);
+        mzEngine.HandleEvent(CreateAppEvent(fbb, app::CreateExecutePathCommandDirect(fbb, &id, app::PathCommand::NOTIFY_DROP, app::PathCommandType::NOTIFY_ALL_CONNECTIONS,  &byteBuffer)));
+    }
+            
     Orphan(false);
     {
         std::stringstream ss;
@@ -454,6 +461,17 @@ void CopyThread::AJAOutputProc()
 
 	auto hungerSignal = CreateAppEvent(fbb, mz::app::CreateScheduleRequest(fbb, mz::app::ScheduleRequestKind::PIN, &id, false));
     mzEngine.HandleEvent(hungerSignal);
+
+    {
+        flatbuffers::FlatBufferBuilder fbb;
+        auto id = client->GetPinId(mz::Name(Name()));
+        UByteSequence byteBuffer = Buffer::From(gpuRing->Size);
+        mzEngine.HandleEvent(CreateAppEvent(fbb, app::CreateExecutePathCommandDirect(fbb,
+                                                                &id,
+                                                                app::PathCommand::RESTART,
+                                                                app::PathCommandType::WALKBACK,
+                                                                &byteBuffer)));
+    }
     
     Orphan(false);
     {
