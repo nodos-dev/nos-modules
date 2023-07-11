@@ -135,6 +135,7 @@ struct AJA
         flatbuffers::FlatBufferBuilder fbb;
 
         std::vector<flatbuffers::Offset<mz::fb::Pin>> pinsToAdd;
+        std::vector<::flatbuffers::Offset<mz::PartialPinUpdate>> pinsToUpdate;
         using mz::fb::ShowAs;
         using mz::fb::CanShowAs;
 
@@ -145,13 +146,13 @@ struct AJA
 					  "string",
 					  StringValue(dev->GetDisplayName()),
 					  loadedPins,
-					  pinsToAdd,
+					  pinsToAdd, pinsToUpdate,
 					  fbb,
                       ShowAs::PROPERTY, CanShowAs::PROPERTY_ONLY);
 		if (auto val = AddIfNotFound(MZN_Dispatch_Size,
 									 "mz.fb.vec2u",
 									 mz::Buffer::From(mz::fb::vec2u(c->DispatchSizeX, c->DispatchSizeY)),
-                                     loadedPins, pinsToAdd, fbb))
+                                     loadedPins, pinsToAdd, pinsToUpdate, fbb))
         {
             c->DispatchSizeX = ((glm::uvec2 *)val)->x;
             c->DispatchSizeY = ((glm::uvec2 *)val)->y;
@@ -159,13 +160,13 @@ struct AJA
 
         if (auto val = AddIfNotFound(
 				MZN_Shader_Type, "AJA.Shader", mz::Buffer::From(ShaderType(c->Shader)), loadedPins,
-                                     pinsToAdd, fbb))
+                                     pinsToAdd, pinsToUpdate, fbb))
         {
             c->Shader = *((ShaderType *)val);
         }
 
         if (auto val =
-				AddIfNotFound(MZN_Debug, "uint", mz::Buffer::From(u32(c->Debug)), loadedPins, pinsToAdd, fbb))
+				AddIfNotFound(MZN_Debug, "uint", mz::Buffer::From(u32(c->Debug)), loadedPins, pinsToAdd, pinsToUpdate, fbb))
         {
             c->Debug = *((u32 *)val);
         }
@@ -195,7 +196,7 @@ struct AJA
         c->UpdateStatus(fbb, msg);
         mzEngine.HandleEvent(
             CreateAppEvent(fbb, mz::CreatePartialNodeUpdateDirect(fbb, &c->Mapping.NodeId, ClearFlags::NONE, &pinsToDel,
-                                                                  &pinsToAdd, 0, 0, 0, 0, &msg)));
+                                                                  &pinsToAdd, 0, 0, 0, 0, &msg, &pinsToUpdate)));
     }
 
 
