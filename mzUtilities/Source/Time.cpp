@@ -6,12 +6,11 @@ MZ_REGISTER_NAME(Seconds);
 MZ_REGISTER_NAME(Time_Pass);
 MZ_REGISTER_NAME(Time_Shader);
 MZ_REGISTER_NAME_SPACED(Mz_Utilities_Time, "mz.utilities.Time")
-class TimeNodeContext
+struct TimeNodeContext : NodeContext
 {
-public:
-	TimeNodeContext() : TimeStart(std::chrono::high_resolution_clock::now()) {}
+	TimeNodeContext(mzFbNode const* node) : NodeContext(node), TimeStart(std::chrono::high_resolution_clock::now()) {}
 
-	mzResult Run(void* ctx,const mzNodeExecuteArgs* args)
+	mzResult ExecuteNode(const mzNodeExecuteArgs* args) override
 	{
 		auto pin = GetPinValues(args);
 		auto sec = GetPinValue<float>(pin, MZN_Seconds);
@@ -32,17 +31,7 @@ public:
 
 void RegisterTime(mzNodeFunctions* fn)
 {
-	fn->TypeName = MZN_Mz_Utilities_Time;
-	fn->OnNodeCreated = [](const mzFbNode* node, void** outCtxPtr) {
-		*outCtxPtr = new TimeNodeContext();
-	};
-	fn->OnNodeDeleted = [](void* ctx, mzUUID nodeId) {
-		delete static_cast<TimeNodeContext*>(ctx);
-	};
-	fn->ExecuteNode = [](void* ctx, const mzNodeExecuteArgs* args)->mzResult {
-		return ((TimeNodeContext*)(ctx))->Run(ctx,args);
-	};
-	
+	MZ_BIND_NODE_CLASS(MZN_Mz_Utilities_Time, TimeNodeContext, fn);
 	// functions["mz.CalculateNodalPoint"].EntryPoint = [](mz::Args& args, void* ctx){
 	// 	auto pos = args.Get<glm::dvec3>("Camera Position");
 	// 	auto rot = args.Get<glm::dvec3>("Camera Orientation");

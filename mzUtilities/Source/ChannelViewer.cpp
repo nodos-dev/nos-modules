@@ -41,7 +41,7 @@ static mzResult GetPasses(size_t* outCount, mzPassInfo* infos)
 	return MZ_RESULT_SUCCESS;
 }
 
-static mzResult Run(void* ctx, const mzNodeExecuteArgs* pins)
+static mzResult ExecuteNode(void* ctx, const mzNodeExecuteArgs* pins)
 {
 	auto values = GetPinValues(pins);
 	const mzResourceShareInfo input = DeserializeTextureInfo(values[MZN_Input]);
@@ -77,7 +77,7 @@ void RegisterChannelViewer(mzNodeFunctions* out)
 	out->TypeName = MZN_Mz_Utilities_ChannelViewer;
 	out->GetShaders = mz::utilities::GetShaders;
 	out->GetPasses = mz::utilities::GetPasses;
-	out->ExecuteNode = mz::utilities::Run;
+	out->ExecuteNode = mz::utilities::ExecuteNode;
 }
 
 

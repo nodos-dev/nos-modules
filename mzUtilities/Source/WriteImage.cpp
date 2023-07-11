@@ -19,7 +19,7 @@ MZ_REGISTER_NAME(Path);
 MZ_REGISTER_NAME(In);
 MZ_REGISTER_NAME_SPACED(Mz_Utilities_WriteImage, "mz.utilities.WriteImage")
 
-struct WriteImage {
+struct WriteImage : NodeContext {
     std::filesystem::path Path;
     mzResourceShareInfo Input;
     std::atomic_bool WriteRequested = false;
@@ -29,7 +29,7 @@ struct WriteImage {
     std::atomic_bool Write = false;
     std::atomic_bool ShouldStop = false;
 
-    WriteImage() {
+    WriteImage(mzFbNode const* node) : NodeContext(node){
         Worker = std::thread([this] {
             while (!ShouldStop) {
                 std::unique_lock<std::mutex> lock(Mutex);
@@ -42,6 +42,11 @@ struct WriteImage {
 				}
             }
         });
+        for (auto* pin : *node->pins()) {
+            auto* pinData = pin->data();
+            mzBuffer value = { .Data = (void*)pinData->data(), .Size = pinData->size() };
+            OnPinValueChanged(mzEngine.GetName(pin->name()->c_str()), &value);
+        }
     }
 
     ~WriteImage() {
@@ -56,13 +61,29 @@ struct WriteImage {
 		CV.notify_all();
 	}
 
-    void OnPinValueChanged(mzName pinName, mzBuffer* value) {
+    void OnPinValueChanged(mz::Name pinName, mzBuffer* value) override 
+    {
         std::unique_lock<std::mutex> lock(Mutex);
 		if (pinName == MZN_In)
 			Input = DeserializeTextureInfo(value->Data);
 		else if (pinName == MZN_Path)
 			Path = std::string((const char*)value->Data, value->Size);
 	}
+
+    mzResult BeginCopyTo(mzCopyInfo* copyInfo) override
+    {
+        copyInfo->ShouldSubmitAndWait = true;
+        copyInfo->Stop = true;
+        return MZ_RESULT_SUCCESS;
+    }
+
+    void EndCopyTo(mzCopyInfo* copyInfo) override
+    {
+        if (WriteRequested) {
+            WriteRequested = false;
+            SignalWrite();
+        }
+    }
 
     void WriteImageToFile() {
         auto& path = this->Path;
@@ -102,90 +123,58 @@ struct WriteImage {
         mzEngine.Destroy(&captures.Buf);
         mzEngine.Destroy(&captures.SRGB);
     }
-};
 
-mzResult GetShaders(size_t* count, mzName* names, mzBuffer* spirv)
-{
-    *count = 1;
-    if (!names || !spirv)
-        return MZ_RESULT_SUCCESS;
-
-    *names = MZN_Linear2SRGB_Shader;
-    spirv->Data = (void*)Linear2SRGB_frag_spv;
-    spirv->Size = sizeof(Linear2SRGB_frag_spv);
-    return MZ_RESULT_SUCCESS;
-}
-
-static mzResult GetPasses(size_t* count, mzPassInfo* passes)
-{
-    *count = 1;
-    if (!passes)
-        return MZ_RESULT_SUCCESS;
-
-    *passes = mzPassInfo{
-        .Key = MZN_Linear2SRGB_Pass,
-        .Shader = MZN_Linear2SRGB_Shader,
-        .Blend = 0,
-        .MultiSample = 1,
-    };
-
-    return MZ_RESULT_SUCCESS;
-}
-
-static mzResult GetFunctions(size_t* count, mzName* names, mzPfnNodeFunctionExecute* fns)
-{
-    *count = 1;
-    if(!names || !fns)
-        return MZ_RESULT_SUCCESS;
-
-    *names = MZ_NAME_STATIC("WriteImage_Save");
-    *fns = [](void* ctx, const mzNodeExecuteArgs* nodeArgs, const mzNodeExecuteArgs* functionArgs)
+    static mzResult GetShaders(size_t* count, mzName* names, mzBuffer* spirv)
     {
-        auto writeImage = (WriteImage*)ctx;
-        auto ids = GetPinIds(nodeArgs);
-        writeImage->WriteRequested = true;
-        mzEngine.SchedulePin(ids[MZN_In]);
-        mzEngine.LogI("WriteImage: Write requested");
-    };
-    
-    return MZ_RESULT_SUCCESS;
-}
+        *count = 1;
+        if (!names || !spirv)
+            return MZ_RESULT_SUCCESS;
+
+        *names = MZN_Linear2SRGB_Shader;
+        spirv->Data = (void*)Linear2SRGB_frag_spv;
+        spirv->Size = sizeof(Linear2SRGB_frag_spv);
+        return MZ_RESULT_SUCCESS;
+    }
+
+    static mzResult GetPasses(size_t* count, mzPassInfo* passes)
+    {
+        *count = 1;
+        if (!passes)
+            return MZ_RESULT_SUCCESS;
+
+        *passes = mzPassInfo{
+            .Key = MZN_Linear2SRGB_Pass,
+            .Shader = MZN_Linear2SRGB_Shader,
+            .Blend = 0,
+            .MultiSample = 1,
+        };
+
+        return MZ_RESULT_SUCCESS;
+    }
+
+    static mzResult GetFunctions(size_t* count, mzName* names, mzPfnNodeFunctionExecute* fns)
+    {
+        *count = 1;
+        if (!names || !fns)
+            return MZ_RESULT_SUCCESS;
+
+        *names = MZ_NAME_STATIC("WriteImage_Save");
+        *fns = [](void* ctx, const mzNodeExecuteArgs* nodeArgs, const mzNodeExecuteArgs* functionArgs)
+        {
+            auto writeImage = (WriteImage*)ctx;
+            auto ids = GetPinIds(nodeArgs);
+            writeImage->WriteRequested = true;
+            mzEngine.SchedulePin(ids[MZN_In]);
+            mzEngine.LogI("WriteImage: Write requested");
+        };
+
+        return MZ_RESULT_SUCCESS;
+    }
+};
 
 void RegisterWriteImage(mzNodeFunctions* fn)
 {
-	fn->TypeName = MZN_Mz_Utilities_WriteImage;
-    fn->GetFunctions = GetFunctions;
-    fn->GetShaders = GetShaders;
-    fn->GetPasses = GetPasses;
-    fn->OnPinValueChanged = [](void* ctx, mzName pinName, mzBuffer* value) {
-		auto writeImage = (WriteImage*)ctx;
-        writeImage->OnPinValueChanged(pinName, value);
-	};
-    fn->OnNodeCreated = [](const mzFbNode* node, void** outCtxPtr)
-	{
-        auto* writeImage = new WriteImage();
-	    *outCtxPtr = writeImage;
-        for (auto* pin : *node->pins()) {
-            auto* pinData = pin->data();
-            mzBuffer value = {.Data = (void*)pinData->data(), .Size = pinData->size() };
-            writeImage->OnPinValueChanged(mzEngine.GetName(pin->name()->c_str()), &value);
-        }
-    };
-    fn->OnNodeDeleted = [](void* ctx, mzUUID nodeId) {
-        delete (WriteImage*)ctx;
-	};
-    fn->BeginCopyTo = [](void* ctx, mzCopyInfo* copyInfo) {
-        copyInfo->ShouldSubmitAndWait = true;
-        copyInfo->Stop = true;
-        return MZ_RESULT_SUCCESS;
-	};
-    fn->EndCopyTo = [](void* ctx, mzCopyInfo* copyInfo) {
-        auto* writeImage = (WriteImage*)ctx;
-        if (writeImage->WriteRequested) {
-			writeImage->WriteRequested = false;
-			writeImage->SignalWrite();
-		}
-    };
+    MZ_BIND_NODE_CLASS(MZN_Mz_Utilities_WriteImage, WriteImage, fn);
 }
 
 } // namespace mz
