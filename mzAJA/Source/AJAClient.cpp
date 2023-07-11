@@ -160,7 +160,7 @@ PinMapping *AJAClient::operator->()
 
 fb::UUID AJAClient::GetPinId(Name pinName) const
 {
-    return Mapping.GetPinId(pinName);
+    return *Mapping.GetPinId(pinName);
 }
 
 void AJAClient::GeneratePinIDSet(Name pinName, AJADevice::Mode mode, std::vector<mz::fb::UUID> &ids)
@@ -252,7 +252,7 @@ void AJAClient::UpdateReferenceValue()
 
     flatbuffers::FlatBufferBuilder fbb;
     mz::fb::UUID pinId;
-    if (auto id = Mapping.PinName2Id.right(MZN_ReferenceSource))
+    if (auto id = Mapping.GetPinId(MZN_ReferenceSource))
         pinId = *id;
     else
         return;
@@ -393,7 +393,7 @@ void AJAClient::OnNodeUpdate(PinMapping &&newMapping, std::unordered_map<Name, c
         auto tmp = Pins;
         for (auto &th : tmp)
         {
-            if (!Mapping.PinName2Id.right(th->name))
+            if (!Mapping.GetPinId(th->name))
             {
                 DeleteTexturePin(th);
             }
@@ -455,8 +455,7 @@ void AJAClient::OnNodeUpdate(PinMapping &&newMapping, std::unordered_map<Name, c
 void AJAClient::OnPinMenuFired(mzContextMenuRequest const &request)
 {
     flatbuffers::FlatBufferBuilder fbb;
-    auto name = Mapping.GetPinName(*request.item_id());
-
+    auto name = *Mapping.GetPinName(*request.item_id());
     if (auto pin = FindChannel(ParseChannel(name.AsString())))
     {
         std::vector<flatbuffers::Offset<mz::ContextMenuItem>> remove = {
@@ -706,7 +705,7 @@ void AJAClient::OnNodeRemoved()
 
 void AJAClient::OnPathCommand(mzUUID pinId, app::PathCommand command, Buffer params)
 {
-    auto pinNameOpt = Mapping.PinName2Id.left(pinId);
+    auto pinNameOpt = Mapping.GetPinName(pinId);
     if (!pinNameOpt)
     {
         mzEngine.LogD("path command on unknown pin: %s", UUID2STR(pinId).c_str());
