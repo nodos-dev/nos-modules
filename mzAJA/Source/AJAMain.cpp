@@ -171,22 +171,19 @@ struct AJA
             c->Debug = *((u32 *)val);
         }
 
-        if (auto ref = loadedPins[MZN_ReferenceSource])
+        if (!isIn)
         {
-            if (flatbuffers::IsFieldPresent(ref, fb::Pin::VT_DATA))
+            mz::fb::TVisualizer vis = { .type = mz::fb::VisualizerType::COMBO_BOX, .name = dev->GetDisplayName() + "-AJAOut-Reference-Source" };
+            if (auto ref = AddIfNotFound(MZN_ReferenceSource,
+                "string",
+                StringValue(dev->GetDisplayName()),
+                loadedPins,
+                pinsToAdd, pinsToUpdate,
+                fbb,
+                ShowAs::PROPERTY, CanShowAs::PROPERTY_ONLY, vis))
             {
-                refSrc = (char *)ref->data()->Data();
+                refSrc = (char *)ref;
             }
-        }
-        else if (!isIn)
-        {
-            std::vector<u8> data = StringValue(refSrc);
-            pinsToAdd.push_back(mz::fb::CreatePinDirect(
-                fbb, generator(), "ReferenceSource", "string", mz::fb::ShowAs::PROPERTY,
-                mz::fb::CanShowAs::PROPERTY_ONLY, 0,
-                mz::fb::CreateVisualizerDirect(fbb, mz::fb::VisualizerType::COMBO_BOX,
-                                               (dev->GetDisplayName() + "-AJAOut-Reference-Source").c_str()),
-                &data));
         }
         c->SetReference(refSrc);
 

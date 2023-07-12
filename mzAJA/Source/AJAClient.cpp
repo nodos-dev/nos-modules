@@ -52,7 +52,7 @@ const u8 *AddIfNotFound(Name name, std::string tyName, std::vector<u8> val,
                         std::vector<flatbuffers::Offset<mz::fb::Pin>> &toAdd, 
                         std::vector<::flatbuffers::Offset<mz::PartialPinUpdate>>& toUpdate,
                         flatbuffers::FlatBufferBuilder &fbb,
-                        mz::fb::ShowAs showAs, mz::fb::CanShowAs canShowAs)
+                        mz::fb::ShowAs showAs, mz::fb::CanShowAs canShowAs, std::optional<mz::fb::TVisualizer> visualizer)
 {
     if (auto pin = pins[name])
     {
@@ -60,7 +60,7 @@ const u8 *AddIfNotFound(Name name, std::string tyName, std::vector<u8> val,
         return pin->data()->Data();
     }
     toAdd.push_back(
-		mz::fb::CreatePinDirect(fbb, generator(), name.AsCStr(), tyName.c_str(), showAs, canShowAs, 0, 0, &val));
+		mz::fb::CreatePinDirect(fbb, generator(), name.AsCStr(), tyName.c_str(), showAs, canShowAs, 0, visualizer ? mz::fb::Visualizer::Pack(fbb, &*visualizer) : 0, &val));
     return 0;
 }
 

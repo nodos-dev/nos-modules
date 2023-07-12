@@ -32,7 +32,8 @@ const u8 *AddIfNotFound(Name name, std::string tyName, std::vector<u8> val,
                                std::vector<flatbuffers::Offset<mz::fb::Pin>> &toAdd,
                                std::vector<::flatbuffers::Offset<mz::PartialPinUpdate>>& toUpdate,
                                flatbuffers::FlatBufferBuilder &fbb, mz::fb::ShowAs showAs = mz::fb::ShowAs::PROPERTY,
-                               mz::fb::CanShowAs canShowAs = mz::fb::CanShowAs::INPUT_PIN_OR_PROPERTY);
+                               mz::fb::CanShowAs canShowAs = mz::fb::CanShowAs::INPUT_PIN_OR_PROPERTY, 
+                               std::optional<mz::fb::TVisualizer> visualizer = std::nullopt);
 
 mz::fb::UUID GenerateUUID();
 
