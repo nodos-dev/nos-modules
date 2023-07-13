@@ -23,16 +23,14 @@ MZ_REGISTER_NAME(Path);
 MZ_REGISTER_NAME(Out);
 MZ_REGISTER_NAME_SPACED(Mz_Utilities_ReadImage, "mz.utilities.ReadImage")
 
-static mzResult GetShaders(size_t* count, mzName* names, mzBuffer* spirv)
+static mzResult GetShaders(size_t* outCount, mzShaderInfo* outShaders)
 {
-	*count = 1;
-	if (!names || !spirv)
-		return MZ_RESULT_SUCCESS;
+    *outCount = 1;
+    if (!outShaders)
+        return MZ_RESULT_SUCCESS;
 
-	*names = MZN_SRGB2Linear_Shader;
-	spirv->Data = (void*)SRGB2Linear_frag_spv;
-	spirv->Size = sizeof(SRGB2Linear_frag_spv);
-	return MZ_RESULT_SUCCESS;
+    outShaders[0] = {.Key=MZN_SRGB2Linear_Shader, .SpirvBlob = {(void*)SRGB2Linear_frag_spv, sizeof(SRGB2Linear_frag_spv)}};
+    return MZ_RESULT_SUCCESS;
 }
 
 static mzResult GetPasses(size_t* count, mzPassInfo* passes)

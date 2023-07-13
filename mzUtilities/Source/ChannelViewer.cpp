@@ -14,16 +14,13 @@ MZ_REGISTER_NAME_SPACED(Mz_Utilities_ChannelViewer, "mz.utilities.ChannelViewer"
 namespace mz::utilities
 {
 
-static mzResult GetShaders(size_t* outCount, mzName* outShaderNames, mzBuffer* infos)
+static mzResult GetShaders(size_t* outCount, mzShaderInfo* outShaders)
 {
 	*outCount = 1;
-	if (!infos)
+	if (!outShaders)
 		return MZ_RESULT_SUCCESS;
 
-	outShaderNames[0] = MZN_Channel_Viewer_Shader;
-	infos->Data = (void*)ChannelViewer_frag_spv;
-	infos->Size = sizeof(ChannelViewer_frag_spv);
-
+	outShaders[0] = {.Key = MZN_Channel_Viewer_Shader, .SpirvBlob = {(void*)ChannelViewer_frag_spv, sizeof(ChannelViewer_frag_spv)}};
 	return MZ_RESULT_SUCCESS;
 }
 

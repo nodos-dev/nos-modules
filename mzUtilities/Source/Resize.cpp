@@ -29,18 +29,16 @@ static mzResult GetPasses(size_t* outCount, mzPassInfo* infos)
 	return MZ_RESULT_SUCCESS;
 }
 
-static mzResult GetShaders(size_t* outCount, mzName* outShaderNames, mzBuffer* outSpirvBufs)
+static mzResult GetShaders(size_t* outCount, mzShaderInfo* outShaders)
 {
-	*outCount = 1;
-	if(!outSpirvBufs || !outShaderNames)
-		return MZ_RESULT_SUCCESS;
-		
-	*outShaderNames = MZN_Resize_Shader;
-	outSpirvBufs->Data = (void*)(Resize_frag_spv);
-	outSpirvBufs->Size = sizeof(Resize_frag_spv);
-	return MZ_RESULT_SUCCESS;
+    *outCount = 1;
+    if (!outShaders)
+        return MZ_RESULT_SUCCESS;
+
+    outShaders[0] = {.Key=MZN_Resize_Shader, .SpirvBlob = {(void*)Resize_frag_spv, sizeof(Resize_frag_spv)}};
+    return MZ_RESULT_SUCCESS;
 }
-	
+
 static mzResult ExecuteNode(void* ctx, const mzNodeExecuteArgs* args)
 {
 	auto pins = GetPinValues(args);

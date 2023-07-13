@@ -27,16 +27,18 @@ static std::vector<std::pair<Name, std::vector<u8>>> GShaders;
 
 struct AJA
 {
-    static mzResult GetShaders(size_t* outCount, mzName* names, mzBuffer* outSpirvBufs)
+    static mzResult GetShaders(size_t* outCount, mzShaderInfo* outShaders)
     {
         *outCount = GShaders.size();
-        if(!outSpirvBufs) 
+        if(!outShaders) 
             return MZ_RESULT_SUCCESS;
 
         for (auto& [name, spirv] : GShaders)
         {
-            *(names++) = name;
-            *(outSpirvBufs++) = { spirv.data(), spirv.size() };
+            *outShaders++ = {
+                .Key = name,
+                .SpirvBlob = { spirv.data(), spirv.size() },
+            };
         }
 
         return MZ_RESULT_SUCCESS;

@@ -124,17 +124,14 @@ struct WriteImage : NodeContext {
         mzEngine.Destroy(&captures.SRGB);
     }
 
-    static mzResult GetShaders(size_t* count, mzName* names, mzBuffer* spirv)
-    {
-        *count = 1;
-        if (!names || !spirv)
-            return MZ_RESULT_SUCCESS;
-
-        *names = MZN_Linear2SRGB_Shader;
-        spirv->Data = (void*)Linear2SRGB_frag_spv;
-        spirv->Size = sizeof(Linear2SRGB_frag_spv);
-        return MZ_RESULT_SUCCESS;
-    }
+	static mzResult GetShaders(size_t* outCount, mzShaderInfo* outShaders)
+	{
+		*outCount = 1;
+		if (!outShaders)
+			return MZ_RESULT_SUCCESS;
+		outShaders[0] = {.Key = MZN_Linear2SRGB_Shader, .SpirvBlob = {(void*)Linear2SRGB_frag_spv, sizeof(Linear2SRGB_frag_spv) }};
+		return MZ_RESULT_SUCCESS;
+	}
 
     static mzResult GetPasses(size_t* count, mzPassInfo* passes)
     {

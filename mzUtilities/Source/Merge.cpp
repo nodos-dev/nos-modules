@@ -228,14 +228,12 @@ struct MergeContext : NodeContext
 		}
 	}
 
-	static mzResult GetShaders(size_t* outCount, mzName* outShaderNames, mzBuffer* outSpirvBufs)
+	static mzResult GetShaders(size_t* outCount, mzShaderInfo* outShaders)
 	{
 		*outCount = 1;
-		if (!outShaderNames || !outSpirvBufs)
+		if (!outShaders)
 			return MZ_RESULT_SUCCESS;
-		*outShaderNames = MZN_Merge_Shader;
-		outSpirvBufs->Data = (void*)(Merge_frag_spv);
-		outSpirvBufs->Size = sizeof(Merge_frag_spv);
+		outShaders[0] = {.Key = MZN_Merge_Shader, .SpirvBlob = {(void*)Merge_frag_spv, sizeof(Merge_frag_spv) }};
 		return MZ_RESULT_SUCCESS;
 	}
 

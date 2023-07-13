@@ -31,16 +31,13 @@ struct GaussBlurContext
 	}
 
 
-	static mzResult GetShaders(size_t* outCount, mzName* outShaderNames, mzBuffer* infos)
+	static mzResult GetShaders(size_t* outCount, mzShaderInfo* outShaders)
 	{
 		*outCount = 1;
-		if (!infos)
+		if (!outShaders)
 			return MZ_RESULT_SUCCESS;
 
-		outShaderNames[0] = MZN_Gaussian_Blur_Shader;
-		infos->Data = (void*)GaussianBlur_frag_spv;
-		infos->Size = sizeof(GaussianBlur_frag_spv);
-
+		outShaders[0] = {.Key=MZN_Gaussian_Blur_Shader, .SpirvBlob = {(void*)GaussianBlur_frag_spv, sizeof(GaussianBlur_frag_spv)}};
 		return MZ_RESULT_SUCCESS;
 	}
 
