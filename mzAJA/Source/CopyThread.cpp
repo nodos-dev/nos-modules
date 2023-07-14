@@ -350,7 +350,7 @@ void CopyThread::AJAInputProc()
 
         if (!(client->Device->WaitForInputVerticalInterrupt(Channel)))
         {
-            Orphan(true);
+            Orphan(true, "AJA Input has no signal");
             while (!client->Device->WaitForInputVerticalInterrupt(Channel))
             {
                 if (!run || gpuRing->Exit || cpuRing->Exit)
@@ -772,23 +772,23 @@ CopyThread::~CopyThread()
         mzEngine.Destroy(&CompressedTex);
 }
 
-void CopyThread::Orphan(bool b)
+void CopyThread::Orphan(bool orphan, std::string const& message)
 {
-    PinUpdate(b ? Action::SET : Action::RESET, Action::NOP);
+    PinUpdate(mz::fb::TOrphanState{.is_orphan=orphan, .message=message}, Action::NOP);
 }
 
 void CopyThread::Live(bool b)
 {
-    PinUpdate(Action::NOP, b ? Action::SET : Action::RESET);
+    PinUpdate(std::nullopt, b ? Action::SET : Action::RESET);
 }
 
-void CopyThread::PinUpdate(Action orphan, mz::Action live)
+void CopyThread::PinUpdate(std::optional<mz::fb::TOrphanState> orphan, mz::Action live)
 {
     flatbuffers::FlatBufferBuilder fbb;
     auto ids = client->GeneratePinIDSet(mz::Name(Name()), mode);
     std::vector<flatbuffers::Offset<PartialPinUpdate>> updates;
     std::transform(ids.begin(), ids.end(), std::back_inserter(updates),
-                   [&fbb, orphan, live](auto id) { return mz::CreatePartialPinUpdate(fbb, &id, 0, orphan, live); });
+                   [&fbb, orphan, live](auto id) { return mz::CreatePartialPinUpdateDirect(fbb, &id, 0, orphan ? mz::fb::CreateOrphanState(fbb, &*orphan) : false, live); });
     mzEngine.HandleEvent(
         CreateAppEvent(fbb, mz::CreatePartialNodeUpdateDirect(fbb, &client->Mapping.NodeId, ClearFlags::NONE, 0, 0, 0,
                                                               0, 0, 0, 0, &updates)));

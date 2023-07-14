@@ -159,9 +159,9 @@ struct CopyThread : TrackSync
 
     void StartThread();
 
-    void Orphan(bool);
+    void Orphan(bool, std::string const& msg = "");
     void Live(bool);
-    void PinUpdate(Action orphan, Action live);
+    void PinUpdate(std::optional<mz::fb::TOrphanState>, Action live);
 
     void Stop();
     void Resize(u32 size);

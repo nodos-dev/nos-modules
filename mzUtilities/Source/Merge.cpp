@@ -53,10 +53,12 @@ struct MergeContext : NodeContext
 
 			for (int i = 0; i < node->pins()->size(); ++i)
 			{
-				if (node->pins()->Get(i)->orphan())
+				if (node->pins()->Get(i)->orphan_state()->is_orphan())
 				{
 					updatePins.emplace_back(
-						mz::CreatePartialPinUpdate(fbb, node->pins()->Get(i)->id(), 0, Action::RESET, Action::NOP));
+						mz::CreatePartialPinUpdate
+						(fbb, node->pins()->Get(i)->id(),
+							0, mz::fb::CreateOrphanStateDirect(fbb, false), Action::NOP));
 				}
 			}
 

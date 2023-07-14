@@ -56,7 +56,7 @@ const u8 *AddIfNotFound(Name name, std::string tyName, std::vector<u8> val,
 {
     if (auto pin = pins[name])
     {
-        toUpdate.push_back(CreatePartialPinUpdateDirect(fbb, pin->id(), 0, Action::RESET));
+        toUpdate.push_back(CreatePartialPinUpdateDirect(fbb, pin->id(), 0, mz::fb::CreateOrphanStateDirect(fbb, false)));
         return pin->data()->Data();
     }
     toAdd.push_back(
