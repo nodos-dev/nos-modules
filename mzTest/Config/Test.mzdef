@@ -54,7 +54,211 @@
                     "show_as": "OUTPUT_PIN"
                 }
             ]
-        }
+        },
+		{
+            "class_name": "NodeWithCategories",
+            "contents_type": "Job",
+            "contents": {
+                "type": "CPU"
+            },
+            "functions": [
+                {
+                    "class_name": "TestFunction",
+                    "contents_type": "Job",
+                    "contents": {
+                        "type": "CPU"
+                    },
+					"function_category": "A",
+                    "pins": [
+                        {
+                            "name": "in1",
+                            "type_name": "double",
+                            "show_as": "INPUT_PIN",
+		                    "pin_category": "A"
 
+                        },
+                        {
+                            "name": "in2",
+                            "type_name": "double",
+                            "show_as": "INPUT_PIN"
+                        },
+                        {
+                            "name": "out",
+                            "type_name": "double",
+                            "show_as": "OUTPUT_PIN"
+                        }
+                    ]
+                }
+            ],
+            "pins": [
+                {
+                    "name": "TestPin1",
+                    "type_name": "double",
+                    "show_as": "INPUT_PIN",
+                    "pin_category": "A"
+                },
+                {
+                    "name": "TestPin2",
+                    "type_name": "mz.fb.vec3d",
+                    "show_as": "INPUT_PIN",
+                    "pin_category": "A|B"
+                },
+                {
+                    "name": "TestPin3",
+                    "type_name": "mz.fb.vec3d",
+                    "show_as": "INPUT_PIN",
+                    "pin_category": "B"
+                },
+                {
+                    "name": "TestPin4",
+                    "type_name": "mz.fb.mat4d",
+                    "show_as": "OUTPUT_PIN",
+                    "pin_category": "B|A"
+                }
+            ]
+        },
+		{
+            "class_name": "NodeWithFunctions",
+            "contents_type": "Job",
+            "contents": {
+                "type": "CPU"
+            },
+            "functions": [
+                {
+                    "class_name": "TestFunction",
+                    "contents_type": "Job",
+                    "contents": {
+                        "type": "CPU"
+                    },
+					"function_category": "A",
+                    "pins": [
+                        {
+                            "name": "in1",
+                            "type_name": "double",
+                            "show_as": "INPUT_PIN",
+		                    "pin_category": "A"
+
+                        },
+                        {
+                            "name": "in2",
+                            "type_name": "double",
+                            "show_as": "INPUT_PIN"
+                        },
+                        {
+                            "name": "out",
+                            "type_name": "double",
+                            "show_as": "OUTPUT_PIN"
+                        }
+                    ]
+                },
+				{
+                    "class_name": "TestFunction2",
+                    "contents_type": "Job",
+                    "contents": {
+                        "type": "CPU"
+                    },
+					"function_category": "A|B",
+                    "pins": [
+                        {
+                            "name": "in1",
+                            "type_name": "double",
+                            "show_as": "INPUT_PIN",
+		                    "pin_category": "A"
+
+                        },
+                        {
+                            "name": "in2",
+                            "type_name": "double",
+                            "show_as": "INPUT_PIN"
+                        },
+                        {
+                            "name": "out",
+                            "type_name": "double",
+                            "show_as": "OUTPUT_PIN"
+                        }
+                    ]
+                },
+				{
+                    "class_name": "TestFunction3",
+                    "contents_type": "Job",
+                    "contents": {
+                        "type": "CPU"
+                    },
+					"function_category": "B",
+                    "pins": [
+                        {
+                            "name": "in1",
+                            "type_name": "double",
+                            "show_as": "INPUT_PIN",
+		                    "pin_category": "A"
+
+                        },
+                        {
+                            "name": "in2",
+                            "type_name": "double",
+                            "show_as": "INPUT_PIN"
+                        },
+                        {
+                            "name": "out",
+                            "type_name": "double",
+                            "show_as": "OUTPUT_PIN"
+                        }
+                    ]
+                },
+				{
+                    "class_name": "TestFunction3",
+                    "contents_type": "Job",
+                    "contents": {
+                        "type": "CPU"
+                    },
+					"function_category": "A",
+                    "pins": [
+                        {
+                            "name": "in1",
+                            "type_name": "double",
+                            "show_as": "INPUT_PIN",
+		                    "pin_category": "A"
+
+                        },
+                        {
+                            "name": "in2",
+                            "type_name": "double",
+                            "show_as": "INPUT_PIN"
+                        },
+                        {
+                            "name": "out",
+                            "type_name": "double",
+                            "show_as": "OUTPUT_PIN"
+                        }
+                    ]
+                }
+            ],
+            "pins": [
+                {
+                    "name": "TestPin1",
+                    "type_name": "double",
+                    "show_as": "INPUT_PIN",
+                    "pin_category": "A"
+                },
+                {
+                    "name": "TestPin2",
+                    "type_name": "mz.fb.vec3d",
+                    "show_as": "INPUT_PIN",
+                    "pin_category": "A|B"
+                },
+                {
+                    "name": "TestPin3",
+                    "type_name": "mz.fb.vec3d",
+                    "show_as": "INPUT_PIN",
+                    "pin_category": "B"
+                },
+                {
+                    "name": "TestPin4",
+                    "type_name": "mz.fb.mat4d",
+                    "show_as": "OUTPUT_PIN",
+                    "pin_category": "B|A"
+                }
+            ]
+        }
     ]
 }

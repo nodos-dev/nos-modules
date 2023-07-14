@@ -22,7 +22,6 @@ static void TestFunction(void* ctx, const mzNodeExecuteArgs* nodeArgs, const mzN
 	mzEngine.SetPinValue(functionArgs->PinIds[2], {.Data = &c, .Size = sizeof(c)});
 }
 
-
 static mzResult GetFunctions(size_t* outCount, mzName* pName, mzPfnNodeFunctionExecute* fns)
 {
 	*outCount = 1;
@@ -40,13 +39,16 @@ extern "C"
 
 	MZAPI_ATTR mzResult MZAPI_CALL mzExportNodeFunctions(size_t* outCount, mzNodeFunctions* outFunctions)
 	{
-		*outCount = (size_t)(1);
+		*outCount = (size_t)(3);
 		if (!outFunctions)
 			return MZ_RESULT_SUCCESS;
 		
-		outFunctions[0].GetFunctions = GetFunctions;
-		outFunctions[0].TypeName = MZ_NAME_STATIC("mz.test.NodeTest");
-
+		outFunctions->GetFunctions = GetFunctions;
+		outFunctions->TypeName = MZ_NAME_STATIC("mz.test.NodeTest");
+		MZ_NEXT_NODE_CLASS(outFunctions);
+		outFunctions->TypeName = MZ_NAME_STATIC("mz.test.NodeWithCategories");
+		MZ_NEXT_NODE_CLASS(outFunctions);
+		outFunctions->TypeName = MZ_NAME_STATIC("mz.test.NodeWithFunctions");
 		return MZ_RESULT_SUCCESS;
 	}
 

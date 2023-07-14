@@ -16,6 +16,16 @@
             "category": "Test",
             "class_name": "NodeTest",
             "display_name": "NodeTestNode"
-        }
+        },
+		{
+			"category": "Test",
+            "class_name": "NodeWithCategories",
+            "display_name": "NodeWithCategories"
+		},
+		{
+			"category": "Test",
+            "class_name": "NodeWithFunctions",
+            "display_name": "NodeWithFunctions"
+		}
     ]
 }
