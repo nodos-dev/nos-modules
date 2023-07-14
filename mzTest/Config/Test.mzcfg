@@ -1,0 +1,21 @@
+{
+    "info": {
+        "id": {
+            "name": "mz.test",
+            "version": "0.1.0"
+        },
+        "display_name": "Test"
+    },
+    "custom_types": [],
+    "node_definitions": [
+        "Test.mzdef"
+    ],
+    "binary_path": "../Binaries/mzTest",
+    "associated_nodes": [
+        {
+            "category": "Test",
+            "class_name": "NodeTest",
+            "display_name": "NodeTestNode"
+        }
+    ]
+}

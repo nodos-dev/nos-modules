@@ -1,0 +1,60 @@
+{
+    "nodes": [
+        {
+            "class_name": "NodeTest",
+            "contents_type": "Job",
+            "contents": {
+                "type": "CPU"
+            },
+            "functions": [
+                {
+                    "class_name": "TestFunction",
+                    "contents_type": "Job",
+                    "contents": {
+                        "type": "CPU"
+                    },
+                    "pins": [
+                        {
+                            "name": "in1",
+                            "type_name": "double",
+                            "show_as": "INPUT_PIN"
+                        },
+                        {
+                            "name": "in2",
+                            "type_name": "double",
+                            "show_as": "INPUT_PIN"
+                        },
+                        {
+                            "name": "out",
+                            "type_name": "double",
+                            "show_as": "OUTPUT_PIN"
+                        }
+                    ]
+                }
+            ],
+            "pins": [
+                {
+                    "name": "double_prop",
+                    "type_name": "double",
+                    "show_as": "INPUT_PIN"
+                },
+                {
+                    "name": "vec3d_prop",
+                    "type_name": "mz.fb.vec3d",
+                    "show_as": "INPUT_PIN"
+                },
+                {
+                    "name": "vec3d_prop",
+                    "type_name": "mz.fb.vec3d",
+                    "show_as": "INPUT_PIN"
+                },
+                {
+                    "name": "mat4d_prop",
+                    "type_name": "mz.fb.mat4d",
+                    "show_as": "OUTPUT_PIN"
+                }
+            ]
+        }
+
+    ]
+}
