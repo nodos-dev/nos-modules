@@ -133,7 +133,7 @@ struct AJA
         AJAClient *c = new AJAClient(isIn, dev);
         *ctx = c;
 
-        std::string refSrc = NTV2ReferenceSourceToString(c->Ref, true);
+        std::string refSrc = "Ref : " + NTV2ReferenceSourceToString(c->Ref, true) + " - " + NTV2FrameRateToString(c->FR, true);
         flatbuffers::FlatBufferBuilder fbb;
 
         std::vector<flatbuffers::Offset<mz::fb::Pin>> pinsToAdd;
@@ -178,7 +178,7 @@ struct AJA
             mz::fb::TVisualizer vis = { .type = mz::fb::VisualizerType::COMBO_BOX, .name = dev->GetDisplayName() + "-AJAOut-Reference-Source" };
             if (auto ref = AddIfNotFound(MZN_ReferenceSource,
                 "string",
-                StringValue(dev->GetDisplayName()),
+                StringValue(refSrc),
                 loadedPins,
                 pinsToAdd, pinsToUpdate,
                 fbb,

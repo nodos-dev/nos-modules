@@ -51,18 +51,23 @@ static mzResult ExecuteNode(void* ctx, const mzNodeExecuteArgs* args)
 	if(size->x != tex.Info.Texture.Width ||
 		size->y != tex.Info.Texture.Height)
 	{
+		auto prevTex = tex;
+		tex.Memory = {};
 		tex.Info.Texture.Width = size->x;
 		tex.Info.Texture.Height = size->y;
-		mzEngine.Destroy(&tex);
-		mzEngine.Create(&tex);
+		mzResult re;
+		re = mzEngine.Create(&tex);
+		assert(MZ_RESULT_SUCCESS == re);
+		re = mzEngine.Destroy(&prevTex);
+		assert(MZ_RESULT_SUCCESS == re);
+
 		auto texFb = ConvertTextureInfo(tex);
 		texFb.unscaled = true;
 		auto texFbBuf = mz::Buffer::From(texFb);
 		mzEngine.SetPinValue(args->PinIds[1], {.Data = texFbBuf.data(), .Size = texFbBuf.size()});
 	}
 
-	std::vector bindings = {ShaderBinding(MZN_Input, inputTex), ShaderBinding(MZN_Method, method)
-	};
+	std::vector bindings = {ShaderBinding(MZN_Input, inputTex), ShaderBinding(MZN_Method, method)};
 		
 	mzRunPassParams resizeParam {
 		.Key = MZN_Resize_Pass,

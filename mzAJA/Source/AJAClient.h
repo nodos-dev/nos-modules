@@ -145,8 +145,8 @@ struct MZAPI_ATTR AJAClient
     LightSetCB<rc<CopyThread>, CTGetName> Pins;
     AJADevice *Device = 0;
 
-    NTV2ReferenceSource Ref;
-    NTV2FrameRate FR;
+    NTV2ReferenceSource Ref = NTV2_REFERENCE_EXTERNAL;
+    NTV2FrameRate FR = NTV2_FRAMERATE_5994;
 
     AJAClient(bool input, AJADevice *device);
     ~AJAClient();

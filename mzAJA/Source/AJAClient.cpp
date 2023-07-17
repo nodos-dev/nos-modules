@@ -10,8 +10,6 @@
 namespace mz
 {
 
-
-
 fb::UUID GenerateUUID()
 {
     static std::mt19937 eng = std::mt19937(std::random_device()());
