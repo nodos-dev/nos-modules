@@ -11,6 +11,14 @@
 
 MZ_INIT();
 
+MZ_REGISTER_NAME(X);
+MZ_REGISTER_NAME(Y);
+MZ_REGISTER_NAME(Z);
+MZ_REGISTER_NAME(Position);
+MZ_REGISTER_NAME(Rotation);
+MZ_REGISTER_NAME(Transformation);
+MZ_REGISTER_NAME(FOV);
+
 namespace mz::math
 {
 
@@ -183,6 +191,9 @@ enum class MathNodeTypes : int {
 	SineWave,
 	Clamp,
 	Absolute,
+	AddTrack,
+	AddTransform,
+	PerspectiveView,
 	Count
 };
 
@@ -192,6 +203,63 @@ mzResult ToString(void* ctx, const mzNodeExecuteArgs* args)
 	auto* in = reinterpret_cast<u32*>(args->PinValues[0].Data);
 	auto s = std::to_string(*in);
 	return mzEngine.SetPinValue(args->PinIds[1], mzBuffer { .Data = (void*)s.c_str(), .Size = s.size() + 1 });
+}
+
+template<class T, u32 I, u32 F = I * 2 + 4>
+inline auto AddTrackField(flatbuffers::FlatBufferBuilder& fbb, flatbuffers::Table* X, flatbuffers::Table* Y)
+{
+	auto l = X->GetStruct<T*>(F);
+	auto r = Y->GetStruct<T*>(F);
+	auto c = (l ? *l : T{}) + (r ? *r : T{});
+	fbb.AddStruct(F, &c);
+}
+
+template<u32 hi, class F, u32 i = 0>
+void For(F&& f)
+{
+	if constexpr (i < hi)
+	{
+		f.template operator() < i > ();
+		For<hi, F, i + 1>(std::move(f));
+	}
+}
+
+template<class T, class F>
+void FieldIterator(F&& f)	
+{
+	For<T::Traits::fields_number>([f = std::move(f), ref = T::MiniReflectTypeTable()]<u32 i>() {
+		using Type = std::remove_pointer_t<typename T::Traits::template FieldType<i>>;
+		f.template operator() < i, Type > (ref->values ? ref->values[i] : 0);
+	});
+}
+
+mzResult AddTrack(void* ctx, const mzNodeExecuteArgs* args)
+{
+	auto pins = GetPinValues(args);
+	auto ids = GetPinIds(args);
+	auto xBuf = pins[MZN_X];
+	auto yBuf = pins[MZN_Y];
+	auto* xTable = flatbuffers::GetMutableRoot<flatbuffers::Table>(xBuf);
+	auto* yTable = flatbuffers::GetMutableRoot<flatbuffers::Table>(yBuf);
+	flatbuffers::FlatBufferBuilder fbb;
+	fb::Track::Builder b(fbb);
+	FieldIterator<fb::Track>([&fbb, X = xTable, Y = yTable]<u32 i, class T>(auto) { AddTrackField<T, i>(fbb, X, Y); });
+	fbb.Finish(b.Finish());
+	auto buf = fbb.Release();
+	return mzEngine.SetPinValue(ids[MZN_Z], mzBuffer { .Data = buf.data(), .Size = buf.size()});
+}
+
+mzResult AddTransform(void* ctx, const mzNodeExecuteArgs* args)
+{
+	auto pins = GetPinValues(args);
+	auto xBuf = pins[MZN_X];
+	auto yBuf = pins[MZN_Y];
+	auto zBuf = pins[MZN_Z];
+	FieldIterator<fb::Transform>([X = static_cast<uint8_t*>(xBuf), Y = static_cast<uint8_t*>(yBuf), Z = static_cast<uint8_t*>(zBuf)]<u32 i, class T>(auto O) {
+		if constexpr (i == 2) (T&)O[Z] = (T&)O[X] * (T&)O[Y];
+		else (T&)O[Z] = (T&)O[X] + (T&)O[Y];
+	});
+	return MZ_RESULT_SUCCESS;
 }
 
 extern "C"
@@ -264,6 +332,41 @@ MZAPI_ATTR mzResult MZAPI_CALL mzExportNodeFunctions(size_t* outCount, mzNodeFun
 			};
 			break;
 		}
+		case MathNodeTypes::AddTrack: {
+			node->TypeName = MZ_NAME_STATIC("mz.math.Add_Track");
+			node->ExecuteNode = AddTrack;
+			break;
+		}
+		case MathNodeTypes::AddTransform: {
+			node->TypeName = MZ_NAME_STATIC("mz.math.Add_Transform");
+			node->ExecuteNode = AddTransform;
+			break;
+		}
+		case MathNodeTypes::PerspectiveView: {
+			node->TypeName = MZ_NAME_STATIC("mz.math.PerspectiveView");
+			node->ExecuteNode = [](void* ctx, const mzNodeExecuteArgs* args)
+			{
+				auto pins = GetPinValues(args);
+
+				auto fov = *static_cast<double*>(pins[MZN_FOV]);
+
+				// Sanity checks
+				static_assert(alignof(glm::dvec3) == alignof(mz::fb::vec3d));
+				static_assert(sizeof(glm::dvec3) == sizeof(mz::fb::vec3d));
+				static_assert(alignof(glm::dmat4) == alignof(mz::fb::mat4d));
+				static_assert(sizeof(glm::dmat4) == sizeof(mz::fb::mat4d));
+
+				// glm::dvec3 is compatible with mz::fb::vec3d so it's safe to cast
+				auto const& rot = *static_cast<glm::dvec3*>(pins[MZN_Rotation]);
+				auto const& pos = *static_cast<glm::dvec3*>(pins[MZN_Position]);
+				auto perspective = glm::perspective(fov, 16.0 / 9.0, 10.0, 10000.0);
+				auto view = glm::eulerAngleXYZ(rot.x, rot.y, rot.z);
+				auto& out = *static_cast<glm::dmat4*>(pins[MZN_Transformation]);
+				out = perspective * view;
+				return MZ_RESULT_SUCCESS;
+			};
+			break;
+		}
 		default:
 			break;
 		}
@@ -273,90 +376,3 @@ MZAPI_ATTR mzResult MZAPI_CALL mzExportNodeFunctions(size_t* outCount, mzNodeFun
 }
 
 }
-
-/*
-
-template<class T, u32 I, u32 F = I*2 + 4>
-inline auto AddTrackField(flatbuffers::FlatBufferBuilder& fbb, flatbuffers::Table* X, flatbuffers::Table* Y)
-{
-	auto l = X->GetStruct<T*>(F);
-	auto r = Y->GetStruct<T*>(F);
-	auto c = (l ? *l : T{}) + (r ? *r : T{});
-	fbb.AddStruct(F, &c);
-}
-
-template<u32 hi, class F, u32 i = 0>
-void FOR(F&& f)
-{
-	if constexpr(i < hi)
-	{
-		f.template operator()<i>();
-		FOR<hi, F, i +1>(std::move(f));
-	}
-}
-
-template<class T, class F>
-void FieldIterator(F&& f)
-{
-	FOR<T::Traits::fields_number>([f=std::move(f),ref=T::MiniReflectTypeTable()]<u32 i>() {
-		using Type = std::remove_pointer_t<typename T::Traits::template FieldType<i>>;
-		f.template operator()<i, Type>(ref->values ? ref->values[i] : 0);
-	});
-}
-
-bool AddTrack(mz::Args& pins, void*)
-{
-	flatbuffers::FlatBufferBuilder fbb;
-	fb::Track::Builder b(fbb);
-	FieldIterator<fb::Track>([&fbb, X=pins.Get<flatbuffers::Table>("X"), Y = pins.Get<flatbuffers::Table>("Y")]<u32 i, class T>(auto){ AddTrackField<T, i>(fbb, X, Y); });
-	fbb.Finish(b.Finish());
-	*pins.GetBuffer("Z") = fbb.Release();
-	return true;
-}
-
-bool AddTransform(mz::Args& pins, void*)
-{
-	FieldIterator<fb::Transform>([X=pins.Get<u8>("X"),Y=pins.Get<u8>("Y"),Z=pins.Get<u8>("Z")]<u32 i, class T>(auto O) { 
-		if constexpr (i == 2) (T&)O[Z] = (T&)O[X] * (T&)O[Y]; 
-		else (T&)O[Z] = (T&)O[X] + (T&)O[Y]; 
-	});
-	return true;
-}
-
-void RegisterMath(NodeActionsMap& functions)
-{
-	functions["mz.math.NodeWithFunction"].NodeCreated = [](mz::fb::Node const& node, mz::Args& args, void* ctx)
-	{
-		std::vector<std::string> demoList = { "Item1","Item2", "AAAAAAAAa", "a" };
-		GServices.UpdateItemList("DemoItems", demoList);
-	};
-
-	functions["mz.math.U32ToString"].EntryPoint = ToString<u32>;
-	functions["mz.math.NodeWithFunction"].NodeFunctions["NodeAsFunctionAddF64"] = SampleNodeAddFunc;
-	functions["mz.math.NodeWithFunction"].NodeFunctions["NodeAsFunctionSubF64"] = SampleNodeAddFunc;
-	
-	functions["mz.math.Add_Track"].EntryPoint = AddTrack;
-	functions["mz.math.Add_Transform"].EntryPoint = AddTransform;
-
-	functions["mz.math.PerspectiveView"].EntryPoint = [](mz::Args& args, void*) {
-		auto fov = *args.Get<f64>("FOV");
-
-		// Sanity checks
-		static_assert(alignof(glm::dvec3) == alignof(mz::fb::vec3d));
-		static_assert(sizeof(glm::dvec3) == sizeof(mz::fb::vec3d));
-		static_assert(alignof(glm::dmat4) == alignof(mz::fb::mat4d));
-		static_assert(sizeof(glm::dmat4) == sizeof(mz::fb::mat4d));
-
-		// glm::dvec3 is compatible with mz::fb::vec3d so it's safe to cast
-		auto rot = *args.Get<glm::dvec3>("Rotation"); 
-		auto pos = *args.Get<glm::dvec3>("Position"); 
-		auto perspective = glm::perspective(fov, 16.0/9.0, 10.0, 10000.0);
-		auto view = glm::eulerAngleXYZ(rot.x, rot.y, rot.z);
-		*args.Get<glm::dmat4>("Transformation") = perspective * view;
-		return true;
-	};
-}
-
-}
-
-*/
