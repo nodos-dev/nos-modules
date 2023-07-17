@@ -3,7 +3,9 @@
         "target_name": "mzAJA",
         "path": "mzAJA",
         "deps": [
-            "mzAJA/*"
+            "mzAJA/*",
+            "External/ntv2/*",
+            "External/stb/*"
         ]
     },
     "mz.filters": {
@@ -26,7 +28,8 @@
         "path": "mzUtilities",
         "deps": [
             "mzUtilities/*",
-            "Shaders/*"
+            "Shaders/*",
+            "External/stb/*"
         ]
     }
 }

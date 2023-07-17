@@ -47,6 +47,8 @@ endfunction()
 # Dependencies
 # ------------
 
+# Update plugins.json if you add dependencies, so that CD can create releases.
+
 # stb
 if (NOT WITH_MEDIAZ AND NOT TARGET stb)
     add_subdirectory(${EXTERNAL_DIR}/stb "${CMAKE_CURRENT_BINARY_DIR}/stb")
