@@ -37,8 +37,8 @@ const WindowsVersionEntry WindowsVersionTable[] =
 	{ 6, 0, (char*)"Windows Vista",		  (char*)"Windows Server 2008"},
 	{ 6, 1, (char*)"Windows 7",			  (char*)"Windows Server 2008 R2"},
 	{ 6, 2, (char*)"Windows 8",			  (char*)"Windows Server 2012"},
-	{ 6, 3, (char*)"Windows 8.1",		  (char*)"Windows Server 2012 R2"},
-	{10, 0, (char*)"Windows 10",		  (char*)"Windows Server 2016"}
+	{ 6, 3, (char*)"Windows 8.1",		  (char*)"Windows Server 2012 R2"}
+	//{10, 0, (char*)"Windows 10",		  (char*)"Windows Server 2016"} // Use Registry to retrieve from this point forward
 };
 const int WindowsVersionTableSize = sizeof(WindowsVersionTable) / sizeof(WindowsVersionEntry);
 
@@ -154,6 +154,11 @@ aja_getosname()
 	//
 	// They forgot to "break" NetWkstaGetInfo(), so use that to get the
 	// major and minor versions for Windows 8.1 and beyound
+	//
+	// Update: Windows 10 and corresponding Server versions have been removed from WindowsVersionTable
+	// Due to the variety of builds under Windows 10, while the majorVesrion and minorVersion apparently do not update beyond 10.0
+	// For Windows 10 and beyond, the registry will be used to retrieve the OS Name.
+
 	if (majorVersion >=6 && minorVersion >= 2)
 	{
 		LPBYTE pinfoRawData;
@@ -200,7 +205,14 @@ aja_getosname()
 			foundVersion = true;
 			break;
 		}
+
 	}
+
+	if (!foundVersion)
+		osname = aja::read_registry_string(HKEY_LOCAL_MACHINE, "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion",
+										  "ProductName");
+
+
 
 	// append the service pack info if available
 	osname += " ";
@@ -314,9 +326,13 @@ aja_getmemory(AJASystemInfoMemoryUnit units, std::string &total, std::string &us
 std::string
 aja_getosversion()
 {
+	//At some point circa Windows 10, Reg Key DisplayVersion began to be used instead of ReleaseId. Check for that first.
 	std::string outVal;
 	outVal = aja::read_registry_string(HKEY_LOCAL_MACHINE, "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion",
-									  "ReleaseId");
+									  "DisplayVersion");
+	if (outVal == "")
+		outVal = aja::read_registry_string(HKEY_LOCAL_MACHINE, "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion",
+										  "ReleaseId");
 
 	return outVal;
 }

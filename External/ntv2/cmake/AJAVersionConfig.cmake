@@ -14,10 +14,10 @@ if (AJA_BUILDING_CMAKE)
         set(AJA_NTV2_SDK_VERSION_MAJOR "16")
     endif()
     if (NOT AJA_NTV2_SDK_VERSION_MINOR)
-        set(AJA_NTV2_SDK_VERSION_MINOR "3")
+        set(AJA_NTV2_SDK_VERSION_MINOR "2")
     endif()
     if (NOT AJA_NTV2_SDK_VERSION_POINT)
-        set(AJA_NTV2_SDK_VERSION_POINT "1")
+        set(AJA_NTV2_SDK_VERSION_POINT "2")
     endif()
 
     set(BUILD_NUMBER_CACHE

@@ -3000,7 +3000,7 @@ bool CNTV2Card::SetVANCMode (const NTV2ChannelSet & inChannels, const NTV2VANCMo
 {
 	size_t errors(0);
 	for (NTV2ChannelSetConstIter it(inChannels.begin());  it != inChannels.end();  ++it)
-		if (!SetEnableVANCData (inVancMode, *it))
+		if (!SetVANCMode (inVancMode, *it))
 			errors++;
 	return !errors;
 }

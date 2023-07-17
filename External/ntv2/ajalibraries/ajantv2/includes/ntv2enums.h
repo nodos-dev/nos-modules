@@ -32,9 +32,9 @@
 #else
 #define AJA_NTV2_SDK_VERSION_MAJOR		16			///< @brief The SDK major version number, an unsigned decimal integer.
 #define AJA_NTV2_SDK_VERSION_MINOR		2			///< @brief The SDK minor version number, an unsigned decimal integer.
-#define AJA_NTV2_SDK_VERSION_POINT		3			///< @brief The SDK "point" release version, an unsigned decimal integer.
-#define AJA_NTV2_SDK_BUILD_NUMBER		43			///< @brief The SDK build number, an unsigned decimal integer.
-#define AJA_NTV2_SDK_BUILD_DATETIME		"Wed Jan 25 15:41:58 UTC 2023"		///< @brief The date and time the SDK was built, in this format: "MM/DD/YYYY +8:hh:mm:ss"
+#define AJA_NTV2_SDK_VERSION_POINT		4			///< @brief The SDK "point" release version, an unsigned decimal integer.
+#define AJA_NTV2_SDK_BUILD_NUMBER		6			///< @brief The SDK build number, an unsigned decimal integer.
+#define AJA_NTV2_SDK_BUILD_DATETIME		"Thu Apr 06 19:54:21 UTC 2023"		///< @brief The date and time the SDK was built, in this format: "MM/DD/YYYY +8:hh:mm:ss"
 #define AJA_NTV2_SDK_BUILD_TYPE			""			///< @brief The SDK build type, where "a"=alpha, "b"=beta, "d"=development, ""=release.
 #endif
 
