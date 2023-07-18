@@ -15,7 +15,6 @@
         "QuadMerge.mzdef",
         "Resize.mzdef",
         "SevenSegment.mzdef",
-        "Distortion.mzdef",
         "Swizzle.mzdef",
         "TextureSwitcher.mzdef",
         "ChannelViewer.mzdef",
@@ -26,7 +25,6 @@
         "Merge.fbs",
         "Gradient.fbs",
         "Resize.fbs",
-        "Distortion.fbs",
         "Swizzle.fbs",
         "TextureSwitcher.fbs",
         "ChannelViewer.fbs"
@@ -84,16 +82,6 @@
             "display_name": "Quad Merge"
         },
         {
-            "category": "Utilities",
-            "class_name": "Distort",
-            "display_name": "Distort"
-        },
-        {
-          "category": "Utilities",
-          "class_name": "Undistort",
-          "display_name": "Undistort"
-        },
-		    {
             "category": "Utilities",
             "class_name": "Swizzle",
             "display_name": "Swizzle"

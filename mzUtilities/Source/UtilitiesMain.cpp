@@ -14,8 +14,6 @@
 #include "QuadMerge.frag.spv.dat"
 #include "Resize.frag.spv.dat"
 #include "SevenSegment.frag.spv.dat"
-#include "Distort.frag.spv.dat"
-#include "Undistort.frag.spv.dat"
 #include "Swizzle.frag.spv.dat"
 #include "TextureSwitcher.frag.spv.dat"
 
@@ -34,8 +32,6 @@ enum Utilities : int
 	QuadMerge,
 	Resize,
 	SevenSegment,
-	Distort,
-	Undistort,
 	Swizzle,
 	TextureSwitcher,
 	ChannelViewer,
@@ -90,8 +86,6 @@ MZAPI_ATTR mzResult MZAPI_CALL mzExportNodeFunctions(size_t* outSize, mzNodeFunc
 			GEN_CASE_GPU_NODE(Offset)
 			GEN_CASE_GPU_NODE(QuadMerge)
 			GEN_CASE_GPU_NODE(SevenSegment)
-			GEN_CASE_GPU_NODE(Distort)
-			GEN_CASE_GPU_NODE(Undistort)
 			GEN_CASE_GPU_NODE(Swizzle)
 			GEN_CASE_GPU_NODE(TextureSwitcher)
 			GEN_CASE_CPU_NODE(Merge)

@@ -1,7 +1,0 @@
-namespace mz.fb;
-
-enum DistortMode : uint {
-  Default = 0,
-  Crop = 1,
-  Repeat = 2,
-}
