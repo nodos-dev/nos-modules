@@ -84,7 +84,6 @@ struct TrackSync
 
 };
 
-
 struct CopyThread : TrackSync
 {
 	mz::Name name;
@@ -93,6 +92,7 @@ struct CopyThread : TrackSync
     rc<GPURing> gpuRing;
 	mzResourceShareInfo CompressedTex = {};
     rc<CPURing> cpuRing;
+	std::atomic_bool TransferInProgress = false; // TODO: Combine these rings into a double ring structure
 	// The ring objects above are overwritten on path restart.
 	// TODO: Find out other synchronization issues and fix them all
     std::atomic_uint32_t SpareCount = 0;
@@ -179,6 +179,8 @@ struct CopyThread : TrackSync
 
 
 	void PathRestart();
+
+	u32 InFlightFrames();
 };
 
 } // namespace mz

@@ -700,7 +700,6 @@ void AJAClient::OnNodeRemoved()
     (Input ? Device->HasInput : Device->HasOutput) = false;
 }
 
-
 void AJAClient::OnPathCommand(mzUUID pinId, app::PathCommand command, Buffer params)
 {
     auto pinNameOpt = Mapping.GetPinName(pinId);
@@ -716,27 +715,30 @@ void AJAClient::OnPathCommand(mzUUID pinId, app::PathCommand command, Buffer par
         mzEngine.LogD("path command on unknown pin: %s", pinName.AsCStr());
 		return;
 	}
-    auto ringThread = *result;
+    auto copyThread = *result;
 
     switch (command)
     {
     case app::PathCommand::RESTART: {
         auto* res = params.As<AjaRestartCommandParams>();
         if (res->UpdateFlags & AjaRestartCommandParams::UpdateRingSize) 
-            ringThread->Resize(res->RingSize);
+            copyThread->Resize(res->RingSize);
         break;
     }
     case app::PathCommand::NOTIFY_NEW_CONNECTION:
         {
-            if (ringThread->IsInput() ||
-                !ringThread->th.joinable())
+            copyThread->Stop();
+            copyThread->CreateRings(copyThread->GetRingSize());
+            copyThread->StartThread();
+            if (copyThread->IsInput() ||
+                !copyThread->th.joinable())
                 break;
 
             // there is a new connection path
             // we need to send a restart signal
-            auto id = GetPinId(Name(ringThread->Name()));
+            auto id = GetPinId(Name(copyThread->Name()));
             AjaRestartCommandParams restartParams;
-            restartParams.RingSize = ringThread->gpuRing->Size;
+            restartParams.RingSize = copyThread->GetRingSize();
             restartParams.UpdateFlags = AjaRestartCommandParams::UpdateRingSize;
             auto args = Buffer::From(restartParams);
             mzEngine.SendPathCommand(mzPathCommand {
@@ -887,12 +889,13 @@ bool AJAClient::BeginCopyTo(mzCopyInfo &cpy)
         return true;
     
     auto th = *it;
-	if ((slot = th->gpuRing->TryPush()))
+
+    if ((th->GetRingSize() > th->InFlightFrames()) && (slot = th->gpuRing->TryPush()))
 	{
 		slot->FrameNumber = cpy.FrameNumber;
         cpy.CopyTextureFrom = DeserializeTextureInfo(cpy.SrcPinData.Data);
         cpy.CopyTextureTo = slot->Res;
-		cpy.ShouldSubmitAndWait = true;
+		cpy.ShouldSubmitAndWait = true; 
 	}
     return cpy.ShouldCopyTexture = !!(cpy.Data = slot);
 }
@@ -914,7 +917,7 @@ void AJAClient::EndCopyTo(mzCopyInfo &cpy)
 {
     if(!cpy.Data) 
         return;
-    auto it = Pins.find(cpy.Name); 
+    auto it = Pins.find(cpy.Name);
     if (it == Pins.end()) 
         return;
 
@@ -922,7 +925,7 @@ void AJAClient::EndCopyTo(mzCopyInfo &cpy)
     auto res = (GPURing::Resource *)cpy.Data;
 	// if (-1 != *cpy.PathState) res->Res->mutate_field_type((mz::fb::FieldType)*cpy.PathState);
     th->gpuRing->EndPush(res);
-    cpy.Stop = th->cpuRing->IsFull();
+    cpy.Stop = th->InFlightFrames() >= th->GetRingSize();
     th->Worker->Enqueue({});
 }
 

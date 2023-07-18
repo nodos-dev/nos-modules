@@ -346,6 +346,20 @@ void CopyThread::AJAInputProc()
 
     while (run && !gpuRing->Exit)
     {
+        auto cpuRingReadSize = cpuRing->Read.Pool.size();
+        auto gpuRingWriteSize = gpuRing->Write.Pool.size();
+        auto cpuRingWriteSize = cpuRing->Write.Pool.size();
+        auto gpuRingReadSize = gpuRing->Read.Pool.size();
+
+        auto strCpuRingReadSize = std::to_string(cpuRingReadSize);
+        auto strCpuRingWriteSize = std::to_string(cpuRingWriteSize);
+        auto strGpuRingWriteSize = std::to_string(gpuRingWriteSize);
+        auto strGpuRingReadSize = std::to_string(gpuRingReadSize);
+
+        mzEngine.WatchLog("AJAIn CPU Ring Read Size", strCpuRingReadSize.c_str());
+        mzEngine.WatchLog("AJAIn CPU Ring Write Size", strCpuRingWriteSize.c_str());
+        mzEngine.WatchLog("AJAIn GPU Ring Read Size", strGpuRingReadSize.c_str());
+        mzEngine.WatchLog("AJAIn GPU Ring Write Size", strGpuRingWriteSize.c_str());
         InputUpdate(prevMode);
 
         if (!(client->Device->WaitForInputVerticalInterrupt(Channel)))
@@ -364,8 +378,11 @@ void CopyThread::AJAInputProc()
             Orphan(false);
         }
 
-        CPURing::Resource* slot = cpuRing->TryPush();
-        if (!slot)
+        int ringSize = GetRingSize();
+        int inFlight = InFlightFrames();
+        
+        CPURing::Resource* slot = nullptr;
+        if (inFlight >= ringSize || (!(slot = cpuRing->TryPush())))
         {
             DropCount++;
             framesSinceLastDrop = 0;
@@ -448,26 +465,36 @@ mzVec2u CopyThread::GetSuitableDispatchSize() const
 
 void CopyThread::PathRestart()
 {
-    flatbuffers::FlatBufferBuilder fbb;
     auto id = client->GetPinId(mz::Name(Name()));
-    auto cmd     = app::PathCommand::RESTART;
-    auto cmdType = app::PathCommandType::WALKBACK;
-    UByteSequence byteBuffer = Buffer::From(AjaRestartCommandParams{
-        .UpdateFlags = u32(AjaRestartCommandParams::UpdateRingSize | AjaRestartCommandParams::UpdateSpareCount),
-        .RingSize = gpuRing->Size,
-        .SpareCount = SpareCount,
-        });
+    auto cmdType = MZ_PATH_COMMAND_TYPE_RESTART;
+    auto execType = MZ_PATH_COMMAND_EXECUTION_TYPE_WALKBACK;
 
     if(IsInput())
     {
-        cmd = app::PathCommand::NOTIFY_DROP;
-        cmdType = app::PathCommandType::NOTIFY_ALL_CONNECTIONS;
+        cmdType = MZ_PATH_COMMAND_TYPE_NOTIFY_DROP;
+        execType = MZ_PATH_COMMAND_EXECUTION_TYPE_NOTIFY_ALL_CONNECTIONS;
         return;
     }
 
-    mzEngine.HandleEvent(CreateAppEvent(fbb, app::CreateExecutePathCommandDirect(fbb, &id, cmd, cmdType, &byteBuffer)));
-
+    auto args = Buffer::From(AjaRestartCommandParams{
+        .UpdateFlags = u32(AjaRestartCommandParams::UpdateRingSize | AjaRestartCommandParams::UpdateSpareCount),
+        .RingSize = gpuRing->Size,
+        .SpareCount = SpareCount,
+    });
+    
+    mzEngine.SendPathCommand(mzPathCommand{
+        .PinId = id,
+        .Command = (mzPathCommandType)cmdType,
+        .Execution = (mzPathCommandExecutionType)execType,
+        .Args = mzBuffer { args.data(), args.size() }
+    });
 }
+
+u32 CopyThread::InFlightFrames()
+{
+    return cpuRing->InFlightFrames() + gpuRing->InFlightFrames() - (TransferInProgress ? 1 : 0);
+}
+
 void CopyThread::AJAOutputProc()
 {
    
@@ -488,7 +515,7 @@ void CopyThread::AJAOutputProc()
         u32 latestReadyFrameCount = cpuRing->ReadyFrames();
         if (latestReadyFrameCount > readyFrames)
             readyFrames = latestReadyFrameCount;
-    } while (run && !cpuRing->Exit && !cpuRing->IsFull());
+    } while (run && !cpuRing->Exit && !(cpuRing->IsFull()));
 
     u32 FB = 0;
     SetFrame(FB);
@@ -498,6 +525,20 @@ void CopyThread::AJAOutputProc()
 
     while (run && !cpuRing->Exit)
     {
+        auto cpuRingReadSize = cpuRing->Read.Pool.size();
+        auto gpuRingWriteSize = gpuRing->Write.Pool.size();
+        auto cpuRingWriteSize = cpuRing->Write.Pool.size();
+        auto gpuRingReadSize = gpuRing->Read.Pool.size();
+
+        auto strCpuRingReadSize = std::to_string(cpuRingReadSize);
+        auto strCpuRingWriteSize = std::to_string(cpuRingWriteSize);
+        auto strGpuRingWriteSize = std::to_string(gpuRingWriteSize);
+        auto strGpuRingReadSize = std::to_string(gpuRingReadSize);
+
+        mzEngine.WatchLog("AJAOut CPU Ring Read Size", strCpuRingReadSize.c_str());
+        mzEngine.WatchLog("AJAOut CPU Ring Write Size", strCpuRingWriteSize.c_str());
+        mzEngine.WatchLog("AJAOut GPU Ring Read Size", strGpuRingReadSize.c_str());
+        mzEngine.WatchLog("AJAOut GPU Ring Write Size", strGpuRingWriteSize.c_str());
 		if (!(client->Device->WaitForOutputVerticalInterrupt(Channel)))
 			break;
 
@@ -586,9 +627,13 @@ void CopyThread::InputConversionThread::Consume(CopyThread::Parameters const& pa
     auto* slot = Cpy->cpuRing->BeginPop();
     if (!slot)
         return;
+    Cpy->TransferInProgress = true;
     auto* res = Cpy->gpuRing->BeginPush();
     if (!res)
+    {
+        Cpy->cpuRing->EndPop(slot);
         return;
+    }
 
     std::vector<mzShaderBinding> inputs;
 
@@ -671,6 +716,7 @@ void CopyThread::InputConversionThread::Consume(CopyThread::Parameters const& pa
     // std::this_thread::sleep_for(std::chrono::milliseconds(1));
     res->FrameNumber = params.FrameNumber;
     Cpy->gpuRing->EndPush(res);
+    Cpy->TransferInProgress = false;
     Cpy->cpuRing->EndPop(slot);
 }
 
@@ -687,13 +733,17 @@ void CopyThread::OutputConversionThread::Consume(const Parameters& item)
         gpuRing->EndPop(res);
         continue;
     }
-#endif 
+#endif
     auto incoming = Cpy->gpuRing->BeginPop();
+    if(!incoming)
+		return;
+    Cpy->TransferInProgress = true;
     auto outgoing = Cpy->cpuRing->BeginPush();
-    if (!outgoing || !incoming)
+    if (!outgoing)
+    {
+        Cpy->gpuRing->EndPop(incoming);
         return;
-
-
+    }
     glm::mat4 colorspace = (Cpy->GetMatrix<f64>());
     uint32_t iflags = (Cpy->client->Shader == ShaderType::Comp10) << 2;
 
@@ -731,9 +781,9 @@ void CopyThread::OutputConversionThread::Consume(const Parameters& item)
 
     mzEngine.Copy(cmd, &Cpy->CompressedTex, &outgoing->Res, 0);
     mzEngine.End(cmd);
-
-    Cpy->cpuRing->EndPush(outgoing);
     Cpy->gpuRing->EndPop(incoming);
+    Cpy->TransferInProgress = false;
+    Cpy->cpuRing->EndPush(outgoing);
 }
 
 CopyThread::CopyThread(struct AJAClient *client, u32 ringSize, u32 spareCount, mz::fb::ShowAs kind, 

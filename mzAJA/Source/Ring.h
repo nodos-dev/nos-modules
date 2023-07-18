@@ -111,10 +111,24 @@ struct TRing
         return Read.Pool.empty();
     }
 
+    void Drain() {
+        Resource* slot = 0;
+        u32 frameNumber = 0;
+        while (slot = TryPop(frameNumber)) {
+			EndPop(slot);
+		}
+    }
+
     u32 ReadyFrames()
     {
         std::unique_lock lock(Read.Mutex);
         return Read.Pool.size();
+    }
+
+    u32 InFlightFrames()
+    {
+        std::unique_lock lock(Write.Mutex);
+        return Size - Write.Pool.size();
     }
 
     Resource *BeginPush()
