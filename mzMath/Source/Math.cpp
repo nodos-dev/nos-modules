@@ -265,16 +265,15 @@ mzResult AddTransform(void* ctx, const mzNodeExecuteArgs* args)
 extern "C"
 {
 
-MZAPI_ATTR mzResult MZAPI_CALL mzExportNodeFunctions(size_t* outCount, mzNodeFunctions* outList)
+MZAPI_ATTR mzResult MZAPI_CALL mzExportNodeFunctions(size_t* outCount, mzNodeFunctions** outList)
 {
 	*outCount = (size_t)(MathNodeTypes::Count);
 	if (!outList)
 		return MZ_RESULT_SUCCESS;
-	auto* node = outList;
-	int i = 0;
-	do
+	for (int i = 0; i < int(MathNodeTypes::Count); ++i)
 	{
-		switch ((MathNodeTypes)i++)
+		auto node = outList[i];
+		switch ((MathNodeTypes)i)
 		{
 		GEN_ALL_CASES()
 		case MathNodeTypes::U32ToString: {
@@ -370,7 +369,7 @@ MZAPI_ATTR mzResult MZAPI_CALL mzExportNodeFunctions(size_t* outCount, mzNodeFun
 		default:
 			break;
 		}
-	} while (node = node->Next);
+	}
 	return MZ_RESULT_SUCCESS;
 }
 }

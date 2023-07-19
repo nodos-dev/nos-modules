@@ -46,18 +46,17 @@ enum Filters : int
 extern "C"
 {
 
-MZAPI_ATTR mzResult MZAPI_CALL mzExportNodeFunctions(size_t* outSize, mzNodeFunctions* outList)
+MZAPI_ATTR mzResult MZAPI_CALL mzExportNodeFunctions(size_t* outSize, mzNodeFunctions** outList)
 {
 	if (!outList)
 	{
 		*outSize = Filters::Count;
 		return MZ_RESULT_SUCCESS;
 	}
-	auto* node = outList;
-	int i = 0;
-	do
+	for (int i = 0; i < Filters::Count; ++i)
 	{
-		switch ((Filters)i++)
+		auto node = outList[i];
+		switch ((Filters)i)
 		{
 		// COLOR CORRECT FILTER
 		case Filters::ColorCorrect: {
@@ -156,7 +155,7 @@ MZAPI_ATTR mzResult MZAPI_CALL mzExportNodeFunctions(size_t* outSize, mzNodeFunc
 		}
 		default: break;
 		}
-	} while (node = node->Next);
+	}
 	return MZ_RESULT_SUCCESS;
 }
 }

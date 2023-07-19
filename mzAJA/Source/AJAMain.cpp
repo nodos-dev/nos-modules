@@ -404,13 +404,13 @@ struct AJA
 extern "C"
 {
 
-MZAPI_ATTR mzResult MZAPI_CALL mzExportNodeFunctions(size_t* outSize, mzNodeFunctions* outList)
+MZAPI_ATTR mzResult MZAPI_CALL mzExportNodeFunctions(size_t* outSize, mzNodeFunctions** outList)
 {
     *outSize = 2;
     if (!outList)
         return MZ_RESULT_SUCCESS;
-    auto* ajaIn = outList;
-    auto* ajaOut = ajaIn->Next;
+    auto* ajaIn = outList[0];
+    auto* ajaOut = outList[1];
     ajaIn->TypeName = MZN_AJA_AJAIn;
     ajaOut->TypeName = MZN_AJA_AJAOut;
     ajaIn->CanCreateNode = ajaOut->CanCreateNode = AJA::CanCreateNode;

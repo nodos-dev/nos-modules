@@ -52,7 +52,7 @@ void RegisterResize(mzNodeFunctions*);
 extern "C"
 {
 
-MZAPI_ATTR mzResult MZAPI_CALL mzExportNodeFunctions(size_t* outSize, mzNodeFunctions* outList)
+MZAPI_ATTR mzResult MZAPI_CALL mzExportNodeFunctions(size_t* outSize, mzNodeFunctions** outList)
 {
     *outSize = Utilities::Count;
 	if (!outList)
@@ -76,10 +76,10 @@ MZAPI_ATTR mzResult MZAPI_CALL mzExportNodeFunctions(size_t* outSize, mzNodeFunc
 			break;              \
 	}
 
-	auto* node = outList;
-	int i = 0;
-	do {
-		switch ((Utilities)i++) {
+	for (int i = 0; i < Utilities::Count; ++i)
+	{
+		auto node = outList[i];
+		switch ((Utilities)i) {
 			GEN_CASE_GPU_NODE(Checkerboard)
 			GEN_CASE_GPU_NODE(Color)
 			GEN_CASE_GPU_NODE(Gradient)
@@ -95,7 +95,7 @@ MZAPI_ATTR mzResult MZAPI_CALL mzExportNodeFunctions(size_t* outSize, mzNodeFunc
 			GEN_CASE_CPU_NODE(ChannelViewer)
 			GEN_CASE_CPU_NODE(Resize)
 		};
-	} while (node = node->Next);
+	}
 	return MZ_RESULT_SUCCESS;
 }
 }

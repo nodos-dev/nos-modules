@@ -37,20 +37,17 @@ static mzResult GetFunctions(size_t* outCount, mzName* pName, mzPfnNodeFunctionE
 extern "C"
 {
 
-	MZAPI_ATTR mzResult MZAPI_CALL mzExportNodeFunctions(size_t* outCount, mzNodeFunctions* outFunctions)
+	MZAPI_ATTR mzResult MZAPI_CALL mzExportNodeFunctions(size_t* outCount, mzNodeFunctions** outFunctions)
 	{
 		*outCount = (size_t)(4);
 		if (!outFunctions)
 			return MZ_RESULT_SUCCESS;
 		
-		outFunctions->GetFunctions = GetFunctions;
-		outFunctions->TypeName = MZ_NAME_STATIC("mz.test.NodeTest");
-		MZ_NEXT_NODE_CLASS(outFunctions);
-		outFunctions->TypeName = MZ_NAME_STATIC("mz.test.NodeWithCategories");
-		MZ_NEXT_NODE_CLASS(outFunctions);
-		outFunctions->TypeName = MZ_NAME_STATIC("mz.test.NodeWithFunctions");
-		MZ_NEXT_NODE_CLASS(outFunctions);
-		outFunctions->TypeName = MZ_NAME_STATIC("mz.test.NodeWithCustomTypes");
+		outFunctions[0]->TypeName = MZ_NAME_STATIC("mz.test.NodeTest");
+		outFunctions[0]->GetFunctions = GetFunctions;
+		outFunctions[1]->TypeName = MZ_NAME_STATIC("mz.test.NodeWithCategories");
+		outFunctions[2]->TypeName = MZ_NAME_STATIC("mz.test.NodeWithFunctions");
+		outFunctions[3]->TypeName = MZ_NAME_STATIC("mz.test.NodeWithCustomTypes");
 		return MZ_RESULT_SUCCESS;
 	}
 
