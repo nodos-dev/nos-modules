@@ -128,15 +128,15 @@ if __name__ == "__main__":
     if os.path.exists("./Releases"):
         shutil.rmtree("./Releases")
 
-    plugins_to_release = []
+    plugins_to_release = set()
     if args.build_all:
-        plugins_to_release = list(PLUGINS.keys())
+        plugins_to_release = set(PLUGINS.keys())
     else:
         latest_tag = get_latest_release_tag()
         logger.info(f"Latest release tag: {latest_tag}")
         if latest_tag is None:
             logger.info("Including all plugins in the release")
-            plugins_to_release = list(PLUGINS.keys())
+            plugins_to_release = set(PLUGINS.keys())
         else:
             changed_files = get_list_of_changed_files_between(latest_tag, "HEAD")
             logger.debug(f"Changed files: {changed_files}")
@@ -144,7 +144,7 @@ if __name__ == "__main__":
                 for dep in plugin_info["deps"]:
                     for changed_file in changed_files:
                         if fnmatch.fnmatch(changed_file, dep):
-                            plugins_to_release.append(plugin_name)
+                            plugins_to_release.add(plugin_name)
                             break
 
     if len(plugins_to_release) == 0:
