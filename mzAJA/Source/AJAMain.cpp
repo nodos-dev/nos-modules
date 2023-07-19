@@ -266,13 +266,22 @@ struct AJA
             }
     }
 
-    static mzResult GetFunctions(size_t * outCount, mzName* pName, mzPfnNodeFunctionExecute * fns) 
+    static void PathRestart(void* ctx, const mzNodeExecuteArgs* nodeArgs, const mzNodeExecuteArgs* functionArgs)
     {
-        *outCount = 1;
-        if(!pName || !fns)
+        auto aja = ((AJAClient *)ctx);
+        for (auto& th : aja->Pins)
+            th->PathRestart();
+    }
+
+    static mzResult GetFunctions(size_t * outCount, mzName* outName, mzPfnNodeFunctionExecute* outFunction) 
+    {
+        *outCount = 2;
+        if(!outName || !outFunction)
             return MZ_RESULT_SUCCESS;
-        *fns = ReloadShaders;
-		*pName = MZ_NAME_STATIC("ReloadShaders");
+        outFunction[0] = ReloadShaders;
+		outName[0] = MZ_NAME_STATIC("ReloadShaders");
+        outFunction[1] = PathRestart;
+        outName[1] = MZ_NAME_STATIC("PathRestart");
         return MZ_RESULT_SUCCESS;
 	    // auto &actions = functions["AJA.AJAIn"];
 	    //

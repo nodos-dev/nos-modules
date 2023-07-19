@@ -9,6 +9,13 @@
             },
             "functions": [
                 {
+                    "class_name": "PathRestart",
+                    "contents_type": "Job",
+                    "contents": {
+                        "type": "CPU"
+                    }
+                },
+                {
                     "class_name": "DumpInfo",
                     "contents_type": "Job",
                     "contents": {
@@ -46,6 +53,13 @@
                 "type": "CPU"
             },
             "functions": [
+                {
+                    "class_name": "PathRestart",
+                    "contents_type": "Job",
+                    "contents": {
+                        "type": "CPU"
+                    }
+                },
                 {
                     "class_name": "StartLog",
                     "contents_type": "Job",
