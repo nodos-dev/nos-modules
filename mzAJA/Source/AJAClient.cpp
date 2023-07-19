@@ -310,6 +310,8 @@ void AJAClient::SetReference(std::string const &val)
         Device->SetReference(src);
     }
     this->Ref = src;
+    for (auto& th : Pins)
+        th->PathRestart();
 }
 
 void AJAClient::OnNodeUpdate(mz::fb::Node const &event)

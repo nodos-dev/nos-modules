@@ -481,7 +481,7 @@ void CopyThread::PathRestart()
         .RingSize = gpuRing->Size,
         .SpareCount = SpareCount,
     });
-    
+
     mzEngine.SendPathCommand(mzPathCommand{
         .PinId = id,
         .Command = (mzPathCommandType)cmdType,
