@@ -86,22 +86,22 @@ struct TrackSync
 
 struct CopyThread : TrackSync
 {
-	mz::Name name;
-    std::atomic_bool run = true;
-    mz::fb::ShowAs kind;
-    rc<GPURing> gpuRing;
+	mz::Name PinName;
+    std::atomic_bool Run = true;
+    mz::fb::ShowAs PinKind;
+    rc<GPURing> GpuRing;
 	mzResourceShareInfo CompressedTex = {};
-    rc<CPURing> cpuRing;
+    rc<CPURing> CpuRing;
 	std::atomic_bool TransferInProgress = false; // TODO: Combine these rings into a double ring structure
 	// The ring objects above are overwritten on path restart.
 	// TODO: Find out other synchronization issues and fix them all
     std::atomic_uint32_t SpareCount = 0;
-    std::thread th;
+    std::thread Thread;
     NTV2Channel Channel;
     u32 DropCount = 0;
-    struct AJAClient *client = 0;
+    struct AJAClient *Client = 0;
     NTV2VideoFormat Format = NTV2_FORMAT_UNKNOWN;
-    AJADevice::Mode mode = AJADevice::SL;
+    AJADevice::Mode Mode = AJADevice::SL;
     std::atomic<Colorspace> Colorspace = Colorspace::REC709;
     std::atomic<GammaCurve> GammaCurve = GammaCurve::REC709;
     std::atomic_bool NarrowRange = true;

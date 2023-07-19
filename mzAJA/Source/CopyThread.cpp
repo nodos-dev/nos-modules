@@ -74,22 +74,22 @@ static std::vector<u16> GetGammaLUT(bool input, GammaCurve curve, u16 bits)
 
 u32 CopyThread::GetRingSize()
 {
-    return cpuRing->Size;
+    return CpuRing->Size;
 }
 
 mz::Name const& CopyThread::Name() const
 {
-    return name;
+    return PinName;
 }
 
 bool CopyThread::IsInput() const
 {
-    return kind == mz::fb::ShowAs::OUTPUT_PIN;
+    return PinKind == mz::fb::ShowAs::OUTPUT_PIN;
 }
 
 bool CopyThread::IsQuad() const
 {
-    return AJADevice::IsQuad(mode);
+    return AJADevice::IsQuad(Mode);
 }
 
 bool CopyThread::Interlaced() const
@@ -104,12 +104,12 @@ void CopyThread::StartThread()
     else
         Worker = std::make_unique<OutputConversionThread>();
     Worker->Cpy = this;
-    cpuRing->Exit = false;
-    gpuRing->Exit = false;
-    run = true;
-    th = std::thread([this] {
+    CpuRing->Exit = false;
+    GpuRing->Exit = false;
+    Run = true;
+    Thread = std::thread([this] {
         Worker->Start();
-        switch (this->kind)
+        switch (this->PinKind)
         {
         default:
             UNREACHABLE;
@@ -129,23 +129,23 @@ void CopyThread::StartThread()
     threadName += ": " + Name().AsString();
 
     mzEngine.HandleEvent(
-        CreateAppEvent(fbb, mz::app::CreateSetThreadNameDirect(fbb, (u64)th.native_handle(), threadName.c_str())));
+        CreateAppEvent(fbb, mz::app::CreateSetThreadNameDirect(fbb, (u64)Thread.native_handle(), threadName.c_str())));
 }
 
 mzVec2u CopyThread::Extent() const
 {
     u32 width, height;
-    client->Device->GetExtent(Format, mode, width, height);
+    Client->Device->GetExtent(Format, Mode, width, height);
     return mzVec2u(width, height);
 }
 
 void CopyThread::Stop()
 {
-    gpuRing->Stop();
-    cpuRing->Stop();
-    run = false;
-    if (th.joinable())
-        th.join();
+    GpuRing->Stop();
+    CpuRing->Stop();
+    Run = false;
+    if (Thread.joinable())
+        Thread.join();
 }
 
 void CopyThread::Resize(u32 size)
@@ -161,13 +161,13 @@ void CopyThread::Resize(u32 size)
 void CopyThread::SetFrame(u32 FB)
 {
     FB += 2 * Channel;
-    IsInput() ? client->Device->SetInputFrame(Channel, FB) : client->Device->SetOutputFrame(Channel, FB);
+    IsInput() ? Client->Device->SetInputFrame(Channel, FB) : Client->Device->SetOutputFrame(Channel, FB);
     if (IsQuad())
     {
         for (u32 i = Channel + 1; i < Channel + 4; ++i)
         {
-            IsInput() ? client->Device->SetInputFrame(NTV2Channel(i), FB)
-                      : client->Device->SetOutputFrame(NTV2Channel(i), FB);
+            IsInput() ? Client->Device->SetInputFrame(NTV2Channel(i), FB)
+                      : Client->Device->SetOutputFrame(NTV2Channel(i), FB);
         }
     }
 }
@@ -255,10 +255,10 @@ float GetFrameDurationFromFrameRate(auto frameRate)
 
 void CopyThread::Refresh()
 {
-    client->Device->CloseChannel(Channel, client->Input, IsQuad());
-    client->Device->RouteSignal(Channel, Format, client->Input, mode, client->FBFmt());
-    Format = IsInput() ? client->Device->GetInputVideoFormat(Channel) : Format;
-    client->Device->SetRegisterWriteMode(Interlaced() ? NTV2_REGWRITE_SYNCTOFIELD : NTV2_REGWRITE_SYNCTOFRAME, Channel);
+    Client->Device->CloseChannel(Channel, Client->Input, IsQuad());
+    Client->Device->RouteSignal(Channel, Format, Client->Input, Mode, Client->FBFmt());
+    Format = IsInput() ? Client->Device->GetInputVideoFormat(Channel) : Format;
+    Client->Device->SetRegisterWriteMode(Interlaced() ? NTV2_REGWRITE_SYNCTOFIELD : NTV2_REGWRITE_SYNCTOFRAME, Channel);
 
     CreateRings(GetRingSize());
 }
@@ -270,9 +270,9 @@ void CopyThread::CreateRings(u32 size)
     if (CompressedTex.Memory.Handle)
         mzEngine.Destroy(&CompressedTex);
     
-	gpuRing = MakeShared<GPURing>(ext, size);
+	GpuRing = MakeShared<GPURing>(ext, size);
 	mzVec2u compressedExt((10 == BitWidth()) ? ((ext.x + (48 - ext.x % 48) % 48) / 3) << 1 : ext.x >> 1, ext.y >> u32(Interlaced()));
-	cpuRing = MakeShared<CPURing>(compressedExt, size);
+	CpuRing = MakeShared<CPURing>(compressedExt, size);
     CompressedTex.Info.Type = MZ_RESOURCE_TYPE_TEXTURE;
     CompressedTex.Info.Texture.Width = compressedExt.x;
     CompressedTex.Info.Texture.Height = compressedExt.y;
@@ -284,14 +284,14 @@ void CopyThread::CreateRings(u32 size)
 
 void CopyThread::InputUpdate(AJADevice::Mode &prevMode)
 {
-    if (client->Device->GetInputVideoFormat(Channel) != Format)
+    if (Client->Device->GetInputVideoFormat(Channel) != Format)
     {
         Refresh();
     }
 
-    if (mode == AJADevice::AUTO)
+    if (Mode == AJADevice::AUTO)
     {
-        auto curMode = client->Device->GetMode(Channel);
+        auto curMode = Client->Device->GetMode(Channel);
         if (prevMode != curMode)
         {
             prevMode = curMode;
@@ -317,7 +317,7 @@ void CopyThread::InputUpdate(AJADevice::Mode &prevMode)
 #pragma pop_macro("R")
 
     u32 val;
-    client->Device->ReadRegister(reg, val);
+    Client->Device->ReadRegister(reg, val);
     FrameIDCounter.store(val);
 }
 
@@ -331,11 +331,11 @@ void CopyThread::AJAInputProc()
         mzEngine.LogI(ss.str().c_str());
     }
 
-    auto prevMode = client->Device->GetMode(Channel);
+    auto prevMode = Client->Device->GetMode(Channel);
 
     u32 FB = 0;
     SetFrame(FB);
-    client->Device->WaitForInputVerticalInterrupt(Channel);
+    Client->Device->WaitForInputVerticalInterrupt(Channel);
 
     Parameters params = {};
     DebugInfo.Time = std::chrono::nanoseconds(0);
@@ -344,12 +344,12 @@ void CopyThread::AJAInputProc()
     DropCount = 0;
     u32 framesSinceLastDrop = 0;
 
-    while (run && !gpuRing->Exit)
+    while (Run && !GpuRing->Exit)
     {
-        auto cpuRingReadSize = cpuRing->Read.Pool.size();
-        auto gpuRingWriteSize = gpuRing->Write.Pool.size();
-        auto cpuRingWriteSize = cpuRing->Write.Pool.size();
-        auto gpuRingReadSize = gpuRing->Read.Pool.size();
+        auto cpuRingReadSize = CpuRing->Read.Pool.size();
+        auto gpuRingWriteSize = GpuRing->Write.Pool.size();
+        auto cpuRingWriteSize = CpuRing->Write.Pool.size();
+        auto gpuRingReadSize = GpuRing->Read.Pool.size();
 
         auto strCpuRingReadSize = std::to_string(cpuRingReadSize);
         auto strCpuRingWriteSize = std::to_string(cpuRingWriteSize);
@@ -362,12 +362,12 @@ void CopyThread::AJAInputProc()
         mzEngine.WatchLog("AJAIn GPU Ring Write Size", strGpuRingWriteSize.c_str());
         InputUpdate(prevMode);
 
-        if (!(client->Device->WaitForInputVerticalInterrupt(Channel)))
+        if (!(Client->Device->WaitForInputVerticalInterrupt(Channel)))
         {
             Orphan(true, "AJA Input has no signal");
-            while (!client->Device->WaitForInputVerticalInterrupt(Channel))
+            while (!Client->Device->WaitForInputVerticalInterrupt(Channel))
             {
-                if (!run || gpuRing->Exit || cpuRing->Exit)
+                if (!Run || GpuRing->Exit || CpuRing->Exit)
                 {
                     goto EXIT;
                 }
@@ -382,11 +382,11 @@ void CopyThread::AJAInputProc()
         int inFlight = InFlightFrames();
         
         CPURing::Resource* slot = nullptr;
-        if (inFlight >= ringSize || (!(slot = cpuRing->TryPush())))
+        if (inFlight >= ringSize || (!(slot = CpuRing->TryPush())))
         {
             DropCount++;
             framesSinceLastDrop = 0;
-            gpuRing->ResetFrameCount = true;
+            GpuRing->ResetFrameCount = true;
             continue;
         }
 
@@ -399,17 +399,17 @@ void CopyThread::AJAInputProc()
         if (Interlaced())
         {
             NTV2FieldID field = NTV2_FIELD0;
-            client->Device->GetInputFieldID(Channel, field);
+            Client->Device->GetInputFieldID(Channel, field);
             params.FieldIdx = field + 1;
             u64 addr, length;
-            client->Device->GetDeviceFrameInfo(ReadFB, Channel, addr, length);
-            client->Device->DMAReadSegments(0, Buf, addr + Pitch * field, Pitch, Segments, Pitch, Pitch * 2);
+            Client->Device->GetDeviceFrameInfo(ReadFB, Channel, addr, length);
+            Client->Device->DMAReadSegments(0, Buf, addr + Pitch * field, Pitch, Segments, Pitch, Pitch * 2);
         }
         else
         {
-            client->Device->DMAReadFrame(ReadFB, Buf, Size, Channel);
+            Client->Device->DMAReadFrame(ReadFB, Buf, Size, Channel);
         }
-        cpuRing->EndPush(slot);
+        CpuRing->EndPush(slot);
         framesSinceLastDrop++;
         if (DropCount && framesSinceLastDrop == 50)
         {
@@ -417,7 +417,7 @@ void CopyThread::AJAInputProc()
         }
             
         NTV2RegisterReads Regs = { NTV2RegInfo(kRegRXSDI1FrameCountLow + Channel * (kRegRXSDI2FrameCountLow - kRegRXSDI1FrameCountLow)) };
-        client->Device->ReadRegisters(Regs);
+        Client->Device->ReadRegisters(Regs);
         params.FrameNumber = Regs.front().registerValue;
 
         if (!Interlaced())
@@ -432,10 +432,10 @@ void CopyThread::AJAInputProc()
     }
 EXIT:
 
-    cpuRing->Stop();
-    gpuRing->Stop();
+    CpuRing->Stop();
+    GpuRing->Stop();
 
-    if (run)
+    if (Run)
     {
         SendDeleteRequest();
     }
@@ -456,8 +456,8 @@ mzVec2u CopyThread::GetSuitableDispatchSize() const
     };
 
     const u32 q = IsQuad();
-    f32 x = glm::clamp<u32>(client->DispatchSizeX.load(), 1, CompressedTex.Info.Texture.Width) * (1 + q) * (.25 * BitWidth() - 1);
-    f32 y = glm::clamp<u32>(client->DispatchSizeY.load(), 1, CompressedTex.Info.Texture.Height) * (1. + q) * (1 - .5 * Interlaced());
+    f32 x = glm::clamp<u32>(Client->DispatchSizeX.load(), 1, CompressedTex.Info.Texture.Width) * (1 + q) * (.25 * BitWidth() - 1);
+    f32 y = glm::clamp<u32>(Client->DispatchSizeY.load(), 1, CompressedTex.Info.Texture.Height) * (1. + q) * (1 - .5 * Interlaced());
 
     return mzVec2u(BestFit(x + .5, CompressedTex.Info.Texture.Width >> (BitWidth() - 5)),
                      BestFit(y + .5, CompressedTex.Info.Texture.Height / 9));
@@ -465,7 +465,7 @@ mzVec2u CopyThread::GetSuitableDispatchSize() const
 
 void CopyThread::PathRestart()
 {
-    auto id = client->GetPinId(mz::Name(Name()));
+    auto id = Client->GetPinId(mz::Name(Name()));
     auto cmdType = MZ_PATH_COMMAND_TYPE_RESTART;
     auto execType = MZ_PATH_COMMAND_EXECUTION_TYPE_WALKBACK;
 
@@ -478,7 +478,7 @@ void CopyThread::PathRestart()
 
     auto args = Buffer::From(AjaRestartCommandParams{
         .UpdateFlags = u32(AjaRestartCommandParams::UpdateRingSize | AjaRestartCommandParams::UpdateSpareCount),
-        .RingSize = gpuRing->Size,
+        .RingSize = GpuRing->Size,
         .SpareCount = SpareCount,
     });
 
@@ -492,14 +492,14 @@ void CopyThread::PathRestart()
 
 u32 CopyThread::InFlightFrames()
 {
-    return cpuRing->InFlightFrames() + gpuRing->InFlightFrames() - (TransferInProgress ? 1 : 0);
+    return CpuRing->InFlightFrames() + GpuRing->InFlightFrames() - (TransferInProgress ? 1 : 0);
 }
 
 void CopyThread::AJAOutputProc()
 {
    
 	flatbuffers::FlatBufferBuilder fbb;
-    auto id = client->GetPinId(name);
+    auto id = Client->GetPinId(PinName);
 	auto hungerSignal = CreateAppEvent(fbb, mz::app::CreateScheduleRequest(fbb, mz::app::ScheduleRequestKind::PIN, &id, false));
     mzEngine.HandleEvent(hungerSignal);
     Orphan(false);
@@ -509,13 +509,13 @@ void CopyThread::AJAOutputProc()
         mzEngine.LogI(ss.str().c_str());
     }
 
-    u32 readyFrames = cpuRing->ReadyFrames();
+    u32 readyFrames = CpuRing->ReadyFrames();
     do
     {
-        u32 latestReadyFrameCount = cpuRing->ReadyFrames();
+        u32 latestReadyFrameCount = CpuRing->ReadyFrames();
         if (latestReadyFrameCount > readyFrames)
             readyFrames = latestReadyFrameCount;
-    } while (run && !cpuRing->Exit && !(cpuRing->IsFull()));
+    } while (Run && !CpuRing->Exit && !(CpuRing->IsFull()));
 
     u32 FB = 0;
     SetFrame(FB);
@@ -523,12 +523,12 @@ void CopyThread::AJAOutputProc()
     DropCount = 0;
 	u32 framesSinceLastDrop = 0;
 
-    while (run && !cpuRing->Exit)
+    while (Run && !CpuRing->Exit)
     {
-        auto cpuRingReadSize = cpuRing->Read.Pool.size();
-        auto gpuRingWriteSize = gpuRing->Write.Pool.size();
-        auto cpuRingWriteSize = cpuRing->Write.Pool.size();
-        auto gpuRingReadSize = gpuRing->Read.Pool.size();
+        auto cpuRingReadSize = CpuRing->Read.Pool.size();
+        auto gpuRingWriteSize = GpuRing->Write.Pool.size();
+        auto cpuRingWriteSize = CpuRing->Write.Pool.size();
+        auto gpuRingReadSize = GpuRing->Read.Pool.size();
 
         auto strCpuRingReadSize = std::to_string(cpuRingReadSize);
         auto strCpuRingWriteSize = std::to_string(cpuRingWriteSize);
@@ -539,16 +539,16 @@ void CopyThread::AJAOutputProc()
         mzEngine.WatchLog("AJAOut CPU Ring Write Size", strCpuRingWriteSize.c_str());
         mzEngine.WatchLog("AJAOut GPU Ring Read Size", strGpuRingReadSize.c_str());
         mzEngine.WatchLog("AJAOut GPU Ring Write Size", strGpuRingWriteSize.c_str());
-		if (!(client->Device->WaitForOutputVerticalInterrupt(Channel)))
+		if (!(Client->Device->WaitForOutputVerticalInterrupt(Channel)))
 			break;
 
         ULWord lastVBLCount;
-		client->Device->GetOutputVerticalInterruptCount(lastVBLCount, Channel);
+		Client->Device->GetOutputVerticalInterruptCount(lastVBLCount, Channel);
 
-		if (auto res = cpuRing->BeginPop())
+		if (auto res = CpuRing->BeginPop())
         {
 			ULWord vblCount;
-			client->Device->GetOutputVerticalInterruptCount(vblCount, Channel);
+			Client->Device->GetOutputVerticalInterruptCount(vblCount, Channel);
 			
             if (vblCount != lastVBLCount)
             {
@@ -567,7 +567,7 @@ void CopyThread::AJAOutputProc()
             if (Interlaced())
             {
                 NTV2FieldID field = NTV2_FIELD0;
-                client->Device->GetOutputFieldID(Channel, field);
+                Client->Device->GetOutputFieldID(Channel, field);
                 field = NTV2FieldID(field ^ 1);
                 FieldIdx = field + 1;
             }
@@ -577,20 +577,20 @@ void CopyThread::AJAOutputProc()
 
 			const u32 Pitch = CompressedTex.Info.Texture.Width * 4;
 			const u32 Segments = CompressedTex.Info.Texture.Height;
-			const u32 Size = cpuRing->Sample.Size;
+			const u32 Size = CpuRing->Sample.Size;
 
             if (Interlaced())
             {
                 u64 addr, length;
-                client->Device->GetDeviceFrameInfo(OutFrame, Channel, addr, length);
-                client->Device->DMAWriteSegments(0, Buf, addr + (FieldIdx - 1) * Pitch, Pitch, Segments, Pitch, Pitch * 2);
+                Client->Device->GetDeviceFrameInfo(OutFrame, Channel, addr, length);
+                Client->Device->DMAWriteSegments(0, Buf, addr + (FieldIdx - 1) * Pitch, Pitch, Segments, Pitch, Pitch * 2);
             }
             else
             {
-                client->Device->DMAWriteFrame(OutFrame, Buf, Pitch * Segments, Channel);
+                Client->Device->DMAWriteFrame(OutFrame, Buf, Pitch * Segments, Channel);
             }
 
-            cpuRing->EndPop(res);
+            CpuRing->EndPop(res);
 			mzEngine.HandleEvent(hungerSignal);
 
             if (!Interlaced())
@@ -604,34 +604,34 @@ void CopyThread::AJAOutputProc()
             mzEngine.LogW((Name().AsString() + " dropped 1 frame").c_str(), "");
         }
     }
-    gpuRing->Stop();
-    cpuRing->Stop();
+    GpuRing->Stop();
+    CpuRing->Stop();
 
     mzEngine.HandleEvent(CreateAppEvent(fbb, 
         mz::app::CreateScheduleRequest(fbb, mz::app::ScheduleRequestKind::PIN, &id, true)));
 
-    if (run)
+    if (Run)
         SendDeleteRequest();
 }
 
 void CopyThread::SendDeleteRequest()
 {
     flatbuffers::FlatBufferBuilder fbb;
-    auto ids = client->GeneratePinIDSet(mz::Name(Name()), mode);
+    auto ids = Client->GeneratePinIDSet(mz::Name(Name()), Mode);
     mzEngine.HandleEvent(
-        CreateAppEvent(fbb, mz::CreatePartialNodeUpdateDirect(fbb, &client->Mapping.NodeId, ClearFlags::NONE, &ids)));
+        CreateAppEvent(fbb, mz::CreatePartialNodeUpdateDirect(fbb, &Client->Mapping.NodeId, ClearFlags::NONE, &ids)));
 }
 
 void CopyThread::InputConversionThread::Consume(CopyThread::Parameters const& params)
 {
-    auto* slot = Cpy->cpuRing->BeginPop();
+    auto* slot = Cpy->CpuRing->BeginPop();
     if (!slot)
         return;
     Cpy->TransferInProgress = true;
-    auto* res = Cpy->gpuRing->BeginPush();
+    auto* res = Cpy->GpuRing->BeginPush();
     if (!res)
     {
-        Cpy->cpuRing->EndPop(slot);
+        Cpy->CpuRing->EndPop(slot);
         return;
     }
 
@@ -639,7 +639,7 @@ void CopyThread::InputConversionThread::Consume(CopyThread::Parameters const& pa
 
     glm::mat4 colorspace = glm::inverse(Cpy->GetMatrix<f64>());
 
-    uint32_t iflags = params.FieldIdx | ((Cpy->client->Shader == ShaderType::Comp10) << 2);
+    uint32_t iflags = params.FieldIdx | ((Cpy->Client->Shader == ShaderType::Comp10) << 2);
 
     inputs.emplace_back(ShaderBinding(MZN_Colorspace, colorspace));
 	inputs.emplace_back(ShaderBinding(MZN_Source, Cpy->CompressedTex));
@@ -651,9 +651,9 @@ void CopyThread::InputConversionThread::Consume(CopyThread::Parameters const& pa
     mzCmd cmd;
     mzEngine.Begin(&cmd);
 
-    mzEngine.Copy(cmd, &slot->Res, &Cpy->CompressedTex, Cpy->client->Debug ? ("(GPUTransfer)" + MsgKey + ":" + std::to_string(Cpy->client->Debug)).c_str() : 0);
+    mzEngine.Copy(cmd, &slot->Res, &Cpy->CompressedTex, Cpy->Client->Debug ? ("(GPUTransfer)" + MsgKey + ":" + std::to_string(Cpy->Client->Debug)).c_str() : 0);
 
-    if (Cpy->client->Shader != ShaderType::Frag8)
+    if (Cpy->Client->Shader != ShaderType::Frag8)
     {
 		inputs.emplace_back(ShaderBinding(MZN_Output, res->Res));
         mzRunComputePassParams pass = {};
@@ -661,7 +661,7 @@ void CopyThread::InputConversionThread::Consume(CopyThread::Parameters const& pa
         pass.DispatchSize = Cpy->GetSuitableDispatchSize();
         pass.Bindings = inputs.data();
         pass.BindingCount = inputs.size();
-        pass.Benchmark = Cpy->client->Debug;
+        pass.Benchmark = Cpy->Client->Debug;
         mzEngine.RunComputePass(cmd, &pass);
     }
     else
@@ -671,14 +671,14 @@ void CopyThread::InputConversionThread::Consume(CopyThread::Parameters const& pa
         pass.Output = res->Res;
         pass.Bindings = inputs.data();
         pass.BindingCount = inputs.size();
-        pass.Benchmark = Cpy->client->Debug;
+        pass.Benchmark = Cpy->Client->Debug;
         mzEngine.RunPass(cmd, &pass);
     }
 
     mzEngine.End(cmd);
 
     auto& [time, counter] = Cpy->DebugInfo;
-    if (Cpy->client->Debug && ++counter >= Cpy->client->Debug)
+    if (Cpy->Client->Debug && ++counter >= Cpy->Client->Debug)
     {
         time += params.T1 - params.T0;
         auto t = time / counter;
@@ -715,9 +715,9 @@ void CopyThread::InputConversionThread::Consume(CopyThread::Parameters const& pa
     // res->Res.field_type = fb::FieldType::ANY ^ fb::FieldType(params.FieldIdx ^ 3);
     // std::this_thread::sleep_for(std::chrono::milliseconds(1));
     res->FrameNumber = params.FrameNumber;
-    Cpy->gpuRing->EndPush(res);
+    Cpy->GpuRing->EndPush(res);
     Cpy->TransferInProgress = false;
-    Cpy->cpuRing->EndPop(slot);
+    Cpy->CpuRing->EndPop(slot);
 }
 
 CopyThread::ConversionThread::~ConversionThread()
@@ -730,22 +730,22 @@ void CopyThread::OutputConversionThread::Consume(const Parameters& item)
 #if 0 // TODO: discard according to compatibility
     if (!(res->res.field_type & fb::FieldType(FieldIdx)))
     {
-        gpuRing->EndPop(res);
+        GpuRing->EndPop(res);
         continue;
     }
 #endif
-    auto incoming = Cpy->gpuRing->BeginPop();
+    auto incoming = Cpy->GpuRing->BeginPop();
     if(!incoming)
 		return;
     Cpy->TransferInProgress = true;
-    auto outgoing = Cpy->cpuRing->BeginPush();
+    auto outgoing = Cpy->CpuRing->BeginPush();
     if (!outgoing)
     {
-        Cpy->gpuRing->EndPop(incoming);
+        Cpy->GpuRing->EndPop(incoming);
         return;
     }
     glm::mat4 colorspace = (Cpy->GetMatrix<f64>());
-    uint32_t iflags = (Cpy->client->Shader == ShaderType::Comp10) << 2;
+    uint32_t iflags = (Cpy->Client->Shader == ShaderType::Comp10) << 2;
 
     std::vector<mzShaderBinding> inputs;
 	inputs.emplace_back(ShaderBinding(MZN_Colorspace, colorspace));
@@ -757,7 +757,7 @@ void CopyThread::OutputConversionThread::Consume(const Parameters& item)
     mzEngine.Begin(&cmd);
 
     // watch out for th members, they are not synced
-    if (Cpy->client->Shader != ShaderType::Frag8)
+    if (Cpy->Client->Shader != ShaderType::Frag8)
     {
 		inputs.emplace_back(ShaderBinding(MZN_Output, Cpy->CompressedTex));
         mzRunComputePassParams pass = {};
@@ -765,7 +765,7 @@ void CopyThread::OutputConversionThread::Consume(const Parameters& item)
         pass.DispatchSize = Cpy->GetSuitableDispatchSize();
         pass.Bindings = inputs.data();
         pass.BindingCount = inputs.size();
-        pass.Benchmark = Cpy->client->Debug;
+        pass.Benchmark = Cpy->Client->Debug;
         mzEngine.RunComputePass(cmd, &pass);
     }
     else
@@ -775,22 +775,22 @@ void CopyThread::OutputConversionThread::Consume(const Parameters& item)
         pass.Output = Cpy->CompressedTex;
         pass.Bindings = inputs.data();
         pass.BindingCount = inputs.size();
-        pass.Benchmark = Cpy->client->Debug;
+        pass.Benchmark = Cpy->Client->Debug;
         mzEngine.RunPass(cmd, &pass);
     }
 
     mzEngine.Copy(cmd, &Cpy->CompressedTex, &outgoing->Res, 0);
     mzEngine.End(cmd);
-    Cpy->gpuRing->EndPop(incoming);
+    Cpy->GpuRing->EndPop(incoming);
     Cpy->TransferInProgress = false;
-    Cpy->cpuRing->EndPush(outgoing);
+    Cpy->CpuRing->EndPush(outgoing);
 }
 
 CopyThread::CopyThread(struct AJAClient *client, u32 ringSize, u32 spareCount, mz::fb::ShowAs kind, 
                        NTV2Channel channel, NTV2VideoFormat initalFmt,
                        AJADevice::Mode mode, enum class Colorspace colorspace, enum class GammaCurve curve,
                        bool narrowRange, const fb::Texture* tex)
-    : name(GetChannelStr(channel, mode)), client(client), kind(kind), Channel(channel), SpareCount(spareCount), mode(mode),
+    : PinName(GetChannelStr(channel, mode)), Client(client), PinKind(kind), Channel(channel), SpareCount(spareCount), Mode(mode),
       Colorspace(colorspace), GammaCurve(curve), NarrowRange(narrowRange), Format(initalFmt)
 {
 
@@ -816,7 +816,7 @@ CopyThread::CopyThread(struct AJAClient *client, u32 ringSize, u32 spareCount, m
 CopyThread::~CopyThread()
 {
     Stop();
-    client->Device->CloseChannel(Channel, IsInput(), IsQuad());
+    Client->Device->CloseChannel(Channel, IsInput(), IsQuad());
     mzEngine.Destroy(&SSBO);
     if (CompressedTex.Memory.Handle)
         mzEngine.Destroy(&CompressedTex);
@@ -835,18 +835,18 @@ void CopyThread::Live(bool b)
 void CopyThread::PinUpdate(std::optional<mz::fb::TOrphanState> orphan, mz::Action live)
 {
     flatbuffers::FlatBufferBuilder fbb;
-    auto ids = client->GeneratePinIDSet(mz::Name(Name()), mode);
+    auto ids = Client->GeneratePinIDSet(mz::Name(Name()), Mode);
     std::vector<flatbuffers::Offset<PartialPinUpdate>> updates;
     std::transform(ids.begin(), ids.end(), std::back_inserter(updates),
                    [&fbb, orphan, live](auto id) { return mz::CreatePartialPinUpdateDirect(fbb, &id, 0, orphan ? mz::fb::CreateOrphanState(fbb, &*orphan) : false, live); });
     mzEngine.HandleEvent(
-        CreateAppEvent(fbb, mz::CreatePartialNodeUpdateDirect(fbb, &client->Mapping.NodeId, ClearFlags::NONE, 0, 0, 0,
+        CreateAppEvent(fbb, mz::CreatePartialNodeUpdateDirect(fbb, &Client->Mapping.NodeId, ClearFlags::NONE, 0, 0, 0,
                                                               0, 0, 0, 0, &updates)));
 }
 
 u32 CopyThread::BitWidth() const
 {
-    return client->BitWidth();
+    return Client->BitWidth();
 }
 
 } // namespace mz

@@ -393,7 +393,7 @@ void AJAClient::OnNodeUpdate(PinMapping &&newMapping, std::unordered_map<Name, c
         auto tmp = Pins;
         for (auto &th : tmp)
         {
-            if (!Mapping.GetPinId(th->name))
+            if (!Mapping.GetPinId(th->PinName))
             {
                 DeleteTexturePin(th);
             }
@@ -733,7 +733,7 @@ void AJAClient::OnPathCommand(mzUUID pinId, app::PathCommand command, Buffer par
             copyThread->CreateRings(copyThread->GetRingSize());
             copyThread->StartThread();
             if (copyThread->IsInput() ||
-                !copyThread->th.joinable())
+                !copyThread->Thread.joinable())
                 break;
 
             // there is a new connection path
@@ -820,10 +820,10 @@ void AJAClient::OnPinValueChanged(mz::Name pinName, void *value)
     {
 		auto pin = FindChannel(ParseChannel(pinNameStr));
         auto mode = *(AJADevice::Mode*)value;
-        if (mode != pin->mode)
+        if (mode != pin->Mode)
         {
             pin->Stop();
-            pin->mode = mode;
+            pin->Mode = mode;
             pin->Refresh();
             pin->StartThread();
         }
@@ -865,7 +865,7 @@ bool AJAClient::BeginCopyFrom(mzCopyInfo &cpy)
         return true;
     
     auto th = *it;
-	if ((slot = th->gpuRing->TryPop(cpy.FrameNumber, th->SpareCount)))
+	if ((slot = th->GpuRing->TryPop(cpy.FrameNumber, th->SpareCount)))
 	{
 		cpy.CopyTextureTo = DeserializeTextureInfo(cpy.SrcPinData.Data); 
 		cpy.CopyTextureFrom = slot->Res;
@@ -892,7 +892,7 @@ bool AJAClient::BeginCopyTo(mzCopyInfo &cpy)
     
     auto th = *it;
 
-    if ((th->GetRingSize() > th->InFlightFrames()) && (slot = th->gpuRing->TryPush()))
+    if ((th->GetRingSize() > th->InFlightFrames()) && (slot = th->GpuRing->TryPush()))
 	{
 		slot->FrameNumber = cpy.FrameNumber;
         cpy.CopyTextureFrom = DeserializeTextureInfo(cpy.SrcPinData.Data);
@@ -912,7 +912,7 @@ void AJAClient::EndCopyFrom(mzCopyInfo &cpy)
 
     auto th = *it;
     auto res = (GPURing::Resource *)cpy.Data;
-    th->gpuRing->EndPop(res);
+    th->GpuRing->EndPop(res);
 }
 
 void AJAClient::EndCopyTo(mzCopyInfo &cpy)
@@ -926,7 +926,7 @@ void AJAClient::EndCopyTo(mzCopyInfo &cpy)
     auto th = *it;
     auto res = (GPURing::Resource *)cpy.Data;
 	// if (-1 != *cpy.PathState) res->Res->mutate_field_type((mz::fb::FieldType)*cpy.PathState);
-    th->gpuRing->EndPush(res);
+    th->GpuRing->EndPush(res);
     cpy.Stop = th->InFlightFrames() >= th->GetRingSize();
     th->Worker->Enqueue({});
 }
