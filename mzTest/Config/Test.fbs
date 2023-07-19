@@ -1,0 +1,22 @@
+namespace mz.Test;
+
+struct TestStruct {
+	test1:float;
+}
+
+
+struct TestStruct2 {
+	test1:mz.Test.TestStruct;
+	test2:float;
+}
+
+enum TestEnum : uint32 {
+	NONE = 0,
+	TEST1 = 1,
+	TEST2 = 2
+}
+
+table TestTable {
+	test1:string;
+	test2:TestStruct2;
+}

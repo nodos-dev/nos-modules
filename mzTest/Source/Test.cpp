@@ -39,7 +39,7 @@ extern "C"
 
 	MZAPI_ATTR mzResult MZAPI_CALL mzExportNodeFunctions(size_t* outCount, mzNodeFunctions* outFunctions)
 	{
-		*outCount = (size_t)(3);
+		*outCount = (size_t)(4);
 		if (!outFunctions)
 			return MZ_RESULT_SUCCESS;
 		
@@ -49,6 +49,8 @@ extern "C"
 		outFunctions->TypeName = MZ_NAME_STATIC("mz.test.NodeWithCategories");
 		MZ_NEXT_NODE_CLASS(outFunctions);
 		outFunctions->TypeName = MZ_NAME_STATIC("mz.test.NodeWithFunctions");
+		MZ_NEXT_NODE_CLASS(outFunctions);
+		outFunctions->TypeName = MZ_NAME_STATIC("mz.test.NodeWithCustomTypes");
 		return MZ_RESULT_SUCCESS;
 	}
 

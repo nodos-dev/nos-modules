@@ -259,6 +259,68 @@
                     "pin_category": "B|A"
                 }
             ]
+        },
+		{
+            "class_name": "NodeWithCustomTypes",
+            "contents_type": "Job",
+            "contents": {
+                "type": "CPU"
+            },
+            "functions": [
+                {
+                    "class_name": "TestFunction",
+                    "contents_type": "Job",
+                    "contents": {
+                        "type": "CPU"
+                    },
+					"function_category": "A",
+                    "pins": [
+                        {
+                            "name": "in1",
+                            "type_name": "mz.Test.TestStruct",
+                            "show_as": "INPUT_PIN",
+		                    "pin_category": "A"
+
+                        },
+                        {
+                            "name": "in2",
+                            "type_name": "mz.Test.TestTable",
+                            "show_as": "INPUT_PIN"
+                        },
+                        {
+                            "name": "out",
+                            "type_name": "double",
+                            "show_as": "OUTPUT_PIN"
+                        }
+                    ]
+                }
+            ],
+            "pins": [
+                {
+                    "name": "TestPin1",
+                    "type_name": "mz.Test.TestTable",
+                    "show_as": "INPUT_PIN",
+                    "pin_category": "A"
+                },
+                {
+                    "name": "TestPin2",
+                    "type_name": "mz.fb.vec3d",
+                    "show_as": "INPUT_PIN",
+                    "pin_category": "A|B"
+                },
+                {
+                    "name": "TestPin3",
+                    "type_name": "mz.Test.TestEnum",
+                    "show_as": "INPUT_PIN",
+                    "pin_category": "B"
+                },
+                {
+                    "name": "TestPin4",
+                    "type_name": "mz.Test.TestStruct2",
+                    "show_as": "OUTPUT_PIN",
+                    "pin_category": "B|A"
+                }
+            ]
         }
     ]
 }

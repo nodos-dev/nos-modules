@@ -6,7 +6,7 @@
         },
         "display_name": "Test"
     },
-    "custom_types": [],
+    "custom_types": [ "Test.fbs" ],
     "node_definitions": [
         "Test.mzdef"
     ],
@@ -26,6 +26,11 @@
 			"category": "Test",
             "class_name": "NodeWithFunctions",
             "display_name": "NodeWithFunctions"
+		},
+		{
+			"category": "Test",
+            "class_name": "NodeWithCustomTypes",
+            "display_name": "NodeWithCustomTypes"
 		}
     ]
 }
