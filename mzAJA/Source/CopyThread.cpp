@@ -469,11 +469,10 @@ void CopyThread::PathRestart()
     auto cmdType = MZ_PATH_COMMAND_TYPE_RESTART;
     auto execType = MZ_PATH_COMMAND_EXECUTION_TYPE_WALKBACK;
 
-    if(IsInput())
+    if (IsInput())
     {
         cmdType = MZ_PATH_COMMAND_TYPE_NOTIFY_DROP;
         execType = MZ_PATH_COMMAND_EXECUTION_TYPE_NOTIFY_ALL_CONNECTIONS;
-        return;
     }
 
     auto args = Buffer::From(AjaRestartCommandParams{
