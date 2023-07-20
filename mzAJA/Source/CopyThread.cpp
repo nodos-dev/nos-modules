@@ -148,13 +148,11 @@ void CopyThread::Stop()
         Thread.join();
 }
 
-void CopyThread::Resize(u32 size)
+void CopyThread::Restart(u32 ringSize)
 {
-    assert(size && size < 200);
-    if(size == GetRingSize())
-        return;
+    assert(ringSize && ringSize < 200);
     Stop();
-    CreateRings(size);
+    CreateRings(ringSize);
     StartThread();
 }
 
@@ -323,7 +321,7 @@ void CopyThread::InputUpdate(AJADevice::Mode &prevMode)
 
 void CopyThread::AJAInputProc()
 {
-    PathRestart();
+    NotifyDrop();
     Orphan(false);
     {
         std::stringstream ss;
@@ -342,7 +340,7 @@ void CopyThread::AJAInputProc()
     DebugInfo.Counter = 0;
 
     DropCount = 0;
-    u32 framesSinceLastDrop = 0;
+    u32 successiveDropCount = 0;
 
     while (Run && !GpuRing->Exit)
     {
@@ -385,10 +383,17 @@ void CopyThread::AJAInputProc()
         if (inFlight >= ringSize || (!(slot = CpuRing->TryPush())))
         {
             DropCount++;
-            framesSinceLastDrop = 0;
-            GpuRing->ResetFrameCount = true;
+            GpuRing->ResetFrameCount = true; 
+            successiveDropCount++;
+            if (successiveDropCount >= 50)
+            {
+                successiveDropCount = 0;
+                NotifyDrop();
+            }
             continue;
         }
+
+        successiveDropCount = 0;
 
         const u32 Pitch = CompressedTex.Info.Texture.Width * 4;
         const u32 Segments = CompressedTex.Info.Texture.Height;
@@ -410,11 +415,6 @@ void CopyThread::AJAInputProc()
             Client->Device->DMAReadFrame(ReadFB, Buf, Size, Channel);
         }
         CpuRing->EndPush(slot);
-        framesSinceLastDrop++;
-        if (DropCount && framesSinceLastDrop == 50)
-        {
-            PathRestart();
-        }
             
         NTV2RegisterReads Regs = { NTV2RegInfo(kRegRXSDI1FrameCountLow + Channel * (kRegRXSDI2FrameCountLow - kRegRXSDI1FrameCountLow)) };
         Client->Device->ReadRegisters(Regs);
@@ -463,30 +463,32 @@ mzVec2u CopyThread::GetSuitableDispatchSize() const
                      BestFit(y + .5, CompressedTex.Info.Texture.Height / 9));
 }
 
-void CopyThread::PathRestart()
+void CopyThread::NotifyRestart(RestartParams const& params)
 {
+    mzEngine.LogW("%s is notifying path for restart", Name().AsCStr());
     auto id = Client->GetPinId(mz::Name(Name()));
-    auto cmdType = MZ_PATH_COMMAND_TYPE_RESTART;
-    auto execType = MZ_PATH_COMMAND_EXECUTION_TYPE_WALKBACK;
-
-    if (IsInput())
-    {
-        cmdType = MZ_PATH_COMMAND_TYPE_NOTIFY_DROP;
-        execType = MZ_PATH_COMMAND_EXECUTION_TYPE_NOTIFY_ALL_CONNECTIONS;
-    }
-
-    auto args = Buffer::From(AjaRestartCommandParams{
-        .UpdateFlags = u32(AjaRestartCommandParams::UpdateRingSize | AjaRestartCommandParams::UpdateSpareCount),
-        .RingSize = GpuRing->Size,
-        .SpareCount = SpareCount,
-    });
-
+    auto args = Buffer::From(params);
     mzEngine.SendPathCommand(mzPathCommand{
         .PinId = id,
-        .Command = (mzPathCommandType)cmdType,
-        .Execution = (mzPathCommandExecutionType)execType,
+        .Command = MZ_PATH_COMMAND_TYPE_RESTART,
+        .Execution = MZ_PATH_COMMAND_EXECUTION_TYPE_WALKBACK,
         .Args = mzBuffer { args.data(), args.size() }
     });
+}
+
+void CopyThread::NotifyDrop()
+{
+    if (!ConnectedPinCount)
+        return;
+    mzEngine.LogW("%s is notifying path about a drop event", Name().AsCStr());
+    auto id = Client->GetPinId(mz::Name(Name()));
+    auto args = Buffer::From(GpuRing->Size);
+    mzEngine.SendPathCommand(mzPathCommand{
+		.PinId = id,
+		.Command = MZ_PATH_COMMAND_TYPE_NOTIFY_DROP,
+		.Execution = MZ_PATH_COMMAND_EXECUTION_TYPE_NOTIFY_ALL_CONNECTIONS,
+		.Args = mzBuffer { args.data(), args.size() }
+	});
 }
 
 u32 CopyThread::InFlightFrames()
@@ -520,7 +522,7 @@ void CopyThread::AJAOutputProc()
     SetFrame(FB);
 
     DropCount = 0;
-	u32 framesSinceLastDrop = 0;
+	u32 successiveDropCount = 0;
 
     while (Run && !CpuRing->Exit)
     {
@@ -551,16 +553,19 @@ void CopyThread::AJAOutputProc()
 			
             if (vblCount != lastVBLCount)
             {
-				framesSinceLastDrop = 0;
-				DropCount += vblCount - lastVBLCount;
+                successiveDropCount += vblCount - lastVBLCount;
+                DropCount += vblCount - lastVBLCount;
+                if (successiveDropCount >= 50)
+                {
+                    successiveDropCount = 0;
+                    mzEngine.LogE("AJA Out dropped last 50 or more frames, restarting");
+                    NotifyRestart({});
+                }
+            } 
+            else
+            {
+                successiveDropCount = 0;
             }
-			else
-			{
-				if (++framesSinceLastDrop == 50)
-				{
-					PathRestart();
-				}
-			}
 
 			u32 FieldIdx = 0;
             if (Interlaced())
@@ -743,6 +748,7 @@ void CopyThread::OutputConversionThread::Consume(const Parameters& item)
         Cpy->GpuRing->EndPop(incoming);
         return;
     }
+
     glm::mat4 colorspace = (Cpy->GetMatrix<f64>());
     uint32_t iflags = (Cpy->Client->Shader == ShaderType::Comp10) << 2;
 

@@ -311,7 +311,7 @@ void AJAClient::SetReference(std::string const &val)
     }
     this->Ref = src;
     for (auto& th : Pins)
-        th->PathRestart();
+        th->NotifyRestart({});
 }
 
 void AJAClient::OnNodeUpdate(mz::fb::Node const &event)
@@ -469,6 +469,20 @@ void AJAClient::OnPinMenuFired(mzContextMenuRequest const &request)
         mzEngine.HandleEvent(CreateAppEvent(
             fbb, mz::CreateContextMenuUpdateDirect(fbb, request.item_id(), request.pos(), request.instigator(), &remove)));
     }
+}
+
+void AJAClient::OnPinConnected(mz::Name pinName)
+{
+    auto pin = FindChannel(ParseChannel(pinName.AsString()));
+    if (pin)
+		++pin->ConnectedPinCount;
+}
+
+void AJAClient::OnPinDisconnected(mz::Name pinName)
+{
+    auto pin = FindChannel(ParseChannel(pinName.AsString()));
+	if (pin)
+        --pin->ConnectedPinCount;
 }
 
 void AJAClient::OnMenuFired(mzContextMenuRequest const&request)
@@ -702,55 +716,48 @@ void AJAClient::OnNodeRemoved()
     (Input ? Device->HasInput : Device->HasOutput) = false;
 }
 
-void AJAClient::OnPathCommand(mzUUID pinId, app::PathCommand command, Buffer params)
+void AJAClient::OnPathCommand(const mzPathCommand* cmd)
 {
+    auto pinId = cmd->PinId;
     auto pinNameOpt = Mapping.GetPinName(pinId);
     if (!pinNameOpt)
     {
-        mzEngine.LogD("path command on unknown pin: %s", UUID2STR(pinId).c_str());
+        mzEngine.LogD("AJA: Path command on unknown pin: %s", UUID2STR(pinId).c_str());
         return;
     }
     auto pinName = *pinNameOpt;
 	auto result = Pins.find(pinName);
 	if (result == Pins.end())
 	{
-        mzEngine.LogD("path command on unknown pin: %s", pinName.AsCStr());
+        mzEngine.LogD("AJA: Path command on unknown pin: %s", pinName.AsCStr());
 		return;
 	}
     auto copyThread = *result;
 
-    switch (command)
+    mz::Buffer params(cmd->Args);
+
+    switch (cmd->Command)
     {
-    case app::PathCommand::RESTART: {
-        auto* res = params.As<AjaRestartCommandParams>();
-        if (res->UpdateFlags & AjaRestartCommandParams::UpdateRingSize) 
-            copyThread->Resize(res->RingSize);
+    case MZ_PATH_COMMAND_TYPE_RESTART: {
+        auto* res = params.As<RestartParams>();
+        u32 ringSize = copyThread->GetRingSize();
+        if (res->UpdateFlags & RestartParams::UpdateRingSize)
+            ringSize = res->RingSize;
+        copyThread->Restart(ringSize);
         break;
     }
-    case app::PathCommand::NOTIFY_NEW_CONNECTION:
-        {
-            copyThread->Stop();
-            copyThread->CreateRings(copyThread->GetRingSize());
-            copyThread->StartThread();
-            if (copyThread->IsInput() ||
-                !copyThread->Thread.joinable())
-                break;
-
-            // there is a new connection path
-            // we need to send a restart signal
-            auto id = GetPinId(Name(copyThread->Name()));
-            AjaRestartCommandParams restartParams;
-            restartParams.RingSize = copyThread->GetRingSize();
-            restartParams.UpdateFlags = AjaRestartCommandParams::UpdateRingSize;
-            auto args = Buffer::From(restartParams);
-            mzEngine.SendPathCommand(mzPathCommand {
-                .PinId = id,
-                .Command = MZ_PATH_COMMAND_TYPE_RESTART,
-                .Execution = MZ_PATH_COMMAND_EXECUTION_TYPE_WALKBACK,
-                .Args = mzBuffer { args.data(), args.size() }
-            });
+    case MZ_PATH_COMMAND_TYPE_NOTIFY_NEW_CONNECTION:
+    {
+        copyThread->Restart(copyThread->GetRingSize());
+        if (copyThread->IsInput() ||
+            !copyThread->Thread.joinable())
             break;
-        }
+
+        // there is a new connection path
+        // we need to send a restart signal
+        copyThread->NotifyRestart({});
+        break;
+    }
     }
 }
 
@@ -774,7 +781,7 @@ void AJAClient::OnPinValueChanged(mz::Name pinName, void *value)
         }
         StartAll();
         for (auto& th : Pins)
-            th->PathRestart();
+            th->NotifyRestart({});
         return;
     }
 
@@ -832,17 +839,10 @@ void AJAClient::OnPinValueChanged(mz::Name pinName, void *value)
 
     if (pinNameStr.ends_with("Ring Size"))
     {
-        flatbuffers::FlatBufferBuilder fbb;
-        AjaRestartCommandParams restartParams;
-        restartParams.RingSize = *(u32*)value;
-        restartParams.UpdateFlags = AjaRestartCommandParams::UpdateRingSize;
-        auto args = Buffer::From(restartParams);
-		auto id = GetPinId((Name)std::string(pinNameStr.begin(), pinNameStr.end() - sizeof("Ring Size")));
-        mzEngine.SendPathCommand(mzPathCommand{
-            .PinId = id,
-            .Command = MZ_PATH_COMMAND_TYPE_RESTART,
-            .Execution = MZ_PATH_COMMAND_EXECUTION_TYPE_WALKBACK,
-            .Args = mzBuffer { args.data(), args.size() }
+        auto pin = FindChannel(ParseChannel(pinNameStr));
+        pin->NotifyRestart(RestartParams{
+            .UpdateFlags = RestartParams::UpdateRingSize,
+            .RingSize = *(u32*)value,
         });
     }
 	if (pinNameStr.ends_with("Ring Spare Count"))

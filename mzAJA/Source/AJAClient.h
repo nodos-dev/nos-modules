@@ -175,13 +175,15 @@ struct MZAPI_ATTR AJAClient
     void OnNodeUpdate(PinMapping &&newMapping, std::unordered_map<Name, const mz::fb::Pin *> &tmpPins,
                       std::vector<mz::fb::UUID> &pinsToDelete);
     void OnPinMenuFired(mzContextMenuRequest const &request);
+    void OnPinConnected(mz::Name pinName);
+    void OnPinDisconnected(mz::Name pinName);
 
     void OnMenuFired(mzContextMenuRequest const &request);
     void OnCommandFired(u32 cmd);
 
     void OnNodeRemoved();
 
-    void OnPathCommand(mzUUID pinName, app::PathCommand command, Buffer params);
+    void OnPathCommand(const mzPathCommand* cmd);
     void OnPinValueChanged(mz::Name pinName, void* value);
     void OnExecute();
 

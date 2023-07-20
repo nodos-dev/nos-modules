@@ -87,6 +87,7 @@ struct TrackSync
 struct CopyThread : TrackSync
 {
 	mz::Name PinName;
+	u32 ConnectedPinCount = 0;
     std::atomic_bool Run = true;
     mz::fb::ShowAs PinKind;
     rc<GPURing> GpuRing;
@@ -164,7 +165,7 @@ struct CopyThread : TrackSync
     void PinUpdate(std::optional<mz::fb::TOrphanState>, Action live);
 
     void Stop();
-    void Resize(u32 size);
+	void Restart(u32 ringSize);
     void SetFrame(u32 FB);
     ~CopyThread();
 
@@ -177,8 +178,8 @@ struct CopyThread : TrackSync
     template<class T>
     glm::mat<4,4,T> GetMatrix() const;
 
-
-	void PathRestart();
+	void NotifyRestart(RestartParams const& params);
+	void NotifyDrop();
 
 	u32 InFlightFrames();
 };
