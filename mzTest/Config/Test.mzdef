@@ -6,6 +6,7 @@
             "contents": {
                 "type": "CPU"
             },
+			"description": "Long long long Test description\nDouble line",
             "functions": [
                 {
                     "class_name": "TestFunction",
@@ -13,11 +14,13 @@
                     "contents": {
                         "type": "CPU"
                     },
+					"description": "Test function description",
                     "pins": [
                         {
                             "name": "in1",
                             "type_name": "double",
-                            "show_as": "INPUT_PIN"
+                            "show_as": "INPUT_PIN",
+							"description": "Function pin test description"
                         },
                         {
                             "name": "in2",
@@ -36,7 +39,8 @@
                 {
                     "name": "double_prop",
                     "type_name": "double",
-                    "show_as": "INPUT_PIN"
+                    "show_as": "INPUT_PIN",
+					"description": "Test pin description"
                 },
                 {
                     "name": "vec3d_prop",
