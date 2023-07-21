@@ -340,7 +340,7 @@ void CopyThread::AJAInputProc()
     DebugInfo.Counter = 0;
 
     DropCount = 0;
-    u32 successiveDropCount = 0;
+    u32 framesSinceLastDrop = 0;
 
     while (Run && !GpuRing->Exit)
     {
@@ -384,16 +384,9 @@ void CopyThread::AJAInputProc()
         {
             DropCount++;
             GpuRing->ResetFrameCount = true; 
-            successiveDropCount++;
-            if (successiveDropCount >= 50)
-            {
-                successiveDropCount = 0;
-                NotifyDrop();
-            }
+            framesSinceLastDrop = 0;
             continue;
         }
-
-        successiveDropCount = 0;
 
         const u32 Pitch = CompressedTex.Info.Texture.Width * 4;
         const u32 Segments = CompressedTex.Info.Texture.Height;
@@ -415,6 +408,9 @@ void CopyThread::AJAInputProc()
             Client->Device->DMAReadFrame(ReadFB, Buf, Size, Channel);
         }
         CpuRing->EndPush(slot);
+        ++framesSinceLastDrop;
+        if (DropCount && framesSinceLastDrop == 50)
+            NotifyDrop();
             
         NTV2RegisterReads Regs = { NTV2RegInfo(kRegRXSDI1FrameCountLow + Channel * (kRegRXSDI2FrameCountLow - kRegRXSDI1FrameCountLow)) };
         Client->Device->ReadRegisters(Regs);
@@ -522,7 +518,7 @@ void CopyThread::AJAOutputProc()
     SetFrame(FB);
 
     DropCount = 0;
-	u32 successiveDropCount = 0;
+	u32 framesSinceLastDrop = 0;
 
     while (Run && !CpuRing->Exit)
     {
@@ -553,18 +549,17 @@ void CopyThread::AJAOutputProc()
 			
             if (vblCount != lastVBLCount)
             {
-                successiveDropCount += vblCount - lastVBLCount;
                 DropCount += vblCount - lastVBLCount;
-                if (successiveDropCount >= 50)
-                {
-                    successiveDropCount = 0;
-                    mzEngine.LogE("AJA Out dropped last 50 or more frames, restarting");
-                    NotifyRestart({});
-                }
-            } 
+                framesSinceLastDrop = 0;
+            }
             else
             {
-                successiveDropCount = 0;
+                ++framesSinceLastDrop;
+                if (DropCount && framesSinceLastDrop == 50)
+                {
+                    mzEngine.LogE("AJAOut: Dropped frames, notifying restart");
+                    NotifyRestart({});
+                }
             }
 
 			u32 FieldIdx = 0;
