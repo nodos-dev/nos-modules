@@ -169,9 +169,9 @@ struct CopyThread : TrackSync
     void Refresh();
     bool IsQuad() const;
     bool Interlaced() const;
+	bool LinkSizeMismatch() const;
 
     void StartThread();
-
     void Orphan(bool, std::string const& msg = "");
     void Live(bool);
     void PinUpdate(std::optional<mz::fb::TOrphanState>, Action live);

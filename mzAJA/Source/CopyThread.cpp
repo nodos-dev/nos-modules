@@ -92,6 +92,43 @@ bool CopyThread::IsQuad() const
     return AJADevice::IsQuad(Mode);
 }
 
+bool CopyThread::LinkSizeMismatch() const
+{
+    auto in0 = Client->Device->GetVPID(Channel);
+    const bool SLSignal = CNTV2VPID::VPIDStandardIsSingleLink(in0.GetStandard());
+    if (!IsQuad())
+    {
+        return !SLSignal;
+    }
+    
+    if(Channel & 3)
+        return true;
+
+    // Maybe squares
+    if (SLSignal)
+    {
+        auto in1 = Client->Device->GetVPID(NTV2Channel(Channel + 1));
+        auto in2 = Client->Device->GetVPID(NTV2Channel(Channel + 2));
+        auto in3 = Client->Device->GetVPID(NTV2Channel(Channel + 3));
+
+        auto fmt0 = in0.GetVideoFormat();
+        auto fmt1 = in1.GetVideoFormat();
+        auto fmt2 = in2.GetVideoFormat();
+        auto fmt3 = in3.GetVideoFormat();
+
+        auto std0 = in0.GetStandard();
+        auto std1 = in0.GetStandard();
+        auto std2 = in0.GetStandard();
+        auto std3 = in0.GetStandard();
+
+        return !((fmt0 == fmt1) && (fmt0 == fmt1) &&
+                 (fmt2 == fmt3) && (fmt2 == fmt3) &&
+                 (fmt0 == fmt2) && (fmt0 == fmt2));
+    }
+
+    return false;
+}
+
 bool CopyThread::Interlaced() const
 {
     return !IsProgressivePicture(Format);
@@ -280,7 +317,8 @@ void CopyThread::CreateRings(u32 size)
 
 void CopyThread::InputUpdate(AJADevice::Mode &prevMode)
 {
-    if (Client->Device->GetInputVideoFormat(Channel) != Format)
+    auto fmt = Client->Device->GetInputVideoFormat(Channel);
+    if (fmt != Format)
     {
         Refresh();
     }
@@ -357,6 +395,22 @@ void CopyThread::AJAInputProc()
         mzEngine.WatchLog("AJAIn GPU Ring Read Size", strGpuRingReadSize.c_str());
         mzEngine.WatchLog("AJAIn GPU Ring Write Size", strGpuRingWriteSize.c_str());
         InputUpdate(prevMode);
+
+        if (LinkSizeMismatch())
+        {
+            Orphan(true, "Quad - Single link mismatch");
+            do 
+            {
+                if (!Run || GpuRing->Exit || CpuRing->Exit)
+                {
+                    goto EXIT;
+                }
+                Client->Device->WaitForInputVerticalInterrupt(Channel);
+                InputUpdate(prevMode);
+            }
+            while(LinkSizeMismatch());
+            Orphan(false);
+        }
 
         if (!(Client->Device->WaitForInputVerticalInterrupt(Channel)))
         {

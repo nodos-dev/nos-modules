@@ -141,7 +141,7 @@ bool AJADevice::IsTSI(NTV2Channel channel)
 
 AJADevice::Mode AJADevice::GetMode(NTV2Channel channel)
 {
-    return IsTSI(channel) ? TSI : SQD;
+    return IsTSI(channel) ? TSI : CNTV2VPID::VPIDStandardIsQuadLink(GetVPID(channel).GetStandard()) ? SQD : SL;
 }
 
 void AJADevice::ClearState()
@@ -477,14 +477,16 @@ bool AJADevice::RouteQuadInputSignal(NTV2Channel channel, NTV2VideoFormat videoF
         switch (mode)
         {
         case TSI:
+            re &= Set4kSquaresEnable(false, channels[i]);
             re &= SetTsiFrameEnable(true, channels[i]);
             NTV2InputCrosspointID in;
             NTV2OutputCrosspointID out;
             re &= GetTSIMUXPins(channels[i], in, out);
-            re &= Connect(GetInputTSIFB(channels[i]), out);
-            re &= Connect(in, GetInputSourceOutputXpt(src));
+            re &= Connect(GetInputTSIFB(channels[i]), out, true);
+            re &= Connect(in, GetInputSourceOutputXpt(src), true);
             break;
         case SQD:
+            re &= SetTsiFrameEnable(false, channels[i]);
             re &= Set4kSquaresEnable(true, channels[i]);
             re &= Connect(GetFrameBufferInputXptFromChannel(channels[i]), GetInputSourceOutputXpt(src));
             break;
