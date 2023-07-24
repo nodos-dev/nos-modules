@@ -205,15 +205,6 @@ mzResult ToString(void* ctx, const mzNodeExecuteArgs* args)
 	return mzEngine.SetPinValue(args->PinIds[1], mzBuffer { .Data = (void*)s.c_str(), .Size = s.size() + 1 });
 }
 
-template<class T, u32 I, u32 F = I * 2 + 4>
-inline auto AddTrackField(flatbuffers::FlatBufferBuilder& fbb, flatbuffers::Table* X, flatbuffers::Table* Y)
-{
-	auto l = X->GetStruct<T*>(F);
-	auto r = Y->GetStruct<T*>(F);
-	auto c = (l ? *l : T{}) + (r ? *r : T{});
-	fbb.AddStruct(F, &c);
-}
-
 template<u32 hi, class F, u32 i = 0>
 void For(F&& f)
 {
@@ -237,16 +228,27 @@ mzResult AddTrack(void* ctx, const mzNodeExecuteArgs* args)
 {
 	auto pins = GetPinValues(args);
 	auto ids = GetPinIds(args);
-	auto xBuf = pins[MZN_X];
-	auto yBuf = pins[MZN_Y];
-	auto* xTable = flatbuffers::GetMutableRoot<flatbuffers::Table>(xBuf);
-	auto* yTable = flatbuffers::GetMutableRoot<flatbuffers::Table>(yBuf);
-	flatbuffers::FlatBufferBuilder fbb;
-	fb::Track::Builder b(fbb);
-	FieldIterator<fb::Track>([&fbb, X = xTable, Y = yTable]<u32 i, class T>(auto) { AddTrackField<T, i>(fbb, X, Y); });
-	fbb.Finish(b.Finish());
-	auto buf = fbb.Release();
-	return mzEngine.SetPinValue(ids[MZN_Z], mzBuffer { .Data = buf.data(), .Size = buf.size()});
+	// TODO: Remove these once generic table aritmetic ops are supported
+	auto* xTrack = flatbuffers::GetMutableRoot<fb::Track>(pins[MZN_X]);
+	auto* yTrack = flatbuffers::GetMutableRoot<fb::Track>(pins[MZN_Y]);
+	fb::TTrack sumTrack;
+	xTrack->UnPackTo(&sumTrack);
+	reinterpret_cast<glm::vec3&>(sumTrack.location) += reinterpret_cast<const glm::vec3&>(*yTrack->location());
+	reinterpret_cast<glm::vec3&>(sumTrack.rotation) += reinterpret_cast<const glm::vec3&>(*yTrack->rotation());
+	sumTrack.fov += yTrack->fov();
+	sumTrack.focus += yTrack->focus();
+	sumTrack.zoom += yTrack->zoom();
+	sumTrack.render_ratio += yTrack->render_ratio();
+	reinterpret_cast<glm::vec2&>(sumTrack.sensor_size) += reinterpret_cast<const glm::vec2&>(*yTrack->sensor_size());
+	sumTrack.pixel_aspect_ratio += yTrack->pixel_aspect_ratio();
+	sumTrack.nodal_offset += yTrack->nodal_offset();
+	sumTrack.focus_distance += yTrack->focus_distance();
+	auto& sumDistortion = sumTrack.lens_distortion;
+	auto& yDistortion = *yTrack->lens_distortion();
+	reinterpret_cast<glm::vec2&>(sumDistortion.mutable_center_shift()) += reinterpret_cast<const glm::vec2&>(yDistortion.center_shift());
+	reinterpret_cast<glm::vec2&>(sumDistortion.mutable_k1k2()) += reinterpret_cast<const glm::vec2&>(yDistortion.k1k2());
+	sumDistortion.mutate_distortion_scale(sumDistortion.distortion_scale() + yDistortion.distortion_scale());
+	return mzEngine.SetPinValue(ids[MZN_Z], mz::Buffer::From(sumTrack));
 }
 
 mzResult AddTransform(void* ctx, const mzNodeExecuteArgs* args)
@@ -347,20 +349,20 @@ MZAPI_ATTR mzResult MZAPI_CALL mzExportNodeFunctions(size_t* outCount, mzNodeFun
 			{
 				auto pins = GetPinValues(args);
 
-				auto fov = *static_cast<double*>(pins[MZN_FOV]);
+				auto fov = *static_cast<float*>(pins[MZN_FOV]);
 
 				// Sanity checks
-				static_assert(alignof(glm::dvec3) == alignof(mz::fb::vec3d));
-				static_assert(sizeof(glm::dvec3) == sizeof(mz::fb::vec3d));
-				static_assert(alignof(glm::dmat4) == alignof(mz::fb::mat4d));
-				static_assert(sizeof(glm::dmat4) == sizeof(mz::fb::mat4d));
+				static_assert(alignof(glm::vec3) == alignof(mz::fb::vec3));
+				static_assert(sizeof(glm::vec3) == sizeof(mz::fb::vec3));
+				static_assert(alignof(glm::mat4) == alignof(mz::fb::mat4));
+				static_assert(sizeof(glm::mat4) == sizeof(mz::fb::mat4));
 
 				// glm::dvec3 is compatible with mz::fb::vec3d so it's safe to cast
-				auto const& rot = *static_cast<glm::dvec3*>(pins[MZN_Rotation]);
-				auto const& pos = *static_cast<glm::dvec3*>(pins[MZN_Position]);
-				auto perspective = glm::perspective(fov, 16.0 / 9.0, 10.0, 10000.0);
+				auto const& rot = *static_cast<glm::vec3*>(pins[MZN_Rotation]);
+				auto const& pos = *static_cast<glm::vec3*>(pins[MZN_Position]);
+				auto perspective = glm::perspective(fov, 16.f / 9.f, 10.f, 10000.f);
 				auto view = glm::eulerAngleXYZ(rot.x, rot.y, rot.z);
-				auto& out = *static_cast<glm::dmat4*>(pins[MZN_Transformation]);
+				auto& out = *static_cast<glm::mat4*>(pins[MZN_Transformation]);
 				out = perspective * view;
 				return MZ_RESULT_SUCCESS;
 			};

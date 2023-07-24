@@ -9,22 +9,22 @@
             "pins": [
                 {
                     "name": "FOV",
-                    "type_name": "double",
+                    "type_name": "float",
                     "show_as": "INPUT_PIN"
                 },
                 {
                     "name": "Rotation",
-                    "type_name": "mz.fb.vec3d",
+                    "type_name": "mz.fb.vec3",
                     "show_as": "INPUT_PIN"
                 },
                 {
                     "name": "Position",
-                    "type_name": "mz.fb.vec3d",
+                    "type_name": "mz.fb.vec3",
                     "show_as": "INPUT_PIN"
                 },
                 {
                     "name": "Transformation",
-                    "type_name": "mz.fb.mat4d",
+                    "type_name": "mz.fb.mat4",
                     "show_as": "OUTPUT_PIN"
                 }
             ]
@@ -183,23 +183,25 @@
 						},
 						"fov": 0,
 						"focus": 0.0,
-						"center_shift": {
-							"x": 0.0,
-							"y": 0.0
-						},
 						"zoom": 0.0,
-						"k1k2": {
-                            "x": 0.0,
-                            "y": 0.0
-                        },
 						"render_ratio": 0.0,
-						"distortion_scale": 0.0,
 						"sensor_size": {
 							"x": 0.0,
 							"y": 0.0
 						},
 						"pixel_aspect_ratio": 0.0,
-						"nodal_offset": 0.0
+						"nodal_offset": 0.0,
+						"lens_distortion": {
+							"distortion_scale": 0.0,
+							"k1k2": {
+								"x": 0.0,
+								"y": 0.0
+							},
+							"center_shift": {
+								"x": 0.0,
+								"y": 0.0
+							}
+						}
 					}
                 },
                 {
@@ -220,23 +222,25 @@
 						},
 						"fov": 0,
 						"focus": 0.0,
-						"center_shift": {
-							"x": 0.0,
-							"y": 0.0
-						},
 						"zoom": 0.0,
-						"k1k2": {
-                            "x": 0.0,
-                            "y": 0.0
-                        },
 						"render_ratio": 0.0,
-						"distortion_scale": 0.0,
 						"sensor_size": {
 							"x": 0.0,
 							"y": 0.0
 						},
 						"pixel_aspect_ratio": 0.0,
-						"nodal_offset": 0.0
+						"nodal_offset": 0.0,
+						"lens_distortion": {
+							"distortion_scale": 0.0,
+							"k1k2": {
+								"x": 0.0,
+								"y": 0.0
+							},
+							"center_shift": {
+								"x": 0.0,
+								"y": 0.0
+							}
+						}
 					}
                 },
                 {
@@ -257,23 +261,25 @@
 						},
 						"fov": 0,
 						"focus": 0.0,
-						"center_shift": {
-							"x": 0.0,
-							"y": 0.0
-						},
 						"zoom": 0.0,
-						"k1k2": {
-                            "x": 0.0,
-                            "y": 0.0
-                        },
 						"render_ratio": 0.0,
-						"distortion_scale": 0.0,
 						"sensor_size": {
 							"x": 0.0,
 							"y": 0.0
 						},
 						"pixel_aspect_ratio": 0.0,
-						"nodal_offset": 0.0
+						"nodal_offset": 0.0,
+						"lens_distortion": {
+							"distortion_scale": 0.0,
+							"k1k2": {
+								"x": 0.0,
+								"y": 0.0
+							},
+							"center_shift": {
+								"x": 0.0,
+								"y": 0.0
+							}
+						}
 					}
                 }
             ]
