@@ -4,8 +4,9 @@
             "class_name": "ChannelViewer",
             "contents_type": "Job",
             "contents": {
-                "type": "CPU"
+              "type": "CPU"
             },
+            "description": "Used for viewing a channel of an RGBA or YCbCr texture",
             "pins": [
                 {
                     "name": "Input",

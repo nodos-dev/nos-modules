@@ -4,14 +4,16 @@
             "class_name": "TextureSwitcher",
             "contents_type": "Job",
             "contents": {
-                "type": "GPU"
+              "type": "GPU"
             },
+            "description": "Used for switch between multiple textures",
             "pins": [
                 {
                     "name": "Output_Channel",
                     "type_name": "mz.plugin.switcher.TextureSwitcherChannel",
                     "show_as": "PROPERTY",
-                    "can_show_as" : "INPUT_PIN_OR_PROPERTY",
+                    "can_show_as": "INPUT_PIN_OR_PROPERTY",
+                    "description": "Channel index to display on output",
                     "data": "Channel_1"
                 },
                 {

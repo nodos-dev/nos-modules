@@ -7,24 +7,28 @@
         "contents": {
           "type": "GPU"
         },
+        "description": "Show a number on top of the input texture",
         "pins": [
           {
             "name": "Number",
             "type_name": "uint",
             "show_as": "INPUT_PIN",
-            "can_show_as": "INPUT_PIN_OR_PROPERTY"
+            "can_show_as": "INPUT_PIN_OR_PROPERTY",
+            "description":  "Number to display"
           },
           {
             "name": "RenderFrameNo",
             "type_name": "uint",
             "show_as": "INPUT_PIN",
-            "can_show_as": "INPUT_PIN_OR_PROPERTY"
+            "can_show_as": "INPUT_PIN_OR_PROPERTY",
+            "description": "1 if number should be render frame no"
           },
           {
             "name": "SampleInput",
             "type_name": "uint",
             "show_as": "INPUT_PIN",
-            "can_show_as": "INPUT_PIN_OR_PROPERTY"
+            "can_show_as": "INPUT_PIN_OR_PROPERTY",
+            "description": "1 if input texture should be sampled"
           },
           {
             "name": "Color",

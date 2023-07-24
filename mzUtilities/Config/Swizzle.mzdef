@@ -4,8 +4,9 @@
             "class_name": "Swizzle",
             "contents_type": "Job",
             "contents": {
-                "type": "GPU"
+              "type": "GPU"
             },
+            "description":  "Combine multiple textures channel by channel to a single texture",
             "pins": [
                 {
                     "name": "RedSource",
