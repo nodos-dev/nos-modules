@@ -91,7 +91,7 @@ struct CopyThread : TrackSync
     std::atomic_bool Run = true;
     mz::fb::ShowAs PinKind;
     rc<GPURing> GpuRing;
-	mzResourceShareInfo CompressedTex = {};
+	
     rc<CPURing> CpuRing;
 	std::atomic_bool TransferInProgress = false; // TODO: Combine these rings into a double ring structure
 	// The ring objects above are overwritten on path restart.
@@ -106,7 +106,9 @@ struct CopyThread : TrackSync
     std::atomic<Colorspace> Colorspace = Colorspace::REC709;
     std::atomic<GammaCurve> GammaCurve = GammaCurve::REC709;
     std::atomic_bool NarrowRange = true;
-    mzResourceShareInfo SSBO;
+    
+	rc<CPURing::Resource> SSBO;
+	rc<GPURing::Resource>  CompressedTex;
 
 	struct
 	{
@@ -120,13 +122,23 @@ struct CopyThread : TrackSync
 		u32 FrameNumber;
 		Clock::time_point T0;
 		Clock::time_point T1;
+		rc<GPURing> GR;
+		rc<CPURing> CR;
+		glm::mat4 Colorspace;
+		ShaderType Shader;
+		rc<GPURing::Resource> CompressedTex;
+		rc<CPURing::Resource> SSBO;
+		std::string Name;
+		uint32_t Debug = 0;
+		mzVec2u DispatchSize;
+		std::atomic_bool* TransferInProgress = 0;
 	};
 
 	struct ConversionThread : ConsumerThread<Parameters>
 	{
 		virtual ~ConversionThread();
 		std::thread Handle;
-		CopyThread* Cpy;
+		// CopyThread* Cpy;
 	};
 	struct InputConversionThread : ConversionThread
 	{

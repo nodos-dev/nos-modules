@@ -928,7 +928,19 @@ void AJAClient::EndCopyTo(mzCopyInfo &cpy)
 	// if (-1 != *cpy.PathState) res->Res->mutate_field_type((mz::fb::FieldType)*cpy.PathState);
     th->GpuRing->EndPush(res);
     cpy.Stop = th->InFlightFrames() >= th->GetRingSize();
-    th->Worker->Enqueue({});
+    
+    CopyThread::Parameters params = {};
+    params.GR = th->GpuRing;
+    params.CR = th->CpuRing;
+    params.Colorspace = th->GetMatrix<f64>();
+    params.Shader = Shader;
+    params.CompressedTex = th->CompressedTex;
+    params.SSBO = th->SSBO;
+    params.Name = th->Name();
+    params.Debug = Debug;
+    params.DispatchSize = th->GetSuitableDispatchSize();
+    params.TransferInProgress = &th->TransferInProgress;
+    th->Worker->Enqueue(params);
 }
 
 void AJAClient::AddTexturePin(const mz::fb::Pin* pin, u32 ringSize, NTV2Channel channel,

@@ -103,7 +103,7 @@ void CopyThread::StartThread()
         Worker = std::make_unique<InputConversionThread>();
     else
         Worker = std::make_unique<OutputConversionThread>();
-    Worker->Cpy = this;
+    // Worker->Cpy = this;
     CpuRing->Exit = false;
     GpuRing->Exit = false;
     Run = true;
@@ -176,7 +176,7 @@ void CopyThread::UpdateCurve(enum GammaCurve curve)
 {
     GammaCurve = curve;
     auto data = GetGammaLUT(IsInput(), GammaCurve, SSBO_SIZE);
-    auto ptr = mzEngine.Map(&SSBO);
+    auto ptr = mzEngine.Map(&SSBO->Res);
     memcpy(ptr, data.data(), data.size() * sizeof(data[0]));
 }
 
@@ -264,20 +264,18 @@ void CopyThread::Refresh()
 void CopyThread::CreateRings(u32 size)
 {
 	const auto ext = Extent();
-    
-    if (CompressedTex.Memory.Handle)
-        mzEngine.Destroy(&CompressedTex);
-    
+
 	GpuRing = MakeShared<GPURing>(ext, size);
 	mzVec2u compressedExt((10 == BitWidth()) ? ((ext.x + (48 - ext.x % 48) % 48) / 3) << 1 : ext.x >> 1, ext.y >> u32(Interlaced()));
 	CpuRing = MakeShared<CPURing>(compressedExt, size);
-    CompressedTex.Info.Type = MZ_RESOURCE_TYPE_TEXTURE;
-    CompressedTex.Info.Texture.Width = compressedExt.x;
-    CompressedTex.Info.Texture.Height = compressedExt.y;
-    CompressedTex.Info.Texture.Format = MZ_FORMAT_R8G8B8A8_UINT;
+    mzTextureInfo info = {};
+    info.Width  = compressedExt.x;
+    info.Height = compressedExt.y;
+    info.Format = MZ_FORMAT_R8G8B8A8_UINT;
+    CompressedTex = MakeShared<GPURing::Resource>(info);
     //CompressedTex.unscaled = true;
     //CompressedTex.unmanaged = true;
-    mzEngine.Create(&CompressedTex);
+    //mzEngine.Create(&CompressedTex);
 }
 
 void CopyThread::InputUpdate(AJADevice::Mode &prevMode)
@@ -388,8 +386,8 @@ void CopyThread::AJAInputProc()
             continue;
         }
 
-        const u32 Pitch = CompressedTex.Info.Texture.Width * 4;
-        const u32 Segments = CompressedTex.Info.Texture.Height;
+        const u32 Pitch    = CompressedTex->Res.Info.Texture.Width * 4;
+        const u32 Segments = CompressedTex->Res.Info.Texture.Height;
         ULWord *Buf = (ULWord *)mzEngine.Map(&slot->Res);
         const u32 Size = slot->Res.Info.Buffer.Size;
         const u32 ReadFB = 2 * Channel + FB;
@@ -424,6 +422,26 @@ void CopyThread::AJAInputProc()
 
         params.T1 = Clock::now();
 
+        // rc<GPURing> GR;
+        // rc<CPURing> CR;
+        // glm::mat4 Colorspace;
+        // ShaderType Shader;
+        // rc<GPURing::Resource> CompressedTex;
+        // rc<CPURing::Resource> SSBO;
+        // std::string Name;
+        // uint32_t Debug = 0;
+        // mzVec2u DispatchSize;
+
+        params.GR = GpuRing;
+        params.CR = CpuRing;
+        params.Colorspace = glm::inverse(GetMatrix<f64>());
+        params.Shader = Client->Shader;
+        params.CompressedTex = this->CompressedTex;
+        params.SSBO = this->SSBO;
+        params.Name = Name();
+        params.Debug = Client->Debug;
+        params.DispatchSize = GetSuitableDispatchSize();
+        params.TransferInProgress = & this->TransferInProgress;
         Worker->Enqueue(params);
     }
 EXIT:
@@ -452,11 +470,11 @@ mzVec2u CopyThread::GetSuitableDispatchSize() const
     };
 
     const u32 q = IsQuad();
-    f32 x = glm::clamp<u32>(Client->DispatchSizeX.load(), 1, CompressedTex.Info.Texture.Width) * (1 + q) * (.25 * BitWidth() - 1);
-    f32 y = glm::clamp<u32>(Client->DispatchSizeY.load(), 1, CompressedTex.Info.Texture.Height) * (1. + q) * (1 - .5 * Interlaced());
+    f32 x = glm::clamp<u32>(Client->DispatchSizeX.load(), 1, CompressedTex->Res.Info.Texture.Width) * (1 + q) * (.25 * BitWidth() - 1);
+    f32 y = glm::clamp<u32>(Client->DispatchSizeY.load(), 1, CompressedTex->Res.Info.Texture.Height) * (1. + q) * (1 - .5 * Interlaced());
 
-    return mzVec2u(BestFit(x + .5, CompressedTex.Info.Texture.Width >> (BitWidth() - 5)),
-                     BestFit(y + .5, CompressedTex.Info.Texture.Height / 9));
+    return mzVec2u(BestFit(x + .5, CompressedTex->Res.Info.Texture.Width >> (BitWidth() - 5)),
+                     BestFit(y + .5, CompressedTex->Res.Info.Texture.Height / 9));
 }
 
 void CopyThread::NotifyRestart(RestartParams const& params)
@@ -574,8 +592,8 @@ void CopyThread::AJAOutputProc()
 
             const u32 OutFrame = 2 * Channel + FB;
 
-			const u32 Pitch = CompressedTex.Info.Texture.Width * 4;
-			const u32 Segments = CompressedTex.Info.Texture.Height;
+			const u32 Pitch = CompressedTex->Res.Info.Texture.Width * 4;
+			const u32 Segments = CompressedTex->Res.Info.Texture.Height;
 			const u32 Size = CpuRing->Sample.Size;
 
             if (Interlaced())
@@ -623,44 +641,45 @@ void CopyThread::SendDeleteRequest()
 
 void CopyThread::InputConversionThread::Consume(CopyThread::Parameters const& params)
 {
-    auto* slot = Cpy->CpuRing->BeginPop();
+    auto* slot = params.CR->BeginPop();
     if (!slot)
         return;
-    Cpy->TransferInProgress = true;
-    auto* res = Cpy->GpuRing->BeginPush();
+    *params.TransferInProgress = true;
+    auto* res = params.GR->BeginPush();
     if (!res)
     {
-        Cpy->CpuRing->EndPop(slot);
+        params.CR->EndPop(slot);
         return;
     }
 
     std::vector<mzShaderBinding> inputs;
 
-    glm::mat4 colorspace = glm::inverse(Cpy->GetMatrix<f64>());
+    glm::mat4 colorspace = params.Colorspace; // glm::inverse(Cpy->GetMatrix<f64>());
 
-    uint32_t iflags = params.FieldIdx | ((Cpy->Client->Shader == ShaderType::Comp10) << 2);
+    uint32_t iflags = params.FieldIdx | ((params.Shader == ShaderType::Comp10) << 2);
 
     inputs.emplace_back(ShaderBinding(MZN_Colorspace, colorspace));
-	inputs.emplace_back(ShaderBinding(MZN_Source, Cpy->CompressedTex));
+	inputs.emplace_back(ShaderBinding(MZN_Source, params.CompressedTex->Res));
 	inputs.emplace_back(ShaderBinding(MZN_Interlaced, iflags));
-	inputs.emplace_back(ShaderBinding(MZN_ssbo, Cpy->SSBO));
+	inputs.emplace_back(ShaderBinding(MZN_ssbo, params.SSBO->Res));
 
-    auto MsgKey = "Input " + Cpy->Name().AsString() + " DMA";
+    // auto MsgKey = "Input " + Cpy->Name().AsString() + " DMA";
+    auto MsgKey = "Input " + params.Name + " DMA";
 
     mzCmd cmd;
     mzEngine.Begin(&cmd);
 
-    mzEngine.Copy(cmd, &slot->Res, &Cpy->CompressedTex, Cpy->Client->Debug ? ("(GPUTransfer)" + MsgKey + ":" + std::to_string(Cpy->Client->Debug)).c_str() : 0);
+    mzEngine.Copy(cmd, &slot->Res, &params.CompressedTex->Res, params.Debug ? ("(GPUTransfer)" + MsgKey + ":" + std::to_string(params.Debug)).c_str() : 0);
 
-    if (Cpy->Client->Shader != ShaderType::Frag8)
+    if (params.Shader != ShaderType::Frag8)
     {
 		inputs.emplace_back(ShaderBinding(MZN_Output, res->Res));
         mzRunComputePassParams pass = {};
 		pass.Key = MZN_AJA_YCbCr2RGB_Compute_Pass;
-        pass.DispatchSize = Cpy->GetSuitableDispatchSize();
+        pass.DispatchSize = params.DispatchSize;
         pass.Bindings = inputs.data();
         pass.BindingCount = inputs.size();
-        pass.Benchmark = Cpy->Client->Debug;
+        pass.Benchmark = params.Debug;
         mzEngine.RunComputePass(cmd, &pass);
     }
     else
@@ -670,13 +689,13 @@ void CopyThread::InputConversionThread::Consume(CopyThread::Parameters const& pa
         pass.Output = res->Res;
         pass.Bindings = inputs.data();
         pass.BindingCount = inputs.size();
-        pass.Benchmark = Cpy->Client->Debug;
+        pass.Benchmark = params.Debug;
         mzEngine.RunPass(cmd, &pass);
     }
 
     mzEngine.End(cmd);
 
-    auto& [time, counter] = Cpy->DebugInfo;
+    /*auto& [time, counter] = Cpy->DebugInfo;
     if (Cpy->Client->Debug && ++counter >= Cpy->Client->Debug)
     {
         time += params.T1 - params.T0;
@@ -688,7 +707,7 @@ void CopyThread::InputConversionThread::Consume(CopyThread::Parameters const& pa
             << " (" << std::chrono::duration_cast<Milli>(t) << ")"
             << "\n";
         mzEngine.LogI(ss.str().c_str());
-    }
+    }*/
 
     //if(Cpy->client->Debug)
     //{
@@ -714,9 +733,9 @@ void CopyThread::InputConversionThread::Consume(CopyThread::Parameters const& pa
     // res->Res.field_type = fb::FieldType::ANY ^ fb::FieldType(params.FieldIdx ^ 3);
     // std::this_thread::sleep_for(std::chrono::milliseconds(1));
     res->FrameNumber = params.FrameNumber;
-    Cpy->GpuRing->EndPush(res);
-    Cpy->TransferInProgress = false;
-    Cpy->CpuRing->EndPop(slot);
+    params.GR->EndPush(res);
+    *params.TransferInProgress = false;
+    params.CR->EndPop(slot);
 }
 
 CopyThread::ConversionThread::~ConversionThread()
@@ -724,7 +743,7 @@ CopyThread::ConversionThread::~ConversionThread()
     Stop();
 }
 
-void CopyThread::OutputConversionThread::Consume(const Parameters& item)
+void CopyThread::OutputConversionThread::Consume(const Parameters& params)
 {
 #if 0 // TODO: discard according to compatibility
     if (!(res->res.field_type & fb::FieldType(FieldIdx)))
@@ -733,57 +752,57 @@ void CopyThread::OutputConversionThread::Consume(const Parameters& item)
         continue;
     }
 #endif
-    auto incoming = Cpy->GpuRing->BeginPop();
+    auto incoming = params.GR->BeginPop();
     if(!incoming)
 		return;
-    Cpy->TransferInProgress = true;
-    auto outgoing = Cpy->CpuRing->BeginPush();
+    *params.TransferInProgress = true;
+    auto outgoing = params.CR->BeginPush();
     if (!outgoing)
     {
-        Cpy->GpuRing->EndPop(incoming);
+        params.GR->EndPop(incoming);
         return;
     }
 
-    glm::mat4 colorspace = (Cpy->GetMatrix<f64>());
-    uint32_t iflags = (Cpy->Client->Shader == ShaderType::Comp10) << 2;
+    glm::mat4 colorspace = params.Colorspace;
+    uint32_t iflags = (params.Shader == ShaderType::Comp10) << 2;
 
     std::vector<mzShaderBinding> inputs;
 	inputs.emplace_back(ShaderBinding(MZN_Colorspace, colorspace));
 	inputs.emplace_back(ShaderBinding(MZN_Source, incoming->Res));
 	inputs.emplace_back(ShaderBinding(MZN_Interlaced, iflags));
-	inputs.emplace_back(ShaderBinding(MZN_ssbo, Cpy->SSBO));
+	inputs.emplace_back(ShaderBinding(MZN_ssbo, params.SSBO->Res));
 
     mzCmd cmd;
     mzEngine.Begin(&cmd);
 
     // watch out for th members, they are not synced
-    if (Cpy->Client->Shader != ShaderType::Frag8)
+    if (params.Shader != ShaderType::Frag8)
     {
-		inputs.emplace_back(ShaderBinding(MZN_Output, Cpy->CompressedTex));
+		inputs.emplace_back(ShaderBinding(MZN_Output, params.CompressedTex->Res));
         mzRunComputePassParams pass = {};
 		pass.Key = MZN_AJA_RGB2YCbCr_Compute_Pass;
-        pass.DispatchSize = Cpy->GetSuitableDispatchSize();
+        pass.DispatchSize = params.DispatchSize;
         pass.Bindings = inputs.data();
         pass.BindingCount = inputs.size();
-        pass.Benchmark = Cpy->Client->Debug;
+        pass.Benchmark = params.Debug;
         mzEngine.RunComputePass(cmd, &pass);
     }
     else
     {
         mzRunPassParams pass = {};
 		pass.Key = MZN_AJA_RGB2YCbCr_Pass;
-        pass.Output = Cpy->CompressedTex;
+        pass.Output = params.CompressedTex->Res;
         pass.Bindings = inputs.data();
         pass.BindingCount = inputs.size();
-        pass.Benchmark = Cpy->Client->Debug;
+        pass.Benchmark = params.Debug;
         mzEngine.RunPass(cmd, &pass);
     }
 
-    mzEngine.Copy(cmd, &Cpy->CompressedTex, &outgoing->Res, 0);
+    mzEngine.Copy(cmd, &params.CompressedTex->Res, &outgoing->Res, 0);
     mzEngine.End(cmd);
-    Cpy->GpuRing->EndPop(incoming);
-    Cpy->TransferInProgress = false;
-    Cpy->CpuRing->EndPush(outgoing);
+    params.GR->EndPop(incoming);
+    *params.TransferInProgress = false;
+    params.CR->EndPush(outgoing);
 }
 
 CopyThread::CopyThread(struct AJAClient *client, u32 ringSize, u32 spareCount, mz::fb::ShowAs kind, 
@@ -795,10 +814,10 @@ CopyThread::CopyThread(struct AJAClient *client, u32 ringSize, u32 spareCount, m
 {
 
     {
-        SSBO.Info.Type = MZ_RESOURCE_TYPE_BUFFER;
-        SSBO.Info.Buffer.Size = (1<<(SSBO_SIZE)) * sizeof(u16);
-        SSBO.Info.Buffer.Usage = MZ_BUFFER_USAGE_STORAGE_BUFFER; // | MZ_BUFFER_USAGE_DEVICE_MEMORY;
-        mzEngine.Create(&SSBO);
+        mzBufferInfo info = {};
+        info.Size = (1<<(SSBO_SIZE)) * sizeof(u16);
+        info.Usage = MZ_BUFFER_USAGE_STORAGE_BUFFER; // | MZ_BUFFER_USAGE_DEVICE_MEMORY;
+        SSBO = MakeShared<CPURing::Resource>(info);
         UpdateCurve(GammaCurve);
     }
 
@@ -817,9 +836,6 @@ CopyThread::~CopyThread()
 {
     Stop();
     Client->Device->CloseChannel(Channel, IsInput(), IsQuad());
-    mzEngine.Destroy(&SSBO);
-    if (CompressedTex.Memory.Handle)
-        mzEngine.Destroy(&CompressedTex);
 }
 
 void CopyThread::Orphan(bool orphan, std::string const& message)
