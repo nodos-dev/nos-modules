@@ -742,7 +742,13 @@ void AJAClient::OnPathCommand(const mzPathCommand* cmd)
         auto* res = params.As<RestartParams>();
         u32 ringSize = copyThread->GetRingSize();
         if (res->UpdateFlags & RestartParams::UpdateRingSize)
+        {
             ringSize = res->RingSize;
+            if (copyThread->IsInput()) {
+                auto ringSizePinId = GetPinId(Name(pinName.AsString() + " Ring Size"));
+                mzEngine.SetPinValue(ringSizePinId, mzBuffer{.Data = &ringSize, .Size = sizeof(u32)});
+            }
+        }
         copyThread->Restart(ringSize);
         break;
     }
