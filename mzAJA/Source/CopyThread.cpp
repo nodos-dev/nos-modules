@@ -701,11 +701,16 @@ void CopyThread::SendDeleteRequest()
 
 void CopyThread::ChangePinResolution(mzVec2u res)
 {
-    mzEngine.SetTexturePinValue(Client->Mapping.NodeId, PinName, {
-        .Width = res.x,
-        .Height = res.y,
-        .Format = MZ_FORMAT_R16G16B16A16_UNORM,
-        });
+    fb::TTexture tex;
+    tex.width = res.x;
+    tex.height = res.y;
+    tex.unscaled = true;
+    tex.unmanaged = !IsInput();
+    tex.format = mz::fb::Format::R16G16B16A16_UNORM;
+    flatbuffers::FlatBufferBuilder fbb;
+    fbb.Finish(fb::CreateTexture(fbb, &tex));
+    auto val = fbb.Release();
+    mzEngine.SetPinValueByName(Client->Mapping.NodeId, PinName, {val.data(), val.size()} );
 }
 
 void CopyThread::InputConversionThread::Consume(CopyThread::Parameters const& params)
