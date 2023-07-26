@@ -17,6 +17,16 @@ std::map<std::string, uint64_t> AJADevice::EnumerateDevices()
     return re;
 }
 
+std::unordered_map<std::string, std::set<NTV2VideoFormat>> AJADevice::StringToFormat()
+{
+    std::unordered_map<std::string, std::set<NTV2VideoFormat>> re;
+    for (u32 i = 0; i < NTV2_MAX_NUM_VIDEO_FORMATS; ++i)
+    {
+        re[NTV2VideoFormatToString(NTV2VideoFormat(i), true)].insert(NTV2VideoFormat(i));
+    }
+    return re;
+}
+
 uint64_t AJADevice::FindDeviceSerial(const char* ident)
 {
     if(auto it = AvailableDevices.find(ident); it != AvailableDevices.end())
@@ -52,11 +62,6 @@ bool AJADevice::GetAvailableDevice(bool input, AJADevice** pOut)
 
 void AJADevice::Init()
 {
-    for (u32 i = 0; i < NTV2_MAX_NUM_VIDEO_FORMATS; ++i)
-    {
-        Formats[NTV2VideoFormatToString(NTV2VideoFormat(i), true)] = NTV2VideoFormat(i);
-    }
-
     if(AvailableDevices.empty() || !Devices.empty()) 
     {
         return;
@@ -113,28 +118,20 @@ CNTV2VPID AJADevice::GetVPID(NTV2Channel channel, CNTV2VPID* B)
     return CNTV2VPID(a);
 }
 
-NTV2VideoFormat AJADevice::GetInputVideoFormat2(NTV2Channel channel)
-{
-    ULWord a, b;
-    ReadSDIInVPID(channel, a, b);
-    if (CNTV2Card::GetVPIDValidA(channel))
-    {
-        return CNTV2VPID(a).GetVideoFormat();
-    }
-    if (CNTV2Card::GetVPIDValidB(channel))
-    {
-        return CNTV2VPID(b).GetVideoFormat();
-    }
-
-    return NTV2_FORMAT_UNKNOWN;
-}
-
 NTV2VideoFormat AJADevice::GetInputVideoFormat(NTV2Channel channel)
 {
     NTV2VideoFormat fmt = GetSDIInputVideoFormat(channel, GetSDIInputIsProgressive(channel));
-    if (fmt == NTV2_FORMAT_UNKNOWN) fmt = GetInputVideoFormat2(channel);
+    if (fmt == NTV2_FORMAT_UNKNOWN)
+    {
+        ULWord a, b;
+        ReadSDIInVPID(channel, a, b);
+        if (CNTV2Card::GetVPIDValidA(channel))
+            fmt = CNTV2VPID(a).GetVideoFormat();
+        else if (CNTV2Card::GetVPIDValidB(channel))
+            fmt = CNTV2VPID(b).GetVideoFormat();
+    }
     if (fmt == NTV2_FORMAT_UNKNOWN) this->GetVideoFormat(fmt, channel);
-    return fmt;
+    return GetSupportedNTV2VideoFormatFromInputVideoFormat(fmt);
 }
 
 bool AJADevice::IsTSI(NTV2Channel channel)

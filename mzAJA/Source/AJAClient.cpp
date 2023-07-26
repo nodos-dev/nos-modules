@@ -359,7 +359,7 @@ void AJAClient::OnNodeUpdate(PinMapping &&newMapping, std::unordered_map<Name, c
         {
             prs[channel].size = pin;
         }
-        if (str.ends_with("Video Format"))
+        else if (str.ends_with("Video Format"))
         {
             prs[channel].frame_rate = pin;
         }
@@ -414,25 +414,24 @@ void AJAClient::OnNodeUpdate(PinMapping &&newMapping, std::unordered_map<Name, c
         }
         else
         {
+            auto mode = pr.quad_mode ? *(AJADevice::Mode*)pr.quad_mode->data()->Data() : AJADevice::SL;
             NTV2VideoFormat fmt = NTV2_FORMAT_UNKNOWN;
             switch (pin->show_as())
             {
             case mz::fb::ShowAs::INPUT_PIN: {
                 if (pr.frame_rate && flatbuffers::IsFieldPresent(pr.frame_rate, mz::fb::Pin::VT_DATA))
                 {
-                    
-                    fmt = AJADevice::Formats[(const char*)(pr.frame_rate->data()->Data())];
+                    fmt = AJADevice::GetMatchingFormat((const char*)(pr.frame_rate->data()->Data()), AJADevice::IsQuad(mode));
                     mzEngine.LogI("AJA: Route output %s with framerate %s", NTV2ChannelToString(channel, true).c_str(),
 								  NTV2VideoFormatToString(fmt, true).c_str());
                 }
                 break;
             }
-
             case mz::fb::ShowAs::OUTPUT_PIN:
 				mzEngine.LogI("AJA: Route input %s", NTV2ChannelToString(channel, true).c_str());
                 break;
             }
-            auto mode = pr.quad_mode ? *(AJADevice::Mode *)pr.quad_mode->data()->Data() : AJADevice::SL;
+          
             if (Device->RouteSignal(channel, fmt, Input, mode, FBFmt()))
             {
                 auto cs = *(Colorspace *)pr.colorspace->data()->Data();
@@ -445,8 +444,6 @@ void AJAClient::OnNodeUpdate(PinMapping &&newMapping, std::unordered_map<Name, c
             else
             {
                 GeneratePinIDSet(name, mode, pinsToDelete);
-                auto it = Pins.find(name);
-                DeleteTexturePin(*it);
                 continue;
             }
         }

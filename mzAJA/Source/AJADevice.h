@@ -57,7 +57,7 @@ struct AJADevice : CNTV2Card
     }
     
     inline static std::vector<std::shared_ptr<AJADevice>> Devices;
-    inline static std::unordered_map<std::string, NTV2VideoFormat> Formats;
+   
 
     NTV2FrameRate FPSFamily = NTV2_FRAMERATE_INVALID;
 
@@ -71,7 +71,20 @@ struct AJADevice : CNTV2Card
     static void Dealloc(void* ptr, size_t size);
     static void* Alloc(size_t size, bool);
     static std::map<std::string, uint64_t>  EnumerateDevices();
+    static std::unordered_map<std::string, std::set<NTV2VideoFormat>> StringToFormat();
+
     inline static const auto AvailableDevices = EnumerateDevices();
+
+    inline static NTV2VideoFormat GetMatchingFormat(std::string const& fmt, bool multiLink)
+    {
+        static const auto Formats = StringToFormat();
+        if(auto it = Formats.find(fmt); it != Formats.end())
+            for (auto fmt : it->second)
+                if (multiLink == NTV2_IS_SQUARE_DIVISION_FORMAT(fmt)) 
+                    return fmt;
+        return NTV2_FORMAT_UNKNOWN;
+    }
+
     static uint64_t FindDeviceSerial(const char* ident);
     static bool DeviceAvailable(const char* ident, bool input);
     static bool GetAvailableDevice(bool input, AJADevice** = 0);
@@ -87,7 +100,6 @@ struct AJADevice : CNTV2Card
     
     CNTV2VPID GetVPID(NTV2Channel channel, CNTV2VPID* B = 0);
 
-    NTV2VideoFormat GetInputVideoFormat2(NTV2Channel channel);
     NTV2VideoFormat GetInputVideoFormat(NTV2Channel channel);
     bool IsTSI(NTV2Channel channel);
     Mode GetMode(NTV2Channel channel);
