@@ -52,6 +52,11 @@ bool AJADevice::GetAvailableDevice(bool input, AJADevice** pOut)
 
 void AJADevice::Init()
 {
+    for (u32 i = 0; i < NTV2_MAX_NUM_VIDEO_FORMATS; ++i)
+    {
+        Formats[NTV2VideoFormatToString(NTV2VideoFormat(i), true)] = NTV2VideoFormat(i);
+    }
+
     if(AvailableDevices.empty() || !Devices.empty()) 
     {
         return;

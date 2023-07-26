@@ -178,9 +178,9 @@ mzVec2u CopyThread::Extent() const
 
 void CopyThread::Stop()
 {
+    Run = false;
     GpuRing->Stop();
     CpuRing->Stop();
-    Run = false;
     if (Thread.joinable())
         Thread.join();
 }
@@ -294,7 +294,6 @@ void CopyThread::Refresh()
     Client->Device->RouteSignal(Channel, Format, Client->Input, Mode, Client->FBFmt());
     Format = IsInput() ? Client->Device->GetInputVideoFormat(Channel) : Format;
     Client->Device->SetRegisterWriteMode(Interlaced() ? NTV2_REGWRITE_SYNCTOFIELD : NTV2_REGWRITE_SYNCTOFRAME, Channel);
-
     CreateRings(GetRingSize());
 }
 
@@ -320,8 +319,14 @@ void CopyThread::InputUpdate(AJADevice::Mode &prevMode)
     auto fmt = Client->Device->GetInputVideoFormat(Channel);
     if (fmt != Format)
     {
+        const bool changeRes = GetNTV2FrameGeometryFromVideoFormat(fmt) != GetNTV2FrameGeometryFromVideoFormat(Format);
         Refresh();
+
+        if (changeRes) ChangePinResolution(Extent());
+        auto fmtStr = NTV2VideoFormatToString(Format, true);
+        mzEngine.SetPinValueByName(Client->Mapping.NodeId, mz::Name(PinName.AsString() + " Video Format"), { fmtStr.data(), fmtStr.size() + 1});
     }
+
 
     if (Mode == AJADevice::AUTO)
     {
@@ -691,6 +696,16 @@ void CopyThread::SendDeleteRequest()
     auto ids = Client->GeneratePinIDSet(mz::Name(Name()), Mode);
     mzEngine.HandleEvent(
         CreateAppEvent(fbb, mz::CreatePartialNodeUpdateDirect(fbb, &Client->Mapping.NodeId, ClearFlags::NONE, &ids)));
+}
+
+
+void CopyThread::ChangePinResolution(mzVec2u res)
+{
+    mzEngine.SetTexturePinValue(Client->Mapping.NodeId, PinName, {
+        .Width = res.x,
+        .Height = res.y,
+        .Format = MZ_FORMAT_R16G16B16A16_UNORM,
+        });
 }
 
 void CopyThread::InputConversionThread::Consume(CopyThread::Parameters const& params)

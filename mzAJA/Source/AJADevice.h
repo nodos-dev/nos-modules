@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include <unordered_map>
 #include <ajabase/common/types.h>
 #include <ajabase/system/memory.h>
 #include <ajabase/system/process.h>
@@ -56,6 +57,7 @@ struct AJADevice : CNTV2Card
     }
     
     inline static std::vector<std::shared_ptr<AJADevice>> Devices;
+    inline static std::unordered_map<std::string, NTV2VideoFormat> Formats;
 
     NTV2FrameRate FPSFamily = NTV2_FRAMERATE_INVALID;
 
@@ -136,4 +138,5 @@ public:
     bool GetExtent(NTV2VideoFormat fmt, Mode mode, uint32_t& width, uint32_t& height);
 
     void GetReferenceAndFrameRate(NTV2ReferenceSource& reference, NTV2FrameRate& framerate);
+
 };

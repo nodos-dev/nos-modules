@@ -359,6 +359,10 @@ void AJAClient::OnNodeUpdate(PinMapping &&newMapping, std::unordered_map<Name, c
         {
             prs[channel].size = pin;
         }
+        if (str.ends_with("Video Format"))
+        {
+            prs[channel].frame_rate = pin;
+        }
 		else if (str.ends_with("Ring Spare Count"))
         {
             prs[channel].spare_count = pin;
@@ -366,10 +370,6 @@ void AJAClient::OnNodeUpdate(PinMapping &&newMapping, std::unordered_map<Name, c
         else if (tyname == "mz.fb.Texture")
         {
             prs[channel].pin = pin;
-        }
-        else if (tyname == "mz.fb.VideoFormat")
-        {
-            prs[channel].frame_rate = pin;
         }
         else if (tyname == "mz.fb.QuadLinkMode" || tyname == "mz.fb.QuadLinkInputMode")
         {
@@ -420,7 +420,8 @@ void AJAClient::OnNodeUpdate(PinMapping &&newMapping, std::unordered_map<Name, c
             case mz::fb::ShowAs::INPUT_PIN: {
                 if (pr.frame_rate && flatbuffers::IsFieldPresent(pr.frame_rate, mz::fb::Pin::VT_DATA))
                 {
-                    fmt = (NTV2VideoFormat)(*pr.frame_rate->data()->Data());
+                    
+                    fmt = AJADevice::Formats[(const char*)(pr.frame_rate->data()->Data())];
                     mzEngine.LogI("AJA: Route output %s with framerate %s", NTV2ChannelToString(channel, true).c_str(),
 								  NTV2VideoFormatToString(fmt, true).c_str());
                 }
@@ -662,7 +663,8 @@ void AJAClient::OnCommandFired(u32 cmd)
         std::vector<u8> ringDataMin = mz::Buffer::From(1);
         std::vector<u8> ringDataMax = mz::Buffer::From(120);
         flatbuffers::FlatBufferBuilder fbb;
-        std::vector<u8> fmtData = mz::Buffer::From(format);
+        std::string fmtString = NTV2VideoFormatToString(format, true);
+        std::vector<u8> fmtData(fmtString.data(), fmtString.data() + fmtString.size() + 1);
         std::vector<u8> colorspaceData = mz::Buffer::From(Colorspace::REC709);
         std::vector<u8> curveData = mz::Buffer::From(GammaCurve::REC709);
         std::vector<u8> narrowRangeData = mz::Buffer::From(true);
@@ -676,7 +678,7 @@ void AJAClient::OnCommandFired(u32 cmd)
             mz::fb::CreatePinDirect(fbb, generator(), (pinName + " Ring Spare Count").c_str(), "uint",
                                     mz::fb::ShowAs::PROPERTY, mz::fb::CanShowAs::OUTPUT_PIN_OR_PROPERTY, 0, 0,
                                     &spareCountData, 0, &spareCountData, &ringDataMax, nullptr, .0f),
-            mz::fb::CreatePinDirect(fbb, generator(), (pinName + " Video Format").c_str(), "mz.fb.VideoFormat",
+            mz::fb::CreatePinDirect(fbb, generator(), (pinName + " Video Format").c_str(), "string",
                                     mz::fb::ShowAs::PROPERTY, mz::fb::CanShowAs::OUTPUT_PIN_OR_PROPERTY, 0, 0, &fmtData,
                                     0, 0, 0, 0, 0, true),
             mz::fb::CreatePinDirect(fbb, generator(), (pinName + " Colorspace").c_str(), "AJA.Colorspace",
@@ -962,5 +964,6 @@ void AJAClient::DeleteTexturePin(rc<CopyThread> const& c)
     c->Stop();
     Pins.erase(c);
 }
+
 
 } // namespace mz

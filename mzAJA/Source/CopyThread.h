@@ -165,6 +165,7 @@ struct CopyThread : TrackSync
     void AJAOutputProc();
     void CreateRings(u32 size);
     void SendDeleteRequest();
+    void ChangePinResolution(mzVec2u res);
     void InputUpdate(AJADevice::Mode &prevMode);
     void Refresh();
     bool IsQuad() const;
