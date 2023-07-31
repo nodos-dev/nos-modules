@@ -740,7 +740,7 @@ void AJAClient::OnPathCommand(const mzPathCommand* cmd)
     case MZ_PATH_COMMAND_TYPE_RESTART: {
         auto* res = params.As<RestartParams>();
         u32 ringSize = copyThread->GetRingSize();
-        if (res->UpdateFlags & RestartParams::UpdateRingSize)
+        if (res && res->UpdateFlags & RestartParams::UpdateRingSize)
         {
             ringSize = res->RingSize;
             if (copyThread->IsInput()) {
