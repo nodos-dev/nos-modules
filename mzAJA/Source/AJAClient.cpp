@@ -935,6 +935,7 @@ void AJAClient::EndCopyTo(mzCopyInfo &cpy)
     cpy.Stop = th->InFlightFrames() >= th->GetRingSize();
     
     CopyThread::Parameters params = {};
+    params.FieldIdx = th->GetFieldID() + 1;
     params.GR = th->GpuRing;
     params.CR = th->CpuRing;
     params.Colorspace = th->GetMatrix<f64>();

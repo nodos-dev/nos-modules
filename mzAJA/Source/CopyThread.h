@@ -138,7 +138,6 @@ struct CopyThread : TrackSync
 	{
 		virtual ~ConversionThread();
 		std::thread Handle;
-		// CopyThread* Cpy;
 	};
 	struct InputConversionThread : ConversionThread
 	{
@@ -176,6 +175,15 @@ struct CopyThread : TrackSync
     void Orphan(bool, std::string const& msg = "");
     void Live(bool);
     void PinUpdate(std::optional<mz::fb::TOrphanState>, Action live);
+	NTV2FieldID GetFieldID() const
+	{ 
+		NTV2FieldID field = NTV2_FIELD0;
+		if (IsInput())
+			Client->Device->GetInputFieldID(Channel, field);
+		else
+			Client->Device->GetOutputFieldID(Channel, field);
+		return field;
+	}
 
     void Stop();
 	void Restart(u32 ringSize);

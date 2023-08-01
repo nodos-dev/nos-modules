@@ -140,7 +140,6 @@ void CopyThread::StartThread()
         Worker = std::make_unique<InputConversionThread>();
     else
         Worker = std::make_unique<OutputConversionThread>();
-    // Worker->Cpy = this;
     CpuRing->Exit = false;
     GpuRing->Exit = false;
     Run = true;
@@ -453,12 +452,10 @@ void CopyThread::AJAInputProc()
         params.T0 = Clock::now();
         if (Interlaced())
         {
-            NTV2FieldID field = NTV2_FIELD0;
-            Client->Device->GetInputFieldID(Channel, field);
-            params.FieldIdx = field + 1;
+            params.FieldIdx = GetFieldID() + 1;
             u64 addr, length;
             Client->Device->GetDeviceFrameInfo(ReadFB, Channel, addr, length);
-            Client->Device->DMAReadSegments(0, Buf, addr + Pitch * field, Pitch, Segments, Pitch, Pitch * 2);
+            Client->Device->DMAReadSegments(0, Buf, addr + (params.FieldIdx - 1) * Pitch, Pitch, Segments, Pitch, Pitch * 2);
         }
         else
         {
@@ -480,17 +477,6 @@ void CopyThread::AJAInputProc()
         }
 
         params.T1 = Clock::now();
-
-        // rc<GPURing> GR;
-        // rc<CPURing> CR;
-        // glm::mat4 Colorspace;
-        // ShaderType Shader;
-        // rc<GPURing::Resource> CompressedTex;
-        // rc<CPURing::Resource> SSBO;
-        // std::string Name;
-        // uint32_t Debug = 0;
-        // mzVec2u DispatchSize;
-
         params.GR = GpuRing;
         params.CR = CpuRing;
         params.Colorspace = glm::inverse(GetMatrix<f64>());
@@ -571,7 +557,6 @@ u32 CopyThread::InFlightFrames()
 
 void CopyThread::AJAOutputProc()
 {
-   
 	flatbuffers::FlatBufferBuilder fbb;
     auto id = Client->GetPinId(PinName);
 	auto hungerSignal = CreateAppEvent(fbb, mz::app::CreateScheduleRequest(fbb, mz::app::ScheduleRequestKind::PIN, &id, false));
@@ -642,8 +627,7 @@ void CopyThread::AJAOutputProc()
 			u32 FieldIdx = 0;
             if (Interlaced())
             {
-                NTV2FieldID field = NTV2_FIELD0;
-                Client->Device->GetOutputFieldID(Channel, field);
+                NTV2FieldID field = GetFieldID();
                 field = NTV2FieldID(field ^ 1);
                 FieldIdx = field + 1;
             }
@@ -653,7 +637,6 @@ void CopyThread::AJAOutputProc()
 
 			const u32 Pitch = CompressedTex->Res.Info.Texture.Width * 4;
 			const u32 Segments = CompressedTex->Res.Info.Texture.Height;
-			const u32 Size = CpuRing->Sample.Size;
 
             if (Interlaced())
             {
@@ -838,7 +821,7 @@ void CopyThread::OutputConversionThread::Consume(const Parameters& params)
     }
 
     glm::mat4 colorspace = params.Colorspace;
-    uint32_t iflags = (params.Shader == ShaderType::Comp10) << 2;
+    uint32_t iflags = params.FieldIdx | ((params.Shader == ShaderType::Comp10) << 2);
 
     std::vector<mzShaderBinding> inputs;
 	inputs.emplace_back(ShaderBinding(MZN_Colorspace, colorspace));
