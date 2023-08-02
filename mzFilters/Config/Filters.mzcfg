@@ -4,7 +4,8 @@
             "name": "mz.filters",
             "version": "0.1.1"
         },
-        "display_name": "Filters"
+        "display_name": "Filters",
+        "description": "Collection of image filters.",
     },
     "node_definitions": [
         "ColorCorrect.mzdef",

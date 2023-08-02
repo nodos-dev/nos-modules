@@ -4,7 +4,8 @@
             "name": "mz.test",
             "version": "0.1.0"
         },
-        "display_name": "Test"
+        "display_name": "Test",
+        "description": "Plugin for testing purposes."
     },
     "custom_types": [ "Test.fbs" ],
     "node_definitions": [

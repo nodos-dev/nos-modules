@@ -4,6 +4,7 @@
             "name": "mz.math",
             "version": "0.1.1"
         },
+        "description": "Nodes for math operations.",
         "display_name": "Math"
     },
     "custom_types": [],
