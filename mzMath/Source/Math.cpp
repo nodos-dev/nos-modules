@@ -292,11 +292,11 @@ MZAPI_ATTR mzResult MZAPI_CALL mzExportNodeFunctions(size_t* outCount, mzNodeFun
 				auto ampBuf = &args->PinValues[PIN_AMPLITUDE];
 				auto freqBuf = &args->PinValues[PIN_FREQUENCY];
 				auto outBuf = &args->PinValues[PIN_OUT];
-				float frequency = *static_cast<float*>(freqBuf->Data);
+				double frequency = *static_cast<float*>(freqBuf->Data);
 				float amplitude = *static_cast<float*>(ampBuf->Data);
-				auto millis = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count();
-				float sec = millis / 1000.f;
-				*(static_cast<float*>(outBuf->Data)) = amplitude * sin(frequency * sec);
+				auto millis = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+				double sec = glm::mod((millis % (int)(2000000. / frequency)) / 1000. * glm::two_pi<double>() * frequency, glm::two_pi<double>());
+				*(static_cast<float*>(outBuf->Data)) = amplitude * glm::sin(sec);
 				return MZ_RESULT_SUCCESS;
 			};
 			break;
