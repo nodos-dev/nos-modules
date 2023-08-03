@@ -877,7 +877,7 @@ bool AJAClient::BeginCopyFrom(mzCopyInfo &cpy)
 
         slot->Res;
         cpy.ShouldSetSourceFrameNumber = true;
-		cpy.ShouldSubmitAndWait = true;
+		cpy.ShouldSubmitOnly = true;
 	}
     return cpy.ShouldCopyTexture = !!(cpy.Data = slot);
 }
