@@ -6,7 +6,7 @@
             "contents": {
                 "type": "CPU"
             },
-			"description": "Long long long Test description\nDouble line",
+			"description": "test online update",
             "functions": [
                 {
                     "class_name": "TestFunction",
