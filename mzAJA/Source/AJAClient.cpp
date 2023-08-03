@@ -877,13 +877,7 @@ bool AJAClient::BeginCopyFrom(mzCopyInfo &cpy)
 
         slot->Res;
         cpy.ShouldSetSourceFrameNumber = true;
-
-		//if (-1 == *cpy.PathState)
-		//	*cpy.PathState = (uint32_t)flatbuffers::GetRoot<fb::Texture>(cpy.CopyTextureFrom.Data)->field_type();
-		//else
-		//{
-		//	*cpy.PathState &= (uint32_t)slot->Res->field_type();
-		//}
+		cpy.ShouldSubmitAndWait = true;
 	}
     return cpy.ShouldCopyTexture = !!(cpy.Data = slot);
 }
