@@ -29,7 +29,7 @@ static mzResult GetShaders(size_t* outCount, mzShaderInfo* outShaders)
     if (!outShaders)
         return MZ_RESULT_SUCCESS;
 
-    outShaders[0] = {.Key=MZN_SRGB2Linear_Shader, .SpirvBlob = {(void*)SRGB2Linear_frag_spv, sizeof(SRGB2Linear_frag_spv)}};
+	outShaders[0] = {.Key=MZN_SRGB2Linear_Shader, .Source = { .SpirvBlob = {(void*)SRGB2Linear_frag_spv, sizeof(SRGB2Linear_frag_spv)}}};
     return MZ_RESULT_SUCCESS;
 }
 

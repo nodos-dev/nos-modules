@@ -37,7 +37,7 @@ struct GaussBlurContext
 		if (!outShaders)
 			return MZ_RESULT_SUCCESS;
 
-		outShaders[0] = {.Key=MZN_Gaussian_Blur_Shader, .SpirvBlob = {(void*)GaussianBlur_frag_spv, sizeof(GaussianBlur_frag_spv)}};
+		outShaders[0] = {.Key=MZN_Gaussian_Blur_Shader, .Source = {.SpirvBlob  = {(void*)GaussianBlur_frag_spv, sizeof(GaussianBlur_frag_spv)}}};
 		return MZ_RESULT_SUCCESS;
 	}
 

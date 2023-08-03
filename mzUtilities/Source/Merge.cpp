@@ -235,7 +235,7 @@ struct MergeContext : NodeContext
 		*outCount = 1;
 		if (!outShaders)
 			return MZ_RESULT_SUCCESS;
-		outShaders[0] = {.Key = MZN_Merge_Shader, .SpirvBlob = {(void*)Merge_frag_spv, sizeof(Merge_frag_spv) }};
+		outShaders[0] = {.Key = MZN_Merge_Shader, .Source = {.SpirvBlob = {(void*)Merge_frag_spv, sizeof(Merge_frag_spv) }}};
 		return MZ_RESULT_SUCCESS;
 	}
 

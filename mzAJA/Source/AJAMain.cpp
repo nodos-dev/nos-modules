@@ -37,7 +37,7 @@ struct AJA
         {
             *outShaders++ = {
                 .Key = name,
-                .SpirvBlob = { spirv.data(), spirv.size() },
+                .Source = { .SpirvBlob = { spirv.data(), spirv.size() }},
             };
         }
 
@@ -66,7 +66,7 @@ struct AJA
         return MZ_RESULT_SUCCESS;
     }
 
-    static mzResult GetShaderSource(mzBuffer * outSpirvBuf) 
+    static mzResult GetShaderSource(mzShaderSource* outSpirvBuf)
     { 
         return MZ_RESULT_SUCCESS;
     }

@@ -20,7 +20,7 @@ static mzResult GetShaders(size_t* outCount, mzShaderInfo* outShaders)
 	if (!outShaders)
 		return MZ_RESULT_SUCCESS;
 
-	outShaders[0] = {.Key = MZN_Channel_Viewer_Shader, .SpirvBlob = {(void*)ChannelViewer_frag_spv, sizeof(ChannelViewer_frag_spv)}};
+	outShaders[0] = {.Key = MZN_Channel_Viewer_Shader, .Source = {.SpirvBlob = {(void*)ChannelViewer_frag_spv, sizeof(ChannelViewer_frag_spv)}}};
 	return MZ_RESULT_SUCCESS;
 }
 

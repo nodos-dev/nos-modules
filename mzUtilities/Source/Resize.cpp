@@ -35,7 +35,7 @@ static mzResult GetShaders(size_t* outCount, mzShaderInfo* outShaders)
     if (!outShaders)
         return MZ_RESULT_SUCCESS;
 
-    outShaders[0] = {.Key=MZN_Resize_Shader, .SpirvBlob = {(void*)Resize_frag_spv, sizeof(Resize_frag_spv)}};
+	outShaders[0] = {.Key=MZN_Resize_Shader, .Source = {.SpirvBlob = {(void*)Resize_frag_spv, sizeof(Resize_frag_spv)}}};
     return MZ_RESULT_SUCCESS;
 }
 

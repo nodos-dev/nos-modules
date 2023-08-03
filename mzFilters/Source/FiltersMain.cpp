@@ -53,109 +53,26 @@ MZAPI_ATTR mzResult MZAPI_CALL mzExportNodeFunctions(size_t* outSize, mzNodeFunc
 		*outSize = Filters::Count;
 		return MZ_RESULT_SUCCESS;
 	}
-	for (int i = 0; i < Filters::Count; ++i)
-	{
-		auto node = outList[i];
-		switch ((Filters)i)
-		{
-		// COLOR CORRECT FILTER
-		case Filters::ColorCorrect: {
-			node->TypeName = MZ_NAME_STATIC("mz.filters.ColorCorrect");
-			node->GetShaderSource = [](mzBuffer* outSpirvBuf) -> mzResult {
-				outSpirvBuf->Data = (void*)(ColorCorrect_frag_spv);
-				outSpirvBuf->Size = sizeof(ColorCorrect_frag_spv);
-				return MZ_RESULT_SUCCESS;
-			};
-			break;
-		}
-		// DIFF FILTER
-		case Filters::Diff: {
-			node->TypeName = MZ_NAME_STATIC("mz.filters.Diff");
-			node->GetShaderSource = [](mzBuffer* outSpirvBuf) -> mzResult {
-				outSpirvBuf->Data = (void*)(Diff_frag_spv);
-				outSpirvBuf->Size = sizeof(Diff_frag_spv);
-				return MZ_RESULT_SUCCESS;
-			};
-			break;
-		}
-		// KUWAHARA FILTER
-		case Filters::Kuwahara: {
-			node->TypeName = MZ_NAME_STATIC("mz.filters.Kuwahara");
-			node->GetShaderSource = [](mzBuffer* outSpirvBuf) -> mzResult {
-				outSpirvBuf->Data = (void*)(Kuwahara_frag_spv);
-				outSpirvBuf->Size = sizeof(Kuwahara_frag_spv);
-				return MZ_RESULT_SUCCESS;
-			};
-			break;
-		}
-		// GAUSSIAN BLUR FILTER
-		case Filters::GaussianBlur: {
-			RegisterGaussianBlur(node);
-			break;
-		}
-		// MERGE FILTER
-		case Filters::KawaseLightStreak: {
-			node->TypeName = MZ_NAME_STATIC("mz.filters.KawaseLightStreak");
-			node->GetShaderSource = [](mzBuffer* outSpirvBuf)-> mzResult {
-				outSpirvBuf->Data = (void*)(KawaseLightStreak_frag_spv);
-				outSpirvBuf->Size = sizeof(KawaseLightStreak_frag_spv);
-				return MZ_RESULT_SUCCESS;
-			};
-			break;
-		}
-		// PREMULTIPLY ALPHA FILTER
-		case Filters::PremultiplyAlpha: {
-			node->TypeName = MZ_NAME_STATIC("mz.filters.PremultiplyAlpha");
-			node->GetShaderSource = [](mzBuffer* outSpirvBuf)-> mzResult {
-				outSpirvBuf->Data = (void*)(PremultiplyAlpha_frag_spv);
-				outSpirvBuf->Size = sizeof(PremultiplyAlpha_frag_spv);
-				return MZ_RESULT_SUCCESS;
-			};
-			break;
-		}
-		// SHARPEN FILTER
-		case Filters::Sharpen: {
-			node->TypeName = MZ_NAME_STATIC("mz.filters.Sharpen");
-			node->GetShaderSource = [](mzBuffer* outSpirvBuf)-> mzResult {
-				outSpirvBuf->Data = (void*)(Sharpen_frag_spv);
-				outSpirvBuf->Size = sizeof(Sharpen_frag_spv);
-				return MZ_RESULT_SUCCESS;
-			};
-			break;
-		}
-		// SOBEL FILTER
-		case Filters::Sobel: {
-			node->TypeName = MZ_NAME_STATIC("mz.filters.Sobel");
-			node->GetShaderSource = [](mzBuffer* outSpirvBuf)-> mzResult {
-				outSpirvBuf->Data = (void*)(Sobel_frag_spv);
-				outSpirvBuf->Size = sizeof(Sobel_frag_spv);
-				return MZ_RESULT_SUCCESS;
-			};
-			break;
-		}
-		// THRESHOLDER FILTER
-		case Filters::Thresholder: {
-			node->TypeName = MZ_NAME_STATIC("mz.filters.Thresholder");
-			node->GetShaderSource = [](mzBuffer* outSpirvBuf)-> mzResult {
-				outSpirvBuf->Data = (void*)(Thresholder_frag_spv);
-				outSpirvBuf->Size = sizeof(Thresholder_frag_spv);
-				return MZ_RESULT_SUCCESS;
-			};
-			break;
-		}
-		// SAMPLER FILTER
-		case Filters::Sampler: {
-			node->TypeName = MZ_NAME_STATIC("mz.filters.Sampler");
-			node->GetShaderSource = [](mzBuffer* outSpirvBuf)-> mzResult {
-				outSpirvBuf->Data = (void*)(Sampler_frag_spv);
-				outSpirvBuf->Size = sizeof(Sampler_frag_spv);
-				return MZ_RESULT_SUCCESS;
-			};
-			break;
-		}
-		default: break;
-		}
-	}
+
+#define REGISTER_NODE(NODE) \
+	outList[Filters::##NODE]->TypeName = MZ_NAME_STATIC("mz.filters." #NODE); \
+	outList[Filters::##NODE]->GetShaderSource = [](mzShaderSource* src) -> mzResult { \
+		src->SpirvBlob.Data = (void*)(NODE##_frag_spv); \
+		src->SpirvBlob.Size = sizeof(NODE##_frag_spv); \
+		return MZ_RESULT_SUCCESS; \
+	};
+
+	REGISTER_NODE(ColorCorrect);
+	REGISTER_NODE(Diff);
+	REGISTER_NODE(Kuwahara);
+	REGISTER_NODE(GaussianBlur);
+	REGISTER_NODE(KawaseLightStreak);
+	REGISTER_NODE(PremultiplyAlpha);
+	REGISTER_NODE(Sharpen);
+	REGISTER_NODE(Sobel);
+	REGISTER_NODE(Thresholder);
+	REGISTER_NODE(Sampler);
+	
 	return MZ_RESULT_SUCCESS;
 }
 }

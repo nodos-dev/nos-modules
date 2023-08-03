@@ -63,8 +63,8 @@ MZAPI_ATTR mzResult MZAPI_CALL mzExportNodeFunctions(size_t* outSize, mzNodeFunc
 #define GEN_CASE_GPU_NODE(name)                                     \
 	case Utilities::name: {                                         \
 			node->TypeName = MZ_NAME_STATIC("mz.utilities." #name); \
-			node->GetShaderSource = [](mzBuffer* spirv) {           \
-				*spirv = {(void*)(name##_frag_spv),                 \
+			node->GetShaderSource = [](mzShaderSource* spirv) {     \
+				spirv->SpirvBlob = {(void*)(name##_frag_spv),       \
 						sizeof(name##_frag_spv)};                   \
 				return MZ_RESULT_SUCCESS;                           \
 			};                                                      \

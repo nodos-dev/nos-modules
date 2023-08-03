@@ -129,7 +129,7 @@ struct WriteImage : NodeContext {
 		*outCount = 1;
 		if (!outShaders)
 			return MZ_RESULT_SUCCESS;
-		outShaders[0] = {.Key = MZN_Linear2SRGB_Shader, .SpirvBlob = {(void*)Linear2SRGB_frag_spv, sizeof(Linear2SRGB_frag_spv) }};
+        outShaders[0] = {.Key = MZN_Linear2SRGB_Shader, .Source = {.SpirvBlob = {(void*)Linear2SRGB_frag_spv, sizeof(Linear2SRGB_frag_spv) }}};
 		return MZ_RESULT_SUCCESS;
 	}
 
