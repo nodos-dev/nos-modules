@@ -141,7 +141,7 @@ struct MergeContext : NodeContext
 		mzEngine.HandleEvent(event);
 	}
 
-	void OnMenuCommand(uint32_t cmd) override
+	void OnMenuCommand(mzUUID itemID, uint32_t cmd) override
 	{
 		if (!cmd)
 			return;

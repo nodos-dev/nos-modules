@@ -400,9 +400,9 @@ struct AJA
         ((AJAClient *)ctx)->OnMenuFired(*request);
     }
 
-    static void OnMenuCommand(void* ctx, uint32_t cmd) 
+    static void OnMenuCommand(void* ctx, mzUUID itemID, uint32_t cmd) 
     { 
-        ((AJAClient *)ctx)->OnCommandFired(cmd); 
+        ((AJAClient *)ctx)->OnCommandFired(itemID, cmd);
     }
 
     static void OnKeyEvent(void* ctx, const mzKeyEvent * keyEvent) { }

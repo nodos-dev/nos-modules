@@ -179,7 +179,7 @@ struct MZAPI_ATTR AJAClient
     void OnPinDisconnected(mz::Name pinName);
 
     void OnMenuFired(mzContextMenuRequest const &request);
-    void OnCommandFired(u32 cmd);
+    void OnCommandFired(mzUUID itemID, u32 cmd);
 
     void OnNodeRemoved();
 

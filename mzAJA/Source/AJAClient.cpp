@@ -592,7 +592,7 @@ void AJAClient::OnMenuFired(mzContextMenuRequest const&request)
         fbb, mz::CreateContextMenuUpdateDirect(fbb, &Mapping.NodeId, request.pos(), request.instigator(), &items)));
 }
 
-void AJAClient::OnCommandFired(u32 cmd)
+void AJAClient::OnCommandFired(mzUUID itemID, u32 cmd)
 {
     if (!cmd)
     {
