@@ -138,7 +138,7 @@ struct MZAPI_ATTR AJAClient
     PinMapping Mapping;
 
     bool Input = false;
-    std::atomic<ShaderType> Shader = ShaderType::Comp10;
+    std::atomic<ShaderType> Shader = ShaderType::Comp8;
     std::atomic_uint DispatchSizeX = 80, DispatchSizeY = 135;
     std::atomic_uint Debug = 0;
 
