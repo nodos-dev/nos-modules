@@ -52,7 +52,7 @@ auto LUTFn(bool input, GammaCurve curve) -> f64 (*)(f64)
                ? [](f64 c)
                      -> f64 { return (c < 0.5) ? (c * c / 3) : (exp(c / 0.17883277 - 5.61582460179) + 0.02372241); }
                : [](f64 c) -> f64 {
-                     return (c < 1. / 12.) ? sqrt(c * 3) : (log(c - 0.02372241) * 0.17883277 + 1.00429346);
+                     return (c < 1. / 12.) ? sqrt(c * 3) : (std::log(c - 0.02372241) * 0.17883277 + 1.00429346);
                  };
     case GammaCurve::ST2084:
         return input ? 
