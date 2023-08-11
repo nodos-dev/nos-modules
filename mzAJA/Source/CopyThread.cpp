@@ -384,20 +384,6 @@ void CopyThread::AJAInputProc()
 
     while (Run && !GpuRing->Exit)
     {
-        auto cpuRingReadSize = CpuRing->Read.Pool.size();
-        auto gpuRingWriteSize = GpuRing->Write.Pool.size();
-        auto cpuRingWriteSize = CpuRing->Write.Pool.size();
-        auto gpuRingReadSize = GpuRing->Read.Pool.size();
-
-        auto strCpuRingReadSize = std::to_string(cpuRingReadSize);
-        auto strCpuRingWriteSize = std::to_string(cpuRingWriteSize);
-        auto strGpuRingWriteSize = std::to_string(gpuRingWriteSize);
-        auto strGpuRingReadSize = std::to_string(gpuRingReadSize);
-
-        mzEngine.WatchLog("AJAIn CPU Ring Read Size", strCpuRingReadSize.c_str());
-        mzEngine.WatchLog("AJAIn CPU Ring Write Size", strCpuRingWriteSize.c_str());
-        mzEngine.WatchLog("AJAIn GPU Ring Read Size", strGpuRingReadSize.c_str());
-        mzEngine.WatchLog("AJAIn GPU Ring Write Size", strGpuRingWriteSize.c_str());
         InputUpdate(prevMode);
 
         if (LinkSizeMismatch())
@@ -432,11 +418,27 @@ void CopyThread::AJAInputProc()
             Orphan(false);
         }
 
+        auto cpuRingReadSize = CpuRing->Read.Pool.size();
+        auto gpuRingWriteSize = GpuRing->Write.Pool.size();
+        auto cpuRingWriteSize = CpuRing->Write.Pool.size();
+        auto gpuRingReadSize = GpuRing->Read.Pool.size();
+
+        auto strCpuRingReadSize = std::to_string(cpuRingReadSize);
+        auto strCpuRingWriteSize = std::to_string(cpuRingWriteSize);
+        auto strGpuRingWriteSize = std::to_string(gpuRingWriteSize);
+        auto strGpuRingReadSize = std::to_string(gpuRingReadSize);
+
+        mzEngine.WatchLog("AJAIn CPU Ring Read Size", strCpuRingReadSize.c_str());
+        mzEngine.WatchLog("AJAIn CPU Ring Write Size", strCpuRingWriteSize.c_str());
+        mzEngine.WatchLog("AJAIn GPU Ring Read Size", strGpuRingReadSize.c_str());
+        mzEngine.WatchLog("AJAIn GPU Ring Write Size", strGpuRingWriteSize.c_str());
+        mzEngine.WatchLog("AJAIn Total Frame Count", std::to_string(TotalFrameCount()).c_str());
+
         int ringSize = GetRingSize();
-        int inFlight = InFlightFrames();
+        int totalFrameCount = TotalFrameCount();
         
         CPURing::Resource* slot = nullptr;
-        if (inFlight >= ringSize || (!(slot = CpuRing->TryPush())))
+        if (totalFrameCount >= ringSize || (!(slot = CpuRing->TryPush())))
         {
             DropCount++;
             GpuRing->ResetFrameCount = true; 
@@ -550,9 +552,9 @@ void CopyThread::NotifyDrop()
 	});
 }
 
-u32 CopyThread::InFlightFrames()
+u32 CopyThread::TotalFrameCount()
 {
-    return CpuRing->InFlightFrames() + GpuRing->InFlightFrames() - (TransferInProgress ? 1 : 0);
+    return CpuRing->TotalFrameCount() + GpuRing->TotalFrameCount() - (TransferInProgress ? 1 : 0);
 }
 
 void CopyThread::AJAOutputProc()
@@ -568,13 +570,13 @@ void CopyThread::AJAOutputProc()
         mzEngine.LogI(ss.str().c_str());
     }
 
-    u32 readyFrames = CpuRing->ReadyFrames();
-    do
-    {
-        u32 latestReadyFrameCount = CpuRing->ReadyFrames();
-        if (latestReadyFrameCount > readyFrames)
-            readyFrames = latestReadyFrameCount;
-    } while (Run && !CpuRing->Exit && !(CpuRing->IsFull()));
+
+    while (Run && !CpuRing->Exit && TotalFrameCount() < GetRingSize())
+        std::this_thread::yield();
+
+    //Reset interrupt event status
+    Client->Device->UnsubscribeOutputVerticalEvent(Channel);
+    Client->Device->SubscribeOutputVerticalEvent(Channel);
 
     u32 FB = 0;
     SetFrame(FB);
@@ -584,6 +586,9 @@ void CopyThread::AJAOutputProc()
 
     while (Run && !CpuRing->Exit)
     {
+		if (!(Client->Device->WaitForOutputVerticalInterrupt(Channel)))
+			break;
+
         auto cpuRingReadSize = CpuRing->Read.Pool.size();
         auto gpuRingWriteSize = GpuRing->Write.Pool.size();
         auto cpuRingWriteSize = CpuRing->Write.Pool.size();
@@ -598,8 +603,8 @@ void CopyThread::AJAOutputProc()
         mzEngine.WatchLog("AJAOut CPU Ring Write Size", strCpuRingWriteSize.c_str());
         mzEngine.WatchLog("AJAOut GPU Ring Read Size", strGpuRingReadSize.c_str());
         mzEngine.WatchLog("AJAOut GPU Ring Write Size", strGpuRingWriteSize.c_str());
-		if (!(Client->Device->WaitForOutputVerticalInterrupt(Channel)))
-			break;
+        mzEngine.WatchLog("AJAOut Total Frame Count", std::to_string(TotalFrameCount()).c_str());
+
 
         ULWord lastVBLCount;
 		Client->Device->GetOutputVerticalInterruptCount(lastVBLCount, Channel);
@@ -650,7 +655,7 @@ void CopyThread::AJAOutputProc()
             }
 
             CpuRing->EndPop(res);
-			mzEngine.HandleEvent(hungerSignal);
+            mzEngine.HandleEvent(hungerSignal);
 
             if (!Interlaced())
             {

@@ -202,7 +202,7 @@ struct CopyThread : TrackSync
 	void NotifyRestart(RestartParams const& params);
 	void NotifyDrop();
 
-	u32 InFlightFrames();
+	u32 TotalFrameCount();
 };
 
 } // namespace mz

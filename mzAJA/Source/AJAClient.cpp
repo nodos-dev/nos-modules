@@ -891,7 +891,7 @@ bool AJAClient::BeginCopyTo(mzCopyInfo &cpy)
     
     auto th = *it;
 
-    if ((th->GetRingSize() > th->InFlightFrames()) && (slot = th->GpuRing->TryPush()))
+    if ((th->GetRingSize() > th->TotalFrameCount()) && (slot = th->GpuRing->TryPush()))
 	{
 		slot->FrameNumber = cpy.FrameNumber;
         cpy.CopyTextureFrom = DeserializeTextureInfo(cpy.SrcPinData.Data);
@@ -926,7 +926,7 @@ void AJAClient::EndCopyTo(mzCopyInfo &cpy)
     auto res = (GPURing::Resource *)cpy.Data;
 	// if (-1 != *cpy.PathState) res->Res->mutate_field_type((mz::fb::FieldType)*cpy.PathState);
     th->GpuRing->EndPush(res);
-    cpy.Stop = th->InFlightFrames() >= th->GetRingSize();
+    cpy.Stop = th->TotalFrameCount() >= th->GetRingSize();
     
     CopyThread::Parameters params = {};
     if (th->Interlaced())

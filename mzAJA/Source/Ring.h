@@ -117,7 +117,7 @@ struct TRing
         return Read.Pool.size();
     }
 
-    u32 InFlightFrames()
+    u32 TotalFrameCount()
     {
         std::unique_lock lock(Write.Mutex);
         return Size - Write.Pool.size();
