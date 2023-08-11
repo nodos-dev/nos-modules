@@ -760,7 +760,10 @@ void AJAClient::OnPathCommand(const mzPathCommand* cmd)
 
         // there is a new connection path
         // we need to send a restart signal
-        copyThread->NotifyRestart({});
+        copyThread->NotifyRestart({ RestartParams{
+            .UpdateFlags = RestartParams::UpdateRingSize,
+            .RingSize = copyThread->GetRingSize(),
+        } });
         break;
     }
     }
