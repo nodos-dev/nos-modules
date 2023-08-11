@@ -210,7 +210,7 @@ struct AJA
         c->OnNodeRemoved();
         delete c;
     }
-    static void OnPinValueChanged(void* ctx, const mzName pinName, mzBuffer * value)
+    static void OnPinValueChanged(void* ctx, const mzName pinName, const mzUUID pinId, mzBuffer * value)
     { 
         return ((AJAClient *)ctx)->OnPinValueChanged(pinName, value->Data);
     }

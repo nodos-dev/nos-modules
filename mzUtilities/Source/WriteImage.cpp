@@ -45,7 +45,7 @@ struct WriteImage : NodeContext {
         for (auto* pin : *node->pins()) {
             auto* pinData = pin->data();
             mzBuffer value = { .Data = (void*)pinData->data(), .Size = pinData->size() };
-            OnPinValueChanged(mzEngine.GetName(pin->name()->c_str()), &value);
+            OnPinValueChanged(mzEngine.GetName(pin->name()->c_str()), *pin->id(), &value);
         }
     }
 
@@ -61,7 +61,7 @@ struct WriteImage : NodeContext {
 		CV.notify_all();
 	}
 
-    void OnPinValueChanged(mz::Name pinName, mzBuffer* value) override 
+    void OnPinValueChanged(mz::Name pinName, mzUUID pinId, mzBuffer* value) override 
     {
         std::unique_lock<std::mutex> lock(Mutex);
 		if (pinName == MZN_In)
