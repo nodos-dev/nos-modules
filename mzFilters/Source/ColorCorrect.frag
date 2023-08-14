@@ -33,5 +33,6 @@ vec3 Correct(vec3 WorkingColor, vec4 Saturation, vec4 Contrast, vec4 Gamma, vec4
 
 void main()
 {
-    rt = vec4(Correct(texture(Source, uv).rgb, CC.Saturation, CC.Contrast, CC.Gamma, CC.Gain, CC.Offset, CC.ContrastCenter), 1);
+    vec4 src = texture(Source, uv);
+    rt = vec4(Correct(src.rgb, CC.Saturation, CC.Contrast, CC.Gamma, CC.Gain, CC.Offset, CC.ContrastCenter), src.a);
 }
