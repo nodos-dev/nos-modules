@@ -132,6 +132,7 @@ AJAClient::AJAClient(bool input, AJADevice *device) : Input(input), Device(devic
 {
     Ctx.Add(this);
     (input ? device->HasInput : device->HasOutput) = true;
+    Device->SetReference(Ref);
     device->GetReferenceAndFrameRate(Ref, FR);
 }
 
