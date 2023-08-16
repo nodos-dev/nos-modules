@@ -227,6 +227,17 @@ struct AJA
     {
         ((AJAClient*)ctx)->OnPinDisconnected(pinName);
     }
+    
+    static mzResult CanRemoveOrphanPin(void* ctx, mzName pinName, mzUUID pinId)
+    {
+        return ((AJAClient*)ctx)->CanRemoveOrphanPin(pinName, pinId) ? MZ_RESULT_SUCCESS : MZ_RESULT_FAILED;
+    }
+
+    static mzResult OnOrphanPinRemoved(void* ctx, mzName pinName, mzUUID pinId)
+    {
+        return ((AJAClient*)ctx)->OnOrphanPinRemoved(pinName, pinId) ? MZ_RESULT_SUCCESS : MZ_RESULT_FAILED;
+    }
+
 
     static void ReloadShaders(void* ctx, const mzNodeExecuteArgs* nodeArgs, const mzNodeExecuteArgs* functionArgs)
     {
@@ -441,6 +452,8 @@ MZAPI_ATTR mzResult MZAPI_CALL mzExportNodeFunctions(size_t* outSize, mzNodeFunc
     ajaIn->OnMenuRequested = ajaOut->OnMenuRequested = AJA::OnMenuRequested;
     ajaIn->OnMenuCommand = ajaOut->OnMenuCommand = AJA::OnMenuCommand;
     ajaIn->OnKeyEvent = ajaOut->OnKeyEvent = AJA::OnKeyEvent;
+    ajaIn->CanRemoveOrphanPin = ajaOut->CanRemoveOrphanPin= AJA::CanRemoveOrphanPin;
+    ajaIn->OnOrphanPinRemoved = ajaOut->OnOrphanPinRemoved = AJA::OnOrphanPinRemoved;
 
     GShaders = {
 		{MZN_AJA_RGB2YCbCr_Compute_Shader, {std::begin(RGB2YCbCr_comp_spv), std::end(RGB2YCbCr_comp_spv)}},

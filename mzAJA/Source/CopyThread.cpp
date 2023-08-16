@@ -902,6 +902,7 @@ CopyThread::~CopyThread()
 
 void CopyThread::Orphan(bool orphan, std::string const& message)
 {
+    IsOrphan = orphan;
     PinUpdate(mz::fb::TOrphanState{.is_orphan=orphan, .message=message}, Action::NOP);
 }
 

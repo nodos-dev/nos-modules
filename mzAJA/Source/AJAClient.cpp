@@ -457,6 +457,8 @@ void AJAClient::OnPinMenuFired(mzContextMenuRequest const &request)
     auto name = *Mapping.GetPinName(*request.item_id());
     if (auto pin = FindChannel(ParseChannel(name.AsString())))
     {
+        if (pin->IsOrphan)
+            return;
         std::vector<flatbuffers::Offset<mz::ContextMenuItem>> remove = {
             mz::CreateContextMenuItemDirect(fbb, "Remove",
                                             AjaAction{
@@ -482,6 +484,21 @@ void AJAClient::OnPinDisconnected(mz::Name pinName)
     auto pin = FindChannel(ParseChannel(pinName.AsString()));
 	if (pin)
         --pin->ConnectedPinCount;
+}
+
+bool AJAClient::CanRemoveOrphanPin(mz::Name pinName, mzUUID pinId)
+{
+    auto pin = FindChannel(ParseChannel(pinName.AsString()));
+    return pin != nullptr;
+}
+
+bool AJAClient::OnOrphanPinRemoved(mz::Name pinName, mzUUID pinId)
+{
+    auto pin = FindChannel(ParseChannel(pinName.AsString()));
+    if (!pin)
+        return false;
+    pin->SendDeleteRequest();
+    return true;
 }
 
 void AJAClient::OnMenuFired(mzContextMenuRequest const&request)

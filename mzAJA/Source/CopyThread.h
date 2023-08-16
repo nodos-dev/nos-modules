@@ -106,6 +106,7 @@ struct CopyThread : TrackSync
     std::atomic<Colorspace> Colorspace = Colorspace::REC709;
     std::atomic<GammaCurve> GammaCurve = GammaCurve::REC709;
     std::atomic_bool NarrowRange = true;
+	std::atomic_bool IsOrphan = false;
     
 	rc<CPURing::Resource> SSBO;
 	rc<GPURing::Resource>  CompressedTex;
