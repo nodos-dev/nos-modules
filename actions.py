@@ -87,7 +87,8 @@ def get_latest_release_tag():
 
     if release_tags:
         # Sort the tags and get the latest one
-        latest_tag = sorted(release_tags)[-1]
+        sorted_tags = sorted(release_tags, key=lambda tag: int(tag.split("-")[1]))
+        latest_tag = sorted_tags[-1]
         return latest_tag
     else:
         return None
