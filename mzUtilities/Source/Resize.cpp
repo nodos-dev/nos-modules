@@ -52,16 +52,10 @@ static mzResult ExecuteNode(void* ctx, const mzNodeExecuteArgs* args)
 		size->y != tex.Info.Texture.Height)
 	{
 		auto prevTex = tex;
-		tex.Memory = {};
-		tex.Info.Texture.Width = size->x;
-		tex.Info.Texture.Height = size->y;
-		mzResult re;
-		re = mzEngine.Create(&tex);
-		assert(MZ_RESULT_SUCCESS == re);
-		re = mzEngine.Destroy(&prevTex);
-		assert(MZ_RESULT_SUCCESS == re);
-
-		auto texFb = ConvertTextureInfo(tex);
+		prevTex.Memory = {};
+		prevTex.Info.Texture.Width = size->x;
+		prevTex.Info.Texture.Height = size->y;
+		auto texFb = ConvertTextureInfo(prevTex);
 		texFb.unscaled = true;
 		auto texFbBuf = mz::Buffer::From(texFb);
 		mzEngine.SetPinValue(args->PinIds[1], {.Data = texFbBuf.data(), .Size = texFbBuf.size()});
