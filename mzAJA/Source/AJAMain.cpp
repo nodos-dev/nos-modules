@@ -238,7 +238,6 @@ struct AJA
         return ((AJAClient*)ctx)->OnOrphanPinRemoved(pinName, pinId) ? MZ_RESULT_SUCCESS : MZ_RESULT_FAILED;
     }
 
-
     static void ReloadShaders(void* ctx, const mzNodeExecuteArgs* nodeArgs, const mzNodeExecuteArgs* functionArgs)
     {
 		std::string workFolder = mzEngine.WorkFolder();

@@ -827,7 +827,7 @@ void AJAClient::OnPinValueChanged(mz::Name pinName, void *value)
     if (!Input && pinNameStr == "ReferenceSource")
     {
         SetReference((char *)value);
-        UpdateStatus();
+        UpdateReferenceValue();
         return;
     }
 
