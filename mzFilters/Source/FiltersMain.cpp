@@ -65,7 +65,7 @@ MZAPI_ATTR mzResult MZAPI_CALL mzExportNodeFunctions(size_t* outSize, mzNodeFunc
 	REGISTER_NODE(ColorCorrect);
 	REGISTER_NODE(Diff);
 	REGISTER_NODE(Kuwahara);
-	REGISTER_NODE(GaussianBlur);
+	RegisterGaussianBlur(outList[GaussianBlur]);
 	REGISTER_NODE(KawaseLightStreak);
 	REGISTER_NODE(PremultiplyAlpha);
 	REGISTER_NODE(Sharpen);
