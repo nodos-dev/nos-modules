@@ -294,18 +294,19 @@ void AJAClient::SetReference(std::string const &val)
     if (val.empty()) {
         mzEngine.LogE("Empty value received for reference pin!");
     }
-    else if (isdigit(val.back()))
-    {
-        src = AJADevice::ChannelToRefSrc(NTV2Channel(val.back() - '1'));
-    }
-    else if (val == "Free Run")
-    {
-        src = NTV2_REFERENCE_FREERUN;
-    }
-    else if (val == "Reference In")
+    else if (std::string::npos != val.find("Reference In"))
     {
         src = NTV2_REFERENCE_EXTERNAL;
     }
+    else if (std::string::npos != val.find("Free Run"))
+    {
+        src = NTV2_REFERENCE_EXTERNAL;
+    }
+    else if(auto pos = val.find("SDI In"); std::string::npos != pos)
+    {
+        src = AJADevice::ChannelToRefSrc(NTV2Channel(val[pos+7] - '1'));
+    }
+    
     if (src != NTV2_REFERENCE_INVALID)
     {
         Device->SetReference(src);
