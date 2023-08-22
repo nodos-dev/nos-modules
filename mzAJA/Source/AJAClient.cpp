@@ -300,7 +300,7 @@ void AJAClient::SetReference(std::string const &val)
     }
     else if (std::string::npos != val.find("Free Run"))
     {
-        src = NTV2_REFERENCE_EXTERNAL;
+        src = NTV2_REFERENCE_FREERUN;
     }
     else if(auto pos = val.find("SDI In"); std::string::npos != pos)
     {
