@@ -6,7 +6,7 @@
             "contents": {
               "type": "CPU"
             },
-            "description": "Used for viewing a channel of an RGBA or YCbCr texture",
+            "description": "Outputs the selected channel of a texture.\nRed, Green, Blue, Alpha or Y, Cb, Cr channels are supported",
             "pins": [
                 {
                     "name": "Input",
@@ -22,14 +22,16 @@
                     "type_name": "mz.fb.ChannelViewerChannels",
                     "show_as": "PROPERTY",
                     "can_show_as" : "PROPERTY_ONLY",
-                    "data": "R"
+                    "data": "A",
+					"description": "Sets the channel to output"
                 },
                 {
                     "name": "Format",
                     "type_name": "mz.fb.ChannelViewerFormats",
                     "show_as": "PROPERTY",
                     "can_show_as" : "PROPERTY_ONLY",
-                    "data": "Rec_709"
+                    "data": "Rec_709",
+					"description": "Sets the input texture color space,\nRequired for correct YCbCr conversion"
                 },
                 {
                     "name": "Output",

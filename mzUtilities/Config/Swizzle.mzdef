@@ -6,7 +6,7 @@
             "contents": {
               "type": "GPU"
             },
-            "description":  "Combine multiple textures channel by channel to a single texture",
+            "description":  "Combine multiple textures (up to 4), channel by channel to a single RGBA texture",
             "pins": [
                 {
                     "name": "RedSource",

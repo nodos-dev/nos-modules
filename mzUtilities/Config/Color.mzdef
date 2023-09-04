@@ -6,6 +6,7 @@
             "contents": {
                 "type": "GPU"
             },
+            "description": "Generates a solid colored image using selected RGBA value",
             "pins": [
                 {
                     "name": "Color",

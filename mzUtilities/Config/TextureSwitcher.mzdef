@@ -6,7 +6,7 @@
             "contents": {
               "type": "GPU"
             },
-            "description": "Used for switch between multiple textures",
+            "description": "Used for switching between multiple textures",
             "pins": [
                 {
                     "name": "Output_Channel",

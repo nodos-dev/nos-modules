@@ -6,6 +6,7 @@
             "contents": {
                 "type": "CPU"
             },
+            "description": "Scales the input image to the desired output size (FILL as alignment method)\nusing various scaling algorithms",
             "functions": [
                 {
                     "class_name": "ReloadShaders",
@@ -35,14 +36,16 @@
                     "name": "Method",
                     "type_name": "mz.fb.ResizeMethod",
                     "show_as": "PROPERTY",
-                    "can_show_as": "INPUT_OUTPUT_PROPERTY"
+                    "can_show_as": "INPUT_OUTPUT_PROPERTY",
+                    "description": "Scaling filter algorithm. Supported algorithms:\nNearest, bilinear, bicubic, directional blur, lanczos3, gaussian unsharp mask"
                 },
                 {
                     "name": "Size",
                     "type_name": "mz.fb.vec2u",
                     "show_as": "PROPERTY",
                     "can_show_as": "INPUT_OUTPUT_PROPERTY",
-                    "data" : { "x": 1920, "y": 1080 }
+                    "data" : { "x": 1920, "y": 1080 },
+                    "description": "Output size which the input image is scaled to"
                 }
             ]
         }

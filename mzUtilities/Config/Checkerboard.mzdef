@@ -6,6 +6,7 @@
             "contents": {
               "type": "GPU"
             },
+            "description": "Generates a checkerboard image that you can use as a placeholder for a texture or background",
             "pins": [
                 {
                     "name": "Squares",
@@ -19,7 +20,8 @@
                     "min": {
                         "x": 2,
                         "y": 2
-                    }
+                    },
+					"description": "Sets the count of horizontal and vertical squares"
                 },
                 {
                     "name": "OddColor",
@@ -34,7 +36,8 @@
                         "y": 1,
                         "z": 1,
                         "w": 1
-                    }
+                    },
+					"description": "Starting with top+left; every odd row and column RGBA color value"
                 },
                 {
                     "name": "EvenColor",
@@ -49,7 +52,8 @@
                         "y": 0,
                         "z": 0,
                         "w": 1
-                    }
+                    },
+                    "description": "Starting with top+left; every even row and column RGBA color value"
                 },
                 {
                     "name": "Output",

@@ -6,13 +6,15 @@
             "contents": {
                 "type": "CPU"
             },
+            "description": "Reads an image file from filesystem using STB library",
             "pins": [
                 {
                     "name": "Path",
                     "type_name": "string",
                     "show_as": "PROPERTY",
                     "can_show_as" : "INPUT_PIN_OR_PROPERTY",
-                    "visualizer" : {"type": "FILE_PICKER"}
+                    "visualizer" : {"type": "FILE_PICKER"},
+                    "description": "Supported filetypes (with some limitations):\nJPEG, PNG, TGA, BMP, PSD, GIF, HDR, PIC"
                 },
                 {
                     "name": "Out",
@@ -39,6 +41,7 @@
             "contents": {
                 "type": "CPU"
             },
+            "description": "Writes an image file to filesystem using STB library",
             "pins": [
                 {
                     "name": "In",
@@ -54,7 +57,8 @@
                     "type_name": "string",
                     "show_as": "PROPERTY",
                     "can_show_as" : "INPUT_PIN_OR_PROPERTY",
-                    "visualizer" : {"type": "FILE_PICKER"}
+                    "visualizer" : {"type": "FILE_PICKER"},
+                    "description": "Supported filetypes (with some limitations):\nJPEG, PNG, TGA, BMP, PSD, GIF, HDR, PIC"
                 }
             ],
             "functions": [

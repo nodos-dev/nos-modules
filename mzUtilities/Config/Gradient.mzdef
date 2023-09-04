@@ -6,6 +6,7 @@
             "contents": {
                 "type": "GPU"
             },
+            "description": "Generates a gradient image",
             "pins": [
                 {
                     "name": "OddColor",
@@ -20,7 +21,8 @@
                         "y": 1,
                         "z": 1,
                         "w": 1
-                    }
+                    },
+                    "description": "Start color of the selected gradient type"
                 },
                 {
                     "name": "EvenColor",
@@ -35,13 +37,15 @@
                         "y": 0,
                         "z": 0,
                         "w": 1
-                    }
+                    },
+                    "description": "End color of the selected gradient type"
                 },
                 {
                     "name": "Kind",
                     "type_name": "mz.fb.GradientKind",
                     "show_as": "PROPERTY",
-                    "can_show_as": "INPUT_PIN_OR_PROPERTY"
+                    "can_show_as": "INPUT_PIN_OR_PROPERTY",
+                    "description": "Sets the output images gradient type"
                 },
                 {
                     "name": "Output",
