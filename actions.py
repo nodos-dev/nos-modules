@@ -74,6 +74,7 @@ def get_latest_release_tag():
     Returns None if no tags with prefix "build-" are found.
     '''
     # Fetch all tags
+    logger.info("Fetching tags...")
     re = run(["git", "fetch", "--tags"])
     if re.returncode != 0:
         logger.error("Failed to fetch tags.")

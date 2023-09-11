@@ -91,9 +91,9 @@ def get_plugin_api_version():
             # 👏👏👏
             if line.startswith("#define MZ_PLUGIN_API_VERSION_MAJOR"):
                 major = int(line.split(" ")[-1])
-            if line.startswith("#define MZ_PLUGIN_API_VERSION_MINOR"):
+            elif line.startswith("#define MZ_PLUGIN_API_VERSION_MINOR"):
                 minor = int(line.split(" ")[-1])
-            if line.startswith("#define MZ_PLUGIN_API_VERSION_PATCH"):
+            elif line.startswith("#define MZ_PLUGIN_API_VERSION_PATCH"):
                 patch = int(line.split(" ")[-1])
         if major is None or minor is None or patch is None:
             logger.error("Failed to parse MZ_PLUGIN_API_VERSION")

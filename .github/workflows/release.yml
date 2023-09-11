@@ -46,12 +46,17 @@ jobs:
           fetch-depth: 0 # We need the full history to get the latest tag.
           clean: true # Scripts are currently not idempotent, so we need to clean the repo before each run.
 
+      - name: Update Git Credentials
+        continue-on-error: true
+        run: |
+          git credential-manager github login --username ${{ env.GH_USERNAME }} --token ${{ env.GH_TOKEN }} --force
+
       - name: Install Python Prerequisites
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Cleanup SDK files if any
+      - name: Cleanup SDK Files If Any
         run: |
           Remove-Item -Recurse -Force -ErrorAction SilentlyContinue mediaZ-SDK*
         shell: pwsh
