@@ -31,5 +31,12 @@
             "Shaders/*",
             "External/stb/*"
         ]
+    },
+	  "mz.ML.CNN": {
+		    "target_name": "CNN",
+		    "path": "mzCNN",
+		    "deps": [
+			    "Shaders/*"
+		    ]
     }
 }

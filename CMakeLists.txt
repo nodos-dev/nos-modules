@@ -86,4 +86,5 @@ add_subdirectory(mzAJA)
 add_subdirectory(mzFilters)
 add_subdirectory(mzUtilities)
 add_subdirectory(mzTest)
+add_subdirectory(mzCNN)
 

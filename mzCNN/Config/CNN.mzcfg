@@ -1,0 +1,22 @@
+{
+    "info": {
+        "id": {
+            "name": "mz.ML.CNN",
+            "version": "0.1.0"
+        },
+        "description": "CNN model runner",
+        "display_name": "CNN"
+    },
+    "node_definitions": [
+        "CNN.mzdef"
+    ],
+    "custom_types": [],
+    "binary_path": "../Binaries/CNN",
+    "associated_nodes": [
+        {
+            "category": "ML|CNN",
+            "class_name": "CNN",
+            "display_name": "CNN"
+        }
+    ]
+}
