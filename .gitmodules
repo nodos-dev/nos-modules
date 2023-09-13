@@ -4,3 +4,6 @@
 [submodule "Shaders"]
 	path = Shaders
 	url = https://github.com/mediaz/shaders
+[submodule "mzCNN/External/cnn-models"]
+	path = mzCNN/External/cnn-models
+	url = https://github.com/mediaz/cnn-models.git
