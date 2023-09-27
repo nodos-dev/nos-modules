@@ -59,6 +59,7 @@ static mzResult GetFunctions(size_t* count, mzName* names, mzPfnNodeFunctionExec
     *fns = [](void* ctx, const mzNodeExecuteArgs* nodeArgs, const mzNodeExecuteArgs* functionArgs)
     {
         auto values = GetPinValues(nodeArgs);
+		auto ids = GetPinIds(nodeArgs);
 		std::filesystem::path path = GetPinValue<const char>(values, MZN_Path);
         if (!std::filesystem::exists(path))
         {
@@ -78,6 +79,10 @@ static mzResult GetFunctions(size_t* count, mzName* names, mzPfnNodeFunctionExec
         mzEngine.Copy(cmd, &tmp, &out, 0);
         mzEngine.End(cmd);
         mzEngine.Destroy(&tmp);
+
+		flatbuffers::FlatBufferBuilder fbb;
+		auto dirty = CreateAppEvent(fbb, app::CreatePinDirtied(fbb, &ids[MZN_Out]));
+		mzEngine.EnqueueEvent(&dirty);
     };
     
     return MZ_RESULT_SUCCESS;
