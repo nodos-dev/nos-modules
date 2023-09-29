@@ -45,6 +45,13 @@ inline auto generator()
     return re;
 }
 
+inline NTV2FieldID GetAJAFieldID(mzTextureFieldType type)
+{
+	return (type == MZ_TEXTURE_FIELD_TYPE_PROGRESSIVE || type == MZ_TEXTURE_FIELD_TYPE_UNKNOWN)
+			   ? NTV2_FIELD_INVALID
+			   : (type == MZ_TEXTURE_FIELD_TYPE_EVEN ? NTV2_FIELD0 : NTV2_FIELD1);
+}
+
 enum class ShaderType : u32
 {
     Frag8 = 0,
