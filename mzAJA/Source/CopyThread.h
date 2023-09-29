@@ -140,7 +140,6 @@ struct CopyThread : TrackSync
 		mzVec2u DispatchSize;
 		std::atomic_bool* TransferInProgress = 0;
 
-		void FlipField() { FieldType = Flipped(FieldType); }
 		bool Interlaced() const { return !(FieldType == MZ_TEXTURE_FIELD_TYPE_PROGRESSIVE || FieldType == MZ_TEXTURE_FIELD_TYPE_UNKNOWN); }
 	};
 
