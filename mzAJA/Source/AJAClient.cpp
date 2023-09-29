@@ -886,22 +886,21 @@ void AJAClient::OnExecute()
 
 bool AJAClient::BeginCopyFrom(mzCopyInfo &cpy)
 {
-    GPURing::Resource *slot = 0;
+    GPURing::Resource *sourceSlot = 0;
     auto it = Pins.find(cpy.Name); 
     if (it == Pins.end()) 
         return true;
     
     auto th = *it;
-	if ((slot = th->GpuRing->TryPop(cpy.FrameNumber, th->SpareCount)))
+	if ((sourceSlot = th->GpuRing->TryPop(cpy.FrameNumber, th->SpareCount)))
 	{
-		cpy.CopyTextureTo = DeserializeTextureInfo(cpy.SrcPinData.Data); 
-		cpy.CopyTextureFrom = slot->Res;
-
-        slot->Res;
+        cpy.CopyTextureTo = DeserializeTextureInfo(cpy.SrcPinData.Data);
+		cpy.CopyTextureFrom = sourceSlot->Res;
         cpy.ShouldSetSourceFrameNumber = true;
 		cpy.ShouldSubmitOnly = true;
-	}
-    return cpy.ShouldCopyTexture = !!(cpy.Data = slot);
+    }
+
+    return cpy.ShouldCopyTexture = !!(cpy.Data = sourceSlot);
 }
 
 bool AJAClient::BeginCopyTo(mzCopyInfo &cpy)
@@ -912,13 +911,13 @@ bool AJAClient::BeginCopyTo(mzCopyInfo &cpy)
         return true;
     
     auto th = *it;
-
     if ((th->GetRingSize() > th->TotalFrameCount()) && (slot = th->GpuRing->TryPush()))
 	{
 		slot->FrameNumber = cpy.FrameNumber;
         cpy.CopyTextureFrom = DeserializeTextureInfo(cpy.SrcPinData.Data);
         cpy.CopyTextureTo = slot->Res;
 		cpy.ShouldSubmitAndWait = true; 
+        slot->Res.Info.Texture.FieldType = cpy.CopyTextureFrom.Info.Texture.FieldType;
 	}
     return cpy.ShouldCopyTexture = !!(cpy.Data = slot);
 }
@@ -936,23 +935,21 @@ void AJAClient::EndCopyFrom(mzCopyInfo &cpy)
     th->GpuRing->EndPop(res);
 }
 
-void AJAClient::EndCopyTo(mzCopyInfo &cpy)
+void AJAClient::EndCopyTo(mzCopyInfo& cpy)
 {
-    if(!cpy.Data) 
-        return;
-    auto it = Pins.find(cpy.Name);
-    if (it == Pins.end()) 
-        return;
+	if (!cpy.Data)
+		return;
+	auto it = Pins.find(cpy.Name);
+	if (it == Pins.end())
+		return;
 
-    auto th = *it;
-    auto res = (GPURing::Resource *)cpy.Data;
-	// if (-1 != *cpy.PathState) res->Res->mutate_field_type((mz::fb::FieldType)*cpy.PathState);
+	auto th = *it;
+	auto res = (GPURing::Resource*)cpy.Data;
     th->GpuRing->EndPush(res);
     cpy.Stop = th->TotalFrameCount() >= th->GetRingSize();
-    
+
     CopyThread::Parameters params = {};
-    if (th->Interlaced())
-        params.FieldIdx = th->GetFieldID() + 1;
+	params.FieldType = cpy.CopyTextureFrom.Info.Texture.FieldType;
     params.GR = th->GpuRing;
     params.CR = th->CpuRing;
     params.Colorspace = th->GetMatrix<f64>();

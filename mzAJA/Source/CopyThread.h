@@ -84,6 +84,12 @@ struct TrackSync
 
 };
 
+inline mzTextureFieldType Flipped(mzTextureFieldType field)
+{
+	return field == MZ_TEXTURE_FIELD_TYPE_PROGRESSIVE || field == MZ_TEXTURE_FIELD_TYPE_UNKNOWN ? field 
+		: (field == MZ_TEXTURE_FIELD_TYPE_EVEN ? MZ_TEXTURE_FIELD_TYPE_ODD : MZ_TEXTURE_FIELD_TYPE_EVEN);
+}
+
 struct CopyThread : TrackSync
 {
 	mz::Name PinName;
@@ -109,7 +115,7 @@ struct CopyThread : TrackSync
 	std::atomic_bool IsOrphan = false;
     
 	rc<CPURing::Resource> SSBO;
-	rc<GPURing::Resource>  CompressedTex;
+	rc<GPURing::Resource> CompressedTex;
 
 	struct
 	{
@@ -119,7 +125,7 @@ struct CopyThread : TrackSync
 
 	struct Parameters
 	{
-		u32 FieldIdx = 0;
+		mzTextureFieldType FieldType = MZ_TEXTURE_FIELD_TYPE_PROGRESSIVE;
 		u32 FrameNumber;
 		Clock::time_point T0;
 		Clock::time_point T1;
@@ -133,6 +139,9 @@ struct CopyThread : TrackSync
 		uint32_t Debug = 0;
 		mzVec2u DispatchSize;
 		std::atomic_bool* TransferInProgress = 0;
+
+		void FlipField() { FieldType = Flipped(FieldType); }
+		bool Interlaced() const { return !(FieldType == MZ_TEXTURE_FIELD_TYPE_PROGRESSIVE || FieldType == MZ_TEXTURE_FIELD_TYPE_UNKNOWN); }
 	};
 
 	struct ConversionThread : ConsumerThread<Parameters>
@@ -167,7 +176,9 @@ struct CopyThread : TrackSync
     void SendDeleteRequest();
     void ChangePinResolution(mzVec2u res);
     void InputUpdate(AJADevice::Mode &prevMode);
-    void Refresh();
+	bool WaitForVBL(mzTextureFieldType fieldType);
+	
+	void Refresh();
     bool IsQuad() const;
     bool Interlaced() const;
 	bool LinkSizeMismatch() const;
@@ -176,19 +187,22 @@ struct CopyThread : TrackSync
     void Orphan(bool, std::string const& msg = "");
     void Live(bool);
     void PinUpdate(std::optional<mz::fb::TOrphanState>, Action live);
-	NTV2FieldID GetFieldID() const
-	{ 
-		NTV2FieldID field = NTV2_FIELD0;
-		if (IsInput())
-			Client->Device->GetInputFieldID(Channel, field);
-		else
-			Client->Device->GetOutputFieldID(Channel, field);
-		return field;
-	}
 
     void Stop();
 	void Restart(u32 ringSize);
-    void SetFrame(u32 FB);
+    void SetFrame(u32 doubleBufferIndex);
+	u32 GetFrameIndex(u32 doubleBufferIndex) const;
+
+	struct DMAInfo
+	{
+		u32* Buffer;
+		u32 Pitch;
+		u32 Segments;
+		u32 FrameIndex;
+	};
+
+	DMAInfo GetDMAInfo(mzResourceShareInfo& buffer, u32 doubleBufferIndex) const;
+
     ~CopyThread();
 
     u32 BitWidth() const;
