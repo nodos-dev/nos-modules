@@ -325,6 +325,36 @@
                     "pin_category": "B|A"
                 }
             ]
+        },
+        {
+            "class_name": "GpuStress",
+            "contents_type": "Job",
+            "contents": {
+                "type": "GPU"
+            },
+            "pins": [
+                {
+                    "name": "Input",
+                    "type_name": "mz.fb.Texture",
+                    "show_as": "INPUT_PIN",
+                    "can_show_as": "INPUT_PIN_OR_PROPERTY"
+                },
+              {
+                "name": "StressExponent",
+                "display_name": "Stress Exponent",
+                "type_name": "uint",
+                "show_as": "PROPERTY",
+                "can_show_as": "INPUT_PIN_OR_PROPERTY",
+                "description": "The shader will loop 2^StressExponent times",
+                "data": 15
+              },
+                {
+                    "name": "Output",
+                    "type_name": "mz.fb.Texture",
+                    "show_as": "OUTPUT_PIN",
+                    "can_show_as": "OUTPUT_PIN_OR_PROPERTY"
+                }
+            ]
         }
     ]
 }
