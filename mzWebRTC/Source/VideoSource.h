@@ -48,6 +48,7 @@ public:
 
 	void StartThread();
 	void MaybePushFrame();
+	void PushFrame(uint8_t* data, int width, int height);
 
 	/* Begin UE::PixelStreaming::AdaptedVideoTrackSource overrides */
 	virtual webrtc::MediaSourceInterface::SourceState state() const override { return CurrentState; }
@@ -63,8 +64,9 @@ private:
 	webrtc::MediaSourceInterface::SourceState CurrentState;
     rtc::Thread* thread;
     mutable webrtc::webrtc_impl::RefCounter ref_count_{0};
-
-	void PushFrame();
+	std::vector<uint8_t> yPlane;
+	std::vector<uint8_t> uPlane;
+	std::vector<uint8_t> vPlane;
 
 
 };

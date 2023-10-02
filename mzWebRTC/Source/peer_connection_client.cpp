@@ -8,9 +8,9 @@
  *  be found in the AUTHORS file in the root of the source tree.
  */
 
-#include "examples/peerconnection/client/peer_connection_client.h"
+#include "peer_connection_client.h"
 
-#include "examples/peerconnection/client/defaults.h"
+#include "defaults.h"
 #include "rtc_base/checks.h"
 #include "rtc_base/logging.h"
 #include "rtc_base/net_helpers.h"
@@ -145,7 +145,7 @@ void PeerConnectionClient::DoConnect() {
   }
 }
 
-bool PeerConnectionClient::SendToPeer(int peer_id, const std::string& message) {
+bool PeerConnectionClient::SendToPeer(int peer_id, const std::shared_ptr<std::string> message) {
   if (state_ != CONNECTED)
     return false;
 
@@ -160,14 +160,14 @@ bool PeerConnectionClient::SendToPeer(int peer_id, const std::string& message) {
            "Content-Length: %zu\r\n"
            "Content-Type: text/plain\r\n"
            "\r\n",
-           my_id_, peer_id, message.length());
+           my_id_, peer_id, (*message.get()).length());
   onconnect_data_ = headers;
-  onconnect_data_ += message;
+  onconnect_data_ += (*message.get());
   return ConnectControlSocket();
 }
 
 bool PeerConnectionClient::SendHangUp(int peer_id) {
-  return SendToPeer(peer_id, kByeMessage);
+  return SendToPeer(peer_id, std::make_shared<std::string>(kByeMessage));
 }
 
 bool PeerConnectionClient::IsSendingMessage() {

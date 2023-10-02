@@ -21,12 +21,6 @@
 #include "VideoSource.h"
 #include <memory>
 
-// clang-format off
-// clang formating would change include order.
-#include <windows.h>
-#include <shellapi.h>  // must come after windows.h
-// clang-format on
-
 #include <string>
 #include <vector>
 
@@ -39,12 +33,14 @@
 #include "system_wrappers/include/field_trial.h"
 #include "test/field_trial.h"
 #include "WebRTCManager.h"
+
 // mzNodes
 
 MZ_INIT();
 MZ_REGISTER_NAME(In)
 MZ_REGISTER_NAME(ServerIP)
 MZ_REGISTER_NAME(Port)
+MZ_REGISTER_NAME(PeerID)
 MZ_REGISTER_NAME(Out);
 MZ_REGISTER_NAME(WebRTCClient);
 
@@ -63,13 +59,14 @@ enum EWebRTCTasks {
 };
 */
 
-
 //The interface between medaiZ and WebRTC, stores the task qeueue and launches the connection thread
-
 struct mzWebRTCInterface {
 public:
+	std::shared_ptr<CustomVideoSource> mzVideoSource;
+
 	mzWebRTCInterface() {
-		webrtcTaskQueue = std::make_shared< AtomicQueue< std::pair<EWebRTCTasks, void*> >>();
+		webrtcTaskQueue = std::make_shared< AtomicQueue< std::pair<EWebRTCTasks, std::shared_ptr<void>> >>();
+		mzVideoSource = std::make_shared<CustomVideoSource>();
 	}
 	~mzWebRTCInterface() {
 		if(RTCThread.joinable())
@@ -78,34 +75,33 @@ public:
 	/// <summary>
 	/// This will automatically pus eLOGIN task, do not push it again to queue before/after
 	/// </summary>
-	void StartConnection() {
-		webrtcTaskQueue->push({ EWebRTCTasks::eLOGIN,nullptr });
+	void StartConnection(std::string server_port) {
+		webrtcTaskQueue->push({ EWebRTCTasks::eLOGIN,std::make_shared<std::string>(server_port)});
 		RTCThread = std::thread([this]() {StartRTCThread(webrtcTaskQueue); });
 	}
 
-	void PushTask(EWebRTCTasks task, void* data) {
+	void PushTask(EWebRTCTasks task, std::shared_ptr<void> data) {
 		webrtcTaskQueue->push({task,data});
 	}
 
+
 private:
-	std::shared_ptr<AtomicQueue< std::pair<EWebRTCTasks, void*> >> webrtcTaskQueue;
+	std::shared_ptr<AtomicQueue< std::pair<EWebRTCTasks, std::shared_ptr<void>> >> webrtcTaskQueue;
 	std::thread RTCThread;
-	void StartRTCThread(std::shared_ptr<AtomicQueue< std::pair<EWebRTCTasks, void*> >> theQueue) {
+	void StartRTCThread(std::shared_ptr<AtomicQueue< std::pair<EWebRTCTasks, std::shared_ptr<void>> >> theQueue) {
 		rtc::WinsockInitializer winsock_init;
 		rtc::Win32SocketServer w32_ss;
 		rtc::Win32Thread w32_thread(&w32_ss);
 		rtc::ThreadManager::Instance()->SetCurrentThread(&w32_thread);
 		// InitFieldTrialsFromString stores the char*, so the char array must outlive
 		// the application.
-		std::shared_ptr<CustomVideoSource> myVideoSource(new CustomVideoSource());
 		// CustomVideoSource* theVS = new CustomVideoSource();
 		rtc::InitializeSSL();
 
 		PeerConnectionClient client;
-		CustomVideoSource* thisVS = new CustomVideoSource();
 
 		rtc::scoped_refptr<WebRTCManager> manager(
-			new rtc::RefCountedObject<WebRTCManager>(&client, thisVS, theQueue));
+			new rtc::RefCountedObject<WebRTCManager>(&client, mzVideoSource.get(), theQueue));
 
 
 		while (manager.get()->MainLoop()) {
@@ -121,10 +117,31 @@ mzWebRTCInterface mzWebRTC;
 struct WebRTCNodeContext : mz::NodeContext {
 
 	
-	mzResourceShareInfo InputCached;
+	mzResourceShareInfo InputRGBA8 = {};
+	mzResourceShareInfo DummyInput = {};
+	mzResourceShareInfo Buf = {};
+	size_t size;
+	uint8_t* data;
 	mzResourceShareInfo TempOutput = {};
 	//On Node Created
 	WebRTCNodeContext(mz::fb::Node const* node) :NodeContext(node){
+		InputRGBA8.Info.Texture.Format = MZ_FORMAT_R8G8B8A8_SRGB;
+		InputRGBA8.Info.Type = MZ_RESOURCE_TYPE_TEXTURE;
+		InputRGBA8.Info.Texture.Usage = mzImageUsage(MZ_IMAGE_USAGE_TRANSFER_SRC | MZ_IMAGE_USAGE_TRANSFER_DST);
+		InputRGBA8.Info.Texture.Width = 640;
+		InputRGBA8.Info.Texture.Height = 360;
+
+		mzEngine.Create(&InputRGBA8);
+
+		Buf.Info.Type = MZ_RESOURCE_TYPE_BUFFER;
+		size = InputRGBA8.Info.Texture.Width * InputRGBA8.Info.Texture.Height * 4 * sizeof(uint8_t);
+		Buf.Info.Buffer.Size = size;
+		Buf.Info.Buffer.Usage = mzBufferUsage(MZ_BUFFER_USAGE_TRANSFER_SRC | MZ_BUFFER_USAGE_TRANSFER_DST);
+		data = new uint8_t[size];
+		mzEngine.Create(&Buf);
+
+		DummyInput.Info.Texture.Format = MZ_FORMAT_R8G8B8A8_SRGB;
+		DummyInput.Info.Type = MZ_RESOURCE_TYPE_TEXTURE;
 	}
 
 	~WebRTCNodeContext() override {
@@ -133,54 +150,57 @@ struct WebRTCNodeContext : mz::NodeContext {
 	void  OnPinValueChanged(mz::Name pinName, mzUUID pinId, mzBuffer* value) override {
 		
 		if (pinName == MZN_In) {
-
-			InputCached = mz::DeserializeTextureInfo(value->Data);
-			mzEngine.LogI("Input value on CNN changed!");
+			DummyInput = mz::DeserializeTextureInfo(value->Data);
 		}
 	}
 
 	virtual mzResult ExecuteNode(const mzNodeExecuteArgs* args) override {
 		auto values = mz::GetPinValues(args);
 
+		mzCmd cmd;
+		mzEngine.Begin(&cmd);
+		mzEngine.Copy(cmd, &InputRGBA8, &Buf, 0);
+		mzEngine.End(cmd);
 
-		//if (Worker.isDone) {
-		//	Worker.isNewFrameReady = true;
-		//	mzResourceShareInfo out = mz::DeserializeTextureInfo(values[MZN_Out]);;
-		//	mzResourceShareInfo tmp = out;
-		//	mzEngine.ImageLoad(Worker.data,
-		//		mzVec2u(out.Info.Texture.Width, out.Info.Texture.Height),
-		//		MZ_FORMAT_R8G8B8A8_SRGB, &tmp);
-		//	{
-		//		mzCmd cmd;
-		//		mzEngine.Begin(&cmd);
-		//		mzEngine.Copy(cmd, &tmp, &out, 0);
-		//		mzEngine.End(cmd);
-		//		mzEngine.Destroy(&tmp);
-		//	}
-		//	//return MZ_RESULT_SUCCESS;
-		//}
+		auto buf2write = mzEngine.Map(&Buf);
+		memcpy(data, buf2write, size);
 
+		//TODO: Write a compute shader for RGBA to YUV420 conversion
+		//TOOD: Make a thread for pushing frame like mzCNN does
+		if (data) {
+			mzWebRTC.mzVideoSource->PushFrame(buf2write, InputRGBA8.Info.Texture.Width, InputRGBA8.Info.Texture.Height);
+		}
 		//return MZ_RESULT_FAILED;
 		return MZ_RESULT_SUCCESS;
 	}
 
 	mzResult BeginCopyTo(mzCopyInfo* cpy) override {
-		//cpy->ShouldCopyTexture = true;
-		//cpy->CopyTextureFrom = InputCached;
-		//cpy->CopyTextureTo = Worker.InputRGBA8;
-		//cpy->ShouldSubmitAndWait = true;
+		cpy->ShouldCopyTexture = true;
+		cpy->CopyTextureFrom = DummyInput;
+		cpy->CopyTextureTo = InputRGBA8;
+		cpy->ShouldSubmitAndWait = true;
 		return MZ_RESULT_SUCCESS;
 	}
 
 	static mzResult GetFunctions(size_t* count, mzName* names, mzPfnNodeFunctionExecute* fns) {
-		*count = 1;
+		*count = 2;
 		if (!names || !fns)
 			return MZ_RESULT_SUCCESS;
 
 		names[0] = MZ_NAME_STATIC("ConnectToServer");
 		fns[0] = [](void* ctx, const mzNodeExecuteArgs* nodeArgs, const mzNodeExecuteArgs* functionArgs) {
+				auto values = mz::GetPinValues(nodeArgs);
+				std::string server = mz::GetPinValue<const char>(values, MZN_ServerIP);
+				int port = *mz::GetPinValue<int>(values, MZN_Port);
+				std::string server_port = server + std::to_string(port);
+				mzWebRTC.StartConnection(server_port);
+			};
+
+		names[1] = MZ_NAME_STATIC("ConnectToPeer");
+		fns[1] = [](void* ctx, const mzNodeExecuteArgs* nodeArgs, const mzNodeExecuteArgs* functionArgs) {
 			auto values = mz::GetPinValues(nodeArgs);
-			mzWebRTC.StartConnection();
+			int port = *mz::GetPinValue<int>(values, MZN_PeerID);
+			mzWebRTC.PushTask(EWebRTCTasks::eCONNECT, std::make_shared<int>(port));
 			};
 
 		return MZ_RESULT_SUCCESS;
@@ -198,9 +218,6 @@ struct WebRTCNodeContext : mz::NodeContext {
 
 		return MZ_RESULT_SUCCESS;
 	}
-
-
-
 };
 
 extern "C"

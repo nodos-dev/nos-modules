@@ -61,7 +61,7 @@ class WebRTCManager : public webrtc::PeerConnectionObserver,
                   public PeerConnectionClientObserver {
  public:
 
-  std::shared_ptr<AtomicQueue< std::pair<EWebRTCTasks,void*> >> task_queue;
+  std::shared_ptr<AtomicQueue< std::pair<EWebRTCTasks,std::shared_ptr<void>> >> task_queue;
 
   bool MainLoop();
 
@@ -73,7 +73,7 @@ class WebRTCManager : public webrtc::PeerConnectionObserver,
     TRACK_REMOVED,
   };
 
-  WebRTCManager(PeerConnectionClient* client, CustomVideoSource* customVideoSource, std::shared_ptr<AtomicQueue< std::pair<EWebRTCTasks, void*> >> taskQueue);
+  WebRTCManager(PeerConnectionClient* client, CustomVideoSource* customVideoSource, std::shared_ptr<AtomicQueue< std::pair<EWebRTCTasks, std::shared_ptr<void>> >> taskQueue);
 
   bool connection_active() const;
 
@@ -146,7 +146,7 @@ class WebRTCManager : public webrtc::PeerConnectionObserver,
 
  protected:
   // Send a message to the remote peer.
-  void SendMessage(const std::string& json_object);
+  void SendMessage(std::shared_ptr<std::string> json_object);
   
 
   int peer_id_;
@@ -157,7 +157,7 @@ class WebRTCManager : public webrtc::PeerConnectionObserver,
   rtc::scoped_refptr<webrtc::PeerConnectionFactoryInterface>
       peer_connection_factory_;
   PeerConnectionClient* client_;
-  std::deque<std::string*> pending_messages_;
+  std::deque<std::shared_ptr<std::string>> pending_messages_;
   std::string m_server;
   int m_port;
   int peer_id = -1;

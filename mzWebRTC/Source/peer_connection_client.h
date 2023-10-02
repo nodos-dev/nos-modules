@@ -60,7 +60,7 @@ class PeerConnectionClient : public sigslot::has_slots<>,
                int port,
                const std::string& client_name);
 
-  bool SendToPeer(int peer_id, const std::string& message);
+  bool SendToPeer(int peer_id, const std::shared_ptr<std::string> message);
   bool SendHangUp(int peer_id);
   bool IsSendingMessage();
 

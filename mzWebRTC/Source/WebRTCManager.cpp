@@ -36,6 +36,7 @@
 #include "rtc_base/strings/json.h"
 #include "test/vcm_capturer.h"
 #include "json/json.h"
+#include <MediaZ/PluginAPI.h>
 
 bool GetStringFromJson(const Json::Value& in, std::string* out) {
     if (!in.isString()) {
@@ -132,7 +133,7 @@ public:
 
 }  // namespace
 
-WebRTCManager::WebRTCManager(PeerConnectionClient* client, CustomVideoSource* customVideoSource, std::shared_ptr<AtomicQueue< std::pair<EWebRTCTasks, void*> >> taskQueue)
+WebRTCManager::WebRTCManager(PeerConnectionClient* client, CustomVideoSource* customVideoSource, std::shared_ptr<AtomicQueue< std::pair<EWebRTCTasks, std::shared_ptr<void>> >> taskQueue)
     : peer_id_(-1), loopback_(false), client_(client), task_queue(nullptr){
   client_->RegisterObserver(this);
   preSetVideoSource = (customVideoSource == nullptr) ? (new CustomVideoSource()): (customVideoSource);
@@ -261,7 +262,7 @@ void WebRTCManager::OnIceCandidate(const webrtc::IceCandidateInterface* candidat
   jmessage[kCandidateSdpName] = sdp;
 
   Json::StreamWriterBuilder factory;
-  SendMessage(Json::writeString(factory, jmessage));
+  SendMessage(std::make_shared<std::string>(Json::writeString(factory, jmessage)));
 }
 
 //
@@ -270,6 +271,7 @@ void WebRTCManager::OnIceCandidate(const webrtc::IceCandidateInterface* candidat
 
 void WebRTCManager::OnSignedIn() {
   RTC_LOG(LS_INFO) << __FUNCTION__;
+  mzEngine.LogI("WebRTC Client connected to server");
 }
 
 void WebRTCManager::OnDisconnected() {
@@ -280,6 +282,7 @@ void WebRTCManager::OnDisconnected() {
 
 void WebRTCManager::OnPeerConnected(int id, const std::string& name) {
   RTC_LOG(LS_INFO) << __FUNCTION__;
+  mzEngine.LogI("Sucessfully connected to peer ", name);
 }
 
 void WebRTCManager::OnPeerDisconnected(int id) {
@@ -404,6 +407,7 @@ void WebRTCManager::OnMessageSent(int err) {
 }
 
 void WebRTCManager::OnServerConnectionFailure() {
+    mzEngine.LogE("WebRTC Client failed to connect server!");
 }
 
 //
@@ -498,21 +502,20 @@ void WebRTCManager::OnSuccess(webrtc::SessionDescriptionInterface* desc) {
     jmessage[kSessionDescriptionTypeName] =
         webrtc::SdpTypeToString(desc->GetType());
     jmessage[kSessionDescriptionSdpName] = sdp;
-    SendMessage(writer.write(jmessage));
+    SendMessage(std::make_shared<std::string>(writer.write(jmessage)));
 }
 
 void WebRTCManager::OnFailure(webrtc::RTCError error) {
   RTC_LOG(LS_ERROR) << ToString(error.type()) << ": " << error.message();
 }
 
-void WebRTCManager::SendMessage(const std::string& json_object) {
-  std::string* msg = new std::string(json_object);
-  task_queue->push({EWebRTCTasks::eSEND_MESSAGE_TO_PEER, msg});
+void WebRTCManager::SendMessage(std::shared_ptr<std::string> json_object) {
+  task_queue->push({EWebRTCTasks::eSEND_MESSAGE_TO_PEER, json_object });
 }
 
 bool WebRTCManager::MainLoop() {
   EWebRTCTasks currentTask;
-  void* data;
+  std::shared_ptr<void> data;
   bool ret = true;
   if (task_queue && task_queue->size()) {
     currentTask = task_queue->front().first;
@@ -520,20 +523,45 @@ bool WebRTCManager::MainLoop() {
     task_queue->pop();
     switch (currentTask) {
       case EWebRTCTasks::eLOGIN: {
+        
+          if (data) {
+            std::string server_port = *static_cast<std::string*>(data.get());
+            size_t delimeter = server_port.find(":");
+            if (delimeter != std::string::npos) {
+                std::string server = server_port.substr(0, delimeter);
+                //type safety is not an issue for conversion here since the MediaZ only accepts integer inputs for `port`
+                int port = std::stoi(server_port.substr(delimeter + 1));
+                //check for valid port numbers, 2^16/2 = 2^15 is highest valid port number
+                if (port > 0 && port < (2 << 15)) {
+                    StartLogin(server, port);
+                    break;
+                }
+            }
+        }
+
+        //fallback to defaults
         StartLogin(std::string("localhost"), 8888);
         break;
       }
 
 
       case EWebRTCTasks::eCONNECT: {
-        ConnectToPeer(2);
+        if (data) {
+            int peer_id = *static_cast<int*>(data.get());
+            for (const auto& [_id, _name] : client_->peers()) {
+                if (peer_id == _id) {
+                    ConnectToPeer(peer_id);
+                    break;
+                }
+            }
+        }
         break;
       }
 
 
       case EWebRTCTasks::eSEND_MESSAGE_TO_PEER: {
         RTC_LOG(LS_INFO) << "SEND_MESSAGE_TO_PEER";
-        std::string* msg = reinterpret_cast<std::string*>(data);
+        std::shared_ptr<std::string> msg = std::static_pointer_cast<std::string>(data);
         if (msg) {
           // For convenience, we always run the message through the queue.
           // This way we can be sure that messages are sent to the server
@@ -544,11 +572,10 @@ bool WebRTCManager::MainLoop() {
           msg = pending_messages_.front();
           pending_messages_.pop_front();
 
-          if (!client_->SendToPeer(peer_id_, *msg) && peer_id_ != -1) {
+          if (!client_->SendToPeer(peer_id_, msg) && peer_id_ != -1) {
             RTC_LOG(LS_ERROR) << "SendToPeer failed";
             DisconnectFromServer();
           }
-          delete msg;
         }
 
         if (!peer_connection_.get())
