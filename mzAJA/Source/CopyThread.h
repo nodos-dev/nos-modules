@@ -145,15 +145,19 @@ struct CopyThread : TrackSync
 
 	struct ConversionThread : ConsumerThread<Parameters>
 	{
+		ConversionThread(CopyThread* parent) : Parent(parent) {}
 		virtual ~ConversionThread();
 		std::thread Handle;
+		CopyThread* Parent;
 	};
 	struct InputConversionThread : ConversionThread
 	{
+		using ConversionThread::ConversionThread;
 		void Consume(const Parameters& item) override;
 	};
 	struct OutputConversionThread : ConversionThread
 	{
+		using ConversionThread::ConversionThread;
 		void Consume(const Parameters& item) override;
 	};
 
