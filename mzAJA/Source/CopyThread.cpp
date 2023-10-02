@@ -138,9 +138,9 @@ bool CopyThread::Interlaced() const
 void CopyThread::StartThread()
 {
 	if (IsInput())
-		Worker = std::make_unique<InputConversionThread>();
+		Worker = std::make_unique<InputConversionThread>(this);
 	else
-		Worker = std::make_unique<OutputConversionThread>();
+		Worker = std::make_unique<OutputConversionThread>(this);
 	CpuRing->Exit = false;
 	GpuRing->Exit = false;
 	Run = true;
@@ -622,6 +622,8 @@ void CopyThread::AJAOutputProc()
 	DropCount = 0;
 	u32 framesSinceLastDrop = 0;
 
+	mzTextureFieldType ownFieldType = MZ_TEXTURE_FIELD_TYPE_EVEN;
+
 	while (Run && !CpuRing->Exit)
 	{
 		auto cpuRingReadSize = CpuRing->Read.Pool.size();
@@ -637,66 +639,74 @@ void CopyThread::AJAOutputProc()
 		ULWord lastVBLCount;
 		Client->Device->GetOutputVerticalInterruptCount(lastVBLCount, Channel);
 
-		if (auto sourceCpuRingSlot = CpuRing->BeginPop())
+		auto *sourceCpuRingSlot = CpuRing->BeginPop();
+		if (!sourceCpuRingSlot)
 		{
-			static auto prevFieldType = MZ_TEXTURE_FIELD_TYPE_UNKNOWN;
-			auto fieldType = sourceCpuRingSlot->Res.Info.Texture.FieldType;
-			if (Interlaced())
-			{
-				if (prevFieldType == MZ_TEXTURE_FIELD_TYPE_UNKNOWN)
-					prevFieldType = fieldType;
-				else if (prevFieldType != Flipped(fieldType))
-					mzEngine.LogW("AJA Out: Field atti");
+			mzEngine.LogW((Name().AsString() + " dropped 1 frame").c_str(), "");
+			continue;
+		}
+
+		auto field = sourceCpuRingSlot->Res.Info.Texture.FieldType;
+
+		// If I'm interlaced and the field type is progressive, use my own field type to wait.
+		if (Interlaced() && field == MZ_TEXTURE_FIELD_TYPE_PROGRESSIVE)
+			field = ownFieldType;
+
+		auto waitField = Flipped(field);
+		if (!WaitForVBL(waitField))
+			break;
+
+#if 0
+		static auto prevFieldType = MZ_TEXTURE_FIELD_TYPE_UNKNOWN;
+		if (Interlaced())
+		{
+			if (prevFieldType == MZ_TEXTURE_FIELD_TYPE_UNKNOWN)
 				prevFieldType = fieldType;
-			}
-			if (!WaitForVBL(Flipped(fieldType)))
-				break;
+			else if (prevFieldType != Flipped(fieldType))
+				mzEngine.LogW("%s: New frame has different field than previous frame!", Name().AsCStr());
+			prevFieldType = fieldType;
+		}
+#endif
 
-			ULWord vblCount;
-			Client->Device->GetOutputVerticalInterruptCount(vblCount, Channel);
-			
-			if (!Interlaced())
-			{
-				if (vblCount != lastVBLCount)
-				{
-					DropCount += vblCount - lastVBLCount;
-					framesSinceLastDrop = 0;
-					mzEngine.LogE("%s dropped a frame!", Name().AsCStr());
-				}
-				else
-				{
-					++framesSinceLastDrop;
-					if (DropCount && framesSinceLastDrop == 50)
-					{
-						mzEngine.LogE("AJAOut: Dropped frames, notifying restart");
-						NotifyRestart({});
-					}
-				}
-			}
-
-			auto [Buf, Pitch, Segments, FrameIndex] = GetDMAInfo(sourceCpuRingSlot->Res, doubleBufferIndex);
-			if (Interlaced())
-			{
-				u64 addr, discardLength;
-				auto fieldId = GetAJAFieldID(fieldType);
-				Client->Device->DMAWriteSegments(FrameIndex, Buf, fieldId * Pitch, Pitch, Segments, Pitch, Pitch * 2);
-			}
-			else
-				Client->Device->DMAWriteFrame(FrameIndex, Buf, Pitch * Segments, Channel);
-
-			CpuRing->EndPop(sourceCpuRingSlot);
-			mzEngine.HandleEvent(hungerSignal);
-
-			if (!Interlaced())
-			{
-				SetFrame(doubleBufferIndex);
-				doubleBufferIndex ^= 1;
-			}
+		ULWord vblCount;
+		Client->Device->GetOutputVerticalInterruptCount(vblCount, Channel);
+		
+		// Drop calculations:
+		if (vblCount > lastVBLCount + 1)
+		{
+			DropCount += vblCount - lastVBLCount - 1;
+			framesSinceLastDrop = 0;
+			mzEngine.LogE("AJA Out: %s dropped a frame!", Name().AsCStr());
 		}
 		else
 		{
-			mzEngine.LogW((Name().AsString() + " dropped 1 frame").c_str(), "");
+			++framesSinceLastDrop;
+			if (DropCount && framesSinceLastDrop == 50)
+			{
+				mzEngine.LogE("AJA Out: %s dropped frames, notifying restart", Name().AsCStr());
+				NotifyRestart({});
+			}
 		}
+
+		auto [Buf, Pitch, Segments, FrameIndex] = GetDMAInfo(sourceCpuRingSlot->Res, doubleBufferIndex);
+		if (Interlaced())
+		{
+			u64 addr, discardLength;
+			auto fieldId = GetAJAFieldID(field);
+			Client->Device->DMAWriteSegments(FrameIndex, Buf, fieldId * Pitch, Pitch, Segments, Pitch, Pitch * 2);
+		}
+		else
+			Client->Device->DMAWriteFrame(FrameIndex, Buf, Pitch * Segments, Channel);
+
+		CpuRing->EndPop(sourceCpuRingSlot);
+		mzEngine.HandleEvent(hungerSignal);
+
+		if (!Interlaced())
+		{
+			SetFrame(doubleBufferIndex);
+			doubleBufferIndex ^= 1;
+		}
+		ownFieldType = Flipped(ownFieldType);
 	}
 	GpuRing->Stop();
 	CpuRing->Stop();
@@ -815,12 +825,11 @@ void CopyThread::OutputConversionThread::Consume(const Parameters& params)
 		params.GR->EndPop(incoming);
 		return;
 	}
-	outgoing->Res.Info.Texture.FieldType = params.FieldType;
-	glm::mat4 colorspace = params.Colorspace;
-	uint32_t iflags = (params.Interlaced() ? u32(params.FieldType) : 0) | ((params.Shader == ShaderType::Comp10) << 2);
+	outgoing->Res.Info.Texture.FieldType = Parent->Interlaced() ? params.FieldType : MZ_TEXTURE_FIELD_TYPE_PROGRESSIVE;
+	uint32_t iflags = (Parent->Interlaced() ? u32(params.FieldType) : 0) | ((params.Shader == ShaderType::Comp10) << 2);
 
 	std::vector<mzShaderBinding> inputs;
-	inputs.emplace_back(ShaderBinding(MZN_Colorspace, colorspace));
+	inputs.emplace_back(ShaderBinding(MZN_Colorspace, params.Colorspace));
 	inputs.emplace_back(ShaderBinding(MZN_Source, incoming->Res));
 	inputs.emplace_back(ShaderBinding(MZN_Interlaced, iflags));
 	inputs.emplace_back(ShaderBinding(MZN_ssbo, params.SSBO->Res));
