@@ -646,27 +646,31 @@ void CopyThread::AJAOutputProc()
 				if (prevFieldType == MZ_TEXTURE_FIELD_TYPE_UNKNOWN)
 					prevFieldType = fieldType;
 				else if (prevFieldType != Flipped(fieldType))
-					mzEngine.LogW("AJA Out: Field Atti");
+					mzEngine.LogW("AJA Out: Field atti");
 				prevFieldType = fieldType;
 			}
-			if (!WaitForVBL(fieldType))
+			if (!WaitForVBL(Flipped(fieldType)))
 				break;
-			
+
 			ULWord vblCount;
 			Client->Device->GetOutputVerticalInterruptCount(vblCount, Channel);
 			
-			if (vblCount != lastVBLCount)
+			if (!Interlaced())
 			{
-				DropCount += vblCount - lastVBLCount;
-				framesSinceLastDrop = 0;
-			}
-			else
-			{
-				++framesSinceLastDrop;
-				if (DropCount && framesSinceLastDrop == 50)
+				if (vblCount != lastVBLCount)
 				{
-					mzEngine.LogE("AJAOut: Dropped frames, notifying restart");
-					NotifyRestart({});
+					DropCount += vblCount - lastVBLCount;
+					framesSinceLastDrop = 0;
+					mzEngine.LogE("%s dropped a frame!", Name().AsCStr());
+				}
+				else
+				{
+					++framesSinceLastDrop;
+					if (DropCount && framesSinceLastDrop == 50)
+					{
+						mzEngine.LogE("AJAOut: Dropped frames, notifying restart");
+						NotifyRestart({});
+					}
 				}
 			}
 
