@@ -221,6 +221,8 @@ struct CopyThread : TrackSync
 	void NotifyDrop();
 
 	u32 TotalFrameCount();
+
+	void SendRingStats();
 };
 
 } // namespace mz

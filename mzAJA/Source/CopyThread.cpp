@@ -421,15 +421,7 @@ void CopyThread::AJAInputProc()
 
 	while (Run && !GpuRing->Exit)
 	{
-		auto cpuRingReadSize = CpuRing->Read.Pool.size();
-		auto gpuRingWriteSize = GpuRing->Write.Pool.size();
-		auto cpuRingWriteSize = CpuRing->Write.Pool.size();
-		auto gpuRingReadSize = GpuRing->Read.Pool.size();
-		mzEngine.WatchLog("AJAIn CPU Ring Read Size", std::to_string(cpuRingReadSize).c_str());
-		mzEngine.WatchLog("AJAIn CPU Ring Write Size", std::to_string(cpuRingWriteSize).c_str());
-		mzEngine.WatchLog("AJAIn GPU Ring Read Size", std::to_string(gpuRingReadSize).c_str());
-		mzEngine.WatchLog("AJAIn GPU Ring Write Size", std::to_string(gpuRingWriteSize).c_str());
-		mzEngine.WatchLog("AJAIn Total Frame Count", std::to_string(TotalFrameCount()).c_str());
+		SendRingStats();
 
 		InputUpdate(prevMode);
 
@@ -626,15 +618,7 @@ void CopyThread::AJAOutputProc()
 
 	while (Run && !CpuRing->Exit)
 	{
-		auto cpuRingReadSize = CpuRing->Read.Pool.size();
-		auto gpuRingWriteSize = GpuRing->Write.Pool.size();
-		auto cpuRingWriteSize = CpuRing->Write.Pool.size();
-		auto gpuRingReadSize = GpuRing->Read.Pool.size();
-		mzEngine.WatchLog("AJAOut CPU Ring Read Size", std::to_string(cpuRingReadSize).c_str());
-		mzEngine.WatchLog("AJAOut CPU Ring Write Size", std::to_string(cpuRingWriteSize).c_str());
-		mzEngine.WatchLog("AJAOut GPU Ring Read Size", std::to_string(gpuRingReadSize).c_str());
-		mzEngine.WatchLog("AJAOut GPU Ring Write Size", std::to_string(gpuRingWriteSize).c_str());
-		mzEngine.WatchLog("AJAOut Total Frame Count", std::to_string(TotalFrameCount()).c_str());
+		SendRingStats();
 
 		ULWord lastVBLCount;
 		Client->Device->GetOutputVerticalInterruptCount(lastVBLCount, Channel);
@@ -926,6 +910,18 @@ void CopyThread::PinUpdate(std::optional<mz::fb::TOrphanState> orphan, mz::Actio
 u32 CopyThread::BitWidth() const
 {
 	return Client->BitWidth();
+}
+
+void CopyThread::SendRingStats() {
+	auto cpuRingReadSize = CpuRing->Read.Pool.size();
+	auto gpuRingWriteSize = GpuRing->Write.Pool.size();
+	auto cpuRingWriteSize = CpuRing->Write.Pool.size();
+	auto gpuRingReadSize = GpuRing->Read.Pool.size();
+	mzEngine.WatchLog((Name().AsString() + " CPU Ring Read Size").c_str(), std::to_string(cpuRingReadSize).c_str());
+	mzEngine.WatchLog((Name().AsString() + " CPU Ring Write Size").c_str(), std::to_string(cpuRingWriteSize).c_str());
+	mzEngine.WatchLog((Name().AsString() + " GPU Ring Read Size").c_str(), std::to_string(gpuRingReadSize).c_str());
+	mzEngine.WatchLog((Name().AsString() + " GPU Ring Write Size").c_str(), std::to_string(gpuRingWriteSize).c_str());
+	mzEngine.WatchLog((Name().AsString() + " Total Frame Count").c_str(), std::to_string(TotalFrameCount()).c_str());
 }
 
 } // namespace mz
