@@ -392,11 +392,7 @@ void CopyThread::AJAInputProc()
 {
 	NotifyDrop();
 	Orphan(false);
-	{
-		std::stringstream ss;
-		ss << "AJAIn Thread: " << std::this_thread::get_id();
-		mzEngine.LogI(ss.str().c_str());
-	}
+	mzEngine.LogI("AJAIn (%s) Thread: %d", Name().AsCStr(), std::this_thread::get_id());
 
 	auto prevMode = Client->Device->GetMode(Channel);
 
@@ -594,12 +590,7 @@ void CopyThread::AJAOutputProc()
 	auto hungerSignal = CreateAppEvent(fbb, mz::app::CreateScheduleRequest(fbb, mz::app::ScheduleRequestKind::PIN, &id, false));
 	mzEngine.HandleEvent(hungerSignal);
 	Orphan(false);
-	{
-		std::stringstream ss;
-		ss << "AJAOut Thread: " << std::this_thread::get_id();
-		mzEngine.LogI(ss.str().c_str());
-	}
-
+	mzEngine.LogI("AJAOut (%s) Thread: %d", Name().AsCStr(), std::this_thread::get_id());
 
 	while (Run && !CpuRing->Exit && TotalFrameCount() < GetRingSize())
 		std::this_thread::yield();
@@ -614,7 +605,7 @@ void CopyThread::AJAOutputProc()
 	DropCount = 0;
 	u32 framesSinceLastDrop = 0;
 
-	mzTextureFieldType ownFieldType = MZ_TEXTURE_FIELD_TYPE_EVEN;
+	auto field = Interlaced() ? MZ_TEXTURE_FIELD_TYPE_EVEN : MZ_TEXTURE_FIELD_TYPE_PROGRESSIVE;
 
 	while (Run && !CpuRing->Exit)
 	{
@@ -625,32 +616,13 @@ void CopyThread::AJAOutputProc()
 
 		auto *sourceCpuRingSlot = CpuRing->BeginPop();
 		if (!sourceCpuRingSlot)
-		{
-			mzEngine.LogW((Name().AsString() + " dropped 1 frame").c_str(), "");
 			continue;
-		}
 
 		auto field = sourceCpuRingSlot->Res.Info.Texture.FieldType;
-
-		// If I'm interlaced and the field type is progressive, use my own field type to wait.
-		if (Interlaced() && field == MZ_TEXTURE_FIELD_TYPE_PROGRESSIVE)
-			field = ownFieldType;
 
 		auto waitField = Flipped(field);
 		if (!WaitForVBL(waitField))
 			break;
-
-#if 0
-		static auto prevFieldType = MZ_TEXTURE_FIELD_TYPE_UNKNOWN;
-		if (Interlaced())
-		{
-			if (prevFieldType == MZ_TEXTURE_FIELD_TYPE_UNKNOWN)
-				prevFieldType = fieldType;
-			else if (prevFieldType != Flipped(fieldType))
-				mzEngine.LogW("%s: New frame has different field than previous frame!", Name().AsCStr());
-			prevFieldType = fieldType;
-		}
-#endif
 
 		ULWord vblCount;
 		Client->Device->GetOutputVerticalInterruptCount(vblCount, Channel);
@@ -660,7 +632,7 @@ void CopyThread::AJAOutputProc()
 		{
 			DropCount += vblCount - lastVBLCount - 1;
 			framesSinceLastDrop = 0;
-			mzEngine.LogE("AJA Out: %s dropped a frame!", Name().AsCStr());
+			mzEngine.LogW("AJA Out: %s dropped while waiting for a frame", Name().AsCStr());
 		}
 		else
 		{
@@ -675,22 +647,20 @@ void CopyThread::AJAOutputProc()
 		auto [Buf, Pitch, Segments, FrameIndex] = GetDMAInfo(sourceCpuRingSlot->Res, doubleBufferIndex);
 		if (Interlaced())
 		{
-			u64 addr, discardLength;
 			auto fieldId = GetAJAFieldID(field);
 			Client->Device->DMAWriteSegments(FrameIndex, Buf, fieldId * Pitch, Pitch, Segments, Pitch, Pitch * 2);
 		}
 		else
 			Client->Device->DMAWriteFrame(FrameIndex, Buf, Pitch * Segments, Channel);
-
-		CpuRing->EndPop(sourceCpuRingSlot);
-		mzEngine.HandleEvent(hungerSignal);
-
+		
 		if (!Interlaced())
 		{
 			SetFrame(doubleBufferIndex);
 			doubleBufferIndex ^= 1;
 		}
-		ownFieldType = Flipped(ownFieldType);
+		CpuRing->EndPop(sourceCpuRingSlot);
+		mzEngine.HandleEvent(hungerSignal);
+
 	}
 	GpuRing->Stop();
 	CpuRing->Stop();
@@ -709,7 +679,6 @@ void CopyThread::SendDeleteRequest()
 	mzEngine.HandleEvent(
 		CreateAppEvent(fbb, mz::CreatePartialNodeUpdateDirect(fbb, &Client->Mapping.NodeId, ClearFlags::NONE, &ids)));
 }
-
 
 void CopyThread::ChangePinResolution(mzVec2u res)
 {
@@ -792,25 +761,52 @@ CopyThread::ConversionThread::~ConversionThread()
 
 void CopyThread::OutputConversionThread::Consume(const Parameters& params)
 {
-#if 0 // TODO: discard according to compatibility
-	if (!(res->res.field_type & fb::FieldType(FieldIdx)))
-	{
-		GpuRing->EndPop(res);
-		continue;
-	}
-#endif
-	auto incoming = params.GR->BeginPop();
-	if(!incoming)
-		return;
-	*params.TransferInProgress = true;
+	if (Field == MZ_TEXTURE_FIELD_TYPE_UNKNOWN)
+		Field = Parent->Interlaced() ? MZ_TEXTURE_FIELD_TYPE_EVEN : MZ_TEXTURE_FIELD_TYPE_PROGRESSIVE;
+		
 	auto outgoing = params.CR->BeginPush();
 	if (!outgoing)
+		return;
+	*params.TransferInProgress = true;
+
+	auto wantedField = Field;
+	bool outInterlaced = IsTextureFieldTypeInterlaced(wantedField);
+
+	outgoing->Res.Info.Texture.FieldType = Field;
+
+	auto incoming = params.GR->BeginPop();
+	if (!incoming)
 	{
-		params.GR->EndPop(incoming);
+		params.CR->EndPush(outgoing);
 		return;
 	}
-	outgoing->Res.Info.Texture.FieldType = Parent->Interlaced() ? params.FieldType : MZ_TEXTURE_FIELD_TYPE_PROGRESSIVE;
-	uint32_t iflags = (Parent->Interlaced() ? u32(params.FieldType) : 0) | ((params.Shader == ShaderType::Comp10) << 2);
+
+	auto incomingField = incoming->Res.Info.Texture.FieldType;
+	bool inInterlaced = IsTextureFieldTypeInterlaced(incomingField);
+	while ((inInterlaced && outInterlaced) && incomingField != wantedField)
+	{
+		params.GR->EndPop(incoming);
+		mzEngine.LogW("%s field mismatch: Waiting for a new frame!", Parent->Name().AsCStr());
+		incoming = params.GR->BeginPop();
+		if (!incoming)
+		{
+			params.CR->EndPush(outgoing);
+			return;
+		}
+		incomingField = incoming->Res.Info.Texture.FieldType;
+		inInterlaced = incomingField != MZ_TEXTURE_FIELD_TYPE_PROGRESSIVE && incomingField != MZ_TEXTURE_FIELD_TYPE_UNKNOWN;
+	}
+	
+	// 0th bit: is out even
+	// 1st bit: is out odd
+	// 2nd bit: is input even
+	// 3rd bit: is input odd
+	// 4th bit: comp10
+	uint32_t iflags = ((params.Shader == ShaderType::Comp10) << 4);
+	if (outInterlaced)
+		iflags |= u32(wantedField);
+	if (inInterlaced)
+		iflags |= (u32(incomingField) << 2);
 
 	std::vector<mzShaderBinding> inputs;
 	inputs.emplace_back(ShaderBinding(MZN_Colorspace, params.Colorspace));
@@ -849,6 +845,8 @@ void CopyThread::OutputConversionThread::Consume(const Parameters& params)
 	params.GR->EndPop(incoming);
 	*params.TransferInProgress = false;
 	params.CR->EndPush(outgoing);
+
+	Field = Flipped(Field);
 }
 
 CopyThread::CopyThread(struct AJAClient *client, u32 ringSize, u32 spareCount, mz::fb::ShowAs kind, 

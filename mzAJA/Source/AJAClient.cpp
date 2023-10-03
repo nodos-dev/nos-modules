@@ -915,9 +915,9 @@ bool AJAClient::BeginCopyTo(mzCopyInfo &cpy)
 	{
 		slot->FrameNumber = cpy.FrameNumber;
         cpy.CopyTextureFrom = DeserializeTextureInfo(cpy.SrcPinData.Data);
-        cpy.CopyTextureTo = slot->Res;
-		cpy.ShouldSubmitAndWait = true; 
         slot->Res.Info.Texture.FieldType = cpy.CopyTextureFrom.Info.Texture.FieldType;
+        cpy.CopyTextureTo = slot->Res;
+		cpy.ShouldSubmitAndWait = true;
 	}
     return cpy.ShouldCopyTexture = !!(cpy.Data = slot);
 }
@@ -949,7 +949,6 @@ void AJAClient::EndCopyTo(mzCopyInfo& cpy)
     cpy.Stop = th->TotalFrameCount() >= th->GetRingSize();
 
     CopyThread::Parameters params = {};
-	params.FieldType = cpy.CopyTextureFrom.Info.Texture.FieldType;
     params.GR = th->GpuRing;
     params.CR = th->CpuRing;
     params.Colorspace = th->GetMatrix<f64>();
