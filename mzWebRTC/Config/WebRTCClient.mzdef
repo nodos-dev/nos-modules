@@ -13,15 +13,10 @@
               "type_name": "mz.fb.Texture",
               "show_as": "INPUT_PIN",
               "can_show_as": "INPUT_PIN_OR_PROPERTY",
+			  "live":true,
               "data": {
                 "format": "R8G8B8A8_SRGB"
               }
-            },
-			{
-              "name": "Out",
-              "type_name": "int",
-              "show_as": "OUTPUT_PIN",
-              "can_show_as": "OUTPUT_PIN_OR_PROPERTY"
             },
 			{   
 				"name": "ServerIP",
