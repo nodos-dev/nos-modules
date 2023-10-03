@@ -159,6 +159,7 @@ struct CopyThread : TrackSync
 	{
 		using ConversionThread::ConversionThread;
 		void Consume(const Parameters& item) override;
+		mzTextureFieldType Field = MZ_TEXTURE_FIELD_TYPE_UNKNOWN;
 	};
 
 	ru<ConversionThread> Worker;
