@@ -77,6 +77,9 @@ class WebRTCManager : public webrtc::PeerConnectionObserver,
 
   bool connection_active() const;
 
+  void SetPeerConnectedCallback(std::function<void()> callback);
+  void SetPeerDisconnectedCallback(std::function<void()> callback);
+
   void Close();
 
  protected:
@@ -161,6 +164,8 @@ class WebRTCManager : public webrtc::PeerConnectionObserver,
   std::string m_server;
   int m_port;
   int peer_id = -1;
+  std::function<void()> OnPeerConnectedCallback;
+  std::function<void()> OnPeerDisConnectedCallback;
 };
 
 #endif  // WEBRTC_MANAGER_H_

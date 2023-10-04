@@ -2,6 +2,7 @@
 #include <Builtins_generated.h>
 #include <MediaZ/Helpers.hpp>
 #include <AppService_generated.h>
+#include <AppEvents_generated.h>
 #include <mzUtil/Thread.h>
 
 #include <Windows.h>
@@ -41,7 +42,6 @@ MZ_REGISTER_NAME(In)
 MZ_REGISTER_NAME(ServerIP)
 MZ_REGISTER_NAME(Port)
 MZ_REGISTER_NAME(PeerID)
-MZ_REGISTER_NAME(Out);
 MZ_REGISTER_NAME(WebRTCClient);
 
 
@@ -67,6 +67,7 @@ public:
 	mzWebRTCInterface() {
 		webrtcTaskQueue = std::make_shared< AtomicQueue< std::pair<EWebRTCTasks, std::shared_ptr<void>> >>();
 		mzVideoSource = std::make_shared<CustomVideoSource>();
+		manager = rtc::scoped_refptr<WebRTCManager>(new rtc::RefCountedObject<WebRTCManager>(&client, mzVideoSource.get(), webrtcTaskQueue));
 	}
 	~mzWebRTCInterface() {
 		if(RTCThread.joinable())
@@ -77,32 +78,26 @@ public:
 	/// </summary>
 	void StartConnection(std::string server_port) {
 		webrtcTaskQueue->push({ EWebRTCTasks::eLOGIN,std::make_shared<std::string>(server_port)});
-		RTCThread = std::thread([this]() {StartRTCThread(webrtcTaskQueue); });
+		RTCThread = std::thread([this]() {StartRTCThread(); });
 	}
 
 	void PushTask(EWebRTCTasks task, std::shared_ptr<void> data) {
 		webrtcTaskQueue->push({task,data});
 	}
-
+	
+	rtc::scoped_refptr<WebRTCManager> manager;
+	PeerConnectionClient client;
 
 private:
 	std::shared_ptr<AtomicQueue< std::pair<EWebRTCTasks, std::shared_ptr<void>> >> webrtcTaskQueue;
 	std::thread RTCThread;
-	void StartRTCThread(std::shared_ptr<AtomicQueue< std::pair<EWebRTCTasks, std::shared_ptr<void>> >> theQueue) {
+	void StartRTCThread() {
 		rtc::WinsockInitializer winsock_init;
 		rtc::Win32SocketServer w32_ss;
 		rtc::Win32Thread w32_thread(&w32_ss);
 		rtc::ThreadManager::Instance()->SetCurrentThread(&w32_thread);
-		// InitFieldTrialsFromString stores the char*, so the char array must outlive
-		// the application.
-		// CustomVideoSource* theVS = new CustomVideoSource();
+
 		rtc::InitializeSSL();
-
-		PeerConnectionClient client;
-
-		rtc::scoped_refptr<WebRTCManager> manager(
-			new rtc::RefCountedObject<WebRTCManager>(&client, mzVideoSource.get(), theQueue));
-
 
 		while (manager.get()->MainLoop()) {
 			w32_thread.ProcessMessages(1);
@@ -115,14 +110,16 @@ private:
 mzWebRTCInterface mzWebRTC;
 
 struct WebRTCNodeContext : mz::NodeContext {
-
-	
+	mzUUID InputPinUUID;
+	 mzUUID NodeID;
+	std::atomic<bool> shouldSendFrame = false;
+	std::mutex Mutex;
+	std::thread FrameSenderThread;
 	mzResourceShareInfo InputRGBA8 = {};
 	mzResourceShareInfo DummyInput = {};
 	mzResourceShareInfo Buf = {};
 	size_t size;
 	uint8_t* data;
-	mzResourceShareInfo TempOutput = {};
 	//On Node Created
 	WebRTCNodeContext(mz::fb::Node const* node) :NodeContext(node){
 		InputRGBA8.Info.Texture.Format = MZ_FORMAT_R8G8B8A8_SRGB;
@@ -142,9 +139,20 @@ struct WebRTCNodeContext : mz::NodeContext {
 
 		DummyInput.Info.Texture.Format = MZ_FORMAT_R8G8B8A8_SRGB;
 		DummyInput.Info.Type = MZ_RESOURCE_TYPE_TEXTURE;
+		for (auto pin : *node->pins()) {
+			if(pin->show_as() == mz::fb::ShowAs::INPUT_PIN){
+				InputPinUUID = *pin->id();
+			}
+		}
+		NodeID = *node->id();
+		mzWebRTC.manager->SetPeerConnectedCallback(std::bind(&WebRTCNodeContext::OnPeerConnected, this));
+		mzWebRTC.manager->SetPeerDisconnectedCallback(std::bind(&WebRTCNodeContext::OnPeerDisconnected, this));
+		
 	}
 
 	~WebRTCNodeContext() override {
+
+		delete[] data;
 	}
 
 	void  OnPinValueChanged(mz::Name pinName, mzUUID pinId, mzBuffer* value) override {
@@ -154,25 +162,11 @@ struct WebRTCNodeContext : mz::NodeContext {
 		}
 	}
 
-	virtual mzResult ExecuteNode(const mzNodeExecuteArgs* args) override {
-		auto values = mz::GetPinValues(args);
-
-		mzCmd cmd;
-		mzEngine.Begin(&cmd);
-		mzEngine.Copy(cmd, &InputRGBA8, &Buf, 0);
-		mzEngine.End(cmd);
-
-		auto buf2write = mzEngine.Map(&Buf);
-		memcpy(data, buf2write, size);
-
-		//TODO: Write a compute shader for RGBA to YUV420 conversion
-		//TOOD: Make a thread for pushing frame like mzCNN does
-		if (data) {
-			mzWebRTC.mzVideoSource->PushFrame(buf2write, InputRGBA8.Info.Texture.Width, InputRGBA8.Info.Texture.Height);
-		}
-		//return MZ_RESULT_FAILED;
-		return MZ_RESULT_SUCCESS;
+	void OnPinConnected(mz::Name pinName, mzUUID connectedPin) override
+	{
+		
 	}
+
 
 	mzResult BeginCopyTo(mzCopyInfo* cpy) override {
 		cpy->ShouldCopyTexture = true;
@@ -181,6 +175,21 @@ struct WebRTCNodeContext : mz::NodeContext {
 		cpy->ShouldSubmitAndWait = true;
 		return MZ_RESULT_SUCCESS;
 	}
+
+	void OnPeerConnected() {
+		mzEngine.LogI("WebRTC client starts frame thread");
+		if (!FrameSenderThread.joinable()) {
+			shouldSendFrame = true;
+			FrameSenderThread = std::thread([this]() {SendFrames(); });
+		}
+	}
+
+	void OnPeerDisconnected() {
+		shouldSendFrame = false;
+		FrameSenderThread.join();
+	}
+
+
 
 	static mzResult GetFunctions(size_t* count, mzName* names, mzPfnNodeFunctionExecute* fns) {
 		*count = 2;
@@ -204,6 +213,41 @@ struct WebRTCNodeContext : mz::NodeContext {
 			};
 
 		return MZ_RESULT_SUCCESS;
+	}
+
+	void SendFrames()
+	{
+		while (shouldSendFrame)
+		{
+			flatbuffers::FlatBufferBuilder fbb;
+			std::vector<flatbuffers::Offset<mz::app::AppEvent>> Offsets;
+			{
+				std::unique_lock lock(Mutex);
+				mzCmd cmd;
+				mzEngine.Begin(&cmd);
+				mzEngine.Copy(cmd, &InputRGBA8, &Buf, 0);
+				mzEngine.End(cmd);
+
+				auto buf2write = mzEngine.Map(&Buf);
+				memcpy(data, buf2write, size);
+
+				//TODO: Write a compute shader for RGBA to YUV420 conversion
+				if (data) {
+					mzWebRTC.mzVideoSource->PushFrame(buf2write, InputRGBA8.Info.Texture.Width, InputRGBA8.Info.Texture.Height);
+				}
+
+				//std::vector<flatbuffers::Offset<mz::PartialPinUpdate>> updates;
+				//updates.push_back(mz::CreatePartialPinUpdateDirect(fbb, &InputPinUUID, 0, false, mz::Action::SET, mz::Action::NOP, 0, 0));
+
+				//mzEngine.HandleEvent(
+				//	mz::CreateAppEvent(fbb, mz::CreatePartialNodeUpdateDirect(fbb, &NodeID, mz::ClearFlags::NONE, 0, 0, 0, 0, 0, 0, 0, &updates)));
+
+				Offsets.push_back(mz::CreateAppEventOffset(
+					fbb, mz::app::CreateScheduleRequest(fbb, mz::app::ScheduleRequestKind::PIN, &InputPinUUID, false)));
+				mzEvent hungerEvent = mz::CreateAppEvent(fbb, mz::app::CreateBatchAppEventDirect(fbb, &Offsets));
+				mzEngine.EnqueueEvent(&hungerEvent);
+			}
+		}
 	}
 
 	static mzResult GetShaders(size_t* outCount, mzShaderInfo* outShaders) {

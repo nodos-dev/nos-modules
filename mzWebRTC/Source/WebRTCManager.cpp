@@ -148,6 +148,16 @@ bool WebRTCManager::connection_active() const {
   return peer_connection_ != nullptr;
 }
 
+void WebRTCManager::SetPeerConnectedCallback(std::function<void()> callback)
+{
+    OnPeerConnectedCallback = callback;
+}
+
+void WebRTCManager::SetPeerDisconnectedCallback(std::function<void()> callback)
+{
+    OnPeerDisConnectedCallback = callback;
+}
+
 void WebRTCManager::Close() {
   client_->SignOut();
   DeletePeerConnection();
@@ -283,6 +293,7 @@ void WebRTCManager::OnDisconnected() {
 void WebRTCManager::OnPeerConnected(int id, const std::string& name) {
   RTC_LOG(LS_INFO) << __FUNCTION__;
   mzEngine.LogI("Sucessfully connected to peer ", name);
+  OnPeerConnectedCallback();
 }
 
 void WebRTCManager::OnPeerDisconnected(int id) {
@@ -290,6 +301,7 @@ void WebRTCManager::OnPeerDisconnected(int id) {
   if (id == peer_id_) {
     RTC_LOG(LS_INFO) << "Our peer disconnected";
      task_queue->push({EWebRTCTasks::eDISCONNECT, nullptr});
+     OnPeerDisConnectedCallback();
   }
 }
 

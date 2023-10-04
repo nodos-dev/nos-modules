@@ -7,12 +7,9 @@ CustomVideoSource::CustomVideoSource()
 {
 
 }
-void CustomVideoSource::StartThread() {
-}
 
-void CustomVideoSource::MaybePushFrame()
-{
-          
+void CustomVideoSource::StartThread() {
+
 }
 
 void CustomVideoSource::PushFrame(uint8_t* data, int width, int height)
