@@ -44,8 +44,8 @@ MZ_REGISTER_NAME(Port)
 MZ_REGISTER_NAME(PeerID)
 MZ_REGISTER_NAME(WebRTCClient);
 
-
-
+#define ConnectToServer  "ConnectToServer"
+#define ConnectToPeer "ConnectToPeer"
 
 /*
 Here is the list of current tasks for WebRTC
@@ -111,7 +111,9 @@ mzWebRTCInterface mzWebRTC;
 
 struct WebRTCNodeContext : mz::NodeContext {
 	mzUUID InputPinUUID;
-	 mzUUID NodeID;
+	mzUUID NodeID;
+	mzUUID ConnectToServerID;
+	mzUUID ConnectToPeerID;
 	std::atomic<bool> shouldSendFrame = false;
 	std::mutex Mutex;
 	std::thread FrameSenderThread;
@@ -144,10 +146,19 @@ struct WebRTCNodeContext : mz::NodeContext {
 				InputPinUUID = *pin->id();
 			}
 		}
+		for (auto func : *node->functions()) {
+			if (strcmp(func->class_name()->c_str(),ConnectToPeer) == 0) {
+				ConnectToPeerID = *func->id();
+			}
+			else if (strcmp(func->class_name()->c_str(),ConnectToServer) == 0) {
+				ConnectToServerID = *func->id();
+			}
+		}
 		NodeID = *node->id();
 		mzWebRTC.manager->SetPeerConnectedCallback(std::bind(&WebRTCNodeContext::OnPeerConnected, this));
 		mzWebRTC.manager->SetPeerDisconnectedCallback(std::bind(&WebRTCNodeContext::OnPeerDisconnected, this));
-		
+		mzWebRTC.manager->SetOnConnectedToServerCallback(std::bind(&WebRTCNodeContext::OnConnectedToServer, this));
+		mzWebRTC.manager->SetOnDisconnectedFromServerCallback(std::bind(&WebRTCNodeContext::OnDisconnectedFromServer, this));
 	}
 
 	~WebRTCNodeContext() override {
@@ -176,17 +187,43 @@ struct WebRTCNodeContext : mz::NodeContext {
 		return MZ_RESULT_SUCCESS;
 	}
 
+	void OnConnectedToServer() {
+		mzEngine.LogI("WebRTC Client connected to server");
+		flatbuffers::FlatBufferBuilder fbb;
+		mzEngine.HandleEvent(
+			mz::CreateAppEvent(fbb, mz::CreatePartialNodeUpdateDirect(fbb, &ConnectToServerID, mz::ClearFlags::NONE, 0, 0, 0, 0, 0, 0, 0, 0, 0, mz::fb::CreateOrphanStateDirect(fbb, true))));
+	}
+
+	void OnDisconnectedFromServer() {
+		mzEngine.LogI("WebRTC Client disconnected from server");
+		flatbuffers::FlatBufferBuilder fbb;
+		mzEngine.HandleEvent(
+			mz::CreateAppEvent(fbb, mz::CreatePartialNodeUpdateDirect(fbb, &ConnectToServerID, mz::ClearFlags::NONE, 0, 0, 0, 0, 0, 0, 0, 0, 0, mz::fb::CreateOrphanStateDirect(fbb, false))));
+	}
+
 	void OnPeerConnected() {
 		mzEngine.LogI("WebRTC client starts frame thread");
 		if (!FrameSenderThread.joinable()) {
 			shouldSendFrame = true;
 			FrameSenderThread = std::thread([this]() {SendFrames(); });
+			flatbuffers::FlatBufferBuilder fbb;
+			mzEngine.HandleEvent(
+				mz::CreateAppEvent(fbb, mz::CreatePartialNodeUpdateDirect(fbb, &ConnectToPeerID, mz::ClearFlags::NONE, 0, 0, 0, 0, 0, 0, 0, 0, 0, mz::fb::CreateOrphanStateDirect(fbb, true))));
+		}
+		else {
+			mzEngine.LogW("Multiple peer connection is not allowed at this version!");
 		}
 	}
 
 	void OnPeerDisconnected() {
 		shouldSendFrame = false;
-		FrameSenderThread.join();
+		if(FrameSenderThread.joinable())
+			FrameSenderThread.join();
+
+
+		flatbuffers::FlatBufferBuilder fbb;
+		mzEngine.HandleEvent(
+			mz::CreateAppEvent(fbb, mz::CreatePartialNodeUpdateDirect(fbb, &ConnectToPeerID, mz::ClearFlags::NONE, 0, 0, 0, 0, 0, 0, 0, 0, 0, mz::fb::CreateOrphanStateDirect(fbb,false))));
 	}
 
 
@@ -196,7 +233,7 @@ struct WebRTCNodeContext : mz::NodeContext {
 		if (!names || !fns)
 			return MZ_RESULT_SUCCESS;
 
-		names[0] = MZ_NAME_STATIC("ConnectToServer");
+		names[0] = MZ_NAME_STATIC(ConnectToServer);
 		fns[0] = [](void* ctx, const mzNodeExecuteArgs* nodeArgs, const mzNodeExecuteArgs* functionArgs) {
 				auto values = mz::GetPinValues(nodeArgs);
 				std::string server = mz::GetPinValue<const char>(values, MZN_ServerIP);
@@ -205,7 +242,7 @@ struct WebRTCNodeContext : mz::NodeContext {
 				mzWebRTC.StartConnection(server_port);
 			};
 
-		names[1] = MZ_NAME_STATIC("ConnectToPeer");
+		names[1] = MZ_NAME_STATIC(ConnectToPeer);
 		fns[1] = [](void* ctx, const mzNodeExecuteArgs* nodeArgs, const mzNodeExecuteArgs* functionArgs) {
 			auto values = mz::GetPinValues(nodeArgs);
 			int port = *mz::GetPinValue<int>(values, MZN_PeerID);
@@ -235,12 +272,6 @@ struct WebRTCNodeContext : mz::NodeContext {
 				if (data) {
 					mzWebRTC.mzVideoSource->PushFrame(buf2write, InputRGBA8.Info.Texture.Width, InputRGBA8.Info.Texture.Height);
 				}
-
-				//std::vector<flatbuffers::Offset<mz::PartialPinUpdate>> updates;
-				//updates.push_back(mz::CreatePartialPinUpdateDirect(fbb, &InputPinUUID, 0, false, mz::Action::SET, mz::Action::NOP, 0, 0));
-
-				//mzEngine.HandleEvent(
-				//	mz::CreateAppEvent(fbb, mz::CreatePartialNodeUpdateDirect(fbb, &NodeID, mz::ClearFlags::NONE, 0, 0, 0, 0, 0, 0, 0, &updates)));
 
 				Offsets.push_back(mz::CreateAppEventOffset(
 					fbb, mz::app::CreateScheduleRequest(fbb, mz::app::ScheduleRequestKind::PIN, &InputPinUUID, false)));

@@ -158,6 +158,16 @@ void WebRTCManager::SetPeerDisconnectedCallback(std::function<void()> callback)
     OnPeerDisConnectedCallback = callback;
 }
 
+void WebRTCManager::SetOnConnectedToServerCallback(std::function<void()> callback)
+{
+    OnConnectedToServerCallback = callback;
+}
+
+void WebRTCManager::SetOnDisconnectedFromServerCallback(std::function<void()> callback)
+{
+    OnDisconnectedFromServerCallback = callback;
+}
+
 void WebRTCManager::Close() {
   client_->SignOut();
   DeletePeerConnection();
@@ -281,19 +291,17 @@ void WebRTCManager::OnIceCandidate(const webrtc::IceCandidateInterface* candidat
 
 void WebRTCManager::OnSignedIn() {
   RTC_LOG(LS_INFO) << __FUNCTION__;
-  mzEngine.LogI("WebRTC Client connected to server");
+  OnConnectedToServerCallback();
 }
 
 void WebRTCManager::OnDisconnected() {
   RTC_LOG(LS_INFO) << __FUNCTION__;
-
+  OnDisconnectedFromServerCallback();
   DeletePeerConnection();
 }
 
 void WebRTCManager::OnPeerConnected(int id, const std::string& name) {
   RTC_LOG(LS_INFO) << __FUNCTION__;
-  mzEngine.LogI("Sucessfully connected to peer ", name);
-  OnPeerConnectedCallback();
 }
 
 void WebRTCManager::OnPeerDisconnected(int id) {
@@ -318,6 +326,7 @@ void WebRTCManager::OnMessageFromPeer(int peer_id, const std::string& message) {
       client_->SignOut();
       return;
     }
+    OnPeerConnectedCallback();
   } 
   else if (peer_id != peer_id_) {
     RTC_DCHECK(peer_id_ != -1);
@@ -450,14 +459,17 @@ void WebRTCManager::ConnectToPeer(int peer_id) {
     peer_id_ = peer_id;
     peer_connection_->CreateOffer(
         this, webrtc::PeerConnectionInterface::RTCOfferAnswerOptions());
+    OnPeerConnectedCallback();
   }
 }
 
+//TODO: Make Add Track an API for WebRTCPlugin
 void WebRTCManager::AddTracks() {
   if (!peer_connection_->GetSenders().empty()) {
     return;  // Already added tracks.
   }
 
+  //TODO: Do NOT add Audio Track
   rtc::scoped_refptr<webrtc::AudioTrackInterface> audio_track(
       peer_connection_factory_->CreateAudioTrack(
           kAudioLabel,

@@ -79,6 +79,8 @@ class WebRTCManager : public webrtc::PeerConnectionObserver,
 
   void SetPeerConnectedCallback(std::function<void()> callback);
   void SetPeerDisconnectedCallback(std::function<void()> callback);
+  void SetOnConnectedToServerCallback(std::function<void()> callback);
+  void SetOnDisconnectedFromServerCallback(std::function<void()> callback);
 
   void Close();
 
@@ -166,6 +168,8 @@ class WebRTCManager : public webrtc::PeerConnectionObserver,
   int peer_id = -1;
   std::function<void()> OnPeerConnectedCallback;
   std::function<void()> OnPeerDisConnectedCallback;
+  std::function<void()> OnConnectedToServerCallback;
+  std::function<void()> OnDisconnectedFromServerCallback;
 };
 
 #endif  // WEBRTC_MANAGER_H_
