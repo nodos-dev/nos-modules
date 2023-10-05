@@ -33,8 +33,10 @@
 #include "rtc_base/win32_socket_server.h"
 #include "system_wrappers/include/field_trial.h"
 #include "test/field_trial.h"
+#include "api/video/i420_buffer.h"
+#include "api/video/video_frame.h"
 #include "WebRTCManager.h"
-
+#include "RGBtoYUV420.comp.spv.dat"
 // mzNodes
 
 MZ_INIT();
@@ -43,6 +45,13 @@ MZ_REGISTER_NAME(ServerIP)
 MZ_REGISTER_NAME(Port)
 MZ_REGISTER_NAME(PeerID)
 MZ_REGISTER_NAME(WebRTCClient);
+
+MZ_REGISTER_NAME(RGBtoYUV420_Compute_Shader);
+MZ_REGISTER_NAME(RGBtoYUV420_Compute_Pass);
+MZ_REGISTER_NAME(Input);
+MZ_REGISTER_NAME(PlaneY);
+MZ_REGISTER_NAME(PlaneU);
+MZ_REGISTER_NAME(PlaneV);
 
 #define ConnectToServer  "ConnectToServer"
 #define ConnectToPeer "ConnectToPeer"
@@ -108,6 +117,7 @@ private:
 };
 
 mzWebRTCInterface mzWebRTC;
+std::pair<mz::Name, std::vector<uint8_t>> RGBtoYUV420Shader;
 
 struct WebRTCNodeContext : mz::NodeContext {
 	mzUUID InputPinUUID;
@@ -115,15 +125,26 @@ struct WebRTCNodeContext : mz::NodeContext {
 	mzUUID ConnectToServerID;
 	mzUUID ConnectToPeerID;
 	std::atomic<bool> shouldSendFrame = false;
+	std::atomic<bool> shouldSendHunger = true;
 	std::mutex Mutex;
+	
 	std::thread FrameSenderThread;
+	std::thread HungerSenderThread;
+
 	mzResourceShareInfo InputRGBA8 = {};
 	mzResourceShareInfo DummyInput = {};
 	mzResourceShareInfo Buf = {};
+	
+	mzResourceShareInfo PlaneY = {};
+	mzResourceShareInfo PlaneU = {};
+	mzResourceShareInfo PlaneV = {};
+
+
+
 	size_t size;
 	uint8_t* data;
 	//On Node Created
-	WebRTCNodeContext(mz::fb::Node const* node) :NodeContext(node){
+	WebRTCNodeContext(mz::fb::Node const* node) :NodeContext(node) {
 		InputRGBA8.Info.Texture.Format = MZ_FORMAT_R8G8B8A8_SRGB;
 		InputRGBA8.Info.Type = MZ_RESOURCE_TYPE_TEXTURE;
 		InputRGBA8.Info.Texture.Usage = mzImageUsage(MZ_IMAGE_USAGE_TRANSFER_SRC | MZ_IMAGE_USAGE_TRANSFER_DST);
@@ -136,21 +157,46 @@ struct WebRTCNodeContext : mz::NodeContext {
 		size = InputRGBA8.Info.Texture.Width * InputRGBA8.Info.Texture.Height * 4 * sizeof(uint8_t);
 		Buf.Info.Buffer.Size = size;
 		Buf.Info.Buffer.Usage = mzBufferUsage(MZ_BUFFER_USAGE_TRANSFER_SRC | MZ_BUFFER_USAGE_TRANSFER_DST);
+
 		data = new uint8_t[size];
 		mzEngine.Create(&Buf);
 
+		PlaneY.Info.Texture.Format = MZ_FORMAT_R8_SRGB;
+		PlaneY.Info.Type = MZ_RESOURCE_TYPE_TEXTURE;
+		PlaneY.Info.Buffer.Usage = mzBufferUsage(MZ_BUFFER_USAGE_TRANSFER_SRC | MZ_BUFFER_USAGE_TRANSFER_DST);
+		PlaneY.Info.Texture.Width = InputRGBA8.Info.Texture.Width;
+		PlaneY.Info.Texture.Height = InputRGBA8.Info.Texture.Height;
+		mzEngine.Create(&PlaneY);
+
+		PlaneU.Info.Texture.Format = MZ_FORMAT_R8_SRGB;
+		PlaneU.Info.Type = MZ_RESOURCE_TYPE_TEXTURE;
+		PlaneU.Info.Buffer.Usage = mzBufferUsage(MZ_BUFFER_USAGE_TRANSFER_SRC | MZ_BUFFER_USAGE_TRANSFER_DST);
+		PlaneU.Info.Texture.Width = InputRGBA8.Info.Texture.Width/2;
+		PlaneU.Info.Texture.Height = InputRGBA8.Info.Texture.Height/2;
+		mzEngine.Create(&PlaneU);
+
+		PlaneV.Info.Texture.Format = MZ_FORMAT_R8_SRGB;
+		PlaneV.Info.Type = MZ_RESOURCE_TYPE_TEXTURE;
+		PlaneV.Info.Buffer.Usage = mzBufferUsage(MZ_BUFFER_USAGE_TRANSFER_SRC | MZ_BUFFER_USAGE_TRANSFER_DST);
+		PlaneV.Info.Texture.Width = InputRGBA8.Info.Texture.Width/2;
+		PlaneV.Info.Texture.Height = InputRGBA8.Info.Texture.Height/2;
+		mzEngine.Create(&PlaneV);
+
 		DummyInput.Info.Texture.Format = MZ_FORMAT_R8G8B8A8_SRGB;
 		DummyInput.Info.Type = MZ_RESOURCE_TYPE_TEXTURE;
+
+
+
 		for (auto pin : *node->pins()) {
-			if(pin->show_as() == mz::fb::ShowAs::INPUT_PIN){
+			if (pin->show_as() == mz::fb::ShowAs::INPUT_PIN) {
 				InputPinUUID = *pin->id();
 			}
 		}
 		for (auto func : *node->functions()) {
-			if (strcmp(func->class_name()->c_str(),ConnectToPeer) == 0) {
+			if (strcmp(func->class_name()->c_str(), ConnectToPeer) == 0) {
 				ConnectToPeerID = *func->id();
 			}
-			else if (strcmp(func->class_name()->c_str(),ConnectToServer) == 0) {
+			else if (strcmp(func->class_name()->c_str(), ConnectToServer) == 0) {
 				ConnectToServerID = *func->id();
 			}
 		}
@@ -159,15 +205,23 @@ struct WebRTCNodeContext : mz::NodeContext {
 		mzWebRTC.manager->SetPeerDisconnectedCallback(std::bind(&WebRTCNodeContext::OnPeerDisconnected, this));
 		mzWebRTC.manager->SetOnConnectedToServerCallback(std::bind(&WebRTCNodeContext::OnConnectedToServer, this));
 		mzWebRTC.manager->SetOnDisconnectedFromServerCallback(std::bind(&WebRTCNodeContext::OnDisconnectedFromServer, this));
+		HungerSenderThread = std::thread([this]() {SendHunger(); });
 	}
 
 	~WebRTCNodeContext() override {
-
+		if (FrameSenderThread.joinable()) {
+			shouldSendFrame = false;
+			FrameSenderThread.join();
+		}
+		if (HungerSenderThread.joinable()) {
+			shouldSendHunger = false;
+			HungerSenderThread.join();
+		}
 		delete[] data;
 	}
 
 	void  OnPinValueChanged(mz::Name pinName, mzUUID pinId, mzBuffer* value) override {
-		
+
 		if (pinName == MZN_In) {
 			DummyInput = mz::DeserializeTextureInfo(value->Data);
 		}
@@ -175,7 +229,7 @@ struct WebRTCNodeContext : mz::NodeContext {
 
 	void OnPinConnected(mz::Name pinName, mzUUID connectedPin) override
 	{
-		
+
 	}
 
 
@@ -185,6 +239,10 @@ struct WebRTCNodeContext : mz::NodeContext {
 		cpy->CopyTextureTo = InputRGBA8;
 		cpy->ShouldSubmitAndWait = true;
 		return MZ_RESULT_SUCCESS;
+	}
+
+	void EndCopyTo(mzCopyInfo* cpy) override {
+		cpy->Stop = true;
 	}
 
 	void OnConnectedToServer() {
@@ -217,13 +275,13 @@ struct WebRTCNodeContext : mz::NodeContext {
 
 	void OnPeerDisconnected() {
 		shouldSendFrame = false;
-		if(FrameSenderThread.joinable())
+		if (FrameSenderThread.joinable())
 			FrameSenderThread.join();
 
 
 		flatbuffers::FlatBufferBuilder fbb;
 		mzEngine.HandleEvent(
-			mz::CreateAppEvent(fbb, mz::CreatePartialNodeUpdateDirect(fbb, &ConnectToPeerID, mz::ClearFlags::NONE, 0, 0, 0, 0, 0, 0, 0, 0, 0, mz::fb::CreateOrphanStateDirect(fbb,false))));
+			mz::CreateAppEvent(fbb, mz::CreatePartialNodeUpdateDirect(fbb, &ConnectToPeerID, mz::ClearFlags::NONE, 0, 0, 0, 0, 0, 0, 0, 0, 0, mz::fb::CreateOrphanStateDirect(fbb, false))));
 	}
 
 
@@ -235,11 +293,11 @@ struct WebRTCNodeContext : mz::NodeContext {
 
 		names[0] = MZ_NAME_STATIC(ConnectToServer);
 		fns[0] = [](void* ctx, const mzNodeExecuteArgs* nodeArgs, const mzNodeExecuteArgs* functionArgs) {
-				auto values = mz::GetPinValues(nodeArgs);
-				std::string server = mz::GetPinValue<const char>(values, MZN_ServerIP);
-				int port = *mz::GetPinValue<int>(values, MZN_Port);
-				std::string server_port = server + std::to_string(port);
-				mzWebRTC.StartConnection(server_port);
+			auto values = mz::GetPinValues(nodeArgs);
+			std::string server = mz::GetPinValue<const char>(values, MZN_ServerIP);
+			int port = *mz::GetPinValue<int>(values, MZN_Port);
+			std::string server_port = server + std::to_string(port);
+			mzWebRTC.StartConnection(server_port);
 			};
 
 		names[1] = MZ_NAME_STATIC(ConnectToPeer);
@@ -256,43 +314,131 @@ struct WebRTCNodeContext : mz::NodeContext {
 	{
 		while (shouldSendFrame)
 		{
-			flatbuffers::FlatBufferBuilder fbb;
-			std::vector<flatbuffers::Offset<mz::app::AppEvent>> Offsets;
+			auto t_start = std::chrono::high_resolution_clock::now();
+			std::unique_lock lock(Mutex);
+
+			std::vector<mzShaderBinding> inputs;
+			inputs.emplace_back(mz::ShaderBinding(MZN_Input, InputRGBA8));
+			inputs.emplace_back(mz::ShaderBinding(MZN_PlaneY, PlaneY));
+			inputs.emplace_back(mz::ShaderBinding(MZN_PlaneU, PlaneU));
+			inputs.emplace_back(mz::ShaderBinding(MZN_PlaneV, PlaneV));
+
+			mzCmd cmdRunPass;
+			mzEngine.Begin(&cmdRunPass);
+
+			auto t0 = std::chrono::high_resolution_clock::now();
+
 			{
-				std::unique_lock lock(Mutex);
-				mzCmd cmd;
-				mzEngine.Begin(&cmd);
-				mzEngine.Copy(cmd, &InputRGBA8, &Buf, 0);
-				mzEngine.End(cmd);
+				mzRunComputePassParams pass = {};
+				pass.Key = MZN_RGBtoYUV420_Compute_Pass;
+				pass.DispatchSize = mzVec2u(40,40); //local size 16x16, you should make a better way for this
+				pass.Bindings = inputs.data();
+				pass.BindingCount = inputs.size();
+				pass.Benchmark = 0;
+				mzEngine.RunComputePass(cmd, &pass);
+			}
 
+			auto t1 = std::chrono::high_resolution_clock::now();
+			mzEngine.WatchLog("WebRTC-Compute Pass Time(us)", std::to_string(std::chrono::duration_cast<std::chrono::microseconds>(t1 - t0).count()).c_str());
+
+			mzEngine.End(cmdRunPass);
+
+			rtc::scoped_refptr<webrtc::I420Buffer> buffer =
+				webrtc::I420Buffer::Create(InputRGBA8.Info.Texture.Width, InputRGBA8.Info.Texture.Height);
+			buffer->InitializeData();
+
+			t0 = std::chrono::high_resolution_clock::now();
+
+			mzCmd cmdBuildFrame;
+			mzEngine.Begin(&cmdBuildFrame);
+			{
+
+				mzEngine.Copy(cmdBuildFrame, &PlaneY, &Buf, 0);
 				auto buf2write = mzEngine.Map(&Buf);
-				memcpy(data, buf2write, size);
+				bool isY = (buf2write != nullptr);
+				if(isY)
+					memcpy(buffer->MutableDataY(), buf2write, InputRGBA8.Info.Texture.Width * InputRGBA8.Info.Texture.Height);
 
-				//TODO: Write a compute shader for RGBA to YUV420 conversion
-				if (data) {
-					mzWebRTC.mzVideoSource->PushFrame(buf2write, InputRGBA8.Info.Texture.Width, InputRGBA8.Info.Texture.Height);
+				mzEngine.Copy(cmdBuildFrame, &PlaneU, &Buf, 0);
+				buf2write = mzEngine.Map(&Buf);
+				bool isU = (buf2write != nullptr);
+				if(isU)
+					memcpy(buffer->MutableDataU(), buf2write, InputRGBA8.Info.Texture.Width/2 * InputRGBA8.Info.Texture.Height/2);
+
+				mzEngine.Copy(cmdBuildFrame, &PlaneV, &Buf, 0);
+				buf2write = mzEngine.Map(&Buf);
+				bool isV = (buf2write != nullptr);
+				if(isV)
+					memcpy(buffer->MutableDataV(), buf2write, InputRGBA8.Info.Texture.Width/2 * InputRGBA8.Info.Texture.Height/2);
+				
+				if (!(isY && isU && isV)) {
+					mzEngine.LogE("YUV420 Frame can not be built!");
+					continue;
 				}
 
-				Offsets.push_back(mz::CreateAppEventOffset(
-					fbb, mz::app::CreateScheduleRequest(fbb, mz::app::ScheduleRequestKind::PIN, &InputPinUUID, false)));
-				mzEvent hungerEvent = mz::CreateAppEvent(fbb, mz::app::CreateBatchAppEventDirect(fbb, &Offsets));
-				mzEngine.EnqueueEvent(&hungerEvent);
 			}
+
+			t1 = std::chrono::high_resolution_clock::now();
+			mzEngine.WatchLog("WebRTC-YUV420 Frame Build Time(us)", std::to_string(std::chrono::duration_cast<std::chrono::microseconds>(t1 - t0).count()).c_str());
+
+			mzEngine.End(cmdBuildFrame);
+
+
+			webrtc::VideoFrame frame =
+				webrtc::VideoFrame::Builder()
+				.set_video_frame_buffer(buffer)
+				.set_rotation(webrtc::kVideoRotation_0)
+				.set_timestamp_us(rtc::TimeMicros())
+				.build();
+
+			mzWebRTC.mzVideoSource->PushFrame(frame);
+
+			auto t_end = std::chrono::high_resolution_clock::now();
+
+			mzEngine.WatchLog("WebRTC Client Run Time(us)", std::to_string(std::chrono::duration_cast<std::chrono::microseconds>(t_end - t_start).count()).c_str());
+
+			
+
+		}
+	}
+
+	void SendHunger() {
+
+		while (shouldSendHunger) {
+			flatbuffers::FlatBufferBuilder fbb;
+			std::vector<flatbuffers::Offset<mz::app::AppEvent>> Offsets;
+			Offsets.push_back(mz::CreateAppEventOffset(
+				fbb, mz::app::CreateScheduleRequest(fbb, mz::app::ScheduleRequestKind::PIN, &InputPinUUID, false)));
+			mzEvent hungerEvent = mz::CreateAppEvent(fbb, mz::app::CreateBatchAppEventDirect(fbb, &Offsets));
+			mzEngine.EnqueueEvent(&hungerEvent);
 		}
 	}
 
 	static mzResult GetShaders(size_t* outCount, mzShaderInfo* outShaders) {
-		*outCount = 0;
+		*outCount = 1;
+		if (!outShaders)
+			return MZ_RESULT_SUCCESS;
+
+		*outShaders++ = {
+		.Key = RGBtoYUV420Shader.first,
+		.Source = {.SpirvBlob = { RGBtoYUV420Shader.second.data(), RGBtoYUV420Shader.second.size() }},
+		};
 		return MZ_RESULT_SUCCESS;
+
 	}
 
 	static mzResult GetPasses(size_t* count, mzPassInfo* passes) {
-		*count = 0;
+
+		*count = 1;
+
 		if (!passes)
 			return MZ_RESULT_SUCCESS;
+		*passes++ = {
+			.Key = MZN_RGBtoYUV420_Compute_Pass, .Shader = MZN_RGBtoYUV420_Compute_Shader, .MultiSample = 1
+		};
 
 		return MZ_RESULT_SUCCESS;
-	}
+	};
 };
 
 extern "C"
@@ -305,8 +451,8 @@ extern "C"
 
 		MZ_BIND_NODE_CLASS(MZN_WebRTCClient, WebRTCNodeContext, outFunctions[0]);
 
+		RGBtoYUV420Shader = { MZN_RGBtoYUV420_Compute_Shader, {std::begin(RGBtoYUV420_comp_spv), std::end(RGBtoYUV420_comp_spv)} };
 
 		return MZ_RESULT_SUCCESS;
 	}
 }
-

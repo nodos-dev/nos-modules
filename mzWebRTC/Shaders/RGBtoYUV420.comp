@@ -1,0 +1,39 @@
+#version 450
+
+layout(local_size_x = 16, local_size_y = 9) in;
+
+layout(binding = 0, rgba8) uniform readonly image2D Input;
+layout(binding = 1, r8) uniform writeonly image2D PlaneY;
+layout(binding = 2, r8) uniform writeonly image2D PlaneU;
+layout(binding = 3, r8) uniform writeonly image2D PlaneV;
+
+const mat3 rgb_to_yuv_bt709 = mat3(
+     0.2126,  0.7152,  0.0722,
+    -0.09991, -0.33609,  0.436,
+     0.615, -0.55861, -0.05639
+);
+
+const mat3 rgb_to_yuv_bt601 = mat3(
+     0.299,  0.587,  0.114,
+    -0.14713, -0.28886,  0.436,
+     0.615, -0.51499, -0.10001
+);
+
+void smooth_subsample(){
+ //make an average to neighboring pixels while subsampling u and v
+}
+
+void main() {
+    ivec2 uv = ivec2(gl_GlobalInvocationID.xy);
+
+    vec3 rgb = imageLoad(Input, uv).rgb;
+
+	vec3 yuv = rgb_to_yuv_bt709 * rgb;
+
+    imageStore(PlaneY, uv, vec4(yuv.x));
+
+    if (uv.x % 2 == 0 && uv.y % 2 == 0) {
+        imageStore(PlaneU, uv / 2, vec4(yuv.y));
+        imageStore(PlaneV, uv / 2, vec4(yuv.z));
+    }
+}

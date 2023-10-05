@@ -47,8 +47,7 @@ public:
 	virtual ~CustomVideoSource() = default;
 
 	void StartThread();
-	void MaybePushFrame();
-	void PushFrame(uint8_t* data, int width, int height);
+	void PushFrame(webrtc::VideoFrame frame);
 
 	/* Begin UE::PixelStreaming::AdaptedVideoTrackSource overrides */
 	virtual webrtc::MediaSourceInterface::SourceState state() const override { return CurrentState; }
