@@ -369,14 +369,15 @@ CopyThread::DMAInfo CopyThread::GetDMAInfo(mzResourceShareInfo& buffer, u32 doub
 	};
 }
 
-bool CopyThread::WaitForVBL(mzTextureFieldType fieldType)
+bool CopyThread::WaitForVBL(mzTextureFieldType writeField)
 {
 	bool ret;
-	auto ajaFieldID = GetAJAFieldID(fieldType);
 	if (Interlaced())
 	{
-		ret = IsInput() ? Client->Device->WaitForInputFieldID(ajaFieldID, Channel)
-						: Client->Device->WaitForOutputFieldID(ajaFieldID, Channel);
+		auto waitField = Flipped(writeField);
+		auto fieldId = GetAJAFieldID(waitField);
+		ret = IsInput() ? Client->Device->WaitForInputFieldID(fieldId, Channel)
+						: Client->Device->WaitForOutputFieldID(fieldId, Channel);
 	}
 	else
 	{
@@ -440,12 +441,10 @@ void CopyThread::AJAInputProc()
 
 		if (!WaitForVBL(currentField))
 		{
-			mzEngine.LogW("Unable to wait for field: %d", currentField);
 			currentField = Flipped(currentField);
 			Orphan(true, "AJA Input has no signal");
 			while (!WaitForVBL(currentField))
 			{
-				mzEngine.LogW("Second time: Unable to wait for field: %d", currentField);
 				currentField = Flipped(currentField);
 				if (!Run || GpuRing->Exit || CpuRing->Exit)
 				{
@@ -618,8 +617,7 @@ void CopyThread::AJAOutputProc()
 
 		auto field = sourceCpuRingSlot->Res.Info.Texture.FieldType;
 
-		auto waitField = Flipped(field);
-		if (!WaitForVBL(waitField))
+		if (!WaitForVBL(field))
 			break;
 
 		ULWord vblCount;
