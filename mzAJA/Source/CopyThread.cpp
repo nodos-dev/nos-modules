@@ -466,7 +466,6 @@ void CopyThread::AJAInputProc()
 		CPURing::Resource* targetCpuRingSlot = nullptr;
 		if (totalFrameCount >= ringSize || (!(targetCpuRingSlot = CpuRing->TryPush())))
 		{
-			mzEngine.LogW("Input %s dropped: Unable to push new frame to mediaz", Name().AsCStr());
 			DropCount++;
 			GpuRing->ResetFrameCount = true;
 			framesSinceLastDrop = 0;
