@@ -782,17 +782,18 @@ void CopyThread::OutputConversionThread::Consume(const Parameters& params)
 	while ((inInterlaced && outInterlaced) && incomingField != wantedField)
 	{
 		params.GR->EndPop(incoming);
-		*params.TransferInProgress = false;
 		mzEngine.LogW("%s field mismatch: Waiting for a new frame!", Parent->Name().AsCStr());
 		flatbuffers::FlatBufferBuilder fbb;
 		auto id = Parent->Client->GetPinId(Parent->PinName);
-		auto hungerSignal =
-			CreateAppEvent(fbb, mz::app::CreateScheduleRequest(fbb, mz::app::ScheduleRequestKind::PIN, &id, false));
+		auto hungerSignal = CreateAppEvent(fbb, mz::app::CreateScheduleRequest(fbb, mz::app::ScheduleRequestKind::PIN, &id, false));
 		mzEngine.HandleEvent(hungerSignal);
 		incoming = params.GR->BeginPop();
 		if (!incoming)
+		{
+			*params.TransferInProgress = false;
+			params.CR->EndPush(outgoing);
 			return;
-		*params.TransferInProgress = true;
+		}
 		incomingField = incoming->Res.Info.Texture.FieldType;
 		inInterlaced = IsTextureFieldTypeInterlaced(incomingField);
 	}
