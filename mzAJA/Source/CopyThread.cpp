@@ -152,7 +152,7 @@ void CopyThread::StartThread()
 		Worker->Start();
 		flatbuffers::FlatBufferBuilder fbb;
 		// TODO: Add mzEngine.SetThreadName call.
-		mzEngine.HandleEvent(CreateAppEvent(fbb, mz::app::CreateSetThreadNameDirect(fbb, (u64)Thread.native_handle(), (threadName + " Conversion Thread").c_str())));
+		mzEngine.HandleEvent(CreateAppEvent(fbb, mz::app::CreateSetThreadNameDirect(fbb, (u64)Worker->GetNativeHandle(), (threadName + " Conversion Thread").c_str())));
 		switch (this->PinKind)
 		{
 		default:
@@ -168,7 +168,7 @@ void CopyThread::StartThread()
 	});
 
 	flatbuffers::FlatBufferBuilder fbb;
-	mzEngine.HandleEvent(CreateAppEvent(fbb, mz::app::CreateSetThreadNameDirect(fbb, (u64)Thread.native_handle(), threadName.c_str())));
+	mzEngine.HandleEvent(CreateAppEvent(fbb, mz::app::CreateSetThreadNameDirect(fbb, (u64)Thread.native_handle(), (threadName + " DMA Thread").c_str())));
 }
 
 mzVec2u CopyThread::Extent() const
