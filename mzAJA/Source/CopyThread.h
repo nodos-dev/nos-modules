@@ -180,7 +180,7 @@ struct CopyThread : TrackSync
     void SendDeleteRequest();
     void ChangePinResolution(mzVec2u res);
     void InputUpdate(AJADevice::Mode &prevMode);
-	bool WaitForVBL(mzTextureFieldType fieldType);
+	bool WaitForVBL(mzTextureFieldType writeField);
 	
 	void Refresh();
     bool IsQuad() const;
