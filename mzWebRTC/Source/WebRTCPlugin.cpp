@@ -152,8 +152,8 @@ struct WebRTCNodeContext : mz::NodeContext {
 		InputRGBA8.Info.Texture.Format = MZ_FORMAT_B8G8R8A8_SRGB;
 		InputRGBA8.Info.Type = MZ_RESOURCE_TYPE_TEXTURE;
 		InputRGBA8.Info.Texture.Usage = mzImageUsage(MZ_IMAGE_USAGE_TRANSFER_SRC | MZ_IMAGE_USAGE_TRANSFER_DST);
-		InputRGBA8.Info.Texture.Width = 640;
-		InputRGBA8.Info.Texture.Height = 360;
+		InputRGBA8.Info.Texture.Width = 960;
+		InputRGBA8.Info.Texture.Height = 540;
 
 		mzEngine.Create(&InputRGBA8);
 
@@ -350,7 +350,7 @@ struct WebRTCNodeContext : mz::NodeContext {
 			{
 				mzRunComputePassParams pass = {};
 				pass.Key = MZN_RGBtoYUV420_Compute_Pass;
-				pass.DispatchSize = mzVec2u(40,40); //local size 16x16, you should make a better way for this
+				pass.DispatchSize = mzVec2u(40,45); //local size 16x16, you should make a better way for this
 				pass.Bindings = inputs.data();
 				pass.BindingCount = inputs.size();
 				pass.Benchmark = 0;
