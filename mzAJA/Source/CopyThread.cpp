@@ -782,10 +782,12 @@ void CopyThread::OutputConversionThread::Consume(const Parameters& params)
 	while ((inInterlaced && outInterlaced) && incomingField != wantedField)
 	{
 		params.GR->EndPop(incoming);
+		*params.TransferInProgress = false;
 		mzEngine.LogW("%s field mismatch: Waiting for a new frame!", Parent->Name().AsCStr());
 		incoming = params.GR->BeginPop();
 		if (!incoming)
 			return;
+		*params.TransferInProgress = true;
 		incomingField = incoming->Res.Info.Texture.FieldType;
 		inInterlaced = IsTextureFieldTypeInterlaced(incomingField);
 	}
