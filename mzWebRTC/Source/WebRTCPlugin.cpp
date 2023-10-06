@@ -87,7 +87,9 @@ public:
 	/// </summary>
 	void StartConnection(std::string server_port) {
 		webrtcTaskQueue->push({ EWebRTCTasks::eLOGIN,std::make_shared<std::string>(server_port)});
-		RTCThread = std::thread([this]() {StartRTCThread(); });
+
+		if(!RTCThread.joinable())
+			RTCThread = std::thread([this]() {StartRTCThread(); });
 	}
 
 	void PushTask(EWebRTCTasks task, std::shared_ptr<void> data) {
@@ -139,13 +141,15 @@ struct WebRTCNodeContext : mz::NodeContext {
 	mzResourceShareInfo PlaneU = {};
 	mzResourceShareInfo PlaneV = {};
 
-
+	mzResourceShareInfo BufY = {};
+	mzResourceShareInfo BufU = {};
+	mzResourceShareInfo BufV = {};
 
 	size_t size;
 	uint8_t* data;
 	//On Node Created
 	WebRTCNodeContext(mz::fb::Node const* node) :NodeContext(node) {
-		InputRGBA8.Info.Texture.Format = MZ_FORMAT_R8G8B8A8_SRGB;
+		InputRGBA8.Info.Texture.Format = MZ_FORMAT_B8G8R8A8_SRGB;
 		InputRGBA8.Info.Type = MZ_RESOURCE_TYPE_TEXTURE;
 		InputRGBA8.Info.Texture.Usage = mzImageUsage(MZ_IMAGE_USAGE_TRANSFER_SRC | MZ_IMAGE_USAGE_TRANSFER_DST);
 		InputRGBA8.Info.Texture.Width = 640;
@@ -182,7 +186,22 @@ struct WebRTCNodeContext : mz::NodeContext {
 		PlaneV.Info.Texture.Height = InputRGBA8.Info.Texture.Height/2;
 		mzEngine.Create(&PlaneV);
 
-		DummyInput.Info.Texture.Format = MZ_FORMAT_R8G8B8A8_SRGB;
+		BufY.Info.Type = MZ_RESOURCE_TYPE_BUFFER;
+		BufY.Info.Buffer.Size = InputRGBA8.Info.Texture.Width * InputRGBA8.Info.Texture.Height * sizeof(uint8_t);
+		BufY.Info.Buffer.Usage = mzBufferUsage(MZ_BUFFER_USAGE_TRANSFER_SRC | MZ_BUFFER_USAGE_TRANSFER_DST);
+		mzEngine.Create(&BufY);
+
+		BufU.Info.Type = MZ_RESOURCE_TYPE_BUFFER;
+		BufU.Info.Buffer.Size = InputRGBA8.Info.Texture.Width / 2 * InputRGBA8.Info.Texture.Height / 2 * sizeof(uint8_t);
+		BufU.Info.Buffer.Usage = mzBufferUsage(MZ_BUFFER_USAGE_TRANSFER_SRC | MZ_BUFFER_USAGE_TRANSFER_DST);
+		mzEngine.Create(&BufU);
+
+		BufV.Info.Type = MZ_RESOURCE_TYPE_BUFFER;
+		BufV.Info.Buffer.Size = InputRGBA8.Info.Texture.Width / 2 * InputRGBA8.Info.Texture.Height / 2 * sizeof(uint8_t);
+		BufV.Info.Buffer.Usage = mzBufferUsage(MZ_BUFFER_USAGE_TRANSFER_SRC | MZ_BUFFER_USAGE_TRANSFER_DST);
+		mzEngine.Create(&BufV);
+
+		DummyInput.Info.Texture.Format = MZ_FORMAT_B8G8R8A8_SRGB;
 		DummyInput.Info.Type = MZ_RESOURCE_TYPE_TEXTURE;
 
 
@@ -335,7 +354,7 @@ struct WebRTCNodeContext : mz::NodeContext {
 				pass.Bindings = inputs.data();
 				pass.BindingCount = inputs.size();
 				pass.Benchmark = 0;
-				mzEngine.RunComputePass(cmd, &pass);
+				mzEngine.RunComputePass(cmdRunPass, &pass);
 			}
 
 			auto t1 = std::chrono::high_resolution_clock::now();
@@ -352,24 +371,26 @@ struct WebRTCNodeContext : mz::NodeContext {
 			mzCmd cmdBuildFrame;
 			mzEngine.Begin(&cmdBuildFrame);
 			{
-
-				mzEngine.Copy(cmdBuildFrame, &PlaneY, &Buf, 0);
-				auto buf2write = mzEngine.Map(&Buf);
-				bool isY = (buf2write != nullptr);
+				mzEngine.Copy(cmdBuildFrame, &PlaneY, &BufY, 0);
+				auto dataY = mzEngine.Map(&BufY);
+				bool isY = (dataY != nullptr);
+				int strideY = buffer->StrideY();
 				if(isY)
-					memcpy(buffer->MutableDataY(), buf2write, InputRGBA8.Info.Texture.Width * InputRGBA8.Info.Texture.Height);
+					memcpy(buffer->MutableDataY(), dataY, InputRGBA8.Info.Texture.Width * InputRGBA8.Info.Texture.Height);
 
-				mzEngine.Copy(cmdBuildFrame, &PlaneU, &Buf, 0);
-				buf2write = mzEngine.Map(&Buf);
-				bool isU = (buf2write != nullptr);
+				mzEngine.Copy(cmdBuildFrame, &PlaneU, &BufU, 0);
+				auto dataU = mzEngine.Map(&BufU);
+				bool isU = (dataU != nullptr);
+				int strideU = buffer->StrideU();
 				if(isU)
-					memcpy(buffer->MutableDataU(), buf2write, InputRGBA8.Info.Texture.Width/2 * InputRGBA8.Info.Texture.Height/2);
+					memcpy(buffer->MutableDataU(), dataU, InputRGBA8.Info.Texture.Width/2 * InputRGBA8.Info.Texture.Height/2);
 
-				mzEngine.Copy(cmdBuildFrame, &PlaneV, &Buf, 0);
-				buf2write = mzEngine.Map(&Buf);
-				bool isV = (buf2write != nullptr);
+				mzEngine.Copy(cmdBuildFrame, &PlaneV, &BufV, 0);
+				auto dataV = mzEngine.Map(&BufV);
+				bool isV = (dataV != nullptr);
+				int strideV = buffer->StrideV();
 				if(isV)
-					memcpy(buffer->MutableDataV(), buf2write, InputRGBA8.Info.Texture.Width/2 * InputRGBA8.Info.Texture.Height/2);
+					memcpy(buffer->MutableDataV(), dataV, InputRGBA8.Info.Texture.Width/2 * InputRGBA8.Info.Texture.Height/2);
 				
 				if (!(isY && isU && isV)) {
 					mzEngine.LogE("YUV420 Frame can not be built!");
