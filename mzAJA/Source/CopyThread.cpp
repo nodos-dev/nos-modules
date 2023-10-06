@@ -577,7 +577,8 @@ void CopyThread::NotifyDrop()
 
 u32 CopyThread::TotalFrameCount()
 {
-	return CpuRing->TotalFrameCount() + GpuRing->TotalFrameCount() - (TransferInProgress ? 1 : 0);
+	assert(CpuRing->TotalFrameCount() + GpuRing->TotalFrameCount() != 0 || !TransferInProgress);
+	return std::max(0, int(CpuRing->TotalFrameCount() + GpuRing->TotalFrameCount()) - (TransferInProgress ? 1 : 0));
 }
 
 void CopyThread::AJAOutputProc()
@@ -700,6 +701,7 @@ void CopyThread::InputConversionThread::Consume(CopyThread::Parameters const& pa
 	if (!destGPURes)
 	{
 		params.CR->EndPop(sourceCPUSlot);
+		*params.TransferInProgress = false;
 		return;
 	}
 
@@ -768,6 +770,7 @@ void CopyThread::OutputConversionThread::Consume(const Parameters& params)
 	if (!outgoing)
 	{
 		params.GR->EndPop(incoming);
+		*params.TransferInProgress = false;
 		return;
 	}
 
