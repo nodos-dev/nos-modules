@@ -415,6 +415,8 @@ void CopyThread::AJAInputProc()
 	DropCount = 0;
 	u32 framesSinceLastDrop = 0;
 
+	u64 frameCount = 0;
+
 	while (Run && !GpuRing->Exit)
 	{
 		SendRingStats();
@@ -438,10 +440,12 @@ void CopyThread::AJAInputProc()
 
 		if (!WaitForVBL(currentField))
 		{
+			mzEngine.LogW("Unable to wait for field: %d", currentField);
 			currentField = Flipped(currentField);
 			Orphan(true, "AJA Input has no signal");
 			while (!WaitForVBL(currentField))
 			{
+				mzEngine.LogW("Second time: Unable to wait for field: %d", currentField);
 				currentField = Flipped(currentField);
 				if (!Run || GpuRing->Exit || CpuRing->Exit)
 				{
@@ -453,15 +457,8 @@ void CopyThread::AJAInputProc()
 			InputUpdate(prevMode);
 			Orphan(false);
 		}
-		
-		auto fieldId = (u32(currentField) - 1);
 
-		NTV2RegisterReads regs = {
-			NTV2RegInfo(kRegRXSDI1FrameCountLow + Channel * (kRegRXSDI2FrameCountLow - kRegRXSDI1FrameCountLow))};
-		Client->Device->ReadRegisters(regs);
-		params.FrameNumber = regs.front().registerValue;
-		if (Interlaced())
-			params.FrameNumber = params.FrameNumber * 2 + fieldId;
+		params.FrameNumber = frameCount++;
 
 		int ringSize = GetRingSize();
 		int totalFrameCount = TotalFrameCount();
@@ -469,6 +466,7 @@ void CopyThread::AJAInputProc()
 		CPURing::Resource* targetCpuRingSlot = nullptr;
 		if (totalFrameCount >= ringSize || (!(targetCpuRingSlot = CpuRing->TryPush())))
 		{
+			mzEngine.LogW("Input %s dropped: Unable to push new frame to mediaz", Name().AsCStr());
 			DropCount++;
 			GpuRing->ResetFrameCount = true;
 			framesSinceLastDrop = 0;
@@ -479,6 +477,7 @@ void CopyThread::AJAInputProc()
 		params.T0 = Clock::now();
 		if (Interlaced())
 		{
+			auto fieldId = (u32(currentField) - 1);
 			Client->Device->DMAReadSegments(FrameIndex,
 											Buf,									// target CPU buffer address
 											fieldId * Pitch, // source AJA buffer address
@@ -628,9 +627,9 @@ void CopyThread::AJAOutputProc()
 		Client->Device->GetOutputVerticalInterruptCount(vblCount, Channel);
 		
 		// Drop calculations:
-		if (vblCount > lastVBLCount + 1)
+		if (vblCount > lastVBLCount + 1 + Interlaced())
 		{
-			DropCount += vblCount - lastVBLCount - 1;
+			DropCount += vblCount - lastVBLCount - 1 - Interlaced();
 			framesSinceLastDrop = 0;
 			mzEngine.LogW("AJA Out: %s dropped while waiting for a frame", Name().AsCStr());
 		}
@@ -709,11 +708,9 @@ void CopyThread::InputConversionThread::Consume(CopyThread::Parameters const& pa
 
 	std::vector<mzShaderBinding> inputs;
 
-	glm::mat4 colorspace = params.Colorspace; // glm::inverse(Cpy->GetMatrix<f64>());
-
 	uint32_t iflags = (params.Interlaced() ? u32(params.FieldType) : 0) | (params.Shader == ShaderType::Comp10) << 2;
 
-	inputs.emplace_back(ShaderBinding(MZN_Colorspace, colorspace));
+	inputs.emplace_back(ShaderBinding(MZN_Colorspace, params.Colorspace));
 	inputs.emplace_back(ShaderBinding(MZN_Source, params.CompressedTex->Res));
 	inputs.emplace_back(ShaderBinding(MZN_Interlaced, iflags));
 	inputs.emplace_back(ShaderBinding(MZN_ssbo, params.SSBO->Res));
@@ -763,23 +760,22 @@ void CopyThread::OutputConversionThread::Consume(const Parameters& params)
 {
 	if (Field == MZ_TEXTURE_FIELD_TYPE_UNKNOWN)
 		Field = Parent->Interlaced() ? MZ_TEXTURE_FIELD_TYPE_EVEN : MZ_TEXTURE_FIELD_TYPE_PROGRESSIVE;
-		
-	auto outgoing = params.CR->BeginPush();
-	if (!outgoing)
-		return;
-	*params.TransferInProgress = true;
-
-	auto wantedField = Field;
-	bool outInterlaced = IsTextureFieldTypeInterlaced(wantedField);
-
-	outgoing->Res.Info.Texture.FieldType = Field;
 
 	auto incoming = params.GR->BeginPop();
 	if (!incoming)
+		return;
+
+	*params.TransferInProgress = true;
+
+	auto outgoing = params.CR->BeginPush();
+	if (!outgoing)
 	{
-		params.CR->EndPush(outgoing);
+		params.GR->EndPop(incoming);
 		return;
 	}
+
+	auto wantedField = Field;
+	bool outInterlaced = IsTextureFieldTypeInterlaced(wantedField);
 
 	auto incomingField = incoming->Res.Info.Texture.FieldType;
 	bool inInterlaced = IsTextureFieldTypeInterlaced(incomingField);
@@ -789,13 +785,11 @@ void CopyThread::OutputConversionThread::Consume(const Parameters& params)
 		mzEngine.LogW("%s field mismatch: Waiting for a new frame!", Parent->Name().AsCStr());
 		incoming = params.GR->BeginPop();
 		if (!incoming)
-		{
-			params.CR->EndPush(outgoing);
 			return;
-		}
 		incomingField = incoming->Res.Info.Texture.FieldType;
-		inInterlaced = incomingField != MZ_TEXTURE_FIELD_TYPE_PROGRESSIVE && incomingField != MZ_TEXTURE_FIELD_TYPE_UNKNOWN;
+		inInterlaced = IsTextureFieldTypeInterlaced(incomingField);
 	}
+	outgoing->Res.Info.Texture.FieldType = wantedField;
 	
 	// 0th bit: is out even
 	// 1st bit: is out odd
