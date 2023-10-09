@@ -39,6 +39,8 @@ enum Utilities : int
 	Time,
 	ReadImage,
 	WriteImage,
+	Interlace,
+	Deinterlace,
 	Count
 };
 
@@ -48,6 +50,8 @@ void RegisterReadImage(mzNodeFunctions*);
 void RegisterWriteImage(mzNodeFunctions*);
 void RegisterChannelViewer(mzNodeFunctions*);
 void RegisterResize(mzNodeFunctions*);
+void RegisterInterlace(mzNodeFunctions*);
+void RegisterDeinterlace(mzNodeFunctions*);
 
 extern "C"
 {
@@ -94,6 +98,8 @@ MZAPI_ATTR mzResult MZAPI_CALL mzExportNodeFunctions(size_t* outSize, mzNodeFunc
 			GEN_CASE_CPU_NODE(WriteImage)
 			GEN_CASE_CPU_NODE(ChannelViewer)
 			GEN_CASE_CPU_NODE(Resize)
+			GEN_CASE_CPU_NODE(Interlace)
+			GEN_CASE_CPU_NODE(Deinterlace)
 		};
 	}
 	return MZ_RESULT_SUCCESS;
