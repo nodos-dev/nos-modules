@@ -1,0 +1,48 @@
+{
+    "nodes": [
+        {
+            "class_name": "Interlace",
+            "contents_type": "Job",
+            "contents": {
+              "type": "CPU"
+            },
+            "description": "Produces full frame interlaced images (even-even, odd-odd)",
+            "pins": [
+                {
+                    "name": "Input",
+                    "type_name": "mz.fb.Texture",
+                    "show_as": "INPUT_PIN",
+                    "can_show_as": "INPUT_PIN_ONLY"
+                },
+                {
+                    "name": "Output",
+                    "type_name": "mz.fb.Texture",
+                    "show_as": "OUTPUT_PIN",
+                    "can_show_as": "OUTPUT_PIN_OR_PROPERTY"
+                }
+            ]
+        },
+        {
+            "class_name": "Deinterlace",
+            "contents_type": "Job",
+            "contents": {
+              "type": "CPU"
+            },
+            "description": "Takes full frame interlaced images and produces deinterlaced images",
+            "pins": [
+                {
+                    "name": "Input",
+                    "type_name": "mz.fb.Texture",
+                    "show_as": "INPUT_PIN",
+                    "can_show_as": "INPUT_PIN_ONLY"
+                },
+                {
+                    "name": "Output",
+                    "type_name": "mz.fb.Texture",
+                    "show_as": "OUTPUT_PIN",
+                    "can_show_as": "OUTPUT_PIN_OR_PROPERTY"
+                }
+            ]
+        }
+    ]
+}

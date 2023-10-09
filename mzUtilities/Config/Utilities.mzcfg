@@ -20,7 +20,8 @@
         "TextureSwitcher.mzdef",
         "ChannelViewer.mzdef",
         "Time.mzdef",
-        "ImageIO.mzdef"
+        "ImageIO.mzdef",
+        "Interlace.mzdef"
     ],
     "custom_types": [
         "Merge.fbs",
@@ -41,6 +42,16 @@
             "category": "Media",
             "class_name": "WriteImage",
             "display_name": "Write Image"
+        },
+        {
+            "category": "Media",
+            "class_name": "Interlace",
+            "display_name": "Interlace"
+        },
+        {
+            "category": "Media",
+            "class_name": "Deinterlace",
+            "display_name": "Deinterlace"
         },
         {
             "category": "Utilities",
