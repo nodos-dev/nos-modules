@@ -75,6 +75,13 @@
                     "type_name": "float",
                     "show_as": "OUTPUT_PIN",
                     "can_show_as": "OUTPUT_PIN_OR_PROPERTY"
+                },
+                {
+                    "name": "Offset",
+                    "type_name": "float",
+                    "show_as": "PROPERTY",
+                    "can_show_as": "INPUT_PIN_OR_PROPERTY",
+                    "data": 0.0
                 }
             ]
         },
