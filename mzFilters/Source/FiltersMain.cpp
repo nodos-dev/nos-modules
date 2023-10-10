@@ -55,8 +55,8 @@ MZAPI_ATTR mzResult MZAPI_CALL mzExportNodeFunctions(size_t* outSize, mzNodeFunc
 	}
 
 #define REGISTER_NODE(NODE) \
-	outList[Filters::##NODE]->TypeName = MZ_NAME_STATIC("mz.filters." #NODE); \
-	outList[Filters::##NODE]->GetShaderSource = [](mzShaderSource* src) -> mzResult { \
+	outList[Filters::NODE]->TypeName = MZ_NAME_STATIC("mz.filters." #NODE); \
+	outList[Filters::NODE]->GetShaderSource = [](mzShaderSource* src) -> mzResult { \
 		src->SpirvBlob.Data = (void*)(NODE##_frag_spv); \
 		src->SpirvBlob.Size = sizeof(NODE##_frag_spv); \
 		return MZ_RESULT_SUCCESS; \
