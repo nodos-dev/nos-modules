@@ -20,6 +20,8 @@ include(AJAVersionConfig)
 include(GNUInstallDirs)
 add_subdirectory(${EXTERNAL_DIR}/ntv2/ajalibraries "${CMAKE_CURRENT_BINARY_DIR}/ajalibraries")
 
+set(CMAKE_DEBUG_POSTFIX "")
+
 list(APPEND DEPENDENCIES stb ajantv2)
 list(APPEND INCLUDE_FOLDERS ${EXTERNAL_DIR}
     ${EXTERNAL_DIR}/ntv2
