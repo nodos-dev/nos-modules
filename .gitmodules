@@ -7,3 +7,6 @@
 [submodule "mzCNN/External/cnn-models"]
 	path = mzCNN/External/cnn-models
 	url = https://github.com/mediaz/cnn-models.git
+[submodule "mzWebRTC/External"]
+	path = mzWebRTC/External
+	url = https://github.com/mediaz/webRTC-builds.git
