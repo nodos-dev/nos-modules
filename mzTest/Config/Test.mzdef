@@ -22,11 +22,12 @@
                             "show_as": "INPUT_PIN",
 							"description": "Function pin test description"
                         },
-                        {
-                            "name": "in2",
-                            "type_name": "double",
-                            "show_as": "INPUT_PIN"
-                        },
+                      {
+                        "name": "in2",
+                        "type_name": "double",
+                        "show_as": "INPUT_PIN" 
+
+                      },
                         {
                             "name": "out",
                             "type_name": "double",
@@ -40,7 +41,13 @@
                     "name": "double_prop",
                     "type_name": "double",
                     "show_as": "INPUT_PIN",
-					"description": "Test pin description"
+                    "description": "Test pin description",
+                    "meta_data_map": [
+                       {
+                            "key": "Tags",
+                            "value": "TestTag1,TestTag2"
+                       }]
+
                 },
                 {
                     "name": "vec3d_prop",
