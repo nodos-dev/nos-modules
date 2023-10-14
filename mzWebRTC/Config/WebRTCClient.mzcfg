@@ -1,0 +1,22 @@
+{
+    "info": {
+        "id": {
+            "name": "mz.WebRTC.Client",
+            "version": "0.1.0"
+        },
+        "description": "WebRTC Client",
+        "display_name": "WebRTCClient"
+    },
+    "node_definitions": [
+        "WebRTCClient.mzdef"
+    ],
+    "custom_types": [],
+    "binary_path": "../Binaries/WebRTCClient",
+    "associated_nodes": [
+        {
+            "category": "WebRTC|Client",
+            "class_name": "WebRTCClient",
+            "display_name": "WebRTCClient"
+        }
+    ]
+}

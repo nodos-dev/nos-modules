@@ -1,0 +1,60 @@
+    {
+    "nodes": [
+        {
+            "class_name": "WebRTCClient",
+            "contents_type": "Job",
+			"always_execute": true,
+            "contents": {
+                "type": "CPU"
+            },
+          "pins": [
+            {
+              "name": "In",
+              "type_name": "mz.fb.Texture",
+              "show_as": "INPUT_PIN",
+              "can_show_as": "INPUT_PIN_OR_PROPERTY",
+			  "live":true,
+              "data": {
+                "format": "R8G8B8A8_SRGB"
+              }
+            },
+			{   
+				"name": "ServerIP",
+				"type_name": "string",
+				"show_as": "PROPERTY",
+				"can_show_as" : "INPUT_PIN_OR_PROPERTY",
+				"data": "localhost"
+			},
+			{   
+				"name": "Port",
+				"type_name": "int",
+				"show_as": "PROPERTY",
+				"can_show_as" : "INPUT_PIN_OR_PROPERTY",
+				"data": 8888
+			},
+			{   
+				"name": "PeerID",
+				"type_name": "int",
+				"show_as": "PROPERTY",
+				"can_show_as" : "INPUT_PIN_OR_PROPERTY"
+			}
+          ],
+            "functions": [
+                {
+                    "class_name": "ConnectToServer",
+                    "contents_type": "Job",
+                    "contents": {
+                        "type": "CPU"
+                    }
+                },
+				{
+                    "class_name": "ConnectToPeer",
+                    "contents_type": "Job",
+                    "contents": {
+                        "type": "CPU"
+                    }
+                }
+            ]
+        }
+    ]
+}
