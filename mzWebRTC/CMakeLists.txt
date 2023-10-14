@@ -22,20 +22,15 @@ list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR}/External)
 find_library(webrtc NAMES webrtc.lib PATHS ${CMAKE_CURRENT_LIST_DIR}/External/lib/Release REQUIRED NO_DEFAULT_PATH)
 find_library(jsoncpp_static NAMES jsoncpp_static.lib PATHS ${CMAKE_CURRENT_LIST_DIR}/External/lib/Release REQUIRED NO_DEFAULT_PATH)
 link_directories(${CMAKE_CURRENT_LIST_DIR}/External/lib/Release)
-message("jsoncpp_static is found:")
-message(jsoncpp_static)
-add_folder_as_plugin_project("webRTC" 
+
+add_folder_as_plugin_project("mzWebRTC" 
 			"jsoncpp_static;webrtc;WinMM.Lib;dmoguids.lib;AdvAPI32.Lib;Secur32.lib;amstrmid.lib;strmiids.lib;Crypt32.Lib;wmcodecdspuuid.lib;iphlpapi.lib;msdmo.lib;"
  "${CMAKE_CURRENT_SOURCE_DIR}")
 
-set(CMAKE_BUILD_TYPE "Release")
+#Always force MD (because webrtc.lib built in Release => MD )
+target_compile_options(mzWebRTC PRIVATE
+    $<$<CXX_COMPILER_ID:MSVC>:/MD>)
+set_target_properties(mzWebRTC PROPERTIES OUTPUT_NAME "WebRTCClient")
 
-
-#webrtc.lib
-
-
-
-#target_link_libraries(webRTC Secur32.lib)
-# CMake includes
 include_directories(${CMAKE_CURRENT_LIST_DIR}/External/include)
 include_directories(${CMAKE_CURRENT_LIST_DIR}/Shaders)

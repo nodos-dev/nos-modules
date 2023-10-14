@@ -1,7 +1,6 @@
 #include "VideoSource.h"
 #include <iostream>
 #include "rtc_base/location.h"
-#include "libyuv/include/libyuv/convert.h"
 CustomVideoSource::CustomVideoSource()
 : CurrentState(webrtc::MediaSourceInterface::SourceState::kInitializing)
 {
@@ -12,7 +11,7 @@ void CustomVideoSource::StartThread() {
 
 }
 
-void CustomVideoSource::PushFrame(webrtc::VideoFrame frame)
+void CustomVideoSource::PushFrame(webrtc::VideoFrame& frame)
 {
     CurrentState = webrtc::MediaSourceInterface::SourceState::kLive;
 

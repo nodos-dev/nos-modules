@@ -224,7 +224,12 @@ struct WebRTCNodeContext : mz::NodeContext {
 		mzWebRTC.manager->SetPeerDisconnectedCallback(std::bind(&WebRTCNodeContext::OnPeerDisconnected, this));
 		mzWebRTC.manager->SetOnConnectedToServerCallback(std::bind(&WebRTCNodeContext::OnConnectedToServer, this));
 		mzWebRTC.manager->SetOnDisconnectedFromServerCallback(std::bind(&WebRTCNodeContext::OnDisconnectedFromServer, this));
-		HungerSenderThread = std::thread([this]() {SendHunger(); });
+		flatbuffers::FlatBufferBuilder fbb;
+		std::vector<flatbuffers::Offset<mz::app::AppEvent>> Offsets;
+		Offsets.push_back(mz::CreateAppEventOffset(
+			fbb, mz::app::CreateScheduleRequest(fbb, mz::app::ScheduleRequestKind::PIN, &InputPinUUID, false)));
+		mzEvent hungerEvent = mz::CreateAppEvent(fbb, mz::app::CreateBatchAppEventDirect(fbb, &Offsets));
+		mzEngine.EnqueueEvent(&hungerEvent);
 	}
 
 	~WebRTCNodeContext() override {
@@ -261,7 +266,6 @@ struct WebRTCNodeContext : mz::NodeContext {
 	}
 
 	void EndCopyTo(mzCopyInfo* cpy) override {
-		cpy->Stop = true;
 	}
 
 	void OnConnectedToServer() {
@@ -426,12 +430,7 @@ struct WebRTCNodeContext : mz::NodeContext {
 	void SendHunger() {
 
 		while (shouldSendHunger) {
-			flatbuffers::FlatBufferBuilder fbb;
-			std::vector<flatbuffers::Offset<mz::app::AppEvent>> Offsets;
-			Offsets.push_back(mz::CreateAppEventOffset(
-				fbb, mz::app::CreateScheduleRequest(fbb, mz::app::ScheduleRequestKind::PIN, &InputPinUUID, false)));
-			mzEvent hungerEvent = mz::CreateAppEvent(fbb, mz::app::CreateBatchAppEventDirect(fbb, &Offsets));
-			mzEngine.EnqueueEvent(&hungerEvent);
+			
 		}
 	}
 
