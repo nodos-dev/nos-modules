@@ -33,4 +33,3 @@ target_compile_options(mzWebRTC PRIVATE
 set_target_properties(mzWebRTC PROPERTIES OUTPUT_NAME "WebRTCClient")
 
 include_directories(${CMAKE_CURRENT_LIST_DIR}/External/include)
-include_directories(${CMAKE_CURRENT_LIST_DIR}/Shaders)
