@@ -6,7 +6,7 @@ if(WIN32)
 endif()
 
 # TODO: Make External/ajalibraries a submodule (https://github.com/aja-video/ntv2)?
-list(APPEND CMAKE_MODULE_PATH ${EXTERNAL_DIR}/ntv2/cmake)
+list(APPEND CMAKE_MODULE_PATH  ${CMAKE_CURRENT_LIST_DIR}/External/ntv2/cmake)
 
 # Caution: AJA wants C++11 standard. Change it back to our's after processing AJA
 include(AJAHelpers)
@@ -18,13 +18,14 @@ include(AJACommonVars)
 include(AJAVersionConfig)
 # CMake includes
 include(GNUInstallDirs)
-add_subdirectory(${EXTERNAL_DIR}/ntv2/ajalibraries "${CMAKE_CURRENT_BINARY_DIR}/ajalibraries")
+add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/External/ntv2/ajalibraries "${CMAKE_CURRENT_BINARY_DIR}/ajalibraries")
 
 set(CMAKE_DEBUG_POSTFIX "")
 
 list(APPEND DEPENDENCIES stb ajantv2)
 list(APPEND INCLUDE_FOLDERS ${EXTERNAL_DIR}
-    ${EXTERNAL_DIR}/ntv2
-    ${EXTERNAL_DIR}/ntv2/ajalibraries/ajantv2/src/win
-    ${EXTERNAL_DIR}/ntv2/ajalibraries/ajantv2/includes)
+    ${CMAKE_CURRENT_LIST_DIR}/External
+    ${CMAKE_CURRENT_LIST_DIR}/External/ntv2
+    ${CMAKE_CURRENT_LIST_DIR}/External/ntv2/ajalibraries/ajantv2/src/win
+    ${CMAKE_CURRENT_LIST_DIR}/External/ntv2/ajalibraries/ajantv2/includes)
 add_folder_as_plugin_project("mzAJA" "${DEPENDENCIES}" "${INCLUDE_FOLDERS}")
