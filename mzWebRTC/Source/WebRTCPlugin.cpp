@@ -37,6 +37,7 @@
 #include "api/video/video_frame.h"
 #include "WebRTCManager.h"
 #include "RGBtoYUV420.comp.spv.dat"
+#include "mzI420Buffer.h"
 // mzNodes
 
 MZ_INIT();
@@ -365,7 +366,54 @@ struct WebRTCNodeContext : mz::NodeContext {
 			mzEngine.WatchLog("WebRTC-Compute Pass Time(us)", std::to_string(std::chrono::duration_cast<std::chrono::microseconds>(t1 - t0).count()).c_str());
 
 			mzEngine.End(cmdRunPass);
+			
 
+			mzCmd cmdBuildFrame;
+			mzEngine.Begin(&cmdBuildFrame);
+			{
+				t0 = std::chrono::high_resolution_clock::now();
+
+				mzEngine.Copy(cmdBuildFrame, &PlaneY, &BufY, 0);
+				auto dataY = mzEngine.Map(&BufY);
+				bool isY = (dataY != nullptr);
+
+				mzEngine.Copy(cmdBuildFrame, &PlaneU, &BufU, 0);
+				auto dataU = mzEngine.Map(&BufU);
+				bool isU = (dataU != nullptr);
+
+				mzEngine.Copy(cmdBuildFrame, &PlaneV, &BufV, 0);
+				auto dataV = mzEngine.Map(&BufV);
+				bool isV = (dataV != nullptr);
+
+				if (!(isY && isU && isV)) {
+					mzEngine.LogE("YUV420 Frame can not be built!");
+					continue;
+				}
+
+				rtc::scoped_refptr<mzI420Buffer> buffer =
+					new mzI420Buffer(
+						InputRGBA8.Info.Texture.Width, InputRGBA8.Info.Texture.Height,
+						dataY,
+						dataU,
+						dataV);
+
+				t1 = std::chrono::high_resolution_clock::now();
+				mzEngine.WatchLog("WebRTC-YUV420 Frame Build Time(us)", std::to_string(std::chrono::duration_cast<std::chrono::microseconds>(t1 - t0).count()).c_str());
+
+
+
+				webrtc::VideoFrame frame =
+					webrtc::VideoFrame::Builder()
+					.set_video_frame_buffer(buffer)
+					.set_rotation(webrtc::kVideoRotation_0)
+					.set_timestamp_us(rtc::TimeMicros())
+					.build();
+
+				mzWebRTC.mzVideoSource->PushFrame(frame);
+			}
+			mzEngine.End(cmdBuildFrame);
+
+			/*
 			rtc::scoped_refptr<webrtc::I420Buffer> buffer =
 				webrtc::I420Buffer::Create(InputRGBA8.Info.Texture.Width, InputRGBA8.Info.Texture.Height);
 			buffer->InitializeData();
@@ -402,21 +450,8 @@ struct WebRTCNodeContext : mz::NodeContext {
 				}
 
 			}
-
-			t1 = std::chrono::high_resolution_clock::now();
-			mzEngine.WatchLog("WebRTC-YUV420 Frame Build Time(us)", std::to_string(std::chrono::duration_cast<std::chrono::microseconds>(t1 - t0).count()).c_str());
-
 			mzEngine.End(cmdBuildFrame);
-
-
-			webrtc::VideoFrame frame =
-				webrtc::VideoFrame::Builder()
-				.set_video_frame_buffer(buffer)
-				.set_rotation(webrtc::kVideoRotation_0)
-				.set_timestamp_us(rtc::TimeMicros())
-				.build();
-
-			mzWebRTC.mzVideoSource->PushFrame(frame);
+			*/
 
 			auto t_end = std::chrono::high_resolution_clock::now();
 
