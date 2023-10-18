@@ -119,20 +119,20 @@ private:
 	}
 };
 
-mzWebRTCInterface mzWebRTC;
 std::pair<mz::Name, std::vector<uint8_t>> RGBtoYUV420Shader;
+mzWebRTCInterface* p_mzWebRTC;
 
 struct WebRTCNodeContext : mz::NodeContext {
+	//mzWebRTCInterface mzWebRTC;
+	std::unique_ptr<mzWebRTCInterface> mzWebRTC = std::make_unique<mzWebRTCInterface>();
 	mzUUID InputPinUUID;
 	mzUUID NodeID;
 	mzUUID ConnectToServerID;
 	mzUUID ConnectToPeerID;
 	std::atomic<bool> shouldSendFrame = false;
-	std::atomic<bool> shouldSendHunger = true;
 	std::mutex Mutex;
 	
 	std::thread FrameSenderThread;
-	std::thread HungerSenderThread;
 
 	mzResourceShareInfo InputRGBA8 = {};
 	mzResourceShareInfo DummyInput = {};
@@ -150,6 +150,8 @@ struct WebRTCNodeContext : mz::NodeContext {
 	uint8_t* data;
 	//On Node Created
 	WebRTCNodeContext(mz::fb::Node const* node) :NodeContext(node) {
+		p_mzWebRTC = mzWebRTC.get();
+
 		InputRGBA8.Info.Texture.Format = MZ_FORMAT_B8G8R8A8_SRGB;
 		InputRGBA8.Info.Type = MZ_RESOURCE_TYPE_TEXTURE;
 		InputRGBA8.Info.Texture.Usage = mzImageUsage(MZ_IMAGE_USAGE_TRANSFER_SRC | MZ_IMAGE_USAGE_TRANSFER_DST);
@@ -221,10 +223,10 @@ struct WebRTCNodeContext : mz::NodeContext {
 			}
 		}
 		NodeID = *node->id();
-		mzWebRTC.manager->SetPeerConnectedCallback(std::bind(&WebRTCNodeContext::OnPeerConnected, this));
-		mzWebRTC.manager->SetPeerDisconnectedCallback(std::bind(&WebRTCNodeContext::OnPeerDisconnected, this));
-		mzWebRTC.manager->SetOnConnectedToServerCallback(std::bind(&WebRTCNodeContext::OnConnectedToServer, this));
-		mzWebRTC.manager->SetOnDisconnectedFromServerCallback(std::bind(&WebRTCNodeContext::OnDisconnectedFromServer, this));
+		p_mzWebRTC->manager->SetPeerConnectedCallback(std::bind(&WebRTCNodeContext::OnPeerConnected, this));
+		p_mzWebRTC->manager->SetPeerDisconnectedCallback(std::bind(&WebRTCNodeContext::OnPeerDisconnected, this));
+		p_mzWebRTC->manager->SetOnConnectedToServerCallback(std::bind(&WebRTCNodeContext::OnConnectedToServer, this));
+		p_mzWebRTC->manager->SetOnDisconnectedFromServerCallback(std::bind(&WebRTCNodeContext::OnDisconnectedFromServer, this));
 		flatbuffers::FlatBufferBuilder fbb;
 		std::vector<flatbuffers::Offset<mz::app::AppEvent>> Offsets;
 		Offsets.push_back(mz::CreateAppEventOffset(
@@ -238,10 +240,7 @@ struct WebRTCNodeContext : mz::NodeContext {
 			shouldSendFrame = false;
 			FrameSenderThread.join();
 		}
-		if (HungerSenderThread.joinable()) {
-			shouldSendHunger = false;
-			HungerSenderThread.join();
-		}
+		p_mzWebRTC->PushTask(EWebRTCTasks::eDISCONNECT, nullptr);
 		delete[] data;
 	}
 
@@ -321,14 +320,14 @@ struct WebRTCNodeContext : mz::NodeContext {
 			std::string server = mz::GetPinValue<const char>(values, MZN_ServerIP);
 			int port = *mz::GetPinValue<int>(values, MZN_Port);
 			std::string server_port = server + std::to_string(port);
-			mzWebRTC.StartConnection(server_port);
+			p_mzWebRTC->StartConnection(server_port);
 			};
 
 		names[1] = MZ_NAME_STATIC(ConnectToPeer);
 		fns[1] = [](void* ctx, const mzNodeExecuteArgs* nodeArgs, const mzNodeExecuteArgs* functionArgs) {
 			auto values = mz::GetPinValues(nodeArgs);
 			int port = *mz::GetPinValue<int>(values, MZN_PeerID);
-			mzWebRTC.PushTask(EWebRTCTasks::eCONNECT, std::make_shared<int>(port));
+			p_mzWebRTC->PushTask(EWebRTCTasks::eCONNECT, std::make_shared<int>(port));
 			};
 
 		return MZ_RESULT_SUCCESS;
@@ -409,7 +408,7 @@ struct WebRTCNodeContext : mz::NodeContext {
 					.set_timestamp_us(rtc::TimeMicros())
 					.build();
 
-				mzWebRTC.mzVideoSource->PushFrame(frame);
+				p_mzWebRTC->mzVideoSource->PushFrame(frame);
 			}
 			mzEngine.End(cmdBuildFrame);
 
@@ -459,13 +458,6 @@ struct WebRTCNodeContext : mz::NodeContext {
 
 			
 
-		}
-	}
-
-	void SendHunger() {
-
-		while (shouldSendHunger) {
-			
 		}
 	}
 

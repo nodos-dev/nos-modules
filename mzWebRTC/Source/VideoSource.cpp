@@ -26,8 +26,5 @@ void CustomVideoSource::AddRef() const {
 
 rtc::RefCountReleaseStatus CustomVideoSource::Release() const {
     const auto status = ref_count_.DecRef();
-    if (status == rtc::RefCountReleaseStatus::kDroppedLastRef) {
-    delete this;
-    }
     return status;
 }
