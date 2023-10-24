@@ -61,8 +61,16 @@ MZAPI_ATTR mzResult MZAPI_CALL mzExportNodeFunctions(size_t* outSize, mzNodeFunc
 		src->SpirvBlob.Size = sizeof(NODE##_frag_spv); \
 		return MZ_RESULT_SUCCESS; \
 	};
+#define REGISTER_NODE_LICENSED(NODE, featureName, featureMessage)								\
+		REGISTER_NODE(NODE)																		\
+		outList[Filters::NODE]->OnNodeCreated = [](const mzFbNode* node, void** outCtxPtr) {	\
+		mzEngine.RegisterFeature(*node->id(), featureName, 1, featureMessage);					\
+		};																						\
+		outList[Filters::NODE]->OnNodeDeleted = [](void* ctx, mzUUID nodeId) {					\
+		mzEngine.UnregisterFeature(nodeId, featureName);										\
+		};
 
-	REGISTER_NODE(ColorCorrect);
+	REGISTER_NODE_LICENSED(ColorCorrect, "reality.ColorCorrect", "Example unlicensed message");
 	REGISTER_NODE(Diff);
 	REGISTER_NODE(Kuwahara);
 	RegisterGaussianBlur(outList[GaussianBlur]);

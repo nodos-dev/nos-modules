@@ -74,6 +74,22 @@ MZAPI_ATTR mzResult MZAPI_CALL mzExportNodeFunctions(size_t* outSize, mzNodeFunc
 			};                                                      \
 			break;                                                  \
 	}
+#define GEN_CASE_GPU_NODE_LICENSED(name, featureName, featureMessage)							\
+	case Utilities::name: {																		\
+			node->TypeName = MZ_NAME_STATIC("mz.utilities." #name);								\
+			node->GetShaderSource = [](mzShaderSource* spirv) {									\
+				spirv->SpirvBlob = {(void*)(name##_frag_spv),									\
+						sizeof(name##_frag_spv)};												\
+				return MZ_RESULT_SUCCESS;														\
+			};																					\
+			node->OnNodeCreated = [](const mzFbNode* node, void** outCtxPtr) {					\
+					mzEngine.RegisterFeature(*node->id(), featureName, 1, featureMessage);		\
+				};																				\
+			node->OnNodeDeleted = [](void* ctx, mzUUID nodeId) {								\
+					mzEngine.UnregisterFeature(nodeId, featureName);							\
+				};																				\
+			break;																				\
+	}
 #define GEN_CASE_CPU_NODE(name) \
 	case Utilities::name: {     \
             Register##name(node);\
@@ -84,7 +100,11 @@ MZAPI_ATTR mzResult MZAPI_CALL mzExportNodeFunctions(size_t* outSize, mzNodeFunc
 	{
 		auto node = outList[i];
 		switch ((Utilities)i) {
-			GEN_CASE_GPU_NODE(Checkerboard)
+			default:
+			{
+				break;
+			}
+			GEN_CASE_GPU_NODE_LICENSED(Checkerboard, "reality.Checkerboard", "Example unlicensed message")
 			GEN_CASE_GPU_NODE(Color)
 			GEN_CASE_GPU_NODE(Gradient)
 			GEN_CASE_GPU_NODE(Offset)
