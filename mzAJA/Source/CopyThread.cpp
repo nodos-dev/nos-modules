@@ -208,6 +208,29 @@ void CopyThread::SetFrame(u32 doubleBufferIndex)
 
 u32 CopyThread::GetFrameIndex(u32 doubleBufferIndex) const { return 2 * Channel + doubleBufferIndex; }
 
+mz::fb::vec2u CopyThread::GetDeltaSeconds() const
+{
+	NTV2FrameRate frameRate = GetNTV2FrameRateFromVideoFormat(Format);
+	switch (frameRate)
+	{
+	case NTV2_FRAMERATE_6000:	return { 1, 60 };
+	case NTV2_FRAMERATE_5994:	return { 1001, 60000 };
+	case NTV2_FRAMERATE_3000:	return { 1, 30 };
+	case NTV2_FRAMERATE_2997:	return { 1001, 30000 };
+	case NTV2_FRAMERATE_2500:	return { 1, 25 };
+	case NTV2_FRAMERATE_2400:	return { 1, 24 };
+	case NTV2_FRAMERATE_2398:	return { 1001, 24000 };
+	case NTV2_FRAMERATE_5000:	return { 1, 50 };
+	case NTV2_FRAMERATE_4800:	return { 1, 48 };
+	case NTV2_FRAMERATE_4795:	return { 1001, 48000 };
+	case NTV2_FRAMERATE_12000:	return { 1, 120 };
+	case NTV2_FRAMERATE_11988:	return { 1001, 120000 };
+	case NTV2_FRAMERATE_1500:	return { 1, 15 };
+	case NTV2_FRAMERATE_1498:	return { 1001, 15000 };
+	default:					return { 1, 50 };
+	}
+}
+
 #define SSBO_SIZE 10
 
 void CopyThread::UpdateCurve(enum GammaCurve curve)
@@ -264,29 +287,6 @@ glm::mat<4,4,T> CopyThread::GetMatrix() const
 			glm::vec<4,T>(CB * V1, CT), 
 			glm::vec<4,T>(CR * V2, CT), 
 			glm::vec<4,T>(0, 0, 0,  1)));
-}
-
-float GetFrameDurationFromFrameRate(auto frameRate)
-{
-
-	switch (frameRate)
-	{
-	case NTV2_FRAMERATE_6000  : return 1.f / 60.f;
-	case NTV2_FRAMERATE_5994  : return 1001.f / 60000.f;
-	case NTV2_FRAMERATE_3000  : return 1.f / 30.f;
-	case NTV2_FRAMERATE_2997  :  return 1001.f / 30000.f;
-	case NTV2_FRAMERATE_2500  :  return 1.f / 25.f;
-	case NTV2_FRAMERATE_2400  :  return 1.f / 24.f;
-	case NTV2_FRAMERATE_2398  :  return 1001.f / 24000.f;
-	case NTV2_FRAMERATE_5000  :  return 1.f / 50.f;
-	case NTV2_FRAMERATE_4800  :  return 1.f / 48.f;
-	case NTV2_FRAMERATE_4795  :  return 1001.f / 48000.f;
-	case NTV2_FRAMERATE_12000 :  return 1.f / 120.f;
-	case NTV2_FRAMERATE_11988 : return 1001.f / 120000.f;
-	case NTV2_FRAMERATE_1500  :  return 1.f / 15.f;
-	case NTV2_FRAMERATE_1498  :  return 1001.f / 15000.f;
-	default : return .02f;
-	}
 }
 
 void CopyThread::Refresh()
@@ -550,7 +550,7 @@ mzVec2u CopyThread::GetSuitableDispatchSize() const
 void CopyThread::NotifyRestart(RestartParams const& params)
 {
 	mzEngine.LogW("%s is notifying path for restart", Name().AsCStr());
-	auto id = Client->GetPinId(mz::Name(Name()));
+	auto id = Client->GetPinId(Name());
 	auto args = Buffer::From(params);
 	mzEngine.SendPathCommand(mzPathCommand{
 		.PinId = id,
@@ -585,7 +585,8 @@ void CopyThread::AJAOutputProc()
 {
 	flatbuffers::FlatBufferBuilder fbb;
 	auto id = Client->GetPinId(PinName);
-	auto hungerSignal = CreateAppEvent(fbb, mz::app::CreateScheduleRequest(fbb, mz::app::ScheduleRequestKind::PIN, &id, false));
+	auto deltaSec = GetDeltaSeconds();
+	auto hungerSignal = CreateAppEvent(fbb, mz::app::CreateScheduleRequest(fbb, mz::app::ScheduleRequestKind::PIN, &id, false, &deltaSec));
 	mzEngine.HandleEvent(hungerSignal);
 	Orphan(false);
 	mzEngine.LogI("AJAOut (%s) Thread: %d", Name().AsCStr(), std::this_thread::get_id());
@@ -785,7 +786,7 @@ void CopyThread::OutputConversionThread::Consume(const Parameters& params)
 		mzEngine.LogW("%s field mismatch: Waiting for a new frame!", Parent->Name().AsCStr());
 		flatbuffers::FlatBufferBuilder fbb;
 		auto id = Parent->Client->GetPinId(Parent->PinName);
-		auto hungerSignal = CreateAppEvent(fbb, mz::app::CreateScheduleRequest(fbb, mz::app::ScheduleRequestKind::PIN, &id, false));
+		auto hungerSignal = CreateAppEvent(fbb, mz::app::CreateScheduleRequest(fbb, mz::app::ScheduleRequestKind::PIN, &id, false, &params.DeltaSeconds));
 		mzEngine.HandleEvent(hungerSignal);
 		incoming = params.GR->BeginPop();
 		if (!incoming)

@@ -959,6 +959,7 @@ void AJAClient::EndCopyTo(mzCopyInfo& cpy)
     params.Debug = Debug;
     params.DispatchSize = th->GetSuitableDispatchSize();
     params.TransferInProgress = &th->TransferInProgress;
+    params.DeltaSeconds = th->GetDeltaSeconds();
     th->Worker->Enqueue(params);
 }
 

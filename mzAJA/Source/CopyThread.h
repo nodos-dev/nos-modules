@@ -139,6 +139,7 @@ struct CopyThread : TrackSync
 		uint32_t Debug = 0;
 		mzVec2u DispatchSize;
 		std::atomic_bool* TransferInProgress = 0;
+		mz::fb::vec2u DeltaSeconds;
 
 		bool Interlaced() const { return !(FieldType == MZ_TEXTURE_FIELD_TYPE_PROGRESSIVE || FieldType == MZ_TEXTURE_FIELD_TYPE_UNKNOWN); }
 	};
@@ -196,6 +197,8 @@ struct CopyThread : TrackSync
 	void Restart(u32 ringSize);
     void SetFrame(u32 doubleBufferIndex);
 	u32 GetFrameIndex(u32 doubleBufferIndex) const;
+
+	mz::fb::vec2u GetDeltaSeconds() const;
 
 	struct DMAInfo
 	{

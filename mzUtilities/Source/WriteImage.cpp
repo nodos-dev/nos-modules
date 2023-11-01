@@ -161,7 +161,7 @@ struct WriteImage : NodeContext {
             auto writeImage = (WriteImage*)ctx;
             auto ids = GetPinIds(nodeArgs);
             writeImage->WriteRequested = true;
-            mzEngine.SchedulePin(ids[MZN_In]);
+            mzEngine.SchedulePin(ids[MZN_In], {0, 1});
             mzEngine.LogI("WriteImage: Write requested");
         };
 
