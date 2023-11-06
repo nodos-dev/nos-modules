@@ -909,9 +909,23 @@ bool AJAClient::BeginCopyTo(mzCopyInfo &cpy)
     auto it = Pins.find(cpy.Name); 
     if (it == Pins.end()) 
         return true;
-    
+
     auto th = *it;
-    if ((th->GetRingSize() > th->TotalFrameCount()) && (slot = th->GpuRing->TryPush()))
+
+    if (th->FieldType == MZ_TEXTURE_FIELD_TYPE_UNKNOWN && th->Interlaced())
+        th->FieldType = MZ_TEXTURE_FIELD_TYPE_EVEN;
+
+    auto wantedField = th->FieldType;
+    auto outInterlaced = IsTextureFieldTypeInterlaced(wantedField);
+    auto incomingTextureInfo = DeserializeTextureInfo(cpy.SrcPinData.Data);
+    auto incomingField = incomingTextureInfo.Info.Texture.FieldType;
+    auto inInterlaced = IsTextureFieldTypeInterlaced(incomingField);
+    if ((inInterlaced && outInterlaced) && incomingField != wantedField)
+    {
+        mzEngine.LogW("%s: Field mismatch. Waiting for a new frame.", th->PinName.AsCStr());
+        cpy.Stop = false;
+    }
+    else if ((th->GetRingSize() > th->TotalFrameCount()) && (slot = th->GpuRing->TryPush()))
 	{
 		slot->FrameNumber = cpy.FrameNumber;
         cpy.CopyTextureFrom = DeserializeTextureInfo(cpy.SrcPinData.Data);
@@ -919,6 +933,8 @@ bool AJAClient::BeginCopyTo(mzCopyInfo &cpy)
         cpy.CopyTextureTo = slot->Res;
 		cpy.ShouldSubmitAndWait = true;
 	}
+    else
+        cpy.Stop = true;
     return cpy.ShouldCopyTexture = !!(cpy.Data = slot);
 }
 
@@ -946,9 +962,11 @@ void AJAClient::EndCopyTo(mzCopyInfo& cpy)
 	auto th = *it;
 	auto res = (GPURing::Resource*)cpy.Data;
     th->GpuRing->EndPush(res);
+
     cpy.Stop = th->TotalFrameCount() >= th->GetRingSize();
 
     CopyThread::Parameters params = {};
+    params.FieldType = th->FieldType;
     params.GR = th->GpuRing;
     params.CR = th->CpuRing;
     params.Colorspace = th->GetMatrix<f64>();
@@ -960,7 +978,8 @@ void AJAClient::EndCopyTo(mzCopyInfo& cpy)
     params.DispatchSize = th->GetSuitableDispatchSize();
     params.TransferInProgress = &th->TransferInProgress;
     params.DeltaSeconds = th->GetDeltaSeconds();
-    th->Worker->Enqueue(params);
+	th->Worker->Enqueue(params);
+    th->FieldType = Flipped(th->FieldType);
 }
 
 void AJAClient::AddTexturePin(const mz::fb::Pin* pin, u32 ringSize, NTV2Channel channel,

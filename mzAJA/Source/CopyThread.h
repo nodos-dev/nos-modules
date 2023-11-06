@@ -160,10 +160,10 @@ struct CopyThread : TrackSync
 	{
 		using ConversionThread::ConversionThread;
 		void Consume(const Parameters& item) override;
-		mzTextureFieldType Field = MZ_TEXTURE_FIELD_TYPE_UNKNOWN;
 	};
 
 	ru<ConversionThread> Worker;
+	mzTextureFieldType FieldType = MZ_TEXTURE_FIELD_TYPE_UNKNOWN;
 
     CopyThread(struct AJAClient *client, u32 ringSize, u32 spareCount, mz::fb::ShowAs kind, NTV2Channel channel, 
                 NTV2VideoFormat initalFmt, 

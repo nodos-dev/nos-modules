@@ -155,8 +155,6 @@ struct MZAPI_ATTR AJAClient
     NTV2ReferenceSource Ref = NTV2_REFERENCE_EXTERNAL;
     NTV2FrameRate FR = NTV2_FRAMERATE_5994;
 
-    std::unordered_map<NTV2Channel, mzTextureFieldType> OutputFieldTypes;
-
     AJAClient(bool input, AJADevice *device);
     ~AJAClient();
 

@@ -408,11 +408,11 @@ void CopyThread::AJAInputProc()
 	u32 doubleBufferIndex = 0;
 	SetFrame(doubleBufferIndex);
 
-	mzTextureFieldType currentField = Interlaced() ? MZ_TEXTURE_FIELD_TYPE_EVEN : MZ_TEXTURE_FIELD_TYPE_PROGRESSIVE;
+	FieldType = Interlaced() ? MZ_TEXTURE_FIELD_TYPE_EVEN : MZ_TEXTURE_FIELD_TYPE_PROGRESSIVE;
 
 	Parameters params = {};
 
-	WaitForVBL(currentField);
+	WaitForVBL(FieldType);
 
 	DebugInfo.Time = std::chrono::nanoseconds(0);
 	DebugInfo.Counter = 0;
@@ -437,19 +437,19 @@ void CopyThread::AJAInputProc()
 				{
 					goto EXIT;
 				}
-				WaitForVBL(currentField);
+				WaitForVBL(FieldType);
 				InputUpdate(prevMode);
 			} while (LinkSizeMismatch());
 			Orphan(false);
 		}
 
-		if (!WaitForVBL(currentField))
+		if (!WaitForVBL(FieldType))
 		{
-			currentField = Flipped(currentField);
+			FieldType = Flipped(FieldType);
 			Orphan(true, "AJA Input has no signal");
-			while (!WaitForVBL(currentField))
+			while (!WaitForVBL(FieldType))
 			{
-				currentField = Flipped(currentField);
+				FieldType = Flipped(FieldType);
 				if (!Run || GpuRing->Exit || CpuRing->Exit)
 				{
 					goto EXIT;
@@ -479,7 +479,7 @@ void CopyThread::AJAInputProc()
 		params.T0 = Clock::now();
 		if (Interlaced())
 		{
-			auto fieldId = (u32(currentField) - 1);
+			auto fieldId = (u32(FieldType) - 1);
 			Client->Device->DMAReadSegments(FrameIndex,
 											Buf,									// target CPU buffer address
 											fieldId * Pitch, // source AJA buffer address
@@ -503,7 +503,7 @@ void CopyThread::AJAInputProc()
 			doubleBufferIndex ^= 1;
 		}
 
-		params.FieldType = currentField;
+		params.FieldType = FieldType;
 		params.T1 = Clock::now();
 		params.GR = GpuRing;
 		params.CR = CpuRing;
@@ -516,7 +516,7 @@ void CopyThread::AJAInputProc()
 		params.DispatchSize = GetSuitableDispatchSize();
 		params.TransferInProgress = & TransferInProgress;
 		Worker->Enqueue(params);
-		currentField = Flipped(currentField);
+		FieldType = Flipped(FieldType);
 	}
 EXIT:
 
@@ -762,9 +762,6 @@ CopyThread::ConversionThread::~ConversionThread()
 
 void CopyThread::OutputConversionThread::Consume(const Parameters& params)
 {
-	if (Field == MZ_TEXTURE_FIELD_TYPE_UNKNOWN)
-		Field = Parent->Interlaced() ? MZ_TEXTURE_FIELD_TYPE_EVEN : MZ_TEXTURE_FIELD_TYPE_PROGRESSIVE;
-
 	auto incoming = params.GR->BeginPop();
 	if (!incoming)
 		return;
@@ -779,29 +776,12 @@ void CopyThread::OutputConversionThread::Consume(const Parameters& params)
 		return;
 	}
 
-	auto wantedField = Field;
+	auto wantedField = params.FieldType;
 	bool outInterlaced = IsTextureFieldTypeInterlaced(wantedField);
-
 	auto incomingField = incoming->Res.Info.Texture.FieldType;
 	bool inInterlaced = IsTextureFieldTypeInterlaced(incomingField);
-	while ((inInterlaced && outInterlaced) && incomingField != wantedField)
-	{
-		params.GR->EndPop(incoming);
-		mzEngine.LogW("%s field mismatch: Waiting for a new frame!", Parent->Name().AsCStr());
-		flatbuffers::FlatBufferBuilder fbb;
-		auto id = Parent->Client->GetPinId(Parent->PinName);
-		auto hungerSignal = CreateAppEvent(fbb, mz::app::CreateScheduleRequest(fbb, mz::app::ScheduleRequestKind::PIN, &id, false, &params.DeltaSeconds));
-		mzEngine.HandleEvent(hungerSignal);
-		incoming = params.GR->BeginPop();
-		if (!incoming)
-		{
-			*params.TransferInProgress = false;
-			params.CR->EndPush(outgoing);
-			return;
-		}
-		incomingField = incoming->Res.Info.Texture.FieldType;
-		inInterlaced = IsTextureFieldTypeInterlaced(incomingField);
-	}
+	if ((inInterlaced && outInterlaced) && incomingField != wantedField)
+		mzEngine.LogE("%s field mismatch!", Parent->Name().AsCStr());
 	outgoing->Res.Info.Texture.FieldType = wantedField;
 	
 	// 0th bit: is out even
@@ -852,8 +832,6 @@ void CopyThread::OutputConversionThread::Consume(const Parameters& params)
 	params.GR->EndPop(incoming);
 	*params.TransferInProgress = false;
 	params.CR->EndPush(outgoing);
-
-	Field = Flipped(Field);
 }
 
 CopyThread::CopyThread(struct AJAClient *client, u32 ringSize, u32 spareCount, mz::fb::ShowAs kind, 
