@@ -211,24 +211,28 @@ u32 CopyThread::GetFrameIndex(u32 doubleBufferIndex) const { return 2 * Channel 
 mz::fb::vec2u CopyThread::GetDeltaSeconds() const
 {
 	NTV2FrameRate frameRate = GetNTV2FrameRateFromVideoFormat(Format);
+	mz::fb::vec2u deltaSeconds = { 1,50 };
 	switch (frameRate)
 	{
-	case NTV2_FRAMERATE_6000:	return { 1, 60 };
-	case NTV2_FRAMERATE_5994:	return { 1001, 60000 };
-	case NTV2_FRAMERATE_3000:	return { 1, 30 };
-	case NTV2_FRAMERATE_2997:	return { 1001, 30000 };
-	case NTV2_FRAMERATE_2500:	return { 1, 25 };
-	case NTV2_FRAMERATE_2400:	return { 1, 24 };
-	case NTV2_FRAMERATE_2398:	return { 1001, 24000 };
-	case NTV2_FRAMERATE_5000:	return { 1, 50 };
-	case NTV2_FRAMERATE_4800:	return { 1, 48 };
-	case NTV2_FRAMERATE_4795:	return { 1001, 48000 };
-	case NTV2_FRAMERATE_12000:	return { 1, 120 };
-	case NTV2_FRAMERATE_11988:	return { 1001, 120000 };
-	case NTV2_FRAMERATE_1500:	return { 1, 15 };
-	case NTV2_FRAMERATE_1498:	return { 1001, 15000 };
-	default:					return { 1, 50 };
+	case NTV2_FRAMERATE_6000:	deltaSeconds = { 1, 60 };
+	case NTV2_FRAMERATE_5994:	deltaSeconds = { 1001, 60000 };
+	case NTV2_FRAMERATE_3000:	deltaSeconds = { 1, 30 };
+	case NTV2_FRAMERATE_2997:	deltaSeconds = { 1001, 30000 };
+	case NTV2_FRAMERATE_2500:	deltaSeconds = { 1, 25 };
+	case NTV2_FRAMERATE_2400:	deltaSeconds = { 1, 24 };
+	case NTV2_FRAMERATE_2398:	deltaSeconds = { 1001, 24000 };
+	case NTV2_FRAMERATE_5000:	deltaSeconds = { 1, 50 };
+	case NTV2_FRAMERATE_4800:	deltaSeconds = { 1, 48 };
+	case NTV2_FRAMERATE_4795:	deltaSeconds = { 1001, 48000 };
+	case NTV2_FRAMERATE_12000:	deltaSeconds = { 1, 120 };
+	case NTV2_FRAMERATE_11988:	deltaSeconds = { 1001, 120000 };
+	case NTV2_FRAMERATE_1500:	deltaSeconds = { 1, 15 };
+	case NTV2_FRAMERATE_1498:	deltaSeconds = { 1001, 15000 };
+	default:					deltaSeconds = { 1, 50 };
 	}
+	if (Interlaced())
+		deltaSeconds.mutate_y(deltaSeconds.y() * 2);
+	return deltaSeconds;
 }
 
 #define SSBO_SIZE 10
