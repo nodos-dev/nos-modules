@@ -877,6 +877,13 @@ void AJAClient::OnPinValueChanged(mz::Name pinName, void *value)
 		auto channel = ParseChannel(pinNameStr);
 		auto pin = FindChannel(channel);
         pin->SpareCount = *(u32*)value;
+		if (pin->SpareCount >= pin->RingSize)
+		{
+			uint32_t newSpareCount = pin->RingSize - 1; 
+			pin->SpareCount = newSpareCount;
+			mzEngine.LogW("Spare count must be less than ring size! Capping spare count at %u.", newSpareCount);
+			mzEngine.SetPinValueByName(Mapping.NodeId, pinName, mzBuffer{.Data = &newSpareCount, .Size = sizeof(newSpareCount)});
+		}
     }
 }
 
@@ -892,7 +899,8 @@ bool AJAClient::BeginCopyFrom(mzCopyInfo &cpy)
         return true;
     
     auto th = *it;
-	if ((sourceSlot = th->GpuRing->TryPop(cpy.FrameNumber, th->SpareCount)))
+	auto effectiveSpareCount = th->SpareCount * (1 + u32(th->Interlaced()));
+	if ((sourceSlot = th->GpuRing->TryPop(cpy.FrameNumber, effectiveSpareCount)))
 	{
         cpy.CopyTextureTo = DeserializeTextureInfo(cpy.SrcPinData.Data);
 		cpy.CopyTextureFrom = sourceSlot->Res;
