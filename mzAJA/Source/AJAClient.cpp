@@ -772,7 +772,7 @@ void AJAClient::OnPathCommand(const mzPathCommand* cmd)
     }
     case MZ_PATH_COMMAND_TYPE_NOTIFY_NEW_CONNECTION:
     {
-        copyThread->Restart(copyThread->EffectiveRingSize);
+        copyThread->Restart(copyThread->RingSize);
         if (copyThread->IsInput() ||
             !copyThread->Thread.joinable())
             break;
