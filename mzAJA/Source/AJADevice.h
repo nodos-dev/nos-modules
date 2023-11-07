@@ -68,8 +68,6 @@ struct AJADevice : CNTV2Card
     std::atomic_bool HasInput = false;
     std::atomic_bool HasOutput = false;
 
-    static void Dealloc(void* ptr, size_t size);
-    static void* Alloc(size_t size, bool);
     static std::map<std::string, uint64_t>  EnumerateDevices();
     static std::unordered_map<std::string, std::set<NTV2VideoFormat>> StringToFormat();
 
