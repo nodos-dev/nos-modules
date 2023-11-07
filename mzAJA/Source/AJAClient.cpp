@@ -442,6 +442,8 @@ void AJAClient::OnNodeUpdate(PinMapping &&newMapping, std::unordered_map<Name, c
                 auto spareCount = pr.spare_count ? *(u32*)pr.spare_count->data()->Data() : 0;
 
                 AddTexturePin(pin, *(u32*)pr.size->data()->Data(), channel, tex, fmt, mode, cs, gc, range, spareCount);
+                if (Input)
+                    SetVideoFormatPinData(name, fmt);
             }
             else
             {
@@ -994,6 +996,13 @@ void AJAClient::DeleteTexturePin(rc<CopyThread> const& c)
 {
     c->Stop();
     Pins.erase(c);
+}
+
+void AJAClient::SetVideoFormatPinData(mz::Name pinName, NTV2VideoFormat fmt)
+{
+	std::string fmtString = NTV2VideoFormatToString(fmt, true);
+	std::vector<u8> fmtData(fmtString.data(), fmtString.data() + fmtString.size() + 1);
+	mzEngine.SetPinValueByName(Mapping.NodeId,  mz::Name(pinName.AsString() + " Video Format"), mzBuffer{.Data = fmtData.data(), .Size = fmtData.size()});
 }
 
 

@@ -323,11 +323,13 @@ void CopyThread::InputUpdate(AJADevice::Mode &prevMode)
 		const bool changeRes = GetNTV2FrameGeometryFromVideoFormat(fmt) != GetNTV2FrameGeometryFromVideoFormat(Format);
 		Refresh();
 
-		if (changeRes) ChangePinResolution(Extent());
-		auto fmtStr = NTV2VideoFormatToString(Format, true);
-		mzEngine.SetPinValueByName(Client->Mapping.NodeId, mz::Name(PinName.AsString() + " Video Format"), { fmtStr.data(), fmtStr.size() + 1});
+		if (changeRes)
+			ChangePinResolution(Extent());
+		Client->SetVideoFormatPinData(PinName, Format);
 	}
 
+	if (Interlaced() ^ IsTextureFieldTypeInterlaced(FieldType))
+		FieldType = Interlaced() ? MZ_TEXTURE_FIELD_TYPE_EVEN : MZ_TEXTURE_FIELD_TYPE_PROGRESSIVE;
 
 	if (Mode == AJADevice::AUTO)
 	{
