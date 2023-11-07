@@ -442,8 +442,6 @@ void AJAClient::OnNodeUpdate(PinMapping &&newMapping, std::unordered_map<Name, c
                 auto spareCount = pr.spare_count ? *(u32*)pr.spare_count->data()->Data() : 0;
 
                 AddTexturePin(pin, *(u32*)pr.size->data()->Data(), channel, tex, fmt, mode, cs, gc, range, spareCount);
-                if (Input)
-                    SetVideoFormatPinData(name, fmt);
             }
             else
             {
@@ -760,7 +758,7 @@ void AJAClient::OnPathCommand(const mzPathCommand* cmd)
     {
     case MZ_PATH_COMMAND_TYPE_RESTART: {
         auto* res = params.As<RestartParams>();
-        u32 ringSize = copyThread->GetRingSize();
+        u32 ringSize = copyThread->RingSize;
         if (res && res->UpdateFlags & RestartParams::UpdateRingSize)
         {
             ringSize = res->RingSize;
@@ -774,7 +772,7 @@ void AJAClient::OnPathCommand(const mzPathCommand* cmd)
     }
     case MZ_PATH_COMMAND_TYPE_NOTIFY_NEW_CONNECTION:
     {
-        copyThread->Restart(copyThread->GetRingSize());
+        copyThread->Restart(copyThread->EffectiveRingSize);
         if (copyThread->IsInput() ||
             !copyThread->Thread.joinable())
             break;
@@ -783,7 +781,7 @@ void AJAClient::OnPathCommand(const mzPathCommand* cmd)
         // we need to send a restart signal
         copyThread->NotifyRestart({ RestartParams{
             .UpdateFlags = RestartParams::UpdateRingSize,
-            .RingSize = copyThread->GetRingSize(),
+            .RingSize = copyThread->RingSize,
         } });
         break;
     }
@@ -927,7 +925,7 @@ bool AJAClient::BeginCopyTo(mzCopyInfo &cpy)
         mzEngine.LogW("%s: Field mismatch. Waiting for a new frame.", th->PinName.AsCStr());
         cpy.Stop = false;
     }
-    else if ((th->GetRingSize() > th->TotalFrameCount()) && (slot = th->GpuRing->TryPush()))
+    else if ((th->EffectiveRingSize > th->TotalFrameCount()) && (slot = th->GpuRing->TryPush()))
 	{
 		slot->FrameNumber = cpy.FrameNumber;
         cpy.CopyTextureFrom = DeserializeTextureInfo(cpy.SrcPinData.Data);
@@ -965,7 +963,7 @@ void AJAClient::EndCopyTo(mzCopyInfo& cpy)
 	auto res = (GPURing::Resource*)cpy.Data;
     th->GpuRing->EndPush(res);
 
-    cpy.Stop = th->TotalFrameCount() >= th->GetRingSize();
+    cpy.Stop = th->TotalFrameCount() >= th->EffectiveRingSize;
 
     CopyThread::Parameters params = {};
     params.FieldType = th->FieldType;
@@ -997,13 +995,5 @@ void AJAClient::DeleteTexturePin(rc<CopyThread> const& c)
     c->Stop();
     Pins.erase(c);
 }
-
-void AJAClient::SetVideoFormatPinData(mz::Name pinName, NTV2VideoFormat fmt)
-{
-	std::string fmtString = NTV2VideoFormatToString(fmt, true);
-	std::vector<u8> fmtData(fmtString.data(), fmtString.data() + fmtString.size() + 1);
-	mzEngine.SetPinValueByName(Mapping.NodeId,  mz::Name(pinName.AsString() + " Video Format"), mzBuffer{.Data = fmtData.data(), .Size = fmtData.size()});
-}
-
 
 } // namespace mz

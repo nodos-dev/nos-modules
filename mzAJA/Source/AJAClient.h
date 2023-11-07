@@ -206,8 +206,6 @@ struct MZAPI_ATTR AJAClient
                        const fb::Texture* tex, NTV2VideoFormat fmt, AJADevice::Mode mode,
                        Colorspace cs, GammaCurve gc, bool range, unsigned spareCount);
     void DeleteTexturePin(rc<CopyThread> const& c);
-    void SetVideoFormatPinData(mz::Name pinName, NTV2VideoFormat fmt);
-
 };
 
 } // namespace mz

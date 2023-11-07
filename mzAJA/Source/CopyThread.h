@@ -12,100 +12,33 @@ using Clock = std::chrono::high_resolution_clock;
 using Milli = std::chrono::duration<double, std::milli>;
 using Micro = std::chrono::duration<double, std::micro>;
 
-// almost all scheduler thread
-struct TrackSync 
-{
-    // worker thread access
-	std::mutex DroppedFramesMutex;
-	std::vector<u32> DroppedFrames;
-    std::atomic<u32> FrameIDCounter = 0; 
-    // worker thread access
-
-	u32 LastFrameID = 0;
-	u32 FramesSinceLastDrop = 0;
-	
-    bool ResetTrackNow = false;
-	bool ResetTrackWhenStable = false;
-
-
-    virtual u32 GetRingSize() = 0;
-    virtual mz::Name const& Name() const = 0;
-
-	void UpdateLastFrameID() // called from scheduler thread
-	{
-		ResetTrackNow = true;
-		ResetTrackWhenStable = false;
-		
-        FramesSinceLastDrop = 0;
-		LastFrameID = FrameIDCounter.load() - GetRingSize();
-
-		//if (true)
-		{
-			mzEngine.LogI("Resetting AJA %s", Name().AsCStr());
-		}
-	}
-	void UpdateDropCount() // called from scheduler thread
-	{
-		std::vector<u32> dropCounts;
-		DequeueDroppedFrames(dropCounts);
-		ResetTrackNow = false;
-		if (!dropCounts.empty())
-		{
-			ResetTrackWhenStable = true;
-			u32 totalDrops = 0;
-			for (const auto& dropCount : dropCounts)
-			{
-				totalDrops += dropCount;
-			}
-
-			mzEngine.LogI("Drop on %s: %ul", Name().AsCStr(), totalDrops);
-		}
-		else
-		{
-			FramesSinceLastDrop++;
-			if (ResetTrackWhenStable && FramesSinceLastDrop > 50)
-			{
-				UpdateLastFrameID();
-			}
-		}
-	}
-
-	void DequeueDroppedFrames(std::vector<u32>& dropCounts) // called from scheduler thread
-	{
-		std::lock_guard<std::mutex> ScopedLock(DroppedFramesMutex);
-		dropCounts = std::move(DroppedFrames);
-	}
-
-	void EnqueueDroppedFrames(u32 dropCount) // called from worker thread
-	{
-		std::lock_guard<std::mutex> ScopedLock(DroppedFramesMutex);
-        DroppedFrames.push_back(dropCount);
-	}
-
-};
-
 inline mzTextureFieldType Flipped(mzTextureFieldType field)
 {
 	return field == MZ_TEXTURE_FIELD_TYPE_PROGRESSIVE || field == MZ_TEXTURE_FIELD_TYPE_UNKNOWN ? field 
 		: (field == MZ_TEXTURE_FIELD_TYPE_EVEN ? MZ_TEXTURE_FIELD_TYPE_ODD : MZ_TEXTURE_FIELD_TYPE_EVEN);
 }
 
-struct CopyThread : TrackSync
+struct CopyThread
 {
 	mz::Name PinName;
 	u32 ConnectedPinCount = 0;
     std::atomic_bool Run = true;
     mz::fb::ShowAs PinKind;
+
+	// Ring
     rc<GPURing> GpuRing;
-	
     rc<CPURing> CpuRing;
+	u32 RingSize = 0;
+	u32 EffectiveRingSize = 0;
 	std::atomic_bool TransferInProgress = false; // TODO: Combine these rings into a double ring structure
 	// The ring objects above are overwritten on path restart.
 	// TODO: Find out other synchronization issues and fix them all
     std::atomic_uint32_t SpareCount = 0;
-    std::thread Thread;
+    
+	std::thread Thread;
     NTV2Channel Channel;
-    u32 DropCount = 0;
+	u32 DropCount = 0;
+	std::atomic<u32> FrameIDCounter = 0; 
     struct AJAClient *Client = 0;
     NTV2VideoFormat Format = NTV2_FORMAT_UNKNOWN;
     AJADevice::Mode Mode = AJADevice::SL;
@@ -170,14 +103,13 @@ struct CopyThread : TrackSync
                 AJADevice::Mode mode,
                 enum class Colorspace colorspace, enum class GammaCurve curve, bool narrowRange, const fb::Texture* tex);
 
-    virtual u32 GetRingSize() override;
-    virtual mz::Name const& Name() const override;
+    mz::Name const& Name() const;
 	mzVec2u GetSuitableDispatchSize() const;
 	mzVec2u Extent() const;
     bool IsInput() const;
     void AJAInputProc();
     void AJAOutputProc();
-    void CreateRings(u32 size);
+    void CreateRings();
     void SendDeleteRequest();
     void ChangePinResolution(mzVec2u res);
     void InputUpdate(AJADevice::Mode &prevMode);
@@ -194,6 +126,7 @@ struct CopyThread : TrackSync
     void PinUpdate(std::optional<mz::fb::TOrphanState>, Action live);
 
     void Stop();
+	void SetRingSize(u32 ringSize);
 	void Restart(u32 ringSize);
     void SetFrame(u32 doubleBufferIndex);
 	u32 GetFrameIndex(u32 doubleBufferIndex) const;

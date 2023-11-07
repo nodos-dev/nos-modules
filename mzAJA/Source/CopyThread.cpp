@@ -73,11 +73,6 @@ static std::vector<u16> GetGammaLUT(bool input, GammaCurve curve, u16 bits)
 	return re;
 }
 
-u32 CopyThread::GetRingSize()
-{
-	return CpuRing->Size;
-}
-
 mz::Name const& CopyThread::Name() const
 {
 	return PinName;
@@ -187,11 +182,18 @@ void CopyThread::Stop()
 		Thread.join();
 }
 
+void CopyThread::SetRingSize(u32 ringSize)
+{
+	RingSize = ringSize;
+	EffectiveRingSize = ringSize * (1 + uint32_t(Interlaced()));
+}
+
 void CopyThread::Restart(u32 ringSize)
 {
 	assert(ringSize && ringSize < 200);
+	SetRingSize(ringSize);
 	Stop();
-	CreateRings(ringSize);
+	CreateRings();
 	StartThread();
 }
 
@@ -299,15 +301,15 @@ void CopyThread::Refresh()
 	Client->Device->RouteSignal(Channel, Format, Client->Input, Mode, Client->FBFmt());
 	Format = IsInput() ? Client->Device->GetInputVideoFormat(Channel) : Format;
 	Client->Device->SetRegisterWriteMode(Interlaced() ? NTV2_REGWRITE_SYNCTOFIELD : NTV2_REGWRITE_SYNCTOFRAME, Channel);
-	CreateRings(GetRingSize());
+	CreateRings();
 }
 
-void CopyThread::CreateRings(u32 size)
+void CopyThread::CreateRings()
 {
 	const auto ext = Extent();
-	GpuRing = MakeShared<GPURing>(ext, size);
+	GpuRing = MakeShared<GPURing>(ext, EffectiveRingSize);
 	mzVec2u compressedExt((10 == BitWidth()) ? ((ext.x + (48 - ext.x % 48) % 48) / 3) << 1 : ext.x >> 1, ext.y >> u32(Interlaced()));
-	CpuRing = MakeShared<CPURing>(compressedExt, size);
+	CpuRing = MakeShared<CPURing>(compressedExt, EffectiveRingSize);
 	mzTextureInfo info = {};
 	info.Width  = compressedExt.x;
 	info.Height = compressedExt.y;
@@ -322,10 +324,11 @@ void CopyThread::InputUpdate(AJADevice::Mode &prevMode)
 	{
 		const bool changeRes = GetNTV2FrameGeometryFromVideoFormat(fmt) != GetNTV2FrameGeometryFromVideoFormat(Format);
 		Refresh();
-
 		if (changeRes)
 			ChangePinResolution(Extent());
-		Client->SetVideoFormatPinData(PinName, Format);
+		std::string fmtString = NTV2VideoFormatToString(fmt, true);
+		std::vector<u8> fmtData(fmtString.data(), fmtString.data() + fmtString.size() + 1);
+		mzEngine.SetPinValueByName(Client->Mapping.NodeId,  mz::Name(PinName.AsString() + " Video Format"), mzBuffer{.Data = fmtData.data(), .Size = fmtData.size()});
 	}
 
 	if (Interlaced() ^ IsTextureFieldTypeInterlaced(FieldType))
@@ -465,7 +468,7 @@ void CopyThread::AJAInputProc()
 
 		params.FrameNumber = frameCount++;
 
-		int ringSize = GetRingSize();
+		int ringSize = EffectiveRingSize;
 		int totalFrameCount = TotalFrameCount();
 
 		CPURing::Resource* targetCpuRingSlot = nullptr;
@@ -597,7 +600,7 @@ void CopyThread::AJAOutputProc()
 	Orphan(false);
 	mzEngine.LogI("AJAOut (%s) Thread: %d", Name().AsCStr(), std::this_thread::get_id());
 
-	while (Run && !CpuRing->Exit && TotalFrameCount() < GetRingSize())
+	while (Run && !CpuRing->Exit && TotalFrameCount() < EffectiveRingSize)
 		std::this_thread::yield();
 
 	//Reset interrupt event status
@@ -843,7 +846,6 @@ CopyThread::CopyThread(struct AJAClient *client, u32 ringSize, u32 spareCount, m
 	: PinName(GetChannelStr(channel, mode)), Client(client), PinKind(kind), Channel(channel), SpareCount(spareCount), Mode(mode),
 	  Colorspace(colorspace), GammaCurve(curve), NarrowRange(narrowRange), Format(initalFmt)
 {
-
 	{
 		mzBufferInfo info = {};
 		info.Size = (1<<(SSBO_SIZE)) * sizeof(u16);
@@ -852,14 +854,11 @@ CopyThread::CopyThread(struct AJAClient *client, u32 ringSize, u32 spareCount, m
 		UpdateCurve(GammaCurve);
 	}
 
-	if(IsInput())
-	{
-		Format = client->Device->GetInputVideoFormat(channel);
-	}
+	SetRingSize(ringSize);
 
 	client->Device->SetRegisterWriteMode(Interlaced() ? NTV2_REGWRITE_SYNCTOFIELD : NTV2_REGWRITE_SYNCTOFRAME, Channel);
 
-	CreateRings(ringSize);
+	CreateRings();
 	StartThread();
 }
 

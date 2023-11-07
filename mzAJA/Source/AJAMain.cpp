@@ -278,7 +278,7 @@ struct AJA
         for (auto c : AJAClient::Ctx.Clients)
             for (auto& p : c->Pins)
             {
-                p->CreateRings(p->GetRingSize());
+                p->CreateRings();
                 p->StartThread();
             }
     }
