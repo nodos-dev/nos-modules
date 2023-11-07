@@ -8,24 +8,18 @@ MZ_REGISTER_NAME(Time_Shader);
 MZ_REGISTER_NAME_SPACED(Mz_Utilities_Time, "mz.utilities.Time")
 struct TimeNodeContext : NodeContext
 {
-	TimeNodeContext(mzFbNode const* node) : NodeContext(node), TimeStart(std::chrono::high_resolution_clock::now()) {}
+	TimeNodeContext(mzFbNode const* node) : NodeContext(node) {}
 
 	mzResult ExecuteNode(const mzNodeExecuteArgs* args) override
 	{
 		auto pin = GetPinValues(args);
 		auto sec = GetPinValue<float>(pin, MZN_Seconds);
-		float result = GetDeltaTime();
-		mzEngine.SetPinValue(args->PinIds[0], {.Data = &result, .Size = sizeof(float)});
+		float time = (args->DeltaSeconds.x * frameCount++) / (double)args->DeltaSeconds.y;
+		mzEngine.SetPinValue(args->PinIds[0], { .Data = &time, .Size = sizeof(float) });
 		return MZ_RESULT_SUCCESS;
 	}
 
-	float GetDeltaTime()
-	{
-		auto now = std::chrono::high_resolution_clock::now();
-		return std::chrono::duration_cast<std::chrono::milliseconds>(now - TimeStart).count() / 1000.f;
-	}
-
-	std::chrono::high_resolution_clock::time_point TimeStart;
+	uint64_t frameCount = 0;
 };
 
 

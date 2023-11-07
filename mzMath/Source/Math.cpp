@@ -264,6 +264,28 @@ mzResult AddTransform(void* ctx, const mzNodeExecuteArgs* args)
 	return MZ_RESULT_SUCCESS;
 }
 
+struct SineWaveNodeContext : NodeContext
+{
+	using NodeContext::NodeContext;
+
+	mzResult ExecuteNode(const mzNodeExecuteArgs* args) override
+	{
+		auto ids = GetPinIds(args);
+		auto pins = GetPinValues(args);
+		auto amplitude = *GetPinValue<float>(pins, MZ_NAME_STATIC("Amplitude"));
+		auto offset = *GetPinValue<float>(pins, MZ_NAME_STATIC("Offset"));
+		auto frequency = *GetPinValue<float>(pins, MZ_NAME_STATIC("Frequency"));
+		double time = (args->DeltaSeconds.x * frameCount++) / (double)args->DeltaSeconds.y;
+		double sec = glm::mod(time * (double)frequency, glm::pi<double>() * 2.0);
+		float result = (amplitude * glm::sin(sec)) + offset;
+		*GetPinValue<float>(pins, MZ_NAME_STATIC("Out")) = result;
+		//mzEngine.SetPinValue(ids[MZ_NAME_STATIC("Out")], {.Data = &result, .Size = sizeof(float)});
+		return MZ_RESULT_SUCCESS;
+	}
+
+	uint64_t frameCount = 0;
+};
+
 extern "C"
 {
 
@@ -284,25 +306,7 @@ MZAPI_ATTR mzResult MZAPI_CALL mzExportNodeFunctions(size_t* outCount, mzNodeFun
 				break;
 			}
 		case MathNodeTypes::SineWave: {
-			node->TypeName = MZ_NAME_STATIC("mz.math.SineWave");
-			node->ExecuteNode = [](void* ctx, const mzNodeExecuteArgs* args) {
-				constexpr uint32_t PIN_AMPLITUDE = 0;
-				constexpr uint32_t PIN_FREQUENCY = 1;
-				constexpr uint32_t PIN_OUT = 2;
-				constexpr uint32_t PIN_OFFSET = 3;
-				auto ampBuf = &args->PinValues[PIN_AMPLITUDE];
-				auto freqBuf = &args->PinValues[PIN_FREQUENCY];
-				auto outBuf = &args->PinValues[PIN_OUT];
-				auto offsetBuf = &args->PinValues[PIN_OFFSET];
-				double frequency = *static_cast<float*>(freqBuf->Data);
-				float amplitude = *static_cast<float*>(ampBuf->Data);
-				float offset = *static_cast<float*>(offsetBuf->Data);
-				auto millis = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
-				double sec = glm::mod((millis % (int)(2000000. / frequency)) / 1000. * glm::two_pi<double>() * frequency, glm::two_pi<double>());
-				float result = (amplitude * glm::sin(sec)) + offset;
-				*(static_cast<float*>(outBuf->Data)) = result;
-				return MZ_RESULT_SUCCESS;
-			};
+			MZ_BIND_NODE_CLASS(MZ_NAME_STATIC("mz.math.SineWave"), SineWaveNodeContext, node);
 			break;
 		}
 		case MathNodeTypes::Clamp: {
