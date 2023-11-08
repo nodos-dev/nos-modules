@@ -33,10 +33,15 @@
             "class_name": "NodeWithCustomTypes",
             "display_name": "NodeWithCustomTypes"
 		},
-		{
-			"category": "Test",
+        {
+            "category": "Test",
             "class_name": "GpuStress",
             "display_name": "GPU Stress"
-		}
+        },
+        {
+            "category": "Test",
+            "class_name": "CopyTest",
+            "display_name": "Copy Test"
+        }
     ]
 }

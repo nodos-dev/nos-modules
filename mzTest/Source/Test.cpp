@@ -41,7 +41,7 @@ extern "C"
 
 	MZAPI_ATTR mzResult MZAPI_CALL mzExportNodeFunctions(size_t* outCount, mzNodeFunctions** outFunctions)
 	{
-		*outCount = (size_t)(5);
+		*outCount = (size_t)(6);
 		if (!outFunctions)
 			return MZ_RESULT_SUCCESS;
 		
@@ -50,10 +50,22 @@ extern "C"
 		outFunctions[1]->TypeName = MZ_NAME_STATIC("mz.test.NodeWithCategories");
 		outFunctions[2]->TypeName = MZ_NAME_STATIC("mz.test.NodeWithFunctions");
 		outFunctions[3]->TypeName = MZ_NAME_STATIC("mz.test.NodeWithCustomTypes");
-		outFunctions[4]->TypeName = MZ_NAME_STATIC("mz.test.GpuStress");
+		outFunctions[4]->TypeName = MZ_NAME_STATIC("mz.test.GpuStress");		
 		outFunctions[4]->GetShaderSource = [](mzShaderSource* src) -> mzResult {
 			src->SpirvBlob.Data = (void*)GpuStress_frag_spv;
 			src->SpirvBlob.Size = sizeof(GpuStress_frag_spv);
+			return MZ_RESULT_SUCCESS;
+		};
+		outFunctions[5]->TypeName = MZ_NAME_STATIC("mz.test.CopyTest");
+		outFunctions[5]->ExecuteNode = [](void* ctx, const mzNodeExecuteArgs* args)
+		{
+			mzCmd cmd;
+			mzEngine.Begin(&cmd);
+			auto values = mz::GetPinValues(args);
+			mzResourceShareInfo input = mz::DeserializeTextureInfo(values[MZ_NAME_STATIC("Input")]);
+			mzResourceShareInfo output = mz::DeserializeTextureInfo(values[MZ_NAME_STATIC("Output")]);
+			mzEngine.Copy(cmd, &input, &output, 0);
+			mzEngine.End(cmd);
 			return MZ_RESULT_SUCCESS;
 		};
 		return MZ_RESULT_SUCCESS;

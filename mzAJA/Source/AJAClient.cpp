@@ -896,7 +896,7 @@ bool AJAClient::BeginCopyFrom(mzCopyInfo &cpy)
     GPURing::Resource *sourceSlot = 0;
     auto it = Pins.find(cpy.Name); 
     if (it == Pins.end()) 
-        return true;
+        return false;
     
     auto th = *it;
 	auto effectiveSpareCount = th->SpareCount * (1 + u32(th->Interlaced()));
@@ -907,7 +907,6 @@ bool AJAClient::BeginCopyFrom(mzCopyInfo &cpy)
         cpy.ShouldSetSourceFrameNumber = true;
 		cpy.ShouldSubmitOnly = true;
     }
-
     return cpy.ShouldCopyTexture = !!(cpy.Data = sourceSlot);
 }
 
@@ -936,10 +935,10 @@ bool AJAClient::BeginCopyTo(mzCopyInfo &cpy)
     else if ((th->EffectiveRingSize > th->TotalFrameCount()) && (slot = th->GpuRing->TryPush()))
 	{
 		slot->FrameNumber = cpy.FrameNumber;
-        cpy.CopyTextureFrom = DeserializeTextureInfo(cpy.SrcPinData.Data);
-        slot->Res.Info.Texture.FieldType = cpy.CopyTextureFrom.Info.Texture.FieldType;
-        cpy.CopyTextureTo = slot->Res;
-		cpy.ShouldSubmitAndWait = true;
+		cpy.CopyTextureFrom = DeserializeTextureInfo(cpy.SrcPinData.Data);
+		slot->Res.Info.Texture.FieldType = cpy.CopyTextureFrom.Info.Texture.FieldType;
+		cpy.CopyTextureTo = slot->Res;
+		cpy.ShouldSubmitAndSignalEvent = true;
 	}
     else
         cpy.Stop = true;
@@ -985,6 +984,7 @@ void AJAClient::EndCopyTo(mzCopyInfo& cpy)
     params.Debug = Debug;
     params.DispatchSize = th->GetSuitableDispatchSize();
     params.TransferInProgress = &th->TransferInProgress;
+    params.SubmissionEventHandle = cpy.CopySubmitEvent;
     params.DeltaSeconds = th->GetDeltaSeconds();
 	th->Worker->Enqueue(params);
     th->FieldType = Flipped(th->FieldType);

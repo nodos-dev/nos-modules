@@ -202,9 +202,7 @@ struct TRing
     Resource *TryPush()
     {
         if (!IsFull())
-        {
             return BeginPush();
-        }
         return 0;
     }
 

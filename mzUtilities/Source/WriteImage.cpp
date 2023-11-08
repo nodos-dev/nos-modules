@@ -111,7 +111,7 @@ struct WriteImage : NodeContext {
 
         mzCmd cmd;
         mzEngine.Begin(&cmd);
-        mzEngine.Blit(cmd, &input, &captures.SRGB);
+        mzEngine.Copy(cmd, &input, &captures.SRGB, nullptr);
         mzEngine.Download(cmd, &captures.SRGB, &captures.Buf);
         mzEngine.End(cmd);
 

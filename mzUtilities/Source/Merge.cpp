@@ -97,7 +97,7 @@ struct MergeContext : NodeContext
 				                                    Textures[curr++] = DeserializeTextureInfo(val.Data)));
 			}
 			else if (name != "Out")
-				bindings.emplace_back(mzShaderBinding{.Name = Name(args->PinNames[i]), .FixedSize = val.Data});
+				bindings.emplace_back(mzShaderBinding{ .Name = Name(args->PinNames[i]), .Data = val.Data, .Size = val.Size });
 		}
 		mzResourceShareInfo dummy = {};
 		mzEngine.GetColorTexture({}, &dummy);

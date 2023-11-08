@@ -71,6 +71,8 @@ struct GaussBlurContext
 		    IntermediateTexture.Info.Texture.Format == outputTexture->Info.Texture.Format)
 			return;
 
+		DestroyResources();
+
 		IntermediateTexture.Info.Texture.Width = outputTexture->Info.Texture.Width;
 		IntermediateTexture.Info.Texture.Height = outputTexture->Info.Texture.Height;
 		IntermediateTexture.Info.Texture.Format = outputTexture->Info.Texture.Format;
@@ -108,9 +110,9 @@ struct GaussBlurContext
 		mzEngine.RunPass(0, &pass);
 
 		// Vert pass
-		bindings[0].Resource = &IntermediateTexture;
-		bindings[1].FixedSize = &kernelSize.y;
-		bindings[2].FixedSize = &passType.y;
+		bindings[0].Data = &IntermediateTexture;
+		bindings[1].Data = &kernelSize.y;
+		bindings[2].Data = &passType.y;
 		pass.Output = output;
 		mzEngine.RunPass(0, &pass);
 
@@ -124,6 +126,9 @@ void RegisterGaussianBlur(mzNodeFunctions* out)
 	out->TypeName = MZ_NAME_STATIC("mz.filters.GaussianBlur");
 	out->OnNodeCreated = [](const mzFbNode* node, void** outCtxPtr) {
 		*outCtxPtr = new mz::utilities::GaussBlurContext(*node);
+	};
+	out->OnNodeDeleted = [](void* ctx, mzUUID nodeId) {
+		delete static_cast<mz::utilities::GaussBlurContext*>(ctx);
 	};
 	out->ExecuteNode = [](void* ctx, const mzNodeExecuteArgs* args) {
 		((mz::utilities::GaussBlurContext*)ctx)->Run(args);

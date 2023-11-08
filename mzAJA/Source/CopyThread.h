@@ -72,6 +72,7 @@ struct CopyThread
 		uint32_t Debug = 0;
 		mzVec2u DispatchSize;
 		std::atomic_bool* TransferInProgress = 0;
+		uint64_t SubmissionEventHandle;
 		mz::fb::vec2u DeltaSeconds;
 
 		bool Interlaced() const { return !(FieldType == MZ_TEXTURE_FIELD_TYPE_PROGRESSIVE || FieldType == MZ_TEXTURE_FIELD_TYPE_UNKNOWN); }

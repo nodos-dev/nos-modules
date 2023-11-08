@@ -667,7 +667,6 @@ void CopyThread::AJAOutputProc()
 		}
 		CpuRing->EndPop(sourceCpuRingSlot);
 		mzEngine.HandleEvent(hungerSignal);
-
 	}
 	GpuRing->Stop();
 	CpuRing->Stop();
@@ -833,6 +832,7 @@ void CopyThread::OutputConversionThread::Consume(const Parameters& params)
 	}
 
 	mzEngine.Copy(cmd, &params.CompressedTex->Res, &outgoing->Res, 0);
+	mzEngine.WaitEvent(params.SubmissionEventHandle);
 	mzEngine.End(cmd);
 	params.GR->EndPop(incoming);
 	*params.TransferInProgress = false;
