@@ -61,28 +61,35 @@ static mzResult GetFunctions(size_t* count, mzName* names, mzPfnNodeFunctionExec
         auto values = GetPinValues(nodeArgs);
 		auto ids = GetPinIds(nodeArgs);
 		std::filesystem::path path = GetPinValue<const char>(values, MZN_Path);
-        if (!std::filesystem::exists(path))
-        {
-            mzEngine.LogE("Read Image cannot load file %s", path.string().c_str());
-            return;
-        }
-		mzResourceShareInfo out = DeserializeTextureInfo(GetPinValue<void>(values, MZN_Out));
-        mzResourceShareInfo tmp = out;
-		
-		int w, h, n;
-		u8* img = stbi_load(path.string().c_str(), &w, &h, &n, 4);
-		mzEngine.ImageLoad(img, mzVec2u(w,h), MZ_FORMAT_R8G8B8A8_SRGB, &tmp);
-		free(img);
+		try
+		{
+			if (!std::filesystem::exists(path))
+			{
+				mzEngine.LogE("Read Image cannot load file %s", path.string().c_str());
+				return;
+			}
+			mzResourceShareInfo out = DeserializeTextureInfo(GetPinValue<void>(values, MZN_Out));
+			mzResourceShareInfo tmp = out;
+			
+			int w, h, n;
+			u8* img = stbi_load(path.string().c_str(), &w, &h, &n, 4);
+			mzEngine.ImageLoad(img, mzVec2u(w,h), MZ_FORMAT_R8G8B8A8_SRGB, &tmp);
+			free(img);
 
-        mzCmd cmd;
-        mzEngine.Begin(&cmd);
-        mzEngine.Copy(cmd, &tmp, &out, 0);
-        mzEngine.End(cmd);
-        mzEngine.Destroy(&tmp);
+			mzCmd cmd;
+			mzEngine.Begin(&cmd);
+			mzEngine.Copy(cmd, &tmp, &out, 0);
+			mzEngine.End(cmd);
+			mzEngine.Destroy(&tmp);
 
-		flatbuffers::FlatBufferBuilder fbb;
-		auto dirty = CreateAppEvent(fbb, app::CreatePinDirtied(fbb, &ids[MZN_Out]));
-		mzEngine.EnqueueEvent(&dirty);
+			flatbuffers::FlatBufferBuilder fbb;
+			auto dirty = CreateAppEvent(fbb, app::CreatePinDirtied(fbb, &ids[MZN_Out]));
+			mzEngine.EnqueueEvent(&dirty);
+		}
+		catch(const std::exception& e)
+		{
+			mzEngine.LogE("Error while loading image: %s", e.what());
+		}
     };
     
     return MZ_RESULT_SUCCESS;
