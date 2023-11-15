@@ -1,5 +1,5 @@
 #include "GaussianBlur.hpp"
-#include "GaussianBlur.frag.spv.dat"
+#include "../Shaders/GaussianBlur.frag.spv.dat"
 
 namespace mz::utilities
 {
@@ -110,9 +110,11 @@ struct GaussBlurContext
 		mzEngine.RunPass(0, &pass);
 
 		// Vert pass
-		bindings[0].Data = &IntermediateTexture;
-		bindings[1].Data = &kernelSize.y;
-		bindings[2].Data = &passType.y;
+		bindings[0] = ShaderBinding(MZN_Input, IntermediateTexture);
+		bindings[1] = ShaderBinding(MZN_Kernel_Size, kernelSize.y);
+		bindings[2] = ShaderBinding(MZN_Pass_Type, passType.y);
+
+
 		pass.Output = output;
 		mzEngine.RunPass(0, &pass);
 

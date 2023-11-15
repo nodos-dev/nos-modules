@@ -6,16 +6,16 @@
 #include <Builtins_generated.h>
 
 // Shaders
-#include "ColorCorrect.frag.spv.dat"
-#include "Diff.frag.spv.dat"
-#include "GaussianBlur.frag.spv.dat"
-#include "Kuwahara.frag.spv.dat"
-#include "KawaseLightStreak.frag.spv.dat"
-#include "PremultiplyAlpha.frag.spv.dat"
-#include "Sharpen.frag.spv.dat"
-#include "Sobel.frag.spv.dat"
-#include "Thresholder.frag.spv.dat"
-#include "Sampler.frag.spv.dat"
+#include "../Shaders/ColorCorrect.frag.spv.dat"
+#include "../Shaders/Diff.frag.spv.dat"
+#include "../Shaders/GaussianBlur.frag.spv.dat"
+#include "../Shaders/Kuwahara.frag.spv.dat"
+#include "../Shaders/KawaseLightStreak.frag.spv.dat"
+#include "../Shaders/PremultiplyAlpha.frag.spv.dat"
+#include "../Shaders/Sharpen.frag.spv.dat"
+#include "../Shaders/Sobel.frag.spv.dat"
+#include "../Shaders/Thresholder.frag.spv.dat"
+#include "../Shaders/Sampler.frag.spv.dat"
 
 // Nodes
 #include "GaussianBlur.hpp"
@@ -59,6 +59,8 @@ MZAPI_ATTR mzResult MZAPI_CALL mzExportNodeFunctions(size_t* outSize, mzNodeFunc
 	outList[Filters::NODE]->GetShaderSource = [](mzShaderSource* src) -> mzResult { \
 		src->SpirvBlob.Data = (void*)(NODE##_frag_spv); \
 		src->SpirvBlob.Size = sizeof(NODE##_frag_spv); \
+        src->GLSLPath = #NODE ".frag"; \
+        src->SpirvPath = #NODE ".frag.spv"; \
 		return MZ_RESULT_SUCCESS; \
 	};
 #define REGISTER_NODE_LICENSED(NODE, featureName, featureMessage)								\

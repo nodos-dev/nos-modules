@@ -25,14 +25,14 @@ def compile_to_spv(filepath):
         logger.error(f"Failed to compile {filepath}")
         return re.returncode
     else:
-        re = run(["spirv-opt", "-O", "-o",  f"{filepath}.spv", f"{filepath}_.spv"], stdout=stdout, stderr=stderr, universal_newlines=True)
+        re = run([f"{path}/tools/{platform.system()}/spirv-opt", "-O", "-o",  f"{filepath}.spv", f"{filepath}_.spv"], stdout=stdout, stderr=stderr, universal_newlines=True)
         os.remove(f"{filepath}_.spv")
         if re.returncode != 0:
             logger.error(f"Failed to optimize {filepath}")
             return re.returncode
         else:
             embed_binary(f"{filepath}.spv")
-            os.remove(f"{filepath}.spv")
+            # os.remove(f"{filepath}.spv")
     return 0
 
 def compile_shaders():

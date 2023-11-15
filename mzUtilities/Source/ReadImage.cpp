@@ -127,7 +127,7 @@ void RegisterReadImage(mzNodeFunctions* fn)
 	// 		flatbuffers::FlatBufferBuilder fbb;
 	// 		std::vector<flatbuffers::Offset<mz::fb::NodeStatusMessage>> messages{mz::fb::CreateNodeStatusMessageDirect(
 	// 			fbb, "Failed to load image", mz::fb::NodeStatusMessageType::FAILURE)};
-	// 		mzEngine.HandleEvent(CreateAppEvent(
+	// 		HandleEvent(CreateAppEvent(
 	// 			fbb,
 	// 			mz::CreatePartialNodeUpdateDirect(fbb, &ctx->NodeId, ClearFlags::NONE, 0, 0, 0, 0, 0, 0, &messages)));
 	// 	}

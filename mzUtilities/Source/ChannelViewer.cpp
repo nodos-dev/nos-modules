@@ -1,6 +1,6 @@
 // Copyright MediaZ AS. All Rights Reserved.
 #include <MediaZ/Helpers.hpp>
-#include "ChannelViewer.frag.spv.dat"
+#include "../Shaders/ChannelViewer.frag.spv.dat"
 #include <glm/glm.hpp>
 
 

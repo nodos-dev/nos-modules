@@ -189,7 +189,7 @@ struct MZAPI_ATTR AJAClient
     bool OnOrphanPinRemoved(mz::Name pinName, mzUUID pinId);
 
     void OnMenuFired(mzContextMenuRequest const &request);
-    void OnCommandFired(mzUUID itemID, u32 cmd);
+    void OnCommandFired(u32 cmd);
 
     void OnNodeRemoved();
 

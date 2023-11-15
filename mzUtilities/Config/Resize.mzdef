@@ -7,15 +7,6 @@
                 "type": "CPU"
             },
             "description": "Scales the input image to the desired output size (FILL as alignment method)\nusing various scaling algorithms",
-            "functions": [
-                {
-                    "class_name": "ReloadShaders",
-                    "contents_type": "Job",
-                    "contents": {
-                        "type": "CPU"
-                    }
-                }
-            ],
             "pins": [
                 {
                     "name": "Input",

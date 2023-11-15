@@ -235,7 +235,7 @@ void AJAClient::UpdateDeviceValue()
     flatbuffers::FlatBufferBuilder fbb;
     auto pinId = GetPinId(MZN_Device);
     std::vector<u8> value = StringValue(Device->GetDisplayName());
-	mzEngine.HandleEvent(CreateAppEvent(fbb, mz::CreatePinValueChangedDirect(fbb, &pinId, &value)));
+	HandleEvent(CreateAppEvent(fbb, mz::CreatePinValueChangedDirect(fbb, &pinId, &value)));
     UpdateReferenceValue();
 }
 
@@ -257,7 +257,7 @@ void AJAClient::UpdateReferenceValue()
         return;
 
     std::vector<u8> value = StringValue(NTV2ReferenceSourceToString(Ref, true));
-    mzEngine.HandleEvent(CreateAppEvent(fbb, mz::CreatePinValueChangedDirect(fbb, &pinId, &value)));
+    HandleEvent(CreateAppEvent(fbb, mz::CreatePinValueChangedDirect(fbb, &pinId, &value)));
     UpdateStatus();
 }
 
@@ -266,7 +266,7 @@ void AJAClient::UpdateStatus()
     std::vector<flatbuffers::Offset<mz::fb::NodeStatusMessage>> msg;
     flatbuffers::FlatBufferBuilder fbb;
     UpdateStatus(fbb, msg);
-    mzEngine.HandleEvent(CreateAppEvent(
+    HandleEvent(CreateAppEvent(
         fbb, mz::CreatePartialNodeUpdateDirect(fbb, &Mapping.NodeId, ClearFlags::NONE, 0, 0, 0, 0, 0, 0, &msg)));
 }
 
@@ -325,7 +325,7 @@ void AJAClient::OnNodeUpdate(mz::fb::Node const &event)
     if (!pinsToDelete.empty())
     {
         flatbuffers::FlatBufferBuilder fbb;
-        mzEngine.HandleEvent(
+        HandleEvent(
             CreateAppEvent(fbb, mz::CreatePartialNodeUpdateDirect(fbb, &mapping.NodeId, ClearFlags::NONE, &pinsToDelete,
                                                                   0, 0, 0, 0, 0, 0)));
     }
@@ -468,7 +468,7 @@ void AJAClient::OnPinMenuFired(mzContextMenuRequest const &request)
                                                 .Channel = pin->Channel,
                                             })};
 
-        mzEngine.HandleEvent(CreateAppEvent(
+        HandleEvent(CreateAppEvent(
             fbb, mz::CreateContextMenuUpdateDirect(fbb, request.item_id(), request.pos(), request.instigator(), &remove)));
     }
 }
@@ -607,11 +607,11 @@ void AJAClient::OnMenuFired(mzContextMenuRequest const&request)
         return;
     }
 
-    mzEngine.HandleEvent(CreateAppEvent(
+    HandleEvent(CreateAppEvent(
         fbb, mz::CreateContextMenuUpdateDirect(fbb, &Mapping.NodeId, request.pos(), request.instigator(), &items)));
 }
 
-void AJAClient::OnCommandFired(mzUUID itemID, u32 cmd)
+void AJAClient::OnCommandFired(u32 cmd)
 {
     if (!cmd)
     {
@@ -716,7 +716,7 @@ void AJAClient::OnCommandFired(mzUUID itemID, u32 cmd)
                 mz::fb::ShowAs::PROPERTY, mz::fb::CanShowAs::PROPERTY_ONLY, 0, 0, &data));
         }
 
-        mzEngine.HandleEvent(
+        HandleEvent(
             CreateAppEvent(fbb, mz::CreatePartialNodeUpdateDirect(fbb, &Mapping.NodeId, ClearFlags::NONE, 0, &pins)));
         break;
     }
@@ -752,11 +752,11 @@ void AJAClient::OnPathCommand(const mzPathCommand* cmd)
 	}
     auto copyThread = *result;
 
-    mz::Buffer params(cmd->Args);
-
+ 
     switch (cmd->Command)
     {
     case MZ_PATH_COMMAND_TYPE_RESTART: {
+        mz::Buffer params(cmd->Args);
         auto* res = params.As<RestartParams>();
         u32 ringSize = copyThread->RingSize;
         if (res && res->UpdateFlags & RestartParams::UpdateRingSize)

@@ -1,6 +1,6 @@
 ﻿#include <MediaZ/Helpers.hpp>
 
-#include "Resize.frag.spv.dat"
+#include "../Shaders/Resize.frag.spv.dat"
 
 #include "Builtins_generated.h"
 

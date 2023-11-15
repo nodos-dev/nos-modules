@@ -147,7 +147,7 @@ void CopyThread::StartThread()
 		Worker->Start();
 		flatbuffers::FlatBufferBuilder fbb;
 		// TODO: Add mzEngine.SetThreadName call.
-		mzEngine.HandleEvent(CreateAppEvent(fbb, mz::app::CreateSetThreadNameDirect(fbb, (u64)Worker->GetNativeHandle(), (threadName + " Conversion Thread").c_str())));
+		HandleEvent(CreateAppEvent(fbb, mz::app::CreateSetThreadNameDirect(fbb, (u64)Worker->GetNativeHandle(), (threadName + " Conversion Thread").c_str())));
 		switch (this->PinKind)
 		{
 		default:
@@ -163,7 +163,7 @@ void CopyThread::StartThread()
 	});
 
 	flatbuffers::FlatBufferBuilder fbb;
-	mzEngine.HandleEvent(CreateAppEvent(fbb, mz::app::CreateSetThreadNameDirect(fbb, (u64)Thread.native_handle(), (threadName + " DMA Thread").c_str())));
+	HandleEvent(CreateAppEvent(fbb, mz::app::CreateSetThreadNameDirect(fbb, (u64)Thread.native_handle(), (threadName + " DMA Thread").c_str())));
 }
 
 mzVec2u CopyThread::Extent() const
@@ -596,7 +596,7 @@ void CopyThread::AJAOutputProc()
 	auto id = Client->GetPinId(PinName);
 	auto deltaSec = GetDeltaSeconds();
 	auto hungerSignal = CreateAppEvent(fbb, mz::app::CreateScheduleRequest(fbb, mz::app::ScheduleRequestKind::PIN, &id, false, &deltaSec));
-	mzEngine.HandleEvent(hungerSignal);
+	HandleEvent(hungerSignal);
 	Orphan(false);
 	mzEngine.LogI("AJAOut (%s) Thread: %d", Name().AsCStr(), std::this_thread::get_id());
 
@@ -666,12 +666,12 @@ void CopyThread::AJAOutputProc()
 			doubleBufferIndex ^= 1;
 		}
 		CpuRing->EndPop(sourceCpuRingSlot);
-		mzEngine.HandleEvent(hungerSignal);
+		HandleEvent(hungerSignal);
 	}
 	GpuRing->Stop();
 	CpuRing->Stop();
 
-	mzEngine.HandleEvent(CreateAppEvent(fbb, 
+	HandleEvent(CreateAppEvent(fbb, 
 		mz::app::CreateScheduleRequest(fbb, mz::app::ScheduleRequestKind::PIN, &id, true)));
 
 	if (Run)
@@ -682,7 +682,7 @@ void CopyThread::SendDeleteRequest()
 {
 	flatbuffers::FlatBufferBuilder fbb;
 	auto ids = Client->GeneratePinIDSet(mz::Name(Name()), Mode);
-	mzEngine.HandleEvent(
+	HandleEvent(
 		CreateAppEvent(fbb, mz::CreatePartialNodeUpdateDirect(fbb, &Client->Mapping.NodeId, ClearFlags::NONE, &ids)));
 }
 
@@ -886,7 +886,7 @@ void CopyThread::PinUpdate(std::optional<mz::fb::TOrphanState> orphan, mz::Actio
 	std::vector<flatbuffers::Offset<PartialPinUpdate>> updates;
 	std::transform(ids.begin(), ids.end(), std::back_inserter(updates),
 				   [&fbb, orphan, live](auto id) { return mz::CreatePartialPinUpdateDirect(fbb, &id, 0, orphan ? mz::fb::CreateOrphanState(fbb, &*orphan) : false, live); });
-	mzEngine.HandleEvent(
+	HandleEvent(
 		CreateAppEvent(fbb, mz::CreatePartialNodeUpdateDirect(fbb, &Client->Mapping.NodeId, ClearFlags::NONE, 0, 0, 0,
 															  0, 0, 0, 0, &updates)));
 }

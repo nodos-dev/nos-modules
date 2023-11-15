@@ -36,13 +36,6 @@
                     "contents": {
                         "type": "CPU"
                     }
-                },
-                {
-                    "class_name": "ReloadShaders",
-                    "contents_type": "Job",
-                    "contents": {
-                        "type": "CPU"
-                    }
                 }
             ]
         },
@@ -71,13 +64,6 @@
                 },
                 {
                     "class_name": "StopLog",
-                    "contents_type": "Job",
-                    "contents": {
-                        "type": "CPU"
-                    }
-                },
-                {
-                    "class_name": "ReloadShaders",
                     "contents_type": "Job",
                     "contents": {
                         "type": "CPU"

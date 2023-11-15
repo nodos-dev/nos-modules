@@ -2,7 +2,7 @@
 
 #include <MediaZ/Helpers.hpp>
 #include <MediaZ/PluginAPI.h>
-#include "Merge.frag.spv.dat"
+#include "../Shaders/Merge.frag.spv.dat"
 
 #include <random>
 
@@ -25,10 +25,15 @@ uuids::uuid_random_generator generator(mtengine);
 namespace mz::utilities
 {
 MZ_REGISTER_NAME(Out);
+MZ_REGISTER_NAME(Textures);
 MZ_REGISTER_NAME(Texture_Count);
 MZ_REGISTER_NAME(Merge_Pass);
 MZ_REGISTER_NAME(Merge_Shader);
-MZ_REGISTER_NAME_SPACED(Mz_Utilities_Merge, "mz.utilities.Merge")
+MZ_REGISTER_NAME(Background_Color);
+MZ_REGISTER_NAME(PerTextureData);
+MZ_REGISTER_NAME(Blends);
+MZ_REGISTER_NAME(Opacities);
+MZ_REGISTER_NAME_SPACED(Merge, "mz.utilities.Merge")
 
 struct MergePin
 {
@@ -62,7 +67,7 @@ struct MergeContext : NodeContext
 				}
 			}
 
-			mzEngine.HandleEvent(
+			HandleEvent(
 				CreateAppEvent(fbb,
 					mz::CreatePartialNodeUpdateDirect(fbb,
 						node->id(),
@@ -84,30 +89,40 @@ struct MergeContext : NodeContext
 		const mzResourceShareInfo output = DeserializeTextureInfo(values[MZN_Out]);
 
 		std::vector<mzShaderBinding> bindings;
-		std::vector<mzResourceShareInfo> Textures(TextureCount);
+		std::vector<mzResourceShareInfo> textures(TextureCount);
+
+		std::array<int, 16> blends = {};
+		std::array<float, 16> opacities = {};
+		
 		u32 curr = 0;
 		
 		for (size_t i = 0; i < args->PinCount; ++i)
 		{
-			std::string name = Name(args->PinNames[i]).AsString();
+			if(MZN_Out == args->PinNames[i])
+				continue;
+
 			mzBuffer val = args->PinValues[i];
-			if (name.starts_with("Texture_"))
+			if (MZN_Background_Color == args->PinNames[i])
 			{
-				bindings.emplace_back(ShaderBinding(Name(args->PinNames[i]),
-				                                    Textures[curr++] = DeserializeTextureInfo(val.Data)));
-			}
-			else if (name != "Out")
 				bindings.emplace_back(mzShaderBinding{ .Name = Name(args->PinNames[i]), .Data = val.Data, .Size = val.Size });
-		}
-		mzResourceShareInfo dummy = {};
-		mzEngine.GetColorTexture({}, &dummy);
-		for (size_t i = TextureCount; i < 16; ++i)
-		{
-			auto name = mzEngine.GetName(("Texture_" + std::to_string(i)).c_str());
-			bindings.emplace_back(ShaderBinding(name, dummy));
+				continue;
+			}
+
+			std::string name = Name(args->PinNames[i]).AsString();
+			uint32_t idx = std::stoi(name.substr(name.find_last_of('_') + 1));
+		
+			switch (name[0])
+			{
+			case 'T': textures[idx] = DeserializeTextureInfo(val.Data); break;
+			case 'B': blends[idx] = *(int*)val.Data; break;
+			case 'O': opacities[idx] = *(float*)val.Data; break;
+			}
 		}
 
+		bindings.emplace_back(ShaderBinding(MZN_Blends, blends));
+		bindings.emplace_back(ShaderBinding(MZN_Opacities, opacities));
 		bindings.emplace_back(ShaderBinding(MZN_Texture_Count, TextureCount));
+		bindings.emplace_back(ShaderBinding(MZN_Textures, textures.data(), textures.size()));
 
 		mzRunPassParams mergePass{
 			.Key = MZN_Merge_Pass,
@@ -138,7 +153,7 @@ struct MergeContext : NodeContext
 		                                                    fbb.CreateVector(items)
 			                            ));
 
-		mzEngine.HandleEvent(event);
+		HandleEvent(event);
 	}
 
 	void OnMenuCommand(mzUUID itemID, uint32_t cmd) override
@@ -203,7 +218,7 @@ struct MergeContext : NodeContext
 				                    0,
 				                    &blendModeData),
 			};
-			mzEngine.HandleEvent(CreateAppEvent(fbb,
+			HandleEvent(CreateAppEvent(fbb,
 			                                    CreatePartialNodeUpdateDirect(
 				                                    fbb,
 				                                    &NodeId,
@@ -219,7 +234,7 @@ struct MergeContext : NodeContext
 				flatbuffers::FlatBufferBuilder fbb;
 				std::vector<mzUUID> ids = {AddedPins.back().TextureId, AddedPins.back().OpacityId,
 				                           AddedPins.back().BlendId};
-				mzEngine.HandleEvent(CreateAppEvent(fbb,
+				HandleEvent(CreateAppEvent(fbb,
 				                                    CreatePartialNodeUpdateDirect(
 					                                    fbb,
 					                                    &NodeId,
@@ -229,13 +244,16 @@ struct MergeContext : NodeContext
 			}
 		}
 	}
+    
+	inline static mzShaderSource MergeSource = { .SpirvBlob = {(void*)Merge_frag_spv, sizeof(Merge_frag_spv) } };
+    
 
 	static mzResult GetShaders(size_t* outCount, mzShaderInfo* outShaders)
 	{
 		*outCount = 1;
 		if (!outShaders)
 			return MZ_RESULT_SUCCESS;
-		outShaders[0] = {.Key = MZN_Merge_Shader, .Source = {.SpirvBlob = {(void*)Merge_frag_spv, sizeof(Merge_frag_spv) }}};
+		outShaders[0] = {.Key = MZN_Merge_Shader, .Source = MergeSource };
 		return MZ_RESULT_SUCCESS;
 	}
 
@@ -256,7 +274,7 @@ struct MergeContext : NodeContext
 
 void RegisterMerge(mzNodeFunctions* out)
 {
-	MZ_BIND_NODE_CLASS(MZN_Mz_Utilities_Merge, MergeContext, out);
+	MZ_BIND_NODE_CLASS(MZN_Merge, MergeContext, out);
 }
 
 }

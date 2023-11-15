@@ -6,16 +6,16 @@
 #include <Builtins_generated.h>
 
 // Shaders
-#include "Checkerboard.frag.spv.dat"
-#include "Color.frag.spv.dat"
-#include "Gradient.frag.spv.dat"
-#include "Merge.frag.spv.dat"
-#include "Offset.frag.spv.dat"
-#include "QuadMerge.frag.spv.dat"
-#include "Resize.frag.spv.dat"
-#include "SevenSegment.frag.spv.dat"
-#include "Swizzle.frag.spv.dat"
-#include "TextureSwitcher.frag.spv.dat"
+#include "../Shaders/Checkerboard.frag.spv.dat"
+#include "../Shaders/Color.frag.spv.dat"
+#include "../Shaders/Gradient.frag.spv.dat"
+#include "../Shaders/Merge.frag.spv.dat"
+#include "../Shaders/Offset.frag.spv.dat"
+#include "../Shaders/QuadMerge.frag.spv.dat"
+#include "../Shaders/Resize.frag.spv.dat"
+#include "../Shaders/SevenSegment.frag.spv.dat"
+#include "../Shaders/Swizzle.frag.spv.dat"
+#include "../Shaders/TextureSwitcher.frag.spv.dat"
 
 
 MZ_INIT();

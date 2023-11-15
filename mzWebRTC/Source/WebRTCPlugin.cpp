@@ -271,14 +271,14 @@ struct WebRTCNodeContext : mz::NodeContext {
 	void OnConnectedToServer() {
 		mzEngine.LogI("WebRTC Client connected to server");
 		flatbuffers::FlatBufferBuilder fbb;
-		mzEngine.HandleEvent(
+		HandleEvent(
 			mz::CreateAppEvent(fbb, mz::CreatePartialNodeUpdateDirect(fbb, &ConnectToServerID, mz::ClearFlags::NONE, 0, 0, 0, 0, 0, 0, 0, 0, 0, mz::fb::CreateOrphanStateDirect(fbb, true))));
 	}
 
 	void OnDisconnectedFromServer() {
 		mzEngine.LogI("WebRTC Client disconnected from server");
 		flatbuffers::FlatBufferBuilder fbb;
-		mzEngine.HandleEvent(
+		HandleEvent(
 			mz::CreateAppEvent(fbb, mz::CreatePartialNodeUpdateDirect(fbb, &ConnectToServerID, mz::ClearFlags::NONE, 0, 0, 0, 0, 0, 0, 0, 0, 0, mz::fb::CreateOrphanStateDirect(fbb, false))));
 	}
 
@@ -288,7 +288,7 @@ struct WebRTCNodeContext : mz::NodeContext {
 			shouldSendFrame = true;
 			FrameSenderThread = std::thread([this]() {SendFrames(); });
 			flatbuffers::FlatBufferBuilder fbb;
-			mzEngine.HandleEvent(
+			HandleEvent(
 				mz::CreateAppEvent(fbb, mz::CreatePartialNodeUpdateDirect(fbb, &ConnectToPeerID, mz::ClearFlags::NONE, 0, 0, 0, 0, 0, 0, 0, 0, 0, mz::fb::CreateOrphanStateDirect(fbb, true))));
 		}
 		else {
@@ -303,7 +303,7 @@ struct WebRTCNodeContext : mz::NodeContext {
 
 
 		flatbuffers::FlatBufferBuilder fbb;
-		mzEngine.HandleEvent(
+		HandleEvent(
 			mz::CreateAppEvent(fbb, mz::CreatePartialNodeUpdateDirect(fbb, &ConnectToPeerID, mz::ClearFlags::NONE, 0, 0, 0, 0, 0, 0, 0, 0, 0, mz::fb::CreateOrphanStateDirect(fbb, false))));
 	}
 
