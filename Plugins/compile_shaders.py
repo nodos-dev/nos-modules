@@ -11,7 +11,7 @@ from loguru import logger
 path = str(os.path.dirname(__file__))
 
 def embed_binary(filepath):
-    result = run([f"{path}/tools/{platform.system()}/bin2header.exe", filepath], stdout=PIPE, stderr=PIPE, universal_newlines=True)
+    result = run([f"{path}/../tools/{platform.system()}/bin2header.exe", filepath], stdout=PIPE, stderr=PIPE, universal_newlines=True)
     if result.returncode != 0:
         logger.warning(f"Failed to embed {filepath}")
         exit(result.returncode)
@@ -20,12 +20,12 @@ def embed_binary(filepath):
 
 def compile_to_spv(filepath):
     logger.info(f"Compiling {filepath}")
-    re = run([f"{path}/tools/{platform.system()}/glslc", "-O", "-g", "-o",  f"{filepath}_.spv", filepath], stdout=stdout, stderr=stderr, universal_newlines=True)
+    re = run([f"{path}/../tools/{platform.system()}/glslc", "-O", "-g", "-o",  f"{filepath}_.spv", filepath], stdout=stdout, stderr=stderr, universal_newlines=True)
     if re.returncode != 0:
         logger.error(f"Failed to compile {filepath}")
         return re.returncode
     else:
-        re = run([f"{path}/tools/{platform.system()}/spirv-opt", "-O", "-o",  f"{filepath}.spv", f"{filepath}_.spv"], stdout=stdout, stderr=stderr, universal_newlines=True)
+        re = run([f"{path}/../tools/{platform.system()}/spirv-opt", "-O", "-o",  f"{filepath}.spv", f"{filepath}_.spv"], stdout=stdout, stderr=stderr, universal_newlines=True)
         os.remove(f"{filepath}_.spv")
         if re.returncode != 0:
             logger.error(f"Failed to optimize {filepath}")
