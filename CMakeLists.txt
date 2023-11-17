@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 3.24.2)
 project("MZ Modules")
 
+set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 set(CMAKE_CXX_STANDARD 20)
 
 macro(get_targets targets dir)
@@ -17,7 +18,6 @@ macro(get_targets targets dir)
 endmacro()
 
 macro(group targets name)
-    message("Adding targets ${targets} to source group ${name}")
     foreach(target ${targets})
         message("Adding target ${target} to source group ${name}")
         set_target_properties(${target} PROPERTIES FOLDER ${name})

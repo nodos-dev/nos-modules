@@ -18,7 +18,7 @@ function(add_folder_as_subsystem_project NAME DEPENDENCIES INCLUDE_FOLDERS)
         message(STATUS "${PROJECT_NAME}: Scanning ${folder}")
         file(GLOB_RECURSE SOURCES CONFIGURE_DEPENDS ${folder} "${folder}/*.cpp" 
             "${folder}/*.cc" "${folder}/*.c" "${folder}/*.inl"
-            "${folder}/*.frag" "${folder}/*.vert" "${folder}/*.glsl" "${folder}/*.comp" "${folder}/*.natvis")
+            "${folder}/*.frag" "${folder}/*.vert" "${folder}/*.glsl" "${folder}/*.comp" "${folder}/*.dat" "${folder}/*.natvis")
         file(GLOB_RECURSE HEADERS CONFIGURE_DEPENDS ${folder} "${folder}/*.h" "${folder}/*.hpp")
         file(GLOB_RECURSE RESOURCES CONFIGURE_DEPENDS ${folder} "${folder}/*.rc")
         list(APPEND COLLECTED_SOURCES ${SOURCES})
@@ -40,7 +40,7 @@ function(add_folder_as_subsystem_project NAME DEPENDENCIES INCLUDE_FOLDERS)
         LIBRARY_OUTPUT_DIRECTORY_MINSIZEREL "${CMAKE_CURRENT_SOURCE_DIR}/Binaries"
     )
 
-    target_include_directories(${NAME} PRIVATE ${INCLUDE_FOLDERS})
+    target_include_directories(${NAME} PRIVATE ${INCLUDE_FOLDERS} ${SOURCE_FOLDERS})
 
     target_link_libraries(${NAME} PRIVATE ${DEPENDENCIES})
     target_link_libraries(${NAME} PUBLIC mzSubsystemSDK)

@@ -19,6 +19,7 @@ extern mz::vk::Device* GVkDevice;
 IMPLEMENT_SINGLETON(RenderThread);
 
 // #define VERBOSE_RENDER_THREAD
+
 void SetThreadName(HANDLE handle, std::string const& threadName)
 {
 	const uint32_t MS_VC_EXCEPTION = 0x406D1388;

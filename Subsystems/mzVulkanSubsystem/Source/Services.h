@@ -7,7 +7,6 @@ namespace mz::vkss
 mzResult Initialize();
 mzResult Deinitialize();
 
-
 mzResult Begin (mzCmd* outCmd);
 mzResult End (mzCmd cmd);
 mzResult WaitEvent (uint64_t eventHandle);
