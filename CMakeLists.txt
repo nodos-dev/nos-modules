@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.24.2)
-project("Modules")
+project("MZ Modules")
 
 macro(get_targets targets dir)
     get_property(subdirectories DIRECTORY ${dir} PROPERTY SUBDIRECTORIES)
@@ -24,8 +24,8 @@ endmacro()
 
 add_subdirectory("Subsystems" "${CMAKE_CURRENT_BINARY_DIR}/Subsystems")
 get_targets(SUBSYSTEM_TARGETS "${CMAKE_CURRENT_BINARY_DIR}/Subsystems")
-group("${SUBSYSTEM_TARGETS}" "Subsystems")
+group("${SUBSYSTEM_TARGETS}" "MZ Subsystems")
 
 add_subdirectory("Plugins" "${CMAKE_CURRENT_BINARY_DIR}/Plugins")
 get_targets(PLUGIN_TARGETS "${CMAKE_CURRENT_BINARY_DIR}/Plugins")
-group("${PLUGIN_TARGETS}" "Plugins")
+group("${PLUGIN_TARGETS}" "MZ Plugins")
