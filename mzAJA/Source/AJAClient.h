@@ -19,11 +19,11 @@ struct UUID
 }
 
 template<> struct std::hash<mz::UUID>{ size_t operator()(mz::UUID const& val) const { return mz::UUIDHash(val); } };
+// template<> struct std::hash<mz::Name>{ size_t operator()(mz::Name const& val) const { return std::hash<std::string>()(val.AsString()); } };
 
 namespace mz
 {
 
-mz::Name const& CTGetName(rc<struct CopyThread> const& c);
 std::vector<u8> StringValue(std::string const& str);
 std::string GetQuadName(NTV2Channel channel);
 std::string GetChannelStr(NTV2Channel channel, AJADevice::Mode mode);
@@ -149,7 +149,7 @@ struct MZAPI_ATTR AJAClient
     std::atomic_uint DispatchSizeX = 80, DispatchSizeY = 135;
     std::atomic_uint Debug = 0;
 
-    LightSetCB<rc<CopyThread>, CTGetName> Pins;
+    std::unordered_map<mz::Name, rc<struct CopyThread>> Pins;
     AJADevice *Device = 0;
 
     NTV2ReferenceSource Ref = NTV2_REFERENCE_EXTERNAL;

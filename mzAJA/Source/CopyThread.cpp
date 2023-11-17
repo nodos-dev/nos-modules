@@ -8,11 +8,6 @@
 namespace mz
 {
 
-mz::Name const& CTGetName(rc<CopyThread> const& c)
-{
-	return c->Name();
-}
-
 static std::set<u32> const& FindDivisors(const u32 N)
 {
 	static std::map<u32, std::set<u32>> Map;

@@ -187,7 +187,7 @@ std::vector<mz::fb::UUID> AJAClient::GeneratePinIDSet(Name pinName, AJADevice::M
 
 std::shared_ptr<CopyThread> AJAClient::FindChannel(NTV2Channel channel)
 {
-    for (auto &p : Pins)
+    for (auto &[_,p] : Pins)
     {
         if (p->Channel == channel)
         {
@@ -204,13 +204,13 @@ NTV2FrameBufferFormat AJAClient::FBFmt() const
 
 void AJAClient::StopAll()
 {
-    for (auto& th : Pins)
+    for (auto& [_,th] : Pins)
         th->Stop();
 }
 
 void AJAClient::StartAll()
 {
-    for (auto& th : Pins)
+    for (auto& [_,th] : Pins)
         th->StartThread();
 }
 
@@ -312,7 +312,7 @@ void AJAClient::SetReference(std::string const &val)
         Device->SetReference(src);
     }
     this->Ref = src;
-    for (auto& th : Pins)
+    for (auto& [_,th] : Pins)
         th->NotifyRestart({});
 }
 
@@ -393,7 +393,7 @@ void AJAClient::OnNodeUpdate(PinMapping &&newMapping, std::unordered_map<Name, c
 
     {
         auto tmp = Pins;
-        for (auto &th : tmp)
+        for (auto &[_,th] : tmp)
         {
             if (!Mapping.GetPinId(th->PinName))
             {
@@ -623,7 +623,7 @@ void AJAClient::OnCommandFired(u32 cmd)
     switch (action.Action)
     {
     case AjaAction::SELECT_DEVICE: {
-        for (auto& pin : Pins)
+        for (auto& [_,pin] : Pins)
         {
             pin->SendDeleteRequest();
         }
@@ -638,7 +638,7 @@ void AJAClient::OnCommandFired(u32 cmd)
         break;
     }
     case AjaAction::DELETE_CHANNEL:
-        for (auto &pin : Pins)
+        for (auto &[_,pin] : Pins)
         {
             if (pin->Channel == channel)
             {
@@ -725,7 +725,7 @@ void AJAClient::OnCommandFired(u32 cmd)
 
 void AJAClient::OnNodeRemoved()
 {
-    for (auto& th : Pins)
+    for (auto& [_,th] : Pins)
         // Because there can be references to the CopyThread shared pointers in 'pins' list,
         // CopyThread destructor will not be called in the subsequent pins.clear call. So we need to stop the thread
         // here to avoid accessing the device (in CopyThread) after it has been destroyed.
@@ -750,7 +750,7 @@ void AJAClient::OnPathCommand(const mzPathCommand* cmd)
         mzEngine.LogD("AJA: Path command on unknown pin: %s", pinName.AsCStr());
 		return;
 	}
-    auto copyThread = *result;
+    auto copyThread = result->second;
 
  
     switch (cmd->Command)
@@ -801,13 +801,13 @@ void AJAClient::OnPinValueChanged(mz::Name pinName, void *value)
     {
         StopAll();
         Shader = *(ShaderType *)value;
-        for (auto& th : Pins)
+        for (auto& [_,th] : Pins)
         {
             th->Refresh();
             th->UpdateCurve(th->GammaCurve);
         }
         StartAll();
-        for (auto& th : Pins)
+        for (auto& [_,th] : Pins)
             th->NotifyRestart({});
         return;
     }
@@ -898,7 +898,7 @@ bool AJAClient::BeginCopyFrom(mzCopyInfo &cpy)
     if (it == Pins.end()) 
         return false;
     
-    auto th = *it;
+    auto th = it->second;
 	auto effectiveSpareCount = th->SpareCount * (1 + u32(th->Interlaced()));
 	if ((sourceSlot = th->GpuRing->TryPop(cpy.FrameNumber, effectiveSpareCount)))
 	{
@@ -917,7 +917,7 @@ bool AJAClient::BeginCopyTo(mzCopyInfo &cpy)
     if (it == Pins.end()) 
         return true;
 
-    auto th = *it;
+    auto th = it->second;
 
     if (th->FieldType == MZ_TEXTURE_FIELD_TYPE_UNKNOWN && th->Interlaced())
         th->FieldType = MZ_TEXTURE_FIELD_TYPE_EVEN;
@@ -953,7 +953,7 @@ void AJAClient::EndCopyFrom(mzCopyInfo &cpy)
     if (it == Pins.end()) 
         return;
 
-    auto th = *it;
+    auto th = it->second;
     auto res = (GPURing::Resource *)cpy.Data;
     th->GpuRing->EndPop(res);
 }
@@ -966,7 +966,7 @@ void AJAClient::EndCopyTo(mzCopyInfo& cpy)
 	if (it == Pins.end())
 		return;
 
-	auto th = *it;
+	auto th = it->second;
 	auto res = (GPURing::Resource*)cpy.Data;
     th->GpuRing->EndPush(res);
 
@@ -995,13 +995,13 @@ void AJAClient::AddTexturePin(const mz::fb::Pin* pin, u32 ringSize, NTV2Channel 
 {
     auto th = MakeShared<CopyThread>(this, ringSize, spareCount, 
                                      pin->show_as(), channel, fmt, mode, cs, gc, range, tex);
-    Pins.insert(std::move(th));
+    Pins.insert({th->Name(), std::move(th)});
 }
 
 void AJAClient::DeleteTexturePin(rc<CopyThread> const& c)
 {
     c->Stop();
-    Pins.erase(c);
+    Pins.erase(c->Name());
 }
 
 } // namespace mz

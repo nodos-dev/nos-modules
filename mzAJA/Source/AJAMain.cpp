@@ -246,7 +246,7 @@ struct AJA
     static void PathRestart(void* ctx, const mzNodeExecuteArgs* nodeArgs, const mzNodeExecuteArgs* functionArgs)
     {
         auto aja = ((AJAClient *)ctx);
-        for (auto& th : aja->Pins)
+        for (auto& [_,th] : aja->Pins)
             th->NotifyRestart({});
     }
 
