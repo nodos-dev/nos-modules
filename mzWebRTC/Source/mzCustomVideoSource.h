@@ -41,12 +41,11 @@
 #include "media/base/adapted_video_track_source.h"
 #include "rtc_base/ref_counter.h"
 
-class CustomVideoSource : public rtc::AdaptedVideoTrackSource {
+class mzCustomVideoSource : public rtc::AdaptedVideoTrackSource {
 public:
-    CustomVideoSource();
-	virtual ~CustomVideoSource() = default;
+    mzCustomVideoSource();
+	virtual ~mzCustomVideoSource() = default;
 
-	void StartThread();
 	void PushFrame(webrtc::VideoFrame& frame);
 
 	/* Begin UE::PixelStreaming::AdaptedVideoTrackSource overrides */
@@ -61,11 +60,6 @@ public:
 
 private:
 	webrtc::MediaSourceInterface::SourceState CurrentState;
-    rtc::Thread* thread;
     mutable webrtc::webrtc_impl::RefCounter ref_count_{0};
-	std::vector<uint8_t> yPlane;
-	std::vector<uint8_t> uPlane;
-	std::vector<uint8_t> vPlane;
-
 
 };

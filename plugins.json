@@ -31,5 +31,12 @@
             "Shaders/*",
             "External/stb/*"
         ]
+    },
+	"mz.WebRTC": {
+        "target_name": "mzWebRTC",
+        "path": "mzWebRTC",
+        "deps": [
+            "mzWebRTC/*"  
+		]
     }
 }

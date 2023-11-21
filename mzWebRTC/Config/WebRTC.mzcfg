@@ -1,0 +1,34 @@
+{
+    "info": {
+        "id": {
+            "name": "mz.WebRTC",
+            "version": "0.1.0"
+        },
+        "description": "WebRTC Nodes",
+        "display_name": "WebRTC"
+    },
+    "node_definitions": [
+        "WebRTCStreamer.mzdef",
+        "WebRTCPlayer.mzdef",
+        "WebRTCSignalingServer.mzdef"
+    ],
+    "custom_types": [],
+    "binary_path": "../Binaries/mzWebRTC",
+    "associated_nodes": [
+      {
+        "category": "WebRTC|Streamer",
+        "class_name": "WebRTCStreamer",
+        "display_name": "WebRTC Streamer"
+      },
+      {
+        "category": "WebRTC|Player",
+        "class_name": "WebRTCPlayer",
+        "display_name": "WebRTC Player"
+      },
+      {
+        "category": "WebRTC|SignalingServer",
+        "class_name": "WebRTCSignalingServer",
+        "display_name": "WebRTC Signaling Server"
+      }
+    ]
+}

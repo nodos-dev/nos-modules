@@ -1,0 +1,65 @@
+    {
+    "nodes": [
+        {
+            "class_name": "WebRTCStreamer",
+            "contents_type": "Job",
+			"always_execute": true,
+            "contents": {
+                "type": "CPU"
+            },
+          "pins": [
+            {
+              "name": "In",
+              "type_name": "mz.fb.Texture",
+              "show_as": "INPUT_PIN",
+              "can_show_as": "INPUT_PIN_OR_PROPERTY",
+			        "live":true,
+              "data": {
+                "format": "R8G8B8A8_SRGB"
+              }
+            },
+            {
+              "name": "ServerIP",
+              "type_name": "string",
+              "show_as": "PROPERTY",
+              "can_show_as": "INPUT_PIN_OR_PROPERTY",
+              "data": "localhost:8888/"
+            },
+            {
+              "name": "MaxFPS",
+              "type_name": "float",
+              "show_as": "PROPERTY",
+              "can_show_as": "INPUT_PIN_OR_PROPERTY",
+              "data": 59.94,
+              "min": 5,
+              "max": 300
+            },
+            {
+              "name": "TargetBitrate",
+              "type_name": "int",
+              "show_as": "PROPERTY",
+              "can_show_as": "INPUT_PIN_OR_PROPERTY",
+              "data": 8000,
+              "min": 1000,
+              "max": 50000
+            }
+          ],
+            "functions": [
+              {
+                "class_name": "ConnectToServer",
+                "contents_type": "Job",
+                "contents": {
+                  "type": "CPU"
+                }
+              },
+              {
+                "class_name": "DisconnectFromServer",
+                "contents_type": "Job",
+                "contents": {
+                  "type": "CPU"
+                }
+              }
+            ]
+        }
+    ]
+}

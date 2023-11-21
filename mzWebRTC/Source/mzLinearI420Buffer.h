@@ -1,30 +1,31 @@
 #pragma once
 #include "api/video/i420_buffer.h"
 #include "api/video/video_frame.h"
-class mzI420Buffer : public webrtc::I420BufferInterface
+class mzLinearI420Buffer : public webrtc::I420BufferInterface
 {
 public:
-	mzI420Buffer(unsigned int width, unsigned int height)
-	:m_width(width), m_height(height) {
+	mzLinearI420Buffer(unsigned int width, unsigned int height)
+	:m_width(width), m_height(height){
 		m_strideY = width;
 		m_strideU = (width + 1) / 2;
 		m_strideV = (width + 1) / 2;
+		m_dataY = std::make_unique<uint8_t[]>(width * height * 3 / 2);
 	}
-	virtual ~mzI420Buffer() = default;
+	virtual ~mzLinearI420Buffer() = default;
 	virtual int width() const override { return m_width; }
 	virtual int height() const override { return m_height; }
 	
-	virtual const uint8_t* DataY() const override { return m_dataY; }
-	virtual const uint8_t* DataU() const override { return (m_dataY + m_width * m_height); }
-	virtual const uint8_t* DataV() const override { return (m_dataY + m_width * m_height + m_width / 2 * m_height / 2); }
+	virtual const uint8_t* DataY() const override { return m_dataY.get(); }
+	virtual const uint8_t* DataU() const override { return (m_dataY.get() + m_width * m_height); }
+	virtual const uint8_t* DataV() const override { return (m_dataY.get() + m_width * m_height + m_width/2 * m_height/2); }
 	
 	virtual int StrideY() const override { return m_strideY; }
 	virtual int StrideU() const override { return m_strideU; }
 	virtual int StrideV() const override { return m_strideV; }
 
-	void AddRef() const override { ref_count_.IncRef(); }
+	uint8_t* GetY(){ return m_dataY.get(); }
 
-	void SetDataY(uint8_t* dataY) { m_dataY = dataY; }
+	void AddRef() const override { ref_count_.IncRef(); }
 
 	rtc::RefCountReleaseStatus Release() const override {
 		const auto status = ref_count_.DecRef();
@@ -36,7 +37,7 @@ public:
 private:
 	unsigned int m_width;
 	unsigned int m_height;
-	uint8_t* m_dataY;
+	std::unique_ptr<uint8_t[]> m_dataY;
 	int m_strideY;
 	int m_strideU;
 	int m_strideV;
