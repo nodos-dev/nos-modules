@@ -1,7 +1,7 @@
 #include "mzSignalingServer.h"
 #include "mzWebRTCJsonConfig.h"
-
 #include "nlohmann/json.hpp"
+#include <iostream>
 using json = nlohmann::json;
 mzSignalingServer::mzSignalingServer()
 {
@@ -130,7 +130,15 @@ void mzSignalingServer::OnStreamerMessage(int id, std::string path, std::string 
 {
 	//First look for any player on the same path with the streamer
 	if (playerPathIDMap.contains(path)) {
-		json jsonMessage = json::parse(message);
+		json jsonMessage;
+		try {
+
+			jsonMessage = json::parse(message);
+		}
+		catch (std::exception e) {
+			std::cerr << "Failed to parse streamer message: " << e.what() << std::endl;
+			return;
+		}
 		int playerID = std::stoi(jsonMessage[mzWebRTCJsonConfig::peerIDKey].get<std::string>());
 		//Retrieve the playerId field of json
 		jsonMessage[mzWebRTCJsonConfig::peerIDKey] = std::to_string(id);
@@ -149,7 +157,15 @@ void mzSignalingServer::OnPlayerMessage(int id, std::string path, std::string me
 {
 	//First look if there is a streamer on that path
 	if (streamerPathIDMap.contains(path)) {
-		json jsonMessage = json::parse(message);
+		json jsonMessage;
+		try {
+
+			jsonMessage = json::parse(message);
+		}
+		catch (std::exception e) {
+			std::cerr << "Failed to parse streamer message: " << e.what() << std::endl;
+			return;
+		}
 		jsonMessage[mzWebRTCJsonConfig::peerIDKey] = std::to_string(id);
 		p_ServerSocket->SendMessageTo(streamerPathIDMap[path], std::move(jsonMessage.dump()));
 	}
