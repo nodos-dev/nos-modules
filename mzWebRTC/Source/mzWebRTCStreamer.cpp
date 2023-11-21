@@ -224,8 +224,10 @@ struct WebRTCNodeContext : mz::NodeContext {
 			if (pin->show_as() == mz::fb::ShowAs::INPUT_PIN) {
 				InputPinUUID = *pin->id();
 			}
-			if (strcmp(pin->name()->c_str(),"MaxFPS")) {
-				auto time = std::chrono::duration<float>(1.0f / 60);
+			if (MZN_MaxFPS.Compare(pin->name()->c_str()) == 0)
+			{
+				FPS = *(float*)pin->data()->data();
+				auto time = std::chrono::duration<float>(1.0f / FPS);
 				timeLimit = std::chrono::round<std::chrono::microseconds>(time);
 			}
 		}
@@ -240,8 +242,9 @@ struct WebRTCNodeContext : mz::NodeContext {
 		NodeID = *node->id();
 		
 		checkCallbacks = true;
-
-		mzEngine.SchedulePin(InputPinUUID, { 0,1 });
+		
+		mzVec2u deltaSec{10'000u, (uint32_t)std::floor(FPS * 10'000)};
+		mzEngine.SchedulePin(InputPinUUID, deltaSec);
 
 		flatbuffers::FlatBufferBuilder fbb;
 
