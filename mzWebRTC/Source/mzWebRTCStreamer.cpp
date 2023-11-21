@@ -404,7 +404,6 @@ struct WebRTCNodeContext : mz::NodeContext {
 		std::chrono::microseconds passedTime;
 		while (shouldSendFrame && p_mzWebRTC)
 		{
-			startTime = std::chrono::high_resolution_clock::now();
 			{
 				std::unique_lock<std::mutex> lck(SendFrameMutex);
 				if (!CopyCompleted) {
@@ -419,6 +418,7 @@ struct WebRTCNodeContext : mz::NodeContext {
 					continue;
 				break;
 			}
+			startTime = std::chrono::high_resolution_clock::now();
 			mzEngine.WatchLog("WebRTC Streamer interframe passed time:", std::to_string(passedTime.count()).c_str());
 			if (PeerCount == 0 )
 				continue;
