@@ -2,7 +2,7 @@
     "info": {
         "id": {
             "name": "mz.utilities",
-            "version": "0.1.0"
+            "version": "1.0.0"
         },
         "description": "Various utility nodes.",
         "display_name": "Utilities"

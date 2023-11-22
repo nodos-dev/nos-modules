@@ -2,7 +2,7 @@
     "info": {
         "id": {
             "name": "mz.math",
-            "version": "0.1.1"
+            "version": "1.0.0"
         },
         "description": "Nodes for math operations.",
         "display_name": "Math"

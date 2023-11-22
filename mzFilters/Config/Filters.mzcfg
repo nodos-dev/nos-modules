@@ -2,7 +2,7 @@
     "info": {
         "id": {
             "name": "mz.filters",
-            "version": "0.1.1"
+            "version": "1.0.0"
         },
         "display_name": "Filters",
         "description": "Collection of image filters."
