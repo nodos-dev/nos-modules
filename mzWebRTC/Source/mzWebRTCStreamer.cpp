@@ -467,7 +467,7 @@ struct WebRTCNodeContext : mz::NodeContext {
 			{
 				mzRunComputePassParams pass = {};
 				pass.Key = MZN_RGBtoYUV420_Compute_Pass;
-				pass.DispatchSize = mzVec2u(InputRGBA8.Info.Texture.Width/24, InputRGBA8.Info.Texture.Height/12);
+				pass.DispatchSize = mzVec2u(InputRGBA8.Info.Texture.Width/20, InputRGBA8.Info.Texture.Height/12);
 				pass.Bindings = inputs.data();
 				pass.BindingCount = inputs.size();
 				pass.Benchmark = 0;
