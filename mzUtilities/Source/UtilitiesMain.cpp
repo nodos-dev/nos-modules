@@ -104,7 +104,7 @@ MZAPI_ATTR mzResult MZAPI_CALL mzExportNodeFunctions(size_t* outSize, mzNodeFunc
 			{
 				break;
 			}
-			GEN_CASE_GPU_NODE_LICENSED(Checkerboard, "reality.Checkerboard", "Example unlicensed message")
+			GEN_CASE_GPU_NODE(Checkerboard)
 			GEN_CASE_GPU_NODE(Color)
 			GEN_CASE_GPU_NODE(Gradient)
 			GEN_CASE_GPU_NODE(Offset)

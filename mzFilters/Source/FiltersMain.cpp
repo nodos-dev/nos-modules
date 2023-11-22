@@ -72,7 +72,7 @@ MZAPI_ATTR mzResult MZAPI_CALL mzExportNodeFunctions(size_t* outSize, mzNodeFunc
 		mzEngine.UnregisterFeature(nodeId, featureName);										\
 		};
 
-	REGISTER_NODE_LICENSED(ColorCorrect, "reality.ColorCorrect", "Example unlicensed message");
+	REGISTER_NODE(ColorCorrect);
 	REGISTER_NODE(Diff);
 	REGISTER_NODE(Kuwahara);
 	RegisterGaussianBlur(outList[GaussianBlur]);
