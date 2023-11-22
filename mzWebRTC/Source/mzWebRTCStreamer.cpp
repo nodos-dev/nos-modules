@@ -261,10 +261,14 @@ struct WebRTCNodeContext : mz::NodeContext {
 		
 		checkCallbacks = true;
 		
-		mzVec2u deltaSec{10'000u, (uint32_t)std::floor(FPS * 10'000)};
-		mzEngine.SchedulePin(InputPinUUID, deltaSec);
+		mz::fb::vec2u deltaSec(10'000u, (uint32_t)std::floor(FPS * 10'000));
 
 		flatbuffers::FlatBufferBuilder fbb;
+		std::vector<flatbuffers::Offset<mz::app::AppEvent>> Offsets;
+		Offsets.push_back(mz::CreateAppEventOffset(
+			fbb, mz::app::CreateScheduleRequest(fbb, mz::app::ScheduleRequestKind::PIN, &InputPinUUID, false, &deltaSec, true)));
+		mzEvent hungerEvent = mz::CreateAppEvent(fbb, mz::app::CreateBatchAppEventDirect(fbb, &Offsets));
+		mzEngine.EnqueueEvent(&hungerEvent);
 
 		HandleEvent(
 			mz::CreateAppEvent(fbb, mz::CreatePartialNodeUpdateDirect(fbb, &DisconnectFromServerID,
