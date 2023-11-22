@@ -173,8 +173,8 @@ struct WebRTCPlayerNodeContext : mz::NodeContext {
 		OutputRGBA8.Info.Texture.Format = MZ_FORMAT_R8G8B8A8_SRGB;
 		OutputRGBA8.Info.Type = MZ_RESOURCE_TYPE_TEXTURE;
 		OutputRGBA8.Info.Texture.Usage = mzImageUsage(MZ_IMAGE_USAGE_TRANSFER_SRC | MZ_IMAGE_USAGE_TRANSFER_DST);
-		OutputRGBA8.Info.Texture.Width = 960;
-		OutputRGBA8.Info.Texture.Height = 540;
+		OutputRGBA8.Info.Texture.Width = 1280;
+		OutputRGBA8.Info.Texture.Height = 720;
 
 		mzEngine.Create(&OutputRGBA8);
 
@@ -183,8 +183,8 @@ struct WebRTCPlayerNodeContext : mz::NodeContext {
 			tex.Info.Texture.Format = MZ_FORMAT_R8G8B8A8_SRGB;
 			tex.Info.Type = MZ_RESOURCE_TYPE_TEXTURE;
 			tex.Info.Texture.Usage = mzImageUsage(MZ_IMAGE_USAGE_TRANSFER_SRC | MZ_IMAGE_USAGE_TRANSFER_DST);
-			tex.Info.Texture.Width = 960;
-			tex.Info.Texture.Height = 540;
+			tex.Info.Texture.Width = OutputRGBA8.Info.Texture.Width;
+			tex.Info.Texture.Height = OutputRGBA8.Info.Texture.Height;
 			mzEngine.Create(&tex);
 			ConvertedTextures.push_back(std::move(tex));
 
@@ -319,16 +319,17 @@ struct WebRTCPlayerNodeContext : mz::NodeContext {
 	}
 
 	mzResult BeginCopyFrom(mzCopyInfo* copyInfo) override{
+		playerLogger.LogStats();
 		if (!OutputRing->IsReadable()) {
 			return MZ_RESULT_FAILED;
 		}
 
-		playerLogger.LogStats();
 		int readIndex = OutputRing->GetNextReadable();
 		copyInfo->ShouldCopyTexture = true;
 		copyInfo->CopyTextureFrom = ConvertedTextures[readIndex];
 		copyInfo->CopyTextureTo = mz::DeserializeTextureInfo(copyInfo->SrcPinData.Data);
 		copyInfo->ShouldSubmitAndWait = true;
+		copyInfo->Stop = true;
 		return MZ_RESULT_SUCCESS;
 	}
 
@@ -344,8 +345,8 @@ struct WebRTCPlayerNodeContext : mz::NodeContext {
 			//mzEngine.WatchLog("WebRTC Player Output Ring Readable Size: ", std::to_string(OutputRing->Size - OutputRing->FreeCount).c_str());
 			//mzEngine.WatchLog("WebRTC Player Output Ring Writable Size: ", std::to_string(OutputRing->FreeCount).c_str());
 			if (!RGBAConversionRing->IsReadable() || !OutputRing->IsWriteable()) {
-				std::unique_lock<std::mutex> lock(FrameConversionMutex);
-				FrameConversionCV.wait(lock);
+				//std::unique_lock<std::mutex> lock(FrameConversionMutex);
+				//FrameConversionCV.wait(lock);
 				continue;
 			}
 
@@ -365,7 +366,7 @@ struct WebRTCPlayerNodeContext : mz::NodeContext {
 			{
 				mzRunComputePassParams pass = {};
 				pass.Key = MZN_YUV420toRGB_Compute_Pass;
-				pass.DispatchSize = mzVec2u(OutputRGBA8.Info.Texture.Width / 24, OutputRGBA8.Info.Texture.Height / 12);
+				pass.DispatchSize = mzVec2u(OutputRGBA8.Info.Texture.Width / 20, OutputRGBA8.Info.Texture.Height / 12);
 				pass.Bindings = inputs.data();
 				pass.BindingCount = inputs.size();
 				pass.Benchmark = 0;

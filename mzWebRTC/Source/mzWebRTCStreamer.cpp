@@ -185,6 +185,7 @@ struct WebRTCNodeContext : mz::NodeContext {
 	std::atomic_int PeerCount = 0;
 	std::string server;
 	std::atomic_bool StopRequested = false;
+	uint32_t LastFrameID = 0;
 	//On Node Created
 	WebRTCNodeContext(mz::fb::Node const* node) :NodeContext(node), currentState(EWebRTCPlayerStates::eNONE), encodeLogger("WebRTC Streamer Encode"), copyToLogger("WebRTC Stramer BeginCopyTo: ") {
 		InputRGBA8.Info.Texture.Format = MZ_FORMAT_B8G8R8A8_SRGB;
@@ -266,7 +267,8 @@ struct WebRTCNodeContext : mz::NodeContext {
 		flatbuffers::FlatBufferBuilder fbb;
 		std::vector<flatbuffers::Offset<mz::app::AppEvent>> Offsets;
 		Offsets.push_back(mz::CreateAppEventOffset(
-			fbb, mz::app::CreateScheduleRequest(fbb, mz::app::ScheduleRequestKind::PIN, &InputPinUUID, false, &deltaSec, true)));
+			fbb, mz::app::CreateScheduleRequest(
+				fbb, mz::app::ScheduleRequestKind::PIN, &InputPinUUID, false, &deltaSec, true) ) );
 		mzEvent hungerEvent = mz::CreateAppEvent(fbb, mz::app::CreateBatchAppEventDirect(fbb, &Offsets));
 		mzEngine.EnqueueEvent(&hungerEvent);
 
@@ -401,7 +403,11 @@ struct WebRTCNodeContext : mz::NodeContext {
 			return MZ_RESULT_FAILED;
 		}
 
+		if (LastFrameID == cpy->FrameNumber) {
+			mzEngine.LogW("WebRTC Streamer frame repeat!");
+		}
 		int writeIndex = InputRing->GetNextWritable();
+		LastFrameID = cpy->FrameNumber;
 		cpy->ShouldCopyTexture = true;
 		cpy->CopyTextureFrom = DummyInput;
 		cpy->CopyTextureTo = InputBuffers[writeIndex];
@@ -450,7 +456,7 @@ struct WebRTCNodeContext : mz::NodeContext {
 			
 			if(!InputRing->IsReadable())
 			{
-				mzEngine.LogW("WebRTC Streamer dropped a frame");
+				mzEngine.LogW("WebRTC Streamer has no frame on the ring!");
 				continue;
 			}
 
@@ -529,6 +535,7 @@ struct WebRTCNodeContext : mz::NodeContext {
 				[[unlikely]]
 				if (FreeBuffers == 0 && PeerCount > 0)
 				{
+					mzEngine.LogW("WebRTC Streamer waits for encoding");
 					std::unique_lock lock(EncodeMutex);
 					EncodeCompletedCV.wait(lock);
 				}

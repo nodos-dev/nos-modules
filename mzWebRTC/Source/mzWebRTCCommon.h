@@ -22,8 +22,8 @@ public:
 		}
 		auto now = std::chrono::high_resolution_clock::now();
 		auto FPS = 1.0 / (std::chrono::duration_cast<std::chrono::milliseconds>(now - startTime).count()) * 1000.0;
-		MaxFPS = (FPS > MaxFPS && FPS < 500) ? (FPS) : (MaxFPS);
-		MinFPS = (MinFPS > FPS && FPS > 5) ? (FPS) : (MinFPS);
+		MaxFPS = (FPS > MaxFPS && FPS < 2000) ? (FPS) : (MaxFPS);
+		MinFPS = (MinFPS > FPS && FPS > 0) ? (FPS) : (MinFPS);
 		mzEngine.WatchLog(Name_FPS.c_str(), std::to_string(FPS).c_str());
 		mzEngine.WatchLog(Name_MAX_FPS.c_str() , std::to_string(MaxFPS).c_str());
 		mzEngine.WatchLog(Name_MIN_FPS.c_str(), std::to_string(MinFPS).c_str());

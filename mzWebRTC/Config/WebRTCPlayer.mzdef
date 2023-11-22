@@ -15,8 +15,8 @@
 			        "live":true,
               "data": {
                 "format": "R8G8B8A8_SRGB",
-                "width": 960,
-                "height": 540
+                "width": 1280,
+                "height": 720
               }
             },
             {
