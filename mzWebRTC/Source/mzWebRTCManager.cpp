@@ -212,11 +212,6 @@ void mzWebRTCManager::SendOffer(int id)
 void mzWebRTCManager::UpdateBitrates(int bitrateKBPS)
 {
     targetKbps = bitrateKBPS;
-    webrtc::BitrateSettings bitrateSettings;
-    bitrateSettings.max_bitrate_bps = bitrateKBPS * 10 * 1000;
-    bitrateSettings.min_bitrate_bps = bitrateKBPS * 5 * 1000;
-    bitrateSettings.start_bitrate_bps = bitrateKBPS * 5 * 1000;
-
 
     for (auto& peerConnection : p_PeerConnections) {
         for (auto& sender : peerConnection->GetSenders()) {
@@ -228,7 +223,6 @@ void mzWebRTCManager::UpdateBitrates(int bitrateKBPS)
             }
             sender->SetParameters(bitrate);
         }
-        peerConnection->SetBitrate(std::move(bitrateSettings));
     }
 }
 
@@ -324,8 +318,8 @@ void mzWebRTCManager::OnSDPCreateSuccess(webrtc::SessionDescriptionInterface* de
         auto bitrate = p_PeerConnections[id]->GetSenders()[0]->GetParameters();
         for (auto& encoding : bitrate.encodings) {
             encoding.max_framerate = 300;
-            encoding.max_bitrate_bps = targetKbps * 10 * 1000;
-            encoding.min_bitrate_bps = targetKbps * 5 * 1000;
+            encoding.max_bitrate_bps = targetKbps * 2 * 10 * 1000;
+            encoding.min_bitrate_bps = targetKbps * 2 * 5 * 1000;
         }
         p_PeerConnections[id]->GetSenders()[0]->SetParameters(bitrate);
     }

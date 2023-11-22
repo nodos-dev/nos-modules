@@ -135,8 +135,10 @@ std::pair<mz::Name, std::vector<uint8_t>> RGBtoYUV420Shader;
 struct WebRTCNodeContext : mz::NodeContext {
 	
 	mzWebRTCStatsLogger encodeLogger;
-	std::unique_ptr<mzWebRTCStreamerInterface> p_mzWebRTC;
+	mzWebRTCStatsLogger copyToLogger;
 
+	std::unique_ptr<mzWebRTCStreamerInterface> p_mzWebRTC;
+	std::unique_ptr<RingProxy> InputRing;
 	std::chrono::microseconds interFrameTimeDelta;
 	std::chrono::microseconds timeLimit;
 	std::chrono::steady_clock::time_point encodeStartTime;
@@ -169,22 +171,27 @@ struct WebRTCNodeContext : mz::NodeContext {
 	std::thread FrameSenderThread;
 	std::thread CallbackHandlerThread;
 
+	std::mutex RingNewFrameMutex;
+	std::condition_variable RingNewFrameCV;
+
 	mzResourceShareInfo InputRGBA8 = {};
 	mzResourceShareInfo DummyInput = {}; 
 	
+	std::vector<mzResourceShareInfo> InputBuffers = {};
 	std::vector<mzResourceShareInfo> YUVPlanes = {};
 	std::vector<mzResourceShareInfo> YUVBuffers = {};
 
 	float FPS;
 	std::atomic_int PeerCount = 0;
 	std::string server;
+	std::atomic_bool StopRequested = false;
 	//On Node Created
-	WebRTCNodeContext(mz::fb::Node const* node) :NodeContext(node), currentState(EWebRTCPlayerStates::eNONE), encodeLogger("WebRTC Streamer Encode") {
+	WebRTCNodeContext(mz::fb::Node const* node) :NodeContext(node), currentState(EWebRTCPlayerStates::eNONE), encodeLogger("WebRTC Streamer Encode"), copyToLogger("WebRTC Stramer BeginCopyTo: ") {
 		InputRGBA8.Info.Texture.Format = MZ_FORMAT_B8G8R8A8_SRGB;
 		InputRGBA8.Info.Type = MZ_RESOURCE_TYPE_TEXTURE;
 		InputRGBA8.Info.Texture.Usage = mzImageUsage(MZ_IMAGE_USAGE_TRANSFER_SRC | MZ_IMAGE_USAGE_TRANSFER_DST);
-		InputRGBA8.Info.Texture.Width = 960;
-		InputRGBA8.Info.Texture.Height = 540;
+		InputRGBA8.Info.Texture.Width = 1280;
+		InputRGBA8.Info.Texture.Height = 720;
 
 		mzEngine.Create(&InputRGBA8);
 
@@ -196,7 +203,7 @@ struct WebRTCNodeContext : mz::NodeContext {
 		buffers.push_back(new mzI420Buffer(InputRGBA8.Info.Texture.Width, InputRGBA8.Info.Texture.Height));
 		buffers.push_back(new mzI420Buffer(InputRGBA8.Info.Texture.Width, InputRGBA8.Info.Texture.Height));
 		buffers.push_back(new mzI420Buffer(InputRGBA8.Info.Texture.Width, InputRGBA8.Info.Texture.Height));
-		
+
 		for (int i = 0; i < buffers.size(); i++) {
 			mzResourceShareInfo PlaneY = {};
 			PlaneY.Info.Texture.Format = MZ_FORMAT_R8_SRGB;
@@ -212,10 +219,21 @@ struct WebRTCNodeContext : mz::NodeContext {
 			BufY.Info.Buffer.Usage = mzBufferUsage(MZ_BUFFER_USAGE_TRANSFER_SRC | MZ_BUFFER_USAGE_TRANSFER_DST);
 			mzEngine.Create(&BufY);
 
+			mzResourceShareInfo Input = {};
+			Input.Info.Texture.Format = MZ_FORMAT_B8G8R8A8_SRGB;
+			Input.Info.Type = MZ_RESOURCE_TYPE_TEXTURE;
+			Input.Info.Texture.Usage = mzImageUsage(MZ_IMAGE_USAGE_TRANSFER_SRC | MZ_IMAGE_USAGE_TRANSFER_DST);
+			Input.Info.Texture.Width = InputRGBA8.Info.Texture.Width;
+			Input.Info.Texture.Height = InputRGBA8.Info.Texture.Height;
+			mzEngine.Create(&Input);
+
 			YUVBuffers.push_back(std::move(BufY));
 			YUVPlanes.push_back(std::move(PlaneY));
+			InputBuffers.push_back(std::move(Input));
 		}
 
+		InputRing = std::make_unique<RingProxy>(InputBuffers.size());
+		InputRing->SetConditionVariable(&RingNewFrameCV);
 
 		FreeBuffers = buffers.size();
 		nextBufferToCopyIndex = 0;
@@ -373,21 +391,28 @@ struct WebRTCNodeContext : mz::NodeContext {
 	}
 
 	mzResult BeginCopyTo(mzCopyInfo* cpy) override {
+		copyToLogger.LogStats();
+		if (!InputRing->IsWriteable()) {
+			mzEngine.LogW("WebRTC Streamer frame drop!");
+			return MZ_RESULT_FAILED;
+		}
+
+		int writeIndex = InputRing->GetNextWritable();
 		cpy->ShouldCopyTexture = true;
 		cpy->CopyTextureFrom = DummyInput;
-		cpy->CopyTextureTo = InputRGBA8;
+		cpy->CopyTextureTo = InputBuffers[writeIndex];
 		cpy->ShouldSubmitAndWait = true;
-		cpy->Stop = true;
+		cpy->Stop = false;
 		return MZ_RESULT_SUCCESS;
 	}
 
 	void EndCopyTo(mzCopyInfo* cpy) override {
-		if (CopyCompleted) {
-			mzEngine.LogW("WebRTC Streamer frame repeat!");
+		if (!InputRing->IsWriteable()) {
 		}
-		std::unique_lock<std::mutex> lck(SendFrameMutex);
 		CopyCompleted = true;
+		InputRing->SetWrote();
 		SendFrameCV.notify_one();
+		StopRequested = !InputRing->IsWriteable();
 	}
 
 	void OnEncodeCompleted() {
@@ -404,15 +429,9 @@ struct WebRTCNodeContext : mz::NodeContext {
 		std::chrono::microseconds passedTime;
 		while (shouldSendFrame && p_mzWebRTC)
 		{
-			{
-				std::unique_lock<std::mutex> lck(SendFrameMutex);
-				if (!CopyCompleted) {
-					SendFrameCV.wait(lck);
-				}
-				CopyCompleted = false;
-			}
 			while (true)
 			{
+				InputRing->LogRing();
 				passedTime = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now() - startTime);
 				if(passedTime.count() < timeLimit.count())
 					continue;
@@ -420,13 +439,21 @@ struct WebRTCNodeContext : mz::NodeContext {
 			}
 			startTime = std::chrono::high_resolution_clock::now();
 			mzEngine.WatchLog("WebRTC Streamer interframe passed time:", std::to_string(passedTime.count()).c_str());
-			if (PeerCount == 0 )
+			if (PeerCount == 0)
 				continue;
 
 			auto t_start = std::chrono::high_resolution_clock::now();
 			
+			if(!InputRing->IsReadable())
+			{
+				mzEngine.LogW("WebRTC Streamer dropped a frame");
+				continue;
+			}
+
+			int readIndex = InputRing->GetNextReadable();
+
 			std::vector<mzShaderBinding> inputs;
-			inputs.emplace_back(mz::ShaderBinding(MZN_Input, InputRGBA8));
+			inputs.emplace_back(mz::ShaderBinding(MZN_Input, InputBuffers[readIndex]));
 			inputs.emplace_back(mz::ShaderBinding(MZN_PlaneY, YUVPlanes[nextBufferToCopyIndex]));
 
 			mzCmd cmdRunPass; 
@@ -452,8 +479,14 @@ struct WebRTCNodeContext : mz::NodeContext {
 				mzEngine.Copy(cmdRunPass, &YUVPlanes[nextBufferToCopyIndex], &YUVBuffers[nextBufferToCopyIndex], 0);
 
 				mzEngine.End(cmdRunPass);
-				mzVec2u deltaSec{ 10'000u, (uint32_t)std::floor(FPS * 10'000) };
-				mzEngine.SchedulePin(InputPinUUID, deltaSec);
+
+				//mzVec2u deltaSec{ 10'000u, (uint32_t)std::floor(FPS * 10'000) };
+				//mzEngine.SchedulePin(InputPinUUID, deltaSec);
+				InputRing->SetRead();
+				/*if (StopRequested && InputRing->IsWriteable()) {
+					mzVec2u deltaSec{ 10'000u, (uint32_t)std::floor(FPS * 10'000) };
+					mzEngine.SchedulePin(InputPinUUID, deltaSec);
+				}*/
 
 
 				auto dataY = mzEngine.Map(&YUVBuffers[nextBufferToCopyIndex]);

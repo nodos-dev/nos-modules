@@ -55,80 +55,6 @@ MZ_REGISTER_NAME(PlaneY);
 MZ_REGISTER_NAME(PlaneU);
 MZ_REGISTER_NAME(PlaneV);
 
-
-struct DummyRing {
-public:
-	DummyRing(size_t size) :Size(size), FreeCount(size) {
-	}
-
-	int GetNextReadable() {
-		std::unique_lock lock(RingMutex);
-		if (FreeCount == Size && !IsFulledOnce) {
-			return -1;
-		}
-		assert(!(FreeCount == 0 && NextReadableFrame != NextWritableFrame));
-		return NextReadableFrame;
-	}
-
-	void SetRead() {
-		std::unique_lock lock(RingMutex);
-		assert(FreeCount < (Size));
-		FreeCount++;
-		NextReadableFrame = (++NextReadableFrame % Size);
-		assert(!(FreeCount == 0 && NextReadableFrame != NextWritableFrame));
-		//mzEngine.WatchLog("WebRTC Player Ring Readable Size: ", std::to_string(Size - FreeCount).c_str());
-		//mzEngine.WatchLog("WebRTC Player Ring Writable Size: ", std::to_string(FreeCount).c_str());
-	}
-
-	int GetNextWritable() {
-		std::unique_lock lock(RingMutex);
-		if (FreeCount == 0) {
-			return -1;
-		}
-		assert(!(FreeCount == 0 && NextReadableFrame != NextWritableFrame));
-		return NextWritableFrame;
-	}
-	void SetWrote() {
-		std::unique_lock lock(RingMutex);
-		assert(FreeCount > 0);
-		FreeCount--;
-		NextWritableFrame = (++NextWritableFrame % Size);
-		if (!IsFulledOnce && FreeCount == 0) {
-			IsFulledOnce = true;
-		}
-		//mzEngine.WatchLog("WebRTC Player Ring Readable Size: ", std::to_string(Size - FreeCount).c_str());
-		//mzEngine.WatchLog("WebRTC Player Ring Writable Size: ", std::to_string(FreeCount).c_str());
-		assert(!(FreeCount == 0 && NextReadableFrame != NextWritableFrame));
-	}
-
-	bool IsReadable() {
-		std::unique_lock lock(RingMutex);
-		if (!IsFulledOnce)
-			return false;
-		assert(!(FreeCount == 0 && NextReadableFrame != NextWritableFrame));
-		//mzEngine.WatchLog("WebRTC Player Ring Readable Size: ", std::to_string(Size - FreeCount).c_str());
-		//mzEngine.WatchLog("WebRTC Player Ring Writable Size: ", std::to_string(FreeCount).c_str());
-		return (FreeCount < Size);
-	}
-
-	bool IsWriteable() {
-		std::unique_lock lock(RingMutex);
-		assert(!(FreeCount == 0 && NextReadableFrame != NextWritableFrame));
-		//mzEngine.WatchLog("WebRTC Player Ring Readable Size: ", std::to_string(Size - FreeCount).c_str());
-		//mzEngine.WatchLog("WebRTC Player Ring Writable Size: ", std::to_string(FreeCount).c_str());
-		return FreeCount > 0;
-	}
-
-public:
-	std::atomic_bool IsFulledOnce = false;
-	std::mutex RingMutex;
-	size_t Size;
-	std::atomic_size_t FreeCount;
-	std::atomic_size_t NextReadableFrame = 0;
-	std::atomic_size_t NextWritableFrame = 0;
-};
-
-
 enum EWebRTCPlayerStates {
 	eNONE,
 	eREQUESTED_TO_CONNECT_SERVER,
@@ -209,8 +135,8 @@ struct WebRTCPlayerNodeContext : mz::NodeContext {
 	mzWebRTCStatsLogger playerLogger;
 
 	std::unique_ptr<mzWebRTCPlayerInterface> p_mzWebRTC;
-	std::unique_ptr<DummyRing> RGBAConversionRing;
-	std::unique_ptr<DummyRing> OutputRing;
+	std::unique_ptr<RingProxy> RGBAConversionRing;
+	std::unique_ptr<RingProxy> OutputRing;
 
 	std::atomic<EWebRTCPlayerStates> currentState;
 	mzUUID NodeID;
@@ -270,8 +196,8 @@ struct WebRTCPlayerNodeContext : mz::NodeContext {
 			OnFrameVBuffers.push_back(std::move(tmpV));
 		}
 
-		RGBAConversionRing = std::make_unique<DummyRing>(OnFrameYBuffers.size());
-		OutputRing = std::make_unique<DummyRing>(ConvertedTextures.size());
+		RGBAConversionRing = std::make_unique<RingProxy>(OnFrameYBuffers.size());
+		OutputRing = std::make_unique<RingProxy>(ConvertedTextures.size());
 
 		for (auto pin : *node->pins()) {
 			if (pin->show_as() == mz::fb::ShowAs::OUTPUT_PIN) {
