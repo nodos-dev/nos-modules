@@ -36,7 +36,7 @@ make.add_argument('--plugin-dir',
 make.add_argument('--exclude',
                     action='store',
                     required=False,
-                    default="*CMakeLists.txt,*.cpp,*.cc,*.c,*.h,*.hxx,*.hpp,*.dat,*.pdb",
+                    default="*CMakeLists.txt,*.cpp,*.cc,*.c,*.h,*.hxx,*.hpp,*.dat,*.pdb,*External/*",
                     help="Comma separated filenames and wildcards to exclude files from the release zip.")
 
 upload = subparsers.add_parser("upload", help="Create a release at GitHub")
