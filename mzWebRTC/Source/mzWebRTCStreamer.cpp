@@ -412,17 +412,16 @@ struct WebRTCNodeContext : mz::NodeContext {
 		cpy->CopyTextureFrom = DummyInput;
 		cpy->CopyTextureTo = InputBuffers[writeIndex];
 		cpy->ShouldSubmitAndWait = true;
-		cpy->Stop = false;
 		return MZ_RESULT_SUCCESS;
 	}
 
 	void EndCopyTo(mzCopyInfo* cpy) override {
-		if (!InputRing->IsWriteable()) {
-		}
 		CopyCompleted = true;
 		InputRing->SetWrote();
 		SendFrameCV.notify_one();
 		StopRequested = !InputRing->IsWriteable();
+		cpy->Stop = !InputRing->IsWriteable();
+
 	}
 
 	void OnEncodeCompleted() {
@@ -456,7 +455,11 @@ struct WebRTCNodeContext : mz::NodeContext {
 			
 			if(!InputRing->IsReadable())
 			{
+				mzVec2u deltaSec{ 10'000u, (uint32_t)std::floor(FPS * 10'000) };
+				mzEngine.SchedulePin(InputPinUUID, deltaSec);
 				mzEngine.LogW("WebRTC Streamer has no frame on the ring!");
+				std::unique_lock<std::mutex> lck(SendFrameMutex);
+				SendFrameCV.wait(lck);
 				continue;
 			}
 
