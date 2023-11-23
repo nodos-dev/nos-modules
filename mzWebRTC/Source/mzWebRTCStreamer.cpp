@@ -187,7 +187,7 @@ struct WebRTCNodeContext : mz::NodeContext {
 	std::atomic_bool StopRequested = false;
 	uint32_t LastFrameID = 0;
 	//On Node Created
-	WebRTCNodeContext(mz::fb::Node const* node) :NodeContext(node), currentState(EWebRTCPlayerStates::eNONE), encodeLogger("WebRTC Streamer Encode"), copyToLogger("WebRTC Stramer BeginCopyTo: ") {
+	WebRTCNodeContext(mz::fb::Node const* node) :NodeContext(node), currentState(EWebRTCPlayerStates::eNONE), encodeLogger("WebRTC Streamer Encode"), copyToLogger("WebRTC Stramer BeginCopyTo") {
 		InputRGBA8.Info.Texture.Format = MZ_FORMAT_B8G8R8A8_SRGB;
 		InputRGBA8.Info.Type = MZ_RESOURCE_TYPE_TEXTURE;
 		InputRGBA8.Info.Texture.Usage = mzImageUsage(MZ_IMAGE_USAGE_TRANSFER_SRC | MZ_IMAGE_USAGE_TRANSFER_DST);
@@ -233,7 +233,7 @@ struct WebRTCNodeContext : mz::NodeContext {
 			InputBuffers.push_back(std::move(Input));
 		}
 
-		InputRing = std::make_unique<RingProxy>(InputBuffers.size());
+		InputRing = std::make_unique<RingProxy>(InputBuffers.size(), "WebRTC Streamer Input Ring");
 		InputRing->SetConditionVariable(&RingNewFrameCV);
 
 		FreeBuffers = buffers.size();
@@ -310,8 +310,8 @@ struct WebRTCNodeContext : mz::NodeContext {
 
 	void ClearNodeInternals() {
 		if (FrameSenderThread.joinable()) {
-			SendFrameCV.notify_one();
 			shouldSendFrame = false;
+			SendFrameCV.notify_one();
 			FrameSenderThread.join();
 		}
 
@@ -399,12 +399,8 @@ struct WebRTCNodeContext : mz::NodeContext {
 	mzResult BeginCopyTo(mzCopyInfo* cpy) override {
 		copyToLogger.LogStats();
 		if (!InputRing->IsWriteable()) {
-			mzEngine.LogW("WebRTC Streamer frame drop!");
+			//mzEngine.LogW("WebRTC Streamer frame drop!");
 			return MZ_RESULT_FAILED;
-		}
-
-		if (LastFrameID == cpy->FrameNumber) {
-			mzEngine.LogW("WebRTC Streamer frame repeat!");
 		}
 		int writeIndex = InputRing->GetNextWritable();
 		LastFrameID = cpy->FrameNumber;
@@ -457,9 +453,12 @@ struct WebRTCNodeContext : mz::NodeContext {
 			{
 				mzVec2u deltaSec{ 10'000u, (uint32_t)std::floor(FPS * 10'000) };
 				mzEngine.SchedulePin(InputPinUUID, deltaSec);
-				mzEngine.LogW("WebRTC Streamer has no frame on the ring!");
-				std::unique_lock<std::mutex> lck(SendFrameMutex);
-				SendFrameCV.wait(lck);
+
+				if (shouldSendFrame) {
+					//mzEngine.LogW("WebRTC Streamer has no frame on the ring!");
+					std::unique_lock<std::mutex> lck(SendFrameMutex);
+					SendFrameCV.wait(lck);
+				}
 				continue;
 			}
 

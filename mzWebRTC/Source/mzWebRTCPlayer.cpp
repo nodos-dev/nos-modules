@@ -45,6 +45,7 @@
 MZ_REGISTER_NAME(Out)
 MZ_REGISTER_NAME(ServerIP)
 MZ_REGISTER_NAME(StreamerID)
+MZ_REGISTER_NAME(MaxFPS)
 MZ_REGISTER_NAME(WebRTCPlayer);
 MZ_REGISTER_NAME(TargetBitrate);
 
@@ -132,7 +133,8 @@ private:
 std::pair<mz::Name, std::vector<uint8_t>> YUV420toRGBShader;
 
 struct WebRTCPlayerNodeContext : mz::NodeContext {
-	mzWebRTCStatsLogger playerLogger;
+	mzWebRTCStatsLogger PlayerBeginCopyToLogger;
+	mzWebRTCStatsLogger PlayerOnFrameLogger;
 
 	std::unique_ptr<mzWebRTCPlayerInterface> p_mzWebRTC;
 	std::unique_ptr<RingProxy> RGBAConversionRing;
@@ -167,9 +169,14 @@ struct WebRTCPlayerNodeContext : mz::NodeContext {
 	std::atomic_int PeerCount = 0;
 	std::string server;
 	std::mutex IsFrameCopyable;
+	std::chrono::high_resolution_clock::time_point LastCopyTime;
+	int FPS;
+	std::chrono::microseconds timeLimit;
+
 
 	//On Node Created
-	WebRTCPlayerNodeContext(mz::fb::Node const* node) :NodeContext(node), currentState(EWebRTCPlayerStates::eNONE), playerLogger("WebRTC Player") {
+	WebRTCPlayerNodeContext(mz::fb::Node const* node) :NodeContext
+	(node), currentState(EWebRTCPlayerStates::eNONE), PlayerBeginCopyToLogger("WebRTC Player BeginCopyFrom"), PlayerOnFrameLogger("WebRTC Player OnVideoFrame") {
 		OutputRGBA8.Info.Texture.Format = MZ_FORMAT_R8G8B8A8_SRGB;
 		OutputRGBA8.Info.Type = MZ_RESOURCE_TYPE_TEXTURE;
 		OutputRGBA8.Info.Texture.Usage = mzImageUsage(MZ_IMAGE_USAGE_TRANSFER_SRC | MZ_IMAGE_USAGE_TRANSFER_DST);
@@ -196,12 +203,19 @@ struct WebRTCPlayerNodeContext : mz::NodeContext {
 			OnFrameVBuffers.push_back(std::move(tmpV));
 		}
 
-		RGBAConversionRing = std::make_unique<RingProxy>(OnFrameYBuffers.size());
-		OutputRing = std::make_unique<RingProxy>(ConvertedTextures.size());
+		RGBAConversionRing = std::make_unique<RingProxy>(OnFrameYBuffers.size(),"WebRTCPlayer RGBA Conversion Ring");
+		
+		OutputRing = std::make_unique<RingProxy>(ConvertedTextures.size(), "WebRTCPlayer Output Ring");
 
 		for (auto pin : *node->pins()) {
 			if (pin->show_as() == mz::fb::ShowAs::OUTPUT_PIN) {
 				OutputPinUUID = *pin->id();
+			}
+			if (MZN_MaxFPS.Compare(pin->name()->c_str()) == 0)
+			{
+				FPS = *(float*)pin->data()->data();
+				auto time = std::chrono::duration<float>(1.0f / FPS);
+				timeLimit = std::chrono::round<std::chrono::microseconds>(time);
 			}
 		}
 		for (auto func : *node->functions()) {
@@ -242,6 +256,14 @@ struct WebRTCPlayerNodeContext : mz::NodeContext {
 		}
 	}
 
+	void  OnPinValueChanged(mz::Name pinName, mzUUID pinId, mzBuffer* value) override {
+		if (pinName == MZN_MaxFPS) {
+			FPS = *(static_cast<float*>(value->Data));
+			auto time = std::chrono::duration<float>(1.0f / FPS);
+			timeLimit = std::chrono::round<std::chrono::microseconds>(time);
+		}
+	}
+	
 	void InitializeNodeInternals() {
 
 		p_mzWebRTC.reset(new mzWebRTCPlayerInterface());
@@ -268,7 +290,7 @@ struct WebRTCPlayerNodeContext : mz::NodeContext {
 
 	void OnVideoFrame(const webrtc::VideoFrame& frame) {
 		
-
+		PlayerOnFrameLogger.LogStats();
 		auto buffer = frame.video_frame_buffer()->GetI420();
 		if (!RGBAConversionRing->IsWriteable()) {
 			mzEngine.LogW("WebRTC Player dropped a frame");
@@ -313,17 +335,21 @@ struct WebRTCPlayerNodeContext : mz::NodeContext {
 		FrameConversionCV.notify_one();
 	}
 
-	void  OnPinValueChanged(mz::Name pinName, mzUUID pinId, mzBuffer* value) override {
-
-		
-	}
+	
 
 	mzResult BeginCopyFrom(mzCopyInfo* copyInfo) override{
-		playerLogger.LogStats();
+		
 		if (!OutputRing->IsReadable()) {
 			return MZ_RESULT_FAILED;
 		}
+		auto now = std::chrono::high_resolution_clock::now();
+		if (timeLimit.count() > std::chrono::duration_cast<std::chrono::microseconds>(now - LastCopyTime).count()) {
+			//mzEngine.LogW("Too fast");
+			return MZ_RESULT_FAILED;
+		}
+		LastCopyTime = std::chrono::high_resolution_clock::now();
 
+		PlayerBeginCopyToLogger.LogStats();
 		int readIndex = OutputRing->GetNextReadable();
 		copyInfo->ShouldCopyTexture = true;
 		copyInfo->CopyTextureFrom = ConvertedTextures[readIndex];
@@ -340,10 +366,8 @@ struct WebRTCPlayerNodeContext : mz::NodeContext {
 
 	void ConvertFrames() {
 		while (shouldConvertFrame) {
-			//mzEngine.WatchLog("WebRTC Player Conversion Ring Readable Size: ", std::to_string(RGBAConversionRing->Size - RGBAConversionRing->FreeCount).c_str());
-			//mzEngine.WatchLog("WebRTC Player Conversion Ring Writable Size: ", std::to_string(RGBAConversionRing->FreeCount).c_str());
-			//mzEngine.WatchLog("WebRTC Player Output Ring Readable Size: ", std::to_string(OutputRing->Size - OutputRing->FreeCount).c_str());
-			//mzEngine.WatchLog("WebRTC Player Output Ring Writable Size: ", std::to_string(OutputRing->FreeCount).c_str());
+			RGBAConversionRing->LogRing();
+			OutputRing->LogRing();
 			if (!RGBAConversionRing->IsReadable() || !OutputRing->IsWriteable()) {
 				//std::unique_lock<std::mutex> lock(FrameConversionMutex);
 				//FrameConversionCV.wait(lock);

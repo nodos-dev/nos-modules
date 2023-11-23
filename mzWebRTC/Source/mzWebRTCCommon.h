@@ -17,17 +17,25 @@ public:
 		{
 			// Clear stats for each 100 frame
 			FrameCount = 0;
-			MaxFPS = -9999;
-			MinFPS = 9999;
+			MaxFPS = -INFINITY;
+			MinFPS = INFINITY;
 		}
 		auto now = std::chrono::high_resolution_clock::now();
 		auto FPS = 1.0 / (std::chrono::duration_cast<std::chrono::milliseconds>(now - startTime).count()) * 1000.0;
-		MaxFPS = (FPS > MaxFPS && FPS < 2000) ? (FPS) : (MaxFPS);
-		MinFPS = (MinFPS > FPS && FPS > 0) ? (FPS) : (MinFPS);
+		MaxFPS = (FPS > MaxFPS) ? (FPS) : (MaxFPS);
+		MinFPS = (MinFPS > FPS) ? (FPS) : (MinFPS);       
 		mzEngine.WatchLog(Name_FPS.c_str(), std::to_string(FPS).c_str());
 		mzEngine.WatchLog(Name_MAX_FPS.c_str() , std::to_string(MaxFPS).c_str());
 		mzEngine.WatchLog(Name_MIN_FPS.c_str(), std::to_string(MinFPS).c_str());
 		startTime = now;
+	}
+
+	float GetMaxFPS() const {
+		return MaxFPS;
+	}
+
+	float GetMinFPS() const {
+		return MinFPS;
 	}
 
 private:
@@ -43,9 +51,7 @@ struct RingProxy {
 public:
 	RingProxy(size_t size, std::string ringName = "") :Size(size), FreeCount(size) {
 		RingID++;
-		if (ringName == "") {
-			name = "Ring_" + std::to_string(RingID);
-		}
+		name = (ringName == "") ? "Ring_" + std::to_string(RingID) : ringName;
 		name_EMPTY = name + " Empty Slots:";
 		name_FILLED = name + " Filled Slots:";
 

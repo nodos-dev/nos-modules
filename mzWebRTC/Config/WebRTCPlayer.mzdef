@@ -26,12 +26,21 @@
               "can_show_as": "INPUT_PIN_OR_PROPERTY",
               "data": "localhost:80/"
             },
-			{
+            {
               "name": "StreamerID",
               "type_name": "int",
               "show_as": "PROPERTY",
               "can_show_as": "INPUT_PIN_OR_PROPERTY",
               "data": "0"
+            },
+            {
+              "name": "MaxFPS",
+              "type_name": "float",
+              "show_as": "PROPERTY",
+              "can_show_as": "INPUT_PIN_OR_PROPERTY",
+              "data": 59.94,
+              "min": 5,
+              "max": 300
             }
           ],
             "functions": [
