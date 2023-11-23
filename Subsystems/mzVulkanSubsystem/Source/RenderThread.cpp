@@ -1,20 +1,24 @@
 #include "RenderThread.h"
-#include "mzVulkan/Device.h"
-#include "mzVulkan/Command.h"
 
+#include "Globals.h"
 
+// Vulkan base
+#include <mzVulkan/Device.h>
+#include <mzVulkan/Command.h>
+
+// External
 #ifndef WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN
 #endif
 #include <Windows.h>
 #include <processthreadsapi.h>
+
+// std
 #include <codecvt>
 
 namespace mz::vkss
 {
 using namespace mz::vk;
-
-extern mz::vk::Device* GVkDevice;
 
 IMPLEMENT_SINGLETON(RenderThread);
 

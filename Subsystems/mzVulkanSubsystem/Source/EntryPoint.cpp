@@ -3,19 +3,9 @@
 #include <MediaZ/SubsystemAPI.h>
 #include <mzVulkan/Common.h>
 
-#include "Services.h"
-
 MZ_INIT();
 
-namespace mz::vk
-{
-void Bind(mzVulkanSubsystem& subsystem)
-{
-	subsystem.Begin = vkss::Begin;
-	subsystem.End = vkss::End;
-	subsystem.WaitEvent = vkss::WaitEvent;
-}
-}
+#include "Services.h"
 
 extern "C"
 {
@@ -24,7 +14,7 @@ MZAPI_ATTR mzResult MZAPI_CALL mzExportSubsystem(void** subsystemContext)
 {
 	mz::vkss::Initialize();
 	auto subsystem = new mzVulkanSubsystem;
-	mz::vk::Bind(*subsystem);
+	mz::vkss::Bind(*subsystem);
 	return MZ_RESULT_SUCCESS;
 }
 

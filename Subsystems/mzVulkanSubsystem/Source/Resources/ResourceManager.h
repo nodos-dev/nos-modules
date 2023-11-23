@@ -16,8 +16,6 @@
 
 namespace mz::vkss
 {
-std::unique_ptr<ResourceManager> GResources = nullptr;
-
 template <typename T>
 concept ResourceConcept = std::is_same_v<vk::Image, T> || std::is_same_v<vk::Buffer, T>;
 

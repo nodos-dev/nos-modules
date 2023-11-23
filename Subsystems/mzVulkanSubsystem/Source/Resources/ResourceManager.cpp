@@ -16,7 +16,6 @@
 
 namespace mz::vkss
 {
-
 void ResourceManager::Clear()
 {
 	std::scoped_lock guard(Mutex);

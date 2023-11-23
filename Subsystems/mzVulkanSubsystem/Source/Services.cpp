@@ -11,15 +11,23 @@
 #include <mzVulkan/Buffer.h>
 #include <mzVulkan/Image.h>
 #include <mzVulkan/QueryPool.h>
+#include <mzVulkan/Renderpass.h>
+
+// SDK
+#include <MediaZ/Name.hpp>
+#include <mzFlatBuffersCommon.h>
 
 // std
 #include <future>
 #include <chrono>
 
-extern mzEngineServices mzEngine;
+// TODO:
+// 1. Combine benchmark codes into one function to avoid duplicate code.
 
 namespace mz::vkss
 {
+#include "CAPIStructHelpers.inl"
+
 VKAPI_ATTR VkBool32 VKAPI_CALL DebugCallback(
 	VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
 	VkDebugUtilsMessageTypeFlagsEXT messageType,
@@ -50,9 +58,6 @@ VKAPI_ATTR VkBool32 VKAPI_CALL DebugCallback(
 	return VK_FALSE;
 }
 
-mz::vk::Device* GVkDevice;
-vk::rc<mz::vk::Context> GVkCtx;
-
 mzResult Initialize()
 {
 	GVkCtx = vk::Context::New(DebugCallback);
@@ -77,6 +82,21 @@ mzResult Deinitialize()
 	GVkCtx = nullptr;
 	GResources.reset();
     return MZ_RESULT_SUCCESS;
+}
+
+void Bind(mzVulkanSubsystem& subsystem)
+{
+	subsystem.Begin = vkss::Begin;
+	subsystem.End = vkss::End;
+	subsystem.WaitEvent = vkss::WaitEvent;
+	subsystem.Copy = vkss::Copy;
+	subsystem.RunPass = vkss::RunPass;
+	subsystem.RunPass2 = vkss::RunPass2;
+	subsystem.RunComputePass = vkss::RunComputePass;
+	subsystem.Clear = vkss::ClearTexture;
+	subsystem.Download = vkss::DownloadTexture;
+	subsystem.Create = vkss::CreateResource;
+	subsystem.Destroy = vkss::DestroyResource;
 }
 
 static vk::rc<vk::CommandBuffer> CommandStart(mzCmd cmd)
@@ -172,6 +192,75 @@ static vk::rc<vk::Image> ImportImageDef(vk::Device* vk, const mzResourceShareInf
 	return img;
 }
 
+void ExportBufferDef(rc<vk::Buffer> buf, mzResourceShareInfo* info)
+{
+	info->Memory.Handle = (u64)buf.get();
+	info->Memory.PID = mz::vk::PlatformGetCurrentProcessId();
+	info->Memory.Memory = (u64)buf->Allocation.OsHandle;
+	info->Memory.Offset = buf->Allocation.GetOffset();
+	info->Memory.Type = (u32)buf->Allocation.ExternalMemoryHandleTypes;
+	info->Info.Type = MZ_RESOURCE_TYPE_BUFFER;
+	info->Info.Buffer.Size = buf->Allocation.GetSize();
+	info->Info.Buffer.Usage = (mzBufferUsage)buf->Usage;
+}
+
+void ExportImageDef(rc<vk::Image> image, mzResourceShareInfo* tex)
+{
+	mz::vk::MemoryExportInfo Ext = image->GetExportInfo();
+	tex->Memory.Handle = (u64)image.get();
+	tex->Memory.PID = Ext.PID;
+	tex->Memory.Memory = (u64)Ext.Memory;
+	tex->Memory.Offset = Ext.Offset;
+	tex->Memory.Type = (u32)Ext.Type;
+	tex->Info.Type = MZ_RESOURCE_TYPE_TEXTURE;
+	tex->Info.Texture.Width = image->GetExtent().width;
+	tex->Info.Texture.Height = image->GetExtent().height;
+	tex->Info.Texture.Format = (mzFormat)image->GetFormat();
+	tex->Info.Texture.Usage = (mzImageUsage)image->Usage;
+	tex->Info.Texture.Semaphore = (u64)(image->ExtSemaphore ? image->ExtSemaphore->Handle : 0);
+	tex->Info.Texture.FieldType = MZ_TEXTURE_FIELD_TYPE_PROGRESSIVE;
+}
+
+void UpdateTextureSizePresetFromSize(mz::fb::TTexture* tex)
+{
+	if (tex->width == 1920 && tex->height == 1080)
+		tex->size = mz::fb::SizePreset::HD;
+	else if (tex->width == 3840 && tex->height == 2160)
+		tex->size = mz::fb::SizePreset::ULTRA_HD;
+	else
+		tex->size = mz::fb::SizePreset::CUSTOM;
+}
+
+void FillDefaultParameters(mzTextureInfo* texture)
+{
+	mzBuffer defaultData{};
+	mzEngine.GetDefaultValueOfType(MZ_NAME_STATIC("mz.fb.Texture"), &defaultData);
+	if (!defaultData.Data)
+	{
+		mzEngine.LogE("Failed to get default data for mz.fb.Texture");
+		return;
+	}
+	auto tex = flatbuffers::GetRoot<mz::fb::Texture>(defaultData.Data);
+	texture->Width = texture->Width ? texture->Width : tex->width();
+	texture->Height = texture->Height ? texture->Height : tex->height();
+	texture->Format = (u32)texture->Format ? texture->Format : (mzFormat)tex->format();
+	texture->Usage = (u32)texture->Usage ? texture->Usage : (mzImageUsage)tex->usage();
+}
+
+void FillDefaultParameters(mzBufferInfo* data)
+{
+	mzBuffer defaultData{};
+	mzEngine.GetDefaultValueOfType(MZ_NAME_STATIC("mz.fb.Buffer"), &defaultData);
+	if (!defaultData.Data)
+	{
+		mzEngine.LogE("Failed to get default data for mz.fb.Buffer");
+		return;
+	}
+	auto defaultBuf = flatbuffers::GetRoot<mz::fb::Buffer>(defaultData.Data);
+	data->Size = data->Size ? data->Size : defaultBuf->size();
+	data->Usage = (u32)data->Usage ? (mzBufferUsage)data->Usage : (mzBufferUsage)defaultBuf->usage();
+}
+
 mzResult MZAPI_CALL Begin(mzCmd* outCmd)
 { 
     if (mzEngine.IsInSchedulerThread())
@@ -261,7 +350,7 @@ mzResult MZAPI_CALL Copy(mzCmd inCmd,
 		if (auto re = GVkDevice->GetQPool()->PerfScope(frames, bench_key, cmd, std::move(RFN)))
 		{
 			auto t = *re;
-			mzEngine.LogI("%s took: %u ns (%u us) (%u ms)", t.count(), std::chrono::duration_cast<std::chrono::microseconds>(t).count(), std::chrono::duration_cast<std::chrono::milliseconds>(t).count());
+			mzEngine.LogI("Benchmark: %s took %u ns (%u us) (%u ms)", bench_key.c_str(), t.count(), std::chrono::duration_cast<std::chrono::microseconds>(t).count(), std::chrono::duration_cast<std::chrono::milliseconds>(t).count());
 		}
 	}
 	else
@@ -272,6 +361,310 @@ mzResult MZAPI_CALL Copy(mzCmd inCmd,
 	CommandFinish(inCmd, cmd);
 	return MZ_RESULT_SUCCESS;
 }
+
+auto ConvertVertices(mzVertexData v, vk::VertexData* verts)
+{
+	if (!verts || !v.Buffer.Memory.Handle)
+		return (vk::VertexData*)0;
+
+	*verts = vk::VertexData{
+		.Buffer = ImportBufferDef(GVkDevice, &v.Buffer),
+		.VertexOffset = v.VertexOffset,
+		.IndexOffset = v.IndexOffset,
+		.NumIndices = v.IndexCount,
+		.DepthWrite = (bool)v.DepthWrite,
+		.DepthTest = (bool)v.DepthTest,
+		.DepthFunc = (VkCompareOp)v.DepthFunc,
+	};
+	return verts;
+}
+
+void BindToPass(rc<vk::Basepass> RP, const mzShaderBinding* binding)
+{
+	auto name = mz::Name(binding->Name).AsString();
+	switch (RP->GetUniformClass(name))
+	{
+	case vk::Basepass::IMAGE_ARRAY:
+		// TODO
+		{
+			std::vector<rc<vk::Image>> images;
+			for (u32 i = 0; i < binding->Size / sizeof(mzResourceShareInfo); ++i)
+				images.push_back(ImportImageDef(GVkDevice, &binding->Resource[i]));
+			RP->BindResource(name, images, (VkFilter)binding->Resource->Info.Texture.Filter);
+		}
+		break;
+	case vk::Basepass::IMAGE:
+		RP->BindResource(name,
+						 ImportImageDef(GVkDevice, binding->Resource),
+						 (VkFilter)binding->Resource->Info.Texture.Filter);
+		break;
+	case vk::Basepass::BUFFER: RP->BindResource(name, ImportBufferDef(GVkDevice, binding->Resource)); break;
+	case vk::Basepass::UNIFORM: RP->BindData(name, binding->Data, binding->Size); break;
+	}
+}
+
+mzResult MZAPI_CALL RunPass(mzCmd inCmd, const mzRunPassParams* params)
+{
+	if (!inCmd)
+	{
+		ENQUEUE_RENDER_COMMAND(RunPass, [copiedParams = OwnedRunPassParams(*params)](rc<vk::CommandBuffer> cmd) {
+			RunPass(cmd.get(), &copiedParams);
+		});
+		return MZ_RESULT_SUCCESS;
+	}
+	auto cmd = CommandStart(inCmd);
+
+	auto RP = GVkDevice->GetGlobal<rc<vk::Renderpass>>(mz::Name(params->Key).AsCStr());
+	RP->Lock();
+	for (u32 i = 0; i < params->BindingCount; ++i)
+		BindToPass(RP, &params->Bindings[i]);
+
+	vk::VertexData verts;
+	RP->Exec(cmd,
+			 ImportImageDef(GVkDevice, &params->Output),
+			 ConvertVertices(params->Vertices, &verts),
+			 !params->DoNotClear,
+			 0,
+			 0.0f,
+			 {params->ClearCol.x, params->ClearCol.y, params->ClearCol.z, params->ClearCol.w});
+	RP->Unlock();
+	CommandFinish(inCmd, cmd);
+	return MZ_RESULT_SUCCESS;
+}
+
+void PrepassTransition(rc<vk::Basepass> RP, rc<vk::CommandBuffer> cmd, const mzShaderBinding* binding)
+{
+	auto name = mz::Name(binding->Name).AsString();
+	switch (RP->GetUniformClass(name))
+	{
+	case vk::Basepass::IMAGE_ARRAY:
+		// TODO
+		assert(0);
+	case vk::Basepass::IMAGE:
+		RP->TransitionInput(cmd, name, ImportImageDef(GVkDevice, binding->Resource));
+		break;
+	}
+}
+
+mzResult MZAPI_CALL RunPass2(mzCmd inCmd, const mzRunPass2Params* params)
+{
+	if (!inCmd)
+	{
+		ENQUEUE_RENDER_COMMAND(RunPass2, [params = OwnedRunPass2Params(*params)](rc<vk::CommandBuffer> cmd) {
+			RunPass2(cmd.get(), &params);
+		});
+		return MZ_RESULT_SUCCESS;
+	}
+	auto RP = GVkDevice->GetGlobal<rc<vk::Renderpass>>(mz::Name(params->Key).AsCStr());
+
+	if (!RP)
+		return MZ_RESULT_INVALID_ARGUMENT;
+
+	assert(RP->PL->MainShader->Stage == VK_SHADER_STAGE_FRAGMENT_BIT);
+
+	auto RFN = [params, &RP](auto cmd) {
+		RP->Lock();
+		for (u32 i = 0; i < params->DrawCallCount; ++i)
+			for (u32 j = 0; j < params->DrawCalls[i].BindingCount; ++j)
+				PrepassTransition(RP, cmd, &params->DrawCalls[i].Bindings[j]);
+
+		auto output = ImportImageDef(GVkDevice, &params->Output);
+		RP->Begin(cmd,
+				  output,
+				  params->Wireframe,
+				  !params->DoNotClear,
+				  0,
+				  0.0f,
+				  {params->ClearCol.x, params->ClearCol.y, params->ClearCol.z, params->ClearCol.w});
+
+		for (u32 i = 0; i < params->DrawCallCount; ++i)
+		{
+			for (u32 j = 0; j < params->DrawCalls[i].BindingCount; ++j)
+				BindToPass(RP, &params->DrawCalls[i].Bindings[j]);
+
+			RP->BindResources(cmd);
+			RP->DescriptorSets.clear();
+			vk::VertexData verts;
+			RP->Draw(cmd, ConvertVertices(params->DrawCalls[i].Vertices, &verts));
+		}
+
+		RP->End(cmd);
+		RP->Unlock();
+	};
+
+	auto cmd = CommandStart(inCmd);
+	if (params->Benchmark)
+	{
+		if (auto re = GVkDevice->GetQPool()->PerfScope(params->Benchmark, mz::Name(params->Key).AsCStr(), cmd, std::move(RFN)))
+		{
+			auto t = *re;
+			mzEngine.LogI("Benchmark: %s took %u ns (%u us) (%u ms)",
+						  mzEngine.GetString(params->Key),
+						  t.count(),
+						  std::chrono::duration_cast<std::chrono::microseconds>(t).count(),
+						  std::chrono::duration_cast<std::chrono::milliseconds>(t).count());
+		}
+	}
+	else
+	{
+		RFN(cmd);
+	}
+	CommandFinish(inCmd, cmd);
+	return MZ_RESULT_SUCCESS;
+}
+
+mzResult MZAPI_CALL RunComputePass(mzCmd inCmd, const mzRunComputePassParams* params) 
+{
+    if (!inCmd)
+    {
+		ENQUEUE_RENDER_COMMAND(RunComputePass, [params = OwnedRunComputePassParams(*params)](rc<vk::CommandBuffer> cmd) {
+			RunComputePass(cmd.get(), &params);
+		});
+		return MZ_RESULT_SUCCESS;
+    }
+    auto CP = GVkDevice->GetGlobal<rc<vk::Computepass>>(mz::Name(params->Key).AsCStr());
+    assert(CP->PL->MainShader->Stage == VK_SHADER_STAGE_COMPUTE_BIT);
+	CP->Lock();
+	auto cmd = CommandStart(inCmd);
+
+    for(u32 i = 0; i < params->BindingCount; ++i)
+    {
+        PrepassTransition(CP, cmd, &params->Bindings[i]);
+        BindToPass(CP, &params->Bindings[i]);
+    }
+
+    CP->BindResources(cmd);
+
+    if(params->Benchmark)
+    {
+        if(auto re = GVkDevice->GetQPool()->PerfScope(params->Benchmark, mz::Name(params->Key).AsCStr(), cmd, [&CP, ds = params->DispatchSize](auto cmd) {
+            CP->Dispatch(cmd, ds.x, ds.y);
+        }))
+        {
+            auto t = *re;
+			mzEngine.LogI("Benchmark: Compute Pass (%d, %d) %s took %u ns (%u us) (%u ms)", params->DispatchSize.x, params->DispatchSize.y,
+						  mzEngine.GetString(params->Key),
+						  t.count(),
+						  std::chrono::duration_cast<std::chrono::microseconds>(t).count(),
+						  std::chrono::duration_cast<std::chrono::milliseconds>(t).count());
+        }
+    }
+    else 
+    {
+        CP->Dispatch(cmd, params->DispatchSize.x, params->DispatchSize.y);
+    }
+    CommandFinish(inCmd, cmd);
+	CP->Bindings.clear();
+    CP->Unlock();
+	return MZ_RESULT_SUCCESS;
+}
+
+mzResult MZAPI_CALL ClearTexture(mzCmd inCmd, const mzResourceShareInfo* texture, mzVec4 color)
+{
+	if (!inCmd)
+	{
+		ENQUEUE_RENDER_COMMAND(ClearTexture, [texture = *texture, color](rc<vk::CommandBuffer> cmd) {
+			ClearTexture(cmd.get(), &texture, color);
+		});
+		return MZ_RESULT_SUCCESS;
+	}
+
+	if (MZ_RESOURCE_TYPE_TEXTURE != texture->Info.Type)
+	{
+		return MZ_RESULT_INVALID_ARGUMENT;
+	}
+	auto cmd = CommandStart(inCmd);
+	ImportImageDef(GVkDevice, texture)
+		->Clear(cmd,
+				VkClearColorValue{.float32{
+					color.x,
+					color.y,
+					color.z,
+					color.w,
+				}});
+	CommandFinish(inCmd, cmd);
+	return MZ_RESULT_SUCCESS;
+}
+
+mzResult MZAPI_CALL DownloadTexture(mzCmd inCmd, const mzResourceShareInfo* texture, mzResourceShareInfo* outBuffer)
+{
+	if (!outBuffer || MZ_RESOURCE_TYPE_TEXTURE != texture->Info.Type)
+	{
+		return MZ_RESULT_INVALID_ARGUMENT;
+	}
+	auto img = ImportImageDef(GVkDevice, texture);
+	rc<vk::Buffer> stagingBuffer = GResources->Create<vk::Buffer>({
+		.Size = (u32)img->Allocation.GetSize(),
+		.Usage = VK_BUFFER_USAGE_TRANSFER_DST_BIT,
+	});
+	auto cmd = CommandStart(inCmd);
+	img->Download(cmd, stagingBuffer);
+	ExportBufferDef(stagingBuffer, outBuffer);
+	CommandFinish(inCmd, cmd);
+	return MZ_RESULT_SUCCESS;
+}
+
+mzResult MZAPI_CALL CreateResource(mzResourceShareInfo* res)
+{
+	Use<RenderThread>()->Flush();
+	if (res->Memory.Handle)
+		mzEngine.LogW("CreateResource was called on an existing resource! Make sure you don't leak your resources!");
+	switch (res->Info.Type)
+	{
+	default: UNREACHABLE;
+	case MZ_RESOURCE_TYPE_BUFFER: {
+		auto buf = res->Info.Buffer;
+		FillDefaultParameters(&buf);
+		auto vkBuf = GResources->Create<vk::Buffer>({
+			.Size = (u32)buf.Size,
+			.Mapped = !bool(buf.Usage & MZ_BUFFER_USAGE_NOT_HOST_VISIBLE),
+			.VRAM = bool(buf.Usage & MZ_BUFFER_USAGE_DEVICE_MEMORY),
+			.Usage = VkBufferUsageFlags((u32)buf.Usage &
+										// these bits mean something else to vulkan
+										// so mask them out to make sure to not create a buffer with irrelevant flags
+										~(MZ_BUFFER_USAGE_NOT_HOST_VISIBLE | MZ_BUFFER_USAGE_DEVICE_MEMORY)),
+		});
+		ExportBufferDef(vkBuf, res);
+		break;
+	}
+	case MZ_RESOURCE_TYPE_TEXTURE: {
+		auto img = res->Info.Texture;
+
+		if (!vk::IsFormatSupportedByDevice(VkFormat(img.Format), GVkDevice->PhysicalDevice))
+		{
+			mzEngine.LogE("Image create error! Plugin requested an unsupported texture type by device");
+			return MZ_RESULT_FAILED;
+		}
+
+		FillDefaultParameters(&img);
+		auto vkImg = GResources->Create<vk::Image>({
+			.Extent = {.width = img.Width, .height = img.Height},
+			.Format = VkFormat(img.Format),
+			.Usage = VkImageUsageFlags(img.Usage),
+			// .Filtering = (VkFilter)req->filtering,
+			// .Type = VkExternalMemoryHandleTypeFlagBits(req->type),
+		});
+		ExportImageDef(vkImg, res);
+		break;
+	}
+	}
+
+	return MZ_RESULT_SUCCESS;
+}
+
+// Handles are written, other info is used as creation info.
+mzResult MZAPI_CALL DestroyResource(const mzResourceShareInfo* resource)
+{
+	Use<RenderThread>()->Flush();
+	switch (resource->Info.Type)
+	{
+	case MZ_RESOURCE_TYPE_BUFFER: GResources->Destroy<vk::Buffer>(resource->Memory.Handle); break;
+	case MZ_RESOURCE_TYPE_TEXTURE: GResources->Destroy<vk::Image>(resource->Memory.Handle); break;
+	default: return MZ_RESULT_FAILED;
+	}
+	return MZ_RESULT_SUCCESS;
+}
+
 
 }
 

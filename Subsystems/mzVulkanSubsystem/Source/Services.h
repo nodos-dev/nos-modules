@@ -6,6 +6,7 @@ namespace mz::vkss
 {
 mzResult Initialize();
 mzResult Deinitialize();
+void Bind(mzVulkanSubsystem& subsystem);
 
 mzResult Begin (mzCmd* outCmd);
 mzResult End (mzCmd cmd);
@@ -14,10 +15,10 @@ mzResult Copy (mzCmd, const mzResourceShareInfo* src, const mzResourceShareInfo*
 mzResult RunPass (mzCmd, const mzRunPassParams* params);
 mzResult RunPass2 (mzCmd, const mzRunPass2Params* params);
 mzResult RunComputePass (mzCmd, const mzRunComputePassParams* params);
-mzResult Clear (mzCmd, const mzResourceShareInfo* texture, mzVec4 color);
-mzResult Download (mzCmd, const mzResourceShareInfo* texture, mzResourceShareInfo* outBuffer);
-mzResult Create (mzResourceShareInfo* inout);
-mzResult Destroy (const mzResourceShareInfo* resource);
+mzResult ClearTexture (mzCmd, const mzResourceShareInfo* texture, mzVec4 color);
+mzResult DownloadTexture (mzCmd, const mzResourceShareInfo* texture, mzResourceShareInfo* outBuffer);
+mzResult CreateResource (mzResourceShareInfo* inout);
+mzResult DestroyResource (const mzResourceShareInfo* resource);
 mzResult ReloadShaders (mzName nodeName);
 uint8_t* Map (const mzResourceShareInfo* buffer);
 mzResult GetColorTexture (mzVec4 color, mzResourceShareInfo* out);

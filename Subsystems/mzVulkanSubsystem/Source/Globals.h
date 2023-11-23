@@ -1,5 +1,8 @@
 ﻿#pragma once
 
+// For now, must be included before MediaZ/Modules.h
+#include <mzVulkanSubsystem/mzVulkanSubsystem.h>
+
 // MediaZ SDK
 #include <MediaZ/Modules.h>
 
@@ -9,7 +12,7 @@
 // std
 #include <memory>
 
-extern mzEngineServices mzEngine;
+extern "C" mzEngineServices mzEngine;
 
 namespace mz::vkss
 {
