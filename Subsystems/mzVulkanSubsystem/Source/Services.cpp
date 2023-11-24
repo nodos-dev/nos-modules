@@ -97,6 +97,10 @@ void Bind(mzVulkanSubsystem& subsystem)
 	subsystem.Download = vkss::DownloadTexture;
 	subsystem.Create = vkss::CreateResource;
 	subsystem.Destroy = vkss::DestroyResource;
+	subsystem.ReloadShaders = vkss::ReloadShaders;
+	subsystem.Map = vkss::Map;
+	subsystem.GetColorTexture = vkss::GetColorTexture;
+	subsystem.ImageLoad = vkss::ImageLoad;
 }
 
 static vk::rc<vk::CommandBuffer> CommandStart(mzCmd cmd)
@@ -259,6 +263,83 @@ void FillDefaultParameters(mzBufferInfo* data)
 	auto defaultBuf = flatbuffers::GetRoot<mz::fb::Buffer>(defaultData.Data);
 	data->Size = data->Size ? data->Size : defaultBuf->size();
 	data->Usage = (u32)data->Usage ? (mzBufferUsage)data->Usage : (mzBufferUsage)defaultBuf->usage();
+}
+
+u32 FormatChannelSize(fb::Format fmt)
+{
+	switch (fmt)
+	{
+	case fb::Format::R8_UNORM: return 1;
+	case fb::Format::R8_UINT: return 1;
+	case fb::Format::R8_SRGB: return 1;
+	case fb::Format::R8G8_UNORM: return 2;
+	case fb::Format::R8G8_UINT: return 2;
+	case fb::Format::R8G8_SRGB: return 2;
+	case fb::Format::R8G8B8_UNORM: return 3;
+	case fb::Format::R8G8B8_SRGB: return 3;
+	case fb::Format::B8G8R8_UNORM: return 3;
+	case fb::Format::B8G8R8_UINT: return 3;
+	case fb::Format::B8G8R8_SRGB: return 3;
+	case fb::Format::R8G8B8A8_UNORM: return 4;
+	case fb::Format::R8G8B8A8_UINT: return 4;
+	case fb::Format::R8G8B8A8_SRGB: return 4;
+	case fb::Format::B8G8R8A8_UNORM: return 4;
+	case fb::Format::B8G8R8A8_SRGB: return 4;
+	case fb::Format::A2R10G10B10_UNORM_PACK32: return 4;
+	case fb::Format::A2R10G10B10_SNORM_PACK32: return 4;
+	case fb::Format::A2R10G10B10_USCALED_PACK32: return 4;
+	case fb::Format::A2R10G10B10_SSCALED_PACK32: return 4;
+	case fb::Format::A2R10G10B10_UINT_PACK32: return 4;
+	case fb::Format::A2R10G10B10_SINT_PACK32: return 4;
+	case fb::Format::R16_UNORM: return 2;
+	case fb::Format::R16_SNORM: return 2;
+	case fb::Format::R16_USCALED: return 2;
+	case fb::Format::R16_SSCALED: return 2;
+	case fb::Format::R16_UINT: return 2;
+	case fb::Format::R16_SINT: return 2;
+	case fb::Format::R16_SFLOAT: return 2;
+	case fb::Format::R16G16_UNORM: return 4;
+	case fb::Format::R16G16_SNORM: return 4;
+	case fb::Format::R16G16_USCALED: return 4;
+	case fb::Format::R16G16_SSCALED: return 4;
+	case fb::Format::R16G16_UINT: return 4;
+	case fb::Format::R16G16_SINT: return 4;
+	case fb::Format::R16G16_SFLOAT: return 4;
+	case fb::Format::R16G16B16_UNORM: return 6;
+	case fb::Format::R16G16B16_SNORM: return 6;
+	case fb::Format::R16G16B16_USCALED: return 6;
+	case fb::Format::R16G16B16_SSCALED: return 6;
+	case fb::Format::R16G16B16_UINT: return 6;
+	case fb::Format::R16G16B16_SINT: return 6;
+	case fb::Format::R16G16B16_SFLOAT: return 6;
+	case fb::Format::R16G16B16A16_UNORM: return 8;
+	case fb::Format::R16G16B16A16_SNORM: return 8;
+	case fb::Format::R16G16B16A16_USCALED: return 8;
+	case fb::Format::R16G16B16A16_SSCALED: return 8;
+	case fb::Format::R16G16B16A16_UINT: return 8;
+	case fb::Format::R16G16B16A16_SINT: return 8;
+	case fb::Format::R16G16B16A16_SFLOAT: return 8;
+	case fb::Format::R32_UINT: return 4;
+	case fb::Format::R32_SINT: return 4;
+	case fb::Format::R32_SFLOAT: return 4;
+	case fb::Format::R32G32_UINT: return 8;
+	case fb::Format::R32G32_SINT: return 8;
+	case fb::Format::R32G32_SFLOAT: return 8;
+	case fb::Format::R32G32B32_UINT: return 12;
+	case fb::Format::R32G32B32_SINT: return 12;
+	case fb::Format::R32G32B32_SFLOAT: return 12;
+	case fb::Format::R32G32B32A32_UINT: return 16;
+	case fb::Format::R32G32B32A32_SINT: return 16;
+	case fb::Format::R32G32B32A32_SFLOAT: return 16;
+	case fb::Format::B10G11R11_UFLOAT_PACK32: return 4;
+	case fb::Format::D16_UNORM: return 2;
+	case fb::Format::X8_D24_UNORM_PACK32: return 4;
+	case fb::Format::D32_SFLOAT: return 4;
+	case fb::Format::G8B8G8R8_422_UNORM: return 4;
+	case fb::Format::B8G8R8G8_422_UNORM: return 4;
+	case fb::Format::NONE: return 0;
+	default: assert(false); return 0;
+	}
 }
 
 mzResult MZAPI_CALL Begin(mzCmd* outCmd)
@@ -665,6 +746,80 @@ mzResult MZAPI_CALL DestroyResource(const mzResourceShareInfo* resource)
 	return MZ_RESULT_SUCCESS;
 }
 
+mzResult MZAPI_CALL ReloadShaders(mzName nodeName)
+{
+	return MZ_RESULT_NOT_IMPLEMENTED;
+}
+
+uint8_t* MZAPI_CALL Map(const mzResourceShareInfo* buffer) 
+{
+	switch(buffer->Info.Type)
+	{
+	case MZ_RESOURCE_TYPE_BUFFER: return ImportBufferDef(GVkDevice, buffer)->Map();
+	case MZ_RESOURCE_TYPE_TEXTURE: {
+		mzEngine.LogE("VulkanSubsystem.Map: Currently, texture types do not support mapping!");
+		break;
+	};
+	}
+	return 0;
+}
+
+mzResult MZAPI_CALL GetColorTexture(mzVec4 inColor, mzResourceShareInfo* out)
+{
+	if (!out)
+		return MZ_RESULT_INVALID_ARGUMENT;
+	auto image = GResources->GetColorTexture((glm::vec4&)inColor);
+	ExportImageDef(image, out);
+	return MZ_RESULT_SUCCESS;
+}
+
+mzResult MZAPI_CALL ImageLoad(void* buf, mzVec2u extent, mzFormat format, mzResourceShareInfo* out)
+{
+	if (!buf || !out || !extent.x || !extent.y || !format)
+		return MZ_RESULT_INVALID_ARGUMENT;
+
+	const mzVec2u targetExtent = {
+		out->Info.Texture.Width ? out->Info.Texture.Width : extent.x,
+		out->Info.Texture.Height ? out->Info.Texture.Height : extent.y,
+	};
+
+	const mzFormat targetFormat = out->Info.Texture.Format ? out->Info.Texture.Format : format;
+
+	auto cmd = GVkDevice->GetPool()->BeginCmd();
+
+	auto tmp =
+		vk::Image::New(GVkDevice,
+					   vk::ImageCreateInfo{.Extent = {extent.x, extent.y},
+										   .Format = (VkFormat)format,
+										   .Usage = VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT |
+													VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT});
+
+	tmp->Upload(cmd,
+				vk::Buffer::New(GVkDevice,
+								vk::BufferCreateInfo{
+									.Size = extent.x * extent.y * FormatChannelSize((fb::Format)format),
+									.Mapped = true,
+									.VRAM = false,
+									.Usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+									.Data = (u8*)buf,
+								}));
+
+	rc<vk::Image> re = tmp;
+
+	if (!(targetFormat == format && targetExtent.x == extent.x && targetExtent.y == extent.y))
+	{
+		re = GResources->Create<vk::Image>(
+			{.Extent = {targetExtent.x, targetExtent.y},
+			 .Format = (VkFormat)targetFormat,
+			 .Usage = VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT |
+					  VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT});
+		re->BlitFrom(cmd, tmp, VK_FILTER_LINEAR);
+	}
+
+	cmd->Submit()->Wait();
+	ExportImageDef(re, out);
+	return MZ_RESULT_SUCCESS;
+}
 
 }
 
