@@ -10,7 +10,7 @@
             "pins": [
                 {
                     "name": "Input",
-                    "type_name": "mz.fb.Texture",
+                    "type_name": "nos.fb.Texture",
                     "show_as": "INPUT_PIN",
                     "can_show_as" : "INPUT_PIN_ONLY",
                     "data": {
@@ -19,7 +19,7 @@
                 },
                 {
                     "name": "Channel",
-                    "type_name": "mz.fb.ChannelViewerChannels",
+                    "type_name": "nos.fb.ChannelViewerChannels",
                     "show_as": "PROPERTY",
                     "can_show_as" : "PROPERTY_ONLY",
                     "data": "A",
@@ -27,7 +27,7 @@
                 },
                 {
                     "name": "Format",
-                    "type_name": "mz.fb.ChannelViewerFormats",
+                    "type_name": "nos.fb.ChannelViewerFormats",
                     "show_as": "PROPERTY",
                     "can_show_as" : "PROPERTY_ONLY",
                     "data": "Rec_709",
@@ -35,7 +35,7 @@
                 },
                 {
                     "name": "Output",
-                    "type_name": "mz.fb.Texture",
+                    "type_name": "nos.fb.Texture",
                     "show_as": "OUTPUT_PIN",
                     "can_show_as" : "OUTPUT_PIN_ONLY"
                 }

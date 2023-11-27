@@ -6,11 +6,11 @@ function(add_folder_as_subsystem_project NAME DEPENDENCIES INCLUDE_FOLDERS)
     message("Processing subsystem ${NAME}")
 
     # TODO: Set convenient paths for debug too. Or, remove it if not used.
-    string(REGEX REPLACE "\\\\" "/" MZ_WORK_FOLDER "$ENV{PROGRAMDATA}/mediaz/core")
-    set(MZ_WORK_FOLDER "${MZ_WORK_FOLDER}")
-    set(MZ_REPO_ROOT "${MZ_WORK_FOLDER}")
-    add_compile_definitions(MZ_WORK_FOLDER="${MZ_WORK_FOLDER}")
-    add_compile_definitions(MZ_REPO_ROOT="${MZ_REPO_ROOT}")
+    string(REGEX REPLACE "\\\\" "/" NOS_WORK_FOLDER "$ENV{PROGRAMDATA}/Nodos/core")
+    set(NOS_WORK_FOLDER "${NOS_WORK_FOLDER}")
+    set(NOS_REPO_ROOT "${NOS_WORK_FOLDER}")
+    add_compile_definitions(NOS_WORK_FOLDER="${NOS_WORK_FOLDER}")
+    add_compile_definitions(NOS_REPO_ROOT="${NOS_REPO_ROOT}")
 
     set(SOURCE_FOLDERS "${CMAKE_CURRENT_SOURCE_DIR}/Source" "${CMAKE_CURRENT_SOURCE_DIR}/Include")
     set(CONFIG_FOLDERS "${CMAKE_CURRENT_SOURCE_DIR}" "${CMAKE_CURRENT_SOURCE_DIR}/Config")
@@ -43,7 +43,7 @@ function(add_folder_as_subsystem_project NAME DEPENDENCIES INCLUDE_FOLDERS)
     target_include_directories(${NAME} PRIVATE ${INCLUDE_FOLDERS} ${SOURCE_FOLDERS})
 
     target_link_libraries(${NAME} PRIVATE ${DEPENDENCIES})
-    target_link_libraries(${NAME} PUBLIC mzSubsystemSDK)
+    target_link_libraries(${NAME} PUBLIC nosSubsystemSDK)
 endfunction()
 
 # Dependencies
@@ -51,11 +51,11 @@ endfunction()
 
 # Update subsystems.json if you add dependencies, so that CD can create releases.
 
-# MediaZ Subsystem SDK
-if (NOT WITH_MEDIAZ)
-    list(APPEND CMAKE_MODULE_PATH $ENV{MZ_SDK_DIR}/cmake)
-    find_package(mzSubsystemSDK REQUIRED)
+# Nodos Subsystem SDK
+if (NOT WITH_NODOS)
+    list(APPEND CMAKE_MODULE_PATH $ENV{NODOS_SDK_DIR}/cmake)
+    find_package(nosSubsystemSDK REQUIRED)
 endif()
 
-add_subdirectory(mzTestSubsystem)
-add_subdirectory(mzVulkanSubsystem) # Subsystem prefix is only for distinguishing between mzVulkan repo and this.
+add_subdirectory(nosTestSubsystem)
+add_subdirectory(nosVulkanSubsystem) # Subsystem prefix is only for distinguishing between nosVulkan repo and this.

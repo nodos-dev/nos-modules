@@ -1,17 +1,17 @@
 #pragma once
 #include "api/video/i420_buffer.h"
 #include "api/video/video_frame.h"
-class mzLinearI420Buffer : public webrtc::I420BufferInterface
+class nosLinearI420Buffer : public webrtc::I420BufferInterface
 {
 public:
-	mzLinearI420Buffer(unsigned int width, unsigned int height)
+	nosLinearI420Buffer(unsigned int width, unsigned int height)
 	:m_width(width), m_height(height){
 		m_strideY = width;
 		m_strideU = (width + 1) / 2;
 		m_strideV = (width + 1) / 2;
 		m_dataY = std::make_unique<uint8_t[]>(width * height * 3 / 2);
 	}
-	virtual ~mzLinearI420Buffer() = default;
+	virtual ~nosLinearI420Buffer() = default;
 	virtual int width() const override { return m_width; }
 	virtual int height() const override { return m_height; }
 	

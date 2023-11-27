@@ -1,10 +1,10 @@
 #pragma once
-#include <MediaZ/PluginAPI.h>
+#include <Nodos/PluginAPI.h>
 #include <chrono>
-class mzWebRTCStatsLogger
+class nosWebRTCStatsLogger
 {
 public:
-	mzWebRTCStatsLogger(std::string name, int refreshRate = 100) : RefreshRate(refreshRate) 
+	nosWebRTCStatsLogger(std::string name, int refreshRate = 100) : RefreshRate(refreshRate) 
 	{
 		Name_FPS = name + " FPS: ";
 		Name_MAX_FPS = name + " MAX FPS: ";
@@ -24,9 +24,9 @@ public:
 		auto FPS = 1.0 / (std::chrono::duration_cast<std::chrono::milliseconds>(now - startTime).count()) * 1000.0;
 		MaxFPS = (FPS > MaxFPS) ? (FPS) : (MaxFPS);
 		MinFPS = (MinFPS > FPS) ? (FPS) : (MinFPS);       
-		mzEngine.WatchLog(Name_FPS.c_str(), std::to_string(FPS).c_str());
-		mzEngine.WatchLog(Name_MAX_FPS.c_str() , std::to_string(MaxFPS).c_str());
-		mzEngine.WatchLog(Name_MIN_FPS.c_str(), std::to_string(MinFPS).c_str());
+		nosEngine.WatchLog(Name_FPS.c_str(), std::to_string(FPS).c_str());
+		nosEngine.WatchLog(Name_MAX_FPS.c_str() , std::to_string(MaxFPS).c_str());
+		nosEngine.WatchLog(Name_MIN_FPS.c_str(), std::to_string(MinFPS).c_str());
 		startTime = now;
 	}
 
@@ -58,8 +58,8 @@ public:
 	}
 
 	void LogRing() {
-		mzEngine.WatchLog(name_EMPTY.c_str(), std::to_string(FreeCount).c_str());
-		mzEngine.WatchLog(name_FILLED.c_str(), std::to_string(Size - FreeCount).c_str());
+		nosEngine.WatchLog(name_EMPTY.c_str(), std::to_string(FreeCount).c_str());
+		nosEngine.WatchLog(name_FILLED.c_str(), std::to_string(Size - FreeCount).c_str());
 	}
 
 	int GetNextReadable() {

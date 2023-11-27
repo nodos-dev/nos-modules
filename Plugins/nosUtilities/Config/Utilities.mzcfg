@@ -1,7 +1,7 @@
 {
     "info": {
         "id": {
-            "name": "mz.utilities",
+            "name": "nos.utilities",
             "version": "1.0.0"
         },
         "description": "Various utility nodes.",
@@ -31,7 +31,7 @@
         "TextureSwitcher.fbs",
         "ChannelViewer.fbs"
     ],
-    "binary_path": "../Binaries/mzUtilities",
+    "binary_path": "../Binaries/nosUtilities",
     "associated_nodes": [
         {
             "category": "Media",

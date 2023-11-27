@@ -10,7 +10,7 @@
             "pins": [
                 {
                     "name": "Background_Color",
-                    "type_name": "mz.fb.vec4",
+                    "type_name": "nos.fb.vec4",
                     "show_as": "PROPERTY",
                     "can_show_as" : "INPUT_PIN_OR_PROPERTY",
                      "visualizer" : {"type": "COLOR_PICKER"},
@@ -39,7 +39,7 @@
                 },
                 {
                     "name": "Blend_Mode_0",
-                    "type_name": "mz.fb.BlendMode",
+                    "type_name": "nos.fb.BlendMode",
                     "show_as": "PROPERTY",
                     "data": "Normal",
                     "pin_category" : "Layer (0)",
@@ -48,7 +48,7 @@
                 },
                 {
                     "name": "Blend_Mode_1",
-                    "type_name": "mz.fb.BlendMode",
+                    "type_name": "nos.fb.BlendMode",
                     "show_as": "PROPERTY",
                     "data": "Normal",
                     "pin_category" : "Layer (1)",
@@ -57,21 +57,21 @@
                 },
                 {
                     "name": "Texture_0",
-                    "type_name": "mz.fb.Texture",
+                    "type_name": "nos.fb.Texture",
                     "show_as": "INPUT_PIN",
                     "can_show_as" : "INPUT_PIN_ONLY",
                     "pin_category" : "Layer (0)"
                 },
                 {
                     "name": "Texture_1",
-                    "type_name": "mz.fb.Texture",
+                    "type_name": "nos.fb.Texture",
                     "show_as": "INPUT_PIN",
                     "can_show_as" : "INPUT_PIN_ONLY",
                     "pin_category" : "Layer (1)"
                 },
                 {
                     "name": "Out",
-                    "type_name": "mz.fb.Texture",
+                    "type_name": "nos.fb.Texture",
                     "show_as": "OUTPUT_PIN",
                     "can_show_as" : "OUTPUT_PIN_ONLY"
                 }

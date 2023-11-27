@@ -1,7 +1,7 @@
-// Copyright MediaZ AS. All Rights Reserved.
+// Copyright Nodos AS. All Rights Reserved.
 
 // Includes
-#include <MediaZ/Helpers.hpp>
+#include <Nodos/Helpers.hpp>
 #include <glm/glm.hpp>
 #include <Builtins_generated.h>
 
@@ -18,9 +18,9 @@
 #include "../Shaders/TextureSwitcher.frag.spv.dat"
 
 
-MZ_INIT();
+NOS_INIT();
 
-namespace mz::utilities
+namespace nos::utilities
 {
 
 enum Utilities : int
@@ -44,49 +44,49 @@ enum Utilities : int
 	Count
 };
 
-void RegisterMerge(mzNodeFunctions*);
-void RegisterTime(mzNodeFunctions*);
-void RegisterReadImage(mzNodeFunctions*);
-void RegisterWriteImage(mzNodeFunctions*);
-void RegisterChannelViewer(mzNodeFunctions*);
-void RegisterResize(mzNodeFunctions*);
-void RegisterInterlace(mzNodeFunctions*);
-void RegisterDeinterlace(mzNodeFunctions*);
+void RegisterMerge(nosNodeFunctions*);
+void RegisterTime(nosNodeFunctions*);
+void RegisterReadImage(nosNodeFunctions*);
+void RegisterWriteImage(nosNodeFunctions*);
+void RegisterChannelViewer(nosNodeFunctions*);
+void RegisterResize(nosNodeFunctions*);
+void RegisterInterlace(nosNodeFunctions*);
+void RegisterDeinterlace(nosNodeFunctions*);
 
 extern "C"
 {
 
-MZAPI_ATTR mzResult MZAPI_CALL mzExportNodeFunctions(size_t* outSize, mzNodeFunctions** outList)
+NOSAPI_ATTR nosResult NOSAPI_CALL nosExportNodeFunctions(size_t* outSize, nosNodeFunctions** outList)
 {
     *outSize = Utilities::Count;
 	if (!outList)
 	{
-		return MZ_RESULT_SUCCESS;
+		return NOS_RESULT_SUCCESS;
 	}
 
 #define GEN_CASE_GPU_NODE(name)                                     \
 	case Utilities::name: {                                         \
-			node->TypeName = MZ_NAME_STATIC("mz.utilities." #name); \
-			node->GetShaderSource = [](mzShaderSource* spirv) {     \
+			node->TypeName = NOS_NAME_STATIC("nos.utilities." #name); \
+			node->GetShaderSource = [](nosShaderSource* spirv) {     \
 				spirv->SpirvBlob = {(void*)(name##_frag_spv),       \
 						sizeof(name##_frag_spv)};                   \
-				return MZ_RESULT_SUCCESS;                           \
+				return NOS_RESULT_SUCCESS;                           \
 			};                                                      \
 			break;                                                  \
 	}
 #define GEN_CASE_GPU_NODE_LICENSED(name, featureName, featureMessage)							\
 	case Utilities::name: {																		\
-			node->TypeName = MZ_NAME_STATIC("mz.utilities." #name);								\
-			node->GetShaderSource = [](mzShaderSource* spirv) {									\
+			node->TypeName = NOS_NAME_STATIC("nos.utilities." #name);								\
+			node->GetShaderSource = [](nosShaderSource* spirv) {									\
 				spirv->SpirvBlob = {(void*)(name##_frag_spv),									\
 						sizeof(name##_frag_spv)};												\
-				return MZ_RESULT_SUCCESS;														\
+				return NOS_RESULT_SUCCESS;														\
 			};																					\
-			node->OnNodeCreated = [](const mzFbNode* node, void** outCtxPtr) {					\
-					mzEngine.RegisterFeature(*node->id(), featureName, 1, featureMessage);		\
+			node->OnNodeCreated = [](const nosFbNode* node, void** outCtxPtr) {					\
+					nosEngine.RegisterFeature(*node->id(), featureName, 1, featureMessage);		\
 				};																				\
-			node->OnNodeDeleted = [](void* ctx, mzUUID nodeId) {								\
-					mzEngine.UnregisterFeature(nodeId, featureName);							\
+			node->OnNodeDeleted = [](void* ctx, nosUUID nodeId) {								\
+					nosEngine.UnregisterFeature(nodeId, featureName);							\
 				};																				\
 			break;																				\
 	}
@@ -122,7 +122,7 @@ MZAPI_ATTR mzResult MZAPI_CALL mzExportNodeFunctions(size_t* outSize, mzNodeFunc
 			GEN_CASE_CPU_NODE(Deinterlace)
 		};
 	}
-	return MZ_RESULT_SUCCESS;
+	return NOS_RESULT_SUCCESS;
 }
 }
 }

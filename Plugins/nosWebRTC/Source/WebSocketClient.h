@@ -8,15 +8,15 @@
 typedef struct lws WebSocketInstance;
 static int mz_ws_callback(struct lws* WSI, enum lws_callback_reasons reason, void* user, void* in, size_t len);
 
-class mzWebSocketClient {
+class nosWebSocketClient {
 public:
-	mzWebSocketClient(const std::string fullIP);
-	mzWebSocketClient(const std::string server,const int port, const std::string path);
+	nosWebSocketClient(const std::string fullIP);
+	nosWebSocketClient(const std::string server,const int port, const std::string path);
 
-	~mzWebSocketClient();
+	~nosWebSocketClient();
 
-	mzWebSocketClient(const mzWebSocketClient&) = delete;
-	mzWebSocketClient& operator=(const mzWebSocketClient&) = delete;
+	nosWebSocketClient(const nosWebSocketClient&) = delete;
+	nosWebSocketClient& operator=(const nosWebSocketClient&) = delete;
 
 	void PushData(std::string&& Data);
 	std::string GetReceivedDataAsString();

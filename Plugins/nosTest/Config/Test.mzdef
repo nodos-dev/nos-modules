@@ -52,17 +52,17 @@
 				},
 				{
 					"name": "vec3d_prop",
-					"type_name": "mz.fb.vec3d",
+					"type_name": "nos.fb.vec3d",
 					"show_as": "INPUT_PIN"
 				},
 				{
 					"name": "vec3d_prop",
-					"type_name": "mz.fb.vec3d",
+					"type_name": "nos.fb.vec3d",
 					"show_as": "INPUT_PIN"
 				},
 				{
 					"name": "mat4d_prop",
-					"type_name": "mz.fb.mat4d",
+					"type_name": "nos.fb.mat4d",
 					"show_as": "OUTPUT_PIN"
 				}
 			]
@@ -111,19 +111,19 @@
 				},
 				{
 					"name": "TestPin2",
-					"type_name": "mz.fb.vec3d",
+					"type_name": "nos.fb.vec3d",
 					"show_as": "INPUT_PIN",
 					"pin_category": "A|B"
 				},
 				{
 					"name": "TestPin3",
-					"type_name": "mz.fb.vec3d",
+					"type_name": "nos.fb.vec3d",
 					"show_as": "INPUT_PIN",
 					"pin_category": "B"
 				},
 				{
 					"name": "TestPin4",
-					"type_name": "mz.fb.mat4d",
+					"type_name": "nos.fb.mat4d",
 					"show_as": "OUTPUT_PIN",
 					"pin_category": "B|A"
 				}
@@ -254,19 +254,19 @@
 				},
 				{
 					"name": "TestPin2",
-					"type_name": "mz.fb.vec3d",
+					"type_name": "nos.fb.vec3d",
 					"show_as": "INPUT_PIN",
 					"pin_category": "A|B"
 				},
 				{
 					"name": "TestPin3",
-					"type_name": "mz.fb.vec3d",
+					"type_name": "nos.fb.vec3d",
 					"show_as": "INPUT_PIN",
 					"pin_category": "B"
 				},
 				{
 					"name": "TestPin4",
-					"type_name": "mz.fb.mat4d",
+					"type_name": "nos.fb.mat4d",
 					"show_as": "OUTPUT_PIN",
 					"pin_category": "B|A"
 				}
@@ -289,14 +289,14 @@
 					"pins": [
 						{
 							"name": "in1",
-							"type_name": "mz.Test.TestStruct",
+							"type_name": "nos.Test.TestStruct",
 							"show_as": "INPUT_PIN",
 							"pin_category": "A"
 
 						},
 						{
 							"name": "in2",
-							"type_name": "mz.Test.TestTable",
+							"type_name": "nos.Test.TestTable",
 							"show_as": "INPUT_PIN"
 						},
 						{
@@ -310,25 +310,25 @@
 			"pins": [
 				{
 					"name": "TestPin1",
-					"type_name": "mz.Test.TestTable",
+					"type_name": "nos.Test.TestTable",
 					"show_as": "INPUT_PIN",
 					"pin_category": "A"
 				},
 				{
 					"name": "TestPin2",
-					"type_name": "mz.fb.vec3d",
+					"type_name": "nos.fb.vec3d",
 					"show_as": "INPUT_PIN",
 					"pin_category": "A|B"
 				},
 				{
 					"name": "TestPin3",
-					"type_name": "mz.Test.TestEnum",
+					"type_name": "nos.Test.TestEnum",
 					"show_as": "INPUT_PIN",
 					"pin_category": "B"
 				},
 				{
 					"name": "TestPin4",
-					"type_name": "mz.Test.TestStruct2",
+					"type_name": "nos.Test.TestStruct2",
 					"show_as": "OUTPUT_PIN",
 					"pin_category": "B|A"
 				}
@@ -343,7 +343,7 @@
 			"pins": [
 				{
 					"name": "Input",
-					"type_name": "mz.fb.Texture",
+					"type_name": "nos.fb.Texture",
 					"show_as": "INPUT_PIN",
 					"can_show_as": "INPUT_PIN_OR_PROPERTY"
 				},
@@ -358,7 +358,7 @@
 				},
 				{
 					"name": "Output",
-					"type_name": "mz.fb.Texture",
+					"type_name": "nos.fb.Texture",
 					"show_as": "OUTPUT_PIN",
 					"can_show_as": "OUTPUT_PIN_OR_PROPERTY"
 				}
@@ -373,13 +373,13 @@
 			"pins": [
 				{
 					"name": "Input",
-					"type_name": "mz.fb.Texture",
+					"type_name": "nos.fb.Texture",
 					"show_as": "INPUT_PIN",
 					"can_show_as": "INPUT_PIN_OR_PROPERTY"
 				},
 				{
 					"name": "Output",
-					"type_name": "mz.fb.Texture",
+					"type_name": "nos.fb.Texture",
 					"show_as": "OUTPUT_PIN",
 					"can_show_as": "OUTPUT_PIN_OR_PROPERTY"
 				}

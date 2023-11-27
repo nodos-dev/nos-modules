@@ -49,6 +49,6 @@ std::string GetDefaultServerName() {
 
 std::string GetPeerName() {
   char computer_name[256];
-  std::string ret("mzWebRTC_Client");
+  std::string ret("nosWebRTC_Client");
   return ret;
 }

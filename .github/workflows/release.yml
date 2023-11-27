@@ -13,8 +13,8 @@ on:
         description: 'Build all plugins'
         required: false
         default: 'false'
-      mediaz_sdk_version:
-        description: 'MediaZ SDK Version'
+      nodos_sdk_version:
+        description: 'Nodos SDK Version'
         required: false
         default: ''
 
@@ -25,7 +25,7 @@ env:
   GH_RELEASE_REPO_ORG: "mediaz"
   GH_RELEASE_REPO_NAME: "plugins-releases"
   GIT_EMAIL: "bot@mediaz.io"
-  MZ_SDK_DIR: ${{ github.workspace }}/mzSDK
+  NODOS_SDK_DIR: ${{ github.workspace }}/nosSDK
   GH_TOKEN: ${{ secrets.CI_TOKEN }}
 
 # TODO: Support parallel runs
@@ -59,24 +59,24 @@ jobs:
 
       - name: Cleanup SDK Files If Any
         run: |
-          Remove-Item -Recurse -Force -ErrorAction SilentlyContinue mediaZ-SDK*
+          Remove-Item -Recurse -Force -ErrorAction SilentlyContinue Nodos-SDK*
         shell: pwsh
 
-      - name: Download MediaZ SDK (Specific Version)
-        if: ${{  github.event_name == 'workflow_dispatch' && github.event.inputs.mediaz_sdk_version != '' }}
+      - name: Download Nodos SDK (Specific Version)
+        if: ${{  github.event_name == 'workflow_dispatch' && github.event.inputs.nodos_sdk_version != '' }}
         run: |
-          gh release download ${{ github.event.inputs.mediaz_sdk_version }} --repo mediaz/mediaz --pattern "mediaZ-SDK-*.zip" --clobber
+          gh release download ${{ github.event.inputs.nodos_sdk_version }} --repo mediaz/mediaz --pattern "Nodos-SDK-*.zip" --clobber
 
-      - name: Download MediaZ SDK (Latest Stable)
+      - name: Download Nodos SDK (Latest Stable)
         shell: pwsh
-        if: ${{  github.event_name != 'workflow_dispatch' || github.event.inputs.mediaz_sdk_version == '' }}
+        if: ${{  github.event_name != 'workflow_dispatch' || github.event.inputs.nodos_sdk_version == '' }}
         run: |
           $ReleaseTag = (gh release list --repo mediaz/mediaz | Select-String -Pattern 'stable' | Select-Object -First 1).Line.Split()[0]
-          gh release download $ReleaseTag --repo mediaz/mediaz --pattern "mediaZ-SDK-*.zip"
+          gh release download $ReleaseTag --repo mediaz/mediaz --pattern "Nodos-SDK-*.zip"
 
-      - name: Unzip MediaZ SDK
+      - name: Unzip Nodos SDK
         run: |
-          7z x mediaZ-SDK-*.zip -o${{ env.MZ_SDK_DIR }}
+          7z x Nodos-SDK-*.zip -o${{ env.NODOS_SDK_DIR }}
 
       - name: Configure
         run: |

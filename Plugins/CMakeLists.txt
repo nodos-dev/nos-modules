@@ -8,11 +8,11 @@ function(add_folder_as_plugin_project NAME DEPENDENCIES INCLUDE_FOLDERS)
     message("Processing plugin ${NAME}")
 
     # TODO: Set convenient paths for debug too. Or, remove it if not used.
-    string(REGEX REPLACE "\\\\" "/" MZ_WORK_FOLDER "$ENV{PROGRAMDATA}/mediaz/core")
-    set(MZ_WORK_FOLDER "${MZ_WORK_FOLDER}")
-    set(MZ_REPO_ROOT "${MZ_WORK_FOLDER}")
-    add_compile_definitions(MZ_WORK_FOLDER="${MZ_WORK_FOLDER}")
-    add_compile_definitions(MZ_REPO_ROOT="${MZ_REPO_ROOT}")
+    string(REGEX REPLACE "\\\\" "/" NOS_WORK_FOLDER "$ENV{PROGRAMDATA}/Nodos/core")
+    set(NOS_WORK_FOLDER "${NOS_WORK_FOLDER}")
+    set(NOS_REPO_ROOT "${NOS_WORK_FOLDER}")
+    add_compile_definitions(NOS_WORK_FOLDER="${NOS_WORK_FOLDER}")
+    add_compile_definitions(NOS_REPO_ROOT="${NOS_REPO_ROOT}")
 
     set(SOURCE_FOLDER "${CMAKE_CURRENT_SOURCE_DIR}/Source")
     set(CONFIG_FOLDERS "${CMAKE_CURRENT_SOURCE_DIR}" "${CMAKE_CURRENT_SOURCE_DIR}/Config")
@@ -50,7 +50,7 @@ function(add_folder_as_plugin_project NAME DEPENDENCIES INCLUDE_FOLDERS)
     target_include_directories(${NAME} PRIVATE ${INCLUDE_FOLDERS})
 
     target_link_libraries(${NAME} PRIVATE ${DEPENDENCIES})
-    target_link_libraries(${NAME} PUBLIC mzPluginSDK)
+    target_link_libraries(${NAME} PUBLIC nosPluginSDK)
 endfunction()
 
 # Dependencies
@@ -59,14 +59,14 @@ endfunction()
 # Update plugins.json if you add dependencies, so that CD can create releases.
 
 # stb
-if (NOT WITH_MEDIAZ AND NOT TARGET stb)
+if (NOT WITH_NODOS AND NOT TARGET stb)
     add_subdirectory(${EXTERNAL_DIR}/stb "${CMAKE_CURRENT_BINARY_DIR}/stb")
 endif()
 
-# MediaZ Plugin SDK
-if (NOT WITH_MEDIAZ)
-    list(APPEND CMAKE_MODULE_PATH $ENV{MZ_SDK_DIR}/cmake)
-    find_package(mzPluginSDK REQUIRED)
+# Nodos Plugin SDK
+if (NOT WITH_NODOS)
+    list(APPEND CMAKE_MODULE_PATH $ENV{NODOS_SDK_DIR}/cmake)
+    find_package(nosPluginSDK REQUIRED)
 endif()
 
 unset(PYTHON_PATH CACHE)
@@ -90,11 +90,11 @@ if (NOT ${COMPILE_SHADERS_RESULT} EQUAL "0")
     message(FATAL_ERROR "Failed to compile shaders. Process returned ${COMPILE_SHADERS_RESULT}.")
 endif()
 
-add_subdirectory(mzMath)
-add_subdirectory(mzAJA)
-add_subdirectory(mzFilters)
-add_subdirectory(mzUtilities)
-add_subdirectory(mzTest)
-add_subdirectory(mzCNN)
-add_subdirectory(mzWebRTC)
+add_subdirectory(nosMath)
+add_subdirectory(nosAJA)
+add_subdirectory(nosFilters)
+add_subdirectory(nosUtilities)
+add_subdirectory(nosTest)
+add_subdirectory(nosCNN)
+add_subdirectory(nosWebRTC)
 

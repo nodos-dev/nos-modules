@@ -1,8 +1,8 @@
 #include <iostream>
 #include <exception>
-#include "mzWebSocketServer.h"
+#include "WebSocketServer.h"
 
-mzWebSocketServer::mzWebSocketServer(std::vector<int>&& port) : ports(port)
+nosWebSocketServer::nosWebSocketServer(std::vector<int>&& port) : ports(port)
 {
 	httpMount = {
 		/* .mount_next */		NULL,		/* linked-list "next" */
@@ -28,11 +28,11 @@ mzWebSocketServer::mzWebSocketServer(std::vector<int>&& port) : ports(port)
 		StartWebSocket();
 	}
 	else {
-		throw std::exception("No ports specified for mzWebSocketServer");
+		throw std::exception("No ports specified for nosWebSocketServer");
 	}
 }
 
-mzWebSocketServer::mzWebSocketServer(std::vector<int>&& port, std::string httpMountOrigin, std::string defaultFilename) : ports(port)
+nosWebSocketServer::nosWebSocketServer(std::vector<int>&& port, std::string httpMountOrigin, std::string defaultFilename) : ports(port)
 {
 	//httpMountOrigin.erase(std::find(httpMountOrigin.begin(), httpMountOrigin.end(), '\0'), httpMountOrigin.end());
 	//defaultFilename.erase(std::find(defaultFilename.begin(), defaultFilename.end(), '\0'), defaultFilename.end());
@@ -60,12 +60,12 @@ mzWebSocketServer::mzWebSocketServer(std::vector<int>&& port, std::string httpMo
 		StartWebSocket();
 	}
 	else {
-		throw std::exception("No ports specified for mzWebSocketServer");
+		throw std::exception("No ports specified for nosWebSocketServer");
 	}
 }
 
 
-mzWebSocketServer::~mzWebSocketServer()
+nosWebSocketServer::~nosWebSocketServer()
 {
 	//Update();
  	shouldUpdate = false;
@@ -76,7 +76,7 @@ mzWebSocketServer::~mzWebSocketServer()
 }
 
 
-void mzWebSocketServer::SendMessageTo(int clientID, std::string&& data)
+void nosWebSocketServer::SendMessageTo(int clientID, std::string&& data)
 {
 	if (!clientWSIMap.contains(clientID))
 		return;
@@ -85,7 +85,7 @@ void mzWebSocketServer::SendMessageTo(int clientID, std::string&& data)
 	sendQueueMap[clientID].push(std::move(data));
 }
 
-std::string mzWebSocketServer::GetMessagesFrom(int clientID)
+std::string nosWebSocketServer::GetMessagesFrom(int clientID)
 {
 	if (receivedQueueMap[clientID].empty())
 		return std::string();
@@ -95,7 +95,7 @@ std::string mzWebSocketServer::GetMessagesFrom(int clientID)
 	return std::move(message);
 }
 
-const std::vector<std::pair<int,std::string>> mzWebSocketServer::GetClientInfos() const
+const std::vector<std::pair<int,std::string>> nosWebSocketServer::GetClientInfos() const
 {
 	std::vector<std::pair<int, std::string>> clientIds;
 	for (const auto& [id, InstancePath] : clientWSIMap) {
@@ -106,7 +106,7 @@ const std::vector<std::pair<int,std::string>> mzWebSocketServer::GetClientInfos(
 }
 
 //Use this in a thread
-void mzWebSocketServer::Update()
+void nosWebSocketServer::Update()
 {
 	if (pContext) {
 		for (const auto& [id, WSIPath] : clientWSIMap) {
@@ -117,27 +117,27 @@ void mzWebSocketServer::Update()
 	}
 }
 
-void mzWebSocketServer::SetClientConnectedCallback(int port, const std::function<void(int, std::string)>& clientConnected)
+void nosWebSocketServer::SetClientConnectedCallback(int port, const std::function<void(int, std::string)>& clientConnected)
 {
 	ClientConnectedCallbacks[port].push_back(clientConnected);
 }
 
-void mzWebSocketServer::SetClientDisconnectedCallback(int port, const std::function<void(int, std::string)>& clientDisconnected)
+void nosWebSocketServer::SetClientDisconnectedCallback(int port, const std::function<void(int, std::string)>& clientDisconnected)
 {
 	ClientDisconnectedCallbacks[port].push_back(clientDisconnected);
 }
 
-void mzWebSocketServer::SetNotifyOnClientMessage(int clientID, const std::function<void(std::string&&)>& notifyOnClientMessage)
+void nosWebSocketServer::SetNotifyOnClientMessage(int clientID, const std::function<void(std::string&&)>& notifyOnClientMessage)
 {
 	NotifyOnClientMessageMap[clientID].push_back(notifyOnClientMessage);
 }
 
-void mzWebSocketServer::SetNotifyOnClientDisconnected(int clientID, const std::function<void()>& notifyOnClientDisconnected)
+void nosWebSocketServer::SetNotifyOnClientDisconnected(int clientID, const std::function<void()>& notifyOnClientDisconnected)
 {
 	NotifyOnClientDisconnectedMap[clientID].push_back(notifyOnClientDisconnected);
 }
 
-void mzWebSocketServer::SetServerCreatedCallback(const std::function<void()> callback)
+void nosWebSocketServer::SetServerCreatedCallback(const std::function<void()> callback)
 {
 	//This is not ideal, but we create the lws context via constructor (for safety)
 	//and hence we cant call ServerCreatedCallback anytime later; instead we will check if server exists
@@ -146,12 +146,12 @@ void mzWebSocketServer::SetServerCreatedCallback(const std::function<void()> cal
 		callback();
 }
 
-void mzWebSocketServer::SetServerDestroyedCallback(const std::function<void()> callback)
+void nosWebSocketServer::SetServerDestroyedCallback(const std::function<void()> callback)
 {
 	ServerDestroyedCallback = callback;
 }
 
-void mzWebSocketServer::Send(WebSocketInstance* wsi)
+void nosWebSocketServer::Send(WebSocketInstance* wsi)
 {
 	for (auto& [id, queue] : sendQueueMap) {
 		
@@ -171,7 +171,7 @@ void mzWebSocketServer::Send(WebSocketInstance* wsi)
 	}
 }
 
-void mzWebSocketServer::StartWebSocket()
+void nosWebSocketServer::StartWebSocket()
 {
 	//Library handles http handshake?
 	pContext = nullptr;
@@ -217,7 +217,7 @@ void mzWebSocketServer::StartWebSocket()
 	}
 }
 
-void mzWebSocketServer::ProcessReceivedData(WebSocketInstance* wsi, void* data, size_t length)
+void nosWebSocketServer::ProcessReceivedData(WebSocketInstance* wsi, void* data, size_t length)
 {
 	if (length == 0)
 		return;
@@ -245,7 +245,7 @@ void mzWebSocketServer::ProcessReceivedData(WebSocketInstance* wsi, void* data, 
 
 }
 
-void mzWebSocketServer::ClientDisconnected(WebSocketInstance* wsi)
+void nosWebSocketServer::ClientDisconnected(WebSocketInstance* wsi)
 {
 	int id = -1;
 	std::string path;
@@ -285,7 +285,7 @@ void mzWebSocketServer::ClientDisconnected(WebSocketInstance* wsi)
 static int mz_ws_server_callback(struct lws* WSI, enum lws_callback_reasons Reason, void* User, void* In, size_t Len)
 {
 	struct lws_context* Context = lws_get_context(WSI);
-	mzWebSocketServer* Socket = (mzWebSocketServer*)lws_context_user(Context);
+	nosWebSocketServer* Socket = (nosWebSocketServer*)lws_context_user(Context);
 	Socket->ProcessReceivedData(WSI, In, Len);
 
 	switch (Reason)

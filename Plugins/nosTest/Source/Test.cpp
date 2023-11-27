@@ -1,74 +1,74 @@
-// Copyright MediaZ AS. All Rights Reserved.
+// Copyright Nodos AS. All Rights Reserved.
 
-#include <MediaZ/PluginAPI.h>
+#include <Nodos/PluginAPI.h>
 
 #include <Builtins_generated.h>
 
-#include <MediaZ/Helpers.hpp>
+#include <Nodos/Helpers.hpp>
 
 #include "GpuStress.frag.spv.dat"
 
-MZ_INIT();
-MZ_REGISTER_NAME(in1)
-MZ_REGISTER_NAME(in2)
-MZ_REGISTER_NAME(out)
+NOS_INIT();
+NOS_REGISTER_NAME(in1)
+NOS_REGISTER_NAME(in2)
+NOS_REGISTER_NAME(out)
 
 
-static void TestFunction(void* ctx, const mzNodeExecuteArgs* nodeArgs, const mzNodeExecuteArgs* functionArgs)
+static void TestFunction(void* ctx, const nosNodeExecuteArgs* nodeArgs, const nosNodeExecuteArgs* functionArgs)
 {
-	auto args = mz::GetPinValues(functionArgs);
+	auto args = nos::GetPinValues(functionArgs);
 
-	auto a = *GetPinValue<double>(args, MZN_in1);
-	auto b = *GetPinValue<double>(args, MZN_in2);
+	auto a = *GetPinValue<double>(args, NSN_in1);
+	auto b = *GetPinValue<double>(args, NSN_in2);
 	auto c = a + b;
-	mzEngine.SetPinValue(functionArgs->PinIds[2], {.Data = &c, .Size = sizeof(c)});
+	nosEngine.SetPinValue(functionArgs->PinIds[2], {.Data = &c, .Size = sizeof(c)});
 }
 
-static mzResult GetFunctions(size_t* outCount, mzName* pName, mzPfnNodeFunctionExecute* fns)
+static nosResult GetFunctions(size_t* outCount, nosName* pName, nosPfnNodeFunctionExecute* fns)
 {
 	*outCount = 1;
 	if (!pName || !fns)
-		return MZ_RESULT_SUCCESS;
+		return NOS_RESULT_SUCCESS;
 
 	*fns = TestFunction;
-	*pName = MZ_NAME_STATIC("TestFunction");
-	return MZ_RESULT_SUCCESS;
+	*pName = NOS_NAME_STATIC("TestFunction");
+	return NOS_RESULT_SUCCESS;
 }
 
 
 extern "C"
 {
 
-	MZAPI_ATTR mzResult MZAPI_CALL mzExportNodeFunctions(size_t* outCount, mzNodeFunctions** outFunctions)
+	NOSAPI_ATTR nosResult NOSAPI_CALL nosExportNodeFunctions(size_t* outCount, nosNodeFunctions** outFunctions)
 	{
 		*outCount = (size_t)(6);
 		if (!outFunctions)
-			return MZ_RESULT_SUCCESS;
+			return NOS_RESULT_SUCCESS;
 		
-		outFunctions[0]->TypeName = MZ_NAME_STATIC("mz.test.NodeTest");
+		outFunctions[0]->TypeName = NOS_NAME_STATIC("nos.test.NodeTest");
 		outFunctions[0]->GetFunctions = GetFunctions;
-		outFunctions[1]->TypeName = MZ_NAME_STATIC("mz.test.NodeWithCategories");
-		outFunctions[2]->TypeName = MZ_NAME_STATIC("mz.test.NodeWithFunctions");
-		outFunctions[3]->TypeName = MZ_NAME_STATIC("mz.test.NodeWithCustomTypes");
-		outFunctions[4]->TypeName = MZ_NAME_STATIC("mz.test.GpuStress");		
-		outFunctions[4]->GetShaderSource = [](mzShaderSource* src) -> mzResult {
+		outFunctions[1]->TypeName = NOS_NAME_STATIC("nos.test.NodeWithCategories");
+		outFunctions[2]->TypeName = NOS_NAME_STATIC("nos.test.NodeWithFunctions");
+		outFunctions[3]->TypeName = NOS_NAME_STATIC("nos.test.NodeWithCustomTypes");
+		outFunctions[4]->TypeName = NOS_NAME_STATIC("nos.test.GpuStress");		
+		outFunctions[4]->GetShaderSource = [](nosShaderSource* src) -> nosResult {
 			src->SpirvBlob.Data = (void*)GpuStress_frag_spv;
 			src->SpirvBlob.Size = sizeof(GpuStress_frag_spv);
-			return MZ_RESULT_SUCCESS;
+			return NOS_RESULT_SUCCESS;
 		};
-		outFunctions[5]->TypeName = MZ_NAME_STATIC("mz.test.CopyTest");
-		outFunctions[5]->ExecuteNode = [](void* ctx, const mzNodeExecuteArgs* args)
+		outFunctions[5]->TypeName = NOS_NAME_STATIC("nos.test.CopyTest");
+		outFunctions[5]->ExecuteNode = [](void* ctx, const nosNodeExecuteArgs* args)
 		{
-			mzCmd cmd;
-			mzEngine.Begin(&cmd);
-			auto values = mz::GetPinValues(args);
-			mzResourceShareInfo input = mz::DeserializeTextureInfo(values[MZ_NAME_STATIC("Input")]);
-			mzResourceShareInfo output = mz::DeserializeTextureInfo(values[MZ_NAME_STATIC("Output")]);
-			mzEngine.Copy(cmd, &input, &output, 0);
-			mzEngine.End(cmd);
-			return MZ_RESULT_SUCCESS;
+			nosCmd cmd;
+			nosEngine.Begin(&cmd);
+			auto values = nos::GetPinValues(args);
+			nosResourceShareInfo input = nos::DeserializeTextureInfo(values[NOS_NAME_STATIC("Input")]);
+			nosResourceShareInfo output = nos::DeserializeTextureInfo(values[NOS_NAME_STATIC("Output")]);
+			nosEngine.Copy(cmd, &input, &output, 0);
+			nosEngine.End(cmd);
+			return NOS_RESULT_SUCCESS;
 		};
-		return MZ_RESULT_SUCCESS;
+		return NOS_RESULT_SUCCESS;
 	}
 
 }

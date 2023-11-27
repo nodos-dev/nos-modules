@@ -1,12 +1,12 @@
-// Copyright MediaZ AS. All Rights Reserved.
+// Copyright Nodos AS. All Rights Reserved.
 
-#include <MediaZ/Helpers.hpp>
-#include <MediaZ/PluginAPI.h>
+#include <Nodos/Helpers.hpp>
+#include <Nodos/PluginAPI.h>
 #include "../Shaders/Merge.frag.spv.dat"
 
 #include <random>
 
-namespace mz
+namespace nos
 {
 std::seed_seq Seed()
 {
@@ -22,24 +22,24 @@ uuids::uuid_random_generator generator(mtengine);
 
 }
 
-namespace mz::utilities
+namespace nos::utilities
 {
-MZ_REGISTER_NAME(Out);
-MZ_REGISTER_NAME(Textures);
-MZ_REGISTER_NAME(Texture_Count);
-MZ_REGISTER_NAME(Merge_Pass);
-MZ_REGISTER_NAME(Merge_Shader);
-MZ_REGISTER_NAME(Background_Color);
-MZ_REGISTER_NAME(PerTextureData);
-MZ_REGISTER_NAME(Blends);
-MZ_REGISTER_NAME(Opacities);
-MZ_REGISTER_NAME_SPACED(Merge, "mz.utilities.Merge")
+NOS_REGISTER_NAME(Out);
+NOS_REGISTER_NAME(Textures);
+NOS_REGISTER_NAME(Texture_Count);
+NOS_REGISTER_NAME(Merge_Pass);
+NOS_REGISTER_NAME(Merge_Shader);
+NOS_REGISTER_NAME(Background_Color);
+NOS_REGISTER_NAME(PerTextureData);
+NOS_REGISTER_NAME(Blends);
+NOS_REGISTER_NAME(Opacities);
+NOS_REGISTER_NAME_SPACED(Merge, "nos.utilities.Merge")
 
 struct MergePin
 {
-	mzUUID TextureId;
-	mzUUID OpacityId;
-	mzUUID BlendId;
+	nosUUID TextureId;
+	nosUUID OpacityId;
+	nosUUID BlendId;
 };
 
 struct MergeContext : NodeContext
@@ -47,7 +47,7 @@ struct MergeContext : NodeContext
 	uint32_t TextureCount = 2;
 	std::vector<MergePin> AddedPins;
 
-	MergeContext(mzFbNode const* node) : NodeContext(node) 
+	MergeContext(nosFbNode const* node) : NodeContext(node) 
 	{
 		TextureCount = (node->pins()->size() - 2) / 3;
 
@@ -61,15 +61,15 @@ struct MergeContext : NodeContext
 				if (node->pins()->Get(i)->orphan_state()->is_orphan())
 				{
 					updatePins.emplace_back(
-						mz::CreatePartialPinUpdate
+						nos::CreatePartialPinUpdate
 						(fbb, node->pins()->Get(i)->id(),
-							0, mz::fb::CreateOrphanStateDirect(fbb, false), Action::NOP));
+							0, nos::fb::CreateOrphanStateDirect(fbb, false), Action::NOP));
 				}
 			}
 
 			HandleEvent(
 				CreateAppEvent(fbb,
-					mz::CreatePartialNodeUpdateDirect(fbb,
+					nos::CreatePartialNodeUpdateDirect(fbb,
 						node->id(),
 						ClearFlags::NONE,
 						0,
@@ -83,13 +83,13 @@ struct MergeContext : NodeContext
 		}
 	}
 
-	mzResult ExecuteNode(const mzNodeExecuteArgs* args) override
+	nosResult ExecuteNode(const nosNodeExecuteArgs* args) override
 	{
 		auto values = GetPinValues(args);
-		const mzResourceShareInfo output = DeserializeTextureInfo(values[MZN_Out]);
+		const nosResourceShareInfo output = DeserializeTextureInfo(values[NSN_Out]);
 
-		std::vector<mzShaderBinding> bindings;
-		std::vector<mzResourceShareInfo> textures(TextureCount);
+		std::vector<nosShaderBinding> bindings;
+		std::vector<nosResourceShareInfo> textures(TextureCount);
 
 		std::array<int, 16> blends = {};
 		std::array<float, 16> opacities = {};
@@ -98,13 +98,13 @@ struct MergeContext : NodeContext
 		
 		for (size_t i = 0; i < args->PinCount; ++i)
 		{
-			if(MZN_Out == args->PinNames[i])
+			if(NSN_Out == args->PinNames[i])
 				continue;
 
-			mzBuffer val = args->PinValues[i];
-			if (MZN_Background_Color == args->PinNames[i])
+			nosBuffer val = args->PinValues[i];
+			if (NSN_Background_Color == args->PinNames[i])
 			{
-				bindings.emplace_back(mzShaderBinding{ .Name = Name(args->PinNames[i]), .Data = val.Data, .Size = val.Size });
+				bindings.emplace_back(nosShaderBinding{ .Name = Name(args->PinNames[i]), .Data = val.Data, .Size = val.Size });
 				continue;
 			}
 
@@ -119,31 +119,31 @@ struct MergeContext : NodeContext
 			}
 		}
 
-		bindings.emplace_back(ShaderBinding(MZN_Blends, blends));
-		bindings.emplace_back(ShaderBinding(MZN_Opacities, opacities));
-		bindings.emplace_back(ShaderBinding(MZN_Texture_Count, TextureCount));
-		bindings.emplace_back(ShaderBinding(MZN_Textures, textures.data(), textures.size()));
+		bindings.emplace_back(ShaderBinding(NSN_Blends, blends));
+		bindings.emplace_back(ShaderBinding(NSN_Opacities, opacities));
+		bindings.emplace_back(ShaderBinding(NSN_Texture_Count, TextureCount));
+		bindings.emplace_back(ShaderBinding(NSN_Textures, textures.data(), textures.size()));
 
-		mzRunPassParams mergePass{
-			.Key = MZN_Merge_Pass,
+		nosRunPassParams mergePass{
+			.Key = NSN_Merge_Pass,
 			.Bindings = bindings.data(),
 			.BindingCount = static_cast<uint32_t>(bindings.size()),
 			.Output = output,
 		};
 
-		mzEngine.RunPass(nullptr, &mergePass);
-		return MZ_RESULT_SUCCESS;
+		nosEngine.RunPass(nullptr, &mergePass);
+		return NOS_RESULT_SUCCESS;
 	}
 
-	void OnMenuRequested(const mzContextMenuRequest* request) override
+	void OnMenuRequested(const nosContextMenuRequest* request) override
 	{
 		flatbuffers::FlatBufferBuilder fbb;
 
-		std::vector<flatbuffers::Offset<mz::ContextMenuItem>> items = {
-			mz::CreateContextMenuItemDirect(fbb, "Add Texture", 1),
+		std::vector<flatbuffers::Offset<nos::ContextMenuItem>> items = {
+			nos::CreateContextMenuItemDirect(fbb, "Add Texture", 1),
 		};
 		if (TextureCount > 2)
-			items.push_back(mz::CreateContextMenuItemDirect(fbb, "Delete Last Texture", 2));
+			items.push_back(nos::CreateContextMenuItemDirect(fbb, "Delete Last Texture", 2));
 
 		auto event = CreateAppEvent(fbb,
 		                            CreateContextMenuUpdate(fbb,
@@ -156,7 +156,7 @@ struct MergeContext : NodeContext
 		HandleEvent(event);
 	}
 
-	void OnMenuCommand(mzUUID itemID, uint32_t cmd) override
+	void OnMenuCommand(nosUUID itemID, uint32_t cmd) override
 	{
 		if (!cmd)
 			return;
@@ -164,33 +164,33 @@ struct MergeContext : NodeContext
 		if (cmd == 1)
 		{
 			auto count = std::to_string(TextureCount++);
-			mzBuffer buffer;
-			mzEngine.GetDefaultValueOfType(MZ_NAME_STATIC("mz.fb.Texture"), &buffer);
+			nosBuffer buffer;
+			nosEngine.GetDefaultValueOfType(NOS_NAME_STATIC("nos.fb.Texture"), &buffer);
 
 			std::string texPinName = "Texture_" + count;
-			mzUUID texId = *(mzUUID*)mz::generator().as_bytes().data();
+			nosUUID texId = *(nosUUID*)nos::generator().as_bytes().data();
 			std::vector<uint8_t> texData((u8*)buffer.Data, (u8*)buffer.Data + buffer.Size);
 
 			std::string opacityPinName = "Opacity_" + count;
-			mzUUID opacityId = *(mzUUID*)mz::generator().as_bytes().data();
-			std::vector<uint8_t> opacityData = mz::Buffer::From(1.f);
-			std::vector<uint8_t> opacityMinData = mz::Buffer::From(0.f);
-			std::vector<uint8_t> opacityMaxData = mz::Buffer::From(1.f);
+			nosUUID opacityId = *(nosUUID*)nos::generator().as_bytes().data();
+			std::vector<uint8_t> opacityData = nos::Buffer::From(1.f);
+			std::vector<uint8_t> opacityMinData = nos::Buffer::From(0.f);
+			std::vector<uint8_t> opacityMaxData = nos::Buffer::From(1.f);
 
 			std::string blendPinName = "Blend_Mode_" + count;
-			mzUUID blendId = *(mzUUID*)mz::generator().as_bytes().data();
-			std::vector<uint8_t> blendModeData = mz::Buffer::From(0u);
+			nosUUID blendId = *(nosUUID*)nos::generator().as_bytes().data();
+			std::vector<uint8_t> blendModeData = nos::Buffer::From(0u);
 
 			std::string pinCategory = "Layer (" + count + ")";
 
 			AddedPins.push_back({texId, opacityId, blendId});
 
 			flatbuffers::FlatBufferBuilder fbb;
-			std::vector<flatbuffers::Offset<mz::fb::Pin>> pins = {
+			std::vector<flatbuffers::Offset<nos::fb::Pin>> pins = {
 				fb::CreatePinDirect(fbb,
 				                    &texId,
 				                    texPinName.c_str(),
-				                    "mz.fb.Texture",
+				                    "nos.fb.Texture",
 				                    fb::ShowAs::INPUT_PIN,
 				                    fb::CanShowAs::INPUT_PIN_ONLY,
 				                    pinCategory.c_str(),
@@ -211,7 +211,7 @@ struct MergeContext : NodeContext
 				fb::CreatePinDirect(fbb,
 				                    &blendId,
 				                    blendPinName.c_str(),
-				                    "mz.fb.BlendMode",
+				                    "nos.fb.BlendMode",
 				                    fb::ShowAs::PROPERTY,
 				                    fb::CanShowAs::OUTPUT_PIN_OR_PROPERTY,
 				                    pinCategory.c_str(),
@@ -232,7 +232,7 @@ struct MergeContext : NodeContext
 			{
 				TextureCount--;
 				flatbuffers::FlatBufferBuilder fbb;
-				std::vector<mzUUID> ids = {AddedPins.back().TextureId, AddedPins.back().OpacityId,
+				std::vector<nosUUID> ids = {AddedPins.back().TextureId, AddedPins.back().OpacityId,
 				                           AddedPins.back().BlendId};
 				HandleEvent(CreateAppEvent(fbb,
 				                                    CreatePartialNodeUpdateDirect(
@@ -245,36 +245,36 @@ struct MergeContext : NodeContext
 		}
 	}
     
-	inline static mzShaderSource MergeSource = { .SpirvBlob = {(void*)Merge_frag_spv, sizeof(Merge_frag_spv) } };
+	inline static nosShaderSource MergeSource = { .SpirvBlob = {(void*)Merge_frag_spv, sizeof(Merge_frag_spv) } };
     
 
-	static mzResult GetShaders(size_t* outCount, mzShaderInfo* outShaders)
+	static nosResult GetShaders(size_t* outCount, nosShaderInfo* outShaders)
 	{
 		*outCount = 1;
 		if (!outShaders)
-			return MZ_RESULT_SUCCESS;
-		outShaders[0] = {.Key = MZN_Merge_Shader, .Source = MergeSource };
-		return MZ_RESULT_SUCCESS;
+			return NOS_RESULT_SUCCESS;
+		outShaders[0] = {.Key = NSN_Merge_Shader, .Source = MergeSource };
+		return NOS_RESULT_SUCCESS;
 	}
 
-	static mzResult GetPasses(size_t* outCount, mzPassInfo* passes)
+	static nosResult GetPasses(size_t* outCount, nosPassInfo* passes)
 	{
 		*outCount = 1;
 		if (!passes)
-			return MZ_RESULT_SUCCESS;
+			return NOS_RESULT_SUCCESS;
 		*passes = {
-			.Key = MZN_Merge_Pass,
-			.Shader = MZN_Merge_Shader,
+			.Key = NSN_Merge_Pass,
+			.Shader = NSN_Merge_Shader,
 			.Blend = 1,
 			.MultiSample = 1,
 		};
-		return MZ_RESULT_SUCCESS;
+		return NOS_RESULT_SUCCESS;
 	}
 };
 
-void RegisterMerge(mzNodeFunctions* out)
+void RegisterMerge(nosNodeFunctions* out)
 {
-	MZ_BIND_NODE_CLASS(MZN_Merge, MergeContext, out);
+	NOS_BIND_NODE_CLASS(NSN_Merge, MergeContext, out);
 }
 
 }

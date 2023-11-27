@@ -1,27 +1,27 @@
-#include "mzCustomVideoSink.h"
+#include "CustomVideoSink.h"
 
-mzCustomVideoSink::mzCustomVideoSink()
+nosCustomVideoSink::nosCustomVideoSink()
 {
 }
 
-void mzCustomVideoSink::SetOnFrameCallback(const std::function<void(const webrtc::VideoFrame&)>& callback)
+void nosCustomVideoSink::SetOnFrameCallback(const std::function<void(const webrtc::VideoFrame&)>& callback)
 {
 	OnFrameCallback = callback;
 }
 
-void mzCustomVideoSink::OnFrame(const webrtc::VideoFrame& frame)
+void nosCustomVideoSink::OnFrame(const webrtc::VideoFrame& frame)
 {
 	if (OnFrameCallback) {
 		OnFrameCallback(frame);
 	}
 }
 
-void mzCustomVideoSink::AddRef() const
+void nosCustomVideoSink::AddRef() const
 {
 	ref_count_.IncRef();
 }
 
-rtc::RefCountReleaseStatus mzCustomVideoSink::Release() const
+rtc::RefCountReleaseStatus nosCustomVideoSink::Release() const
 {
 	const auto status = ref_count_.DecRef();
 	if (status == rtc::RefCountReleaseStatus::kDroppedLastRef) {

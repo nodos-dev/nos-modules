@@ -1,9 +1,9 @@
 #pragma once
 #include "api/peer_connection_interface.h"
 
-class mzPeerConnectionObserver : public webrtc::PeerConnectionObserver {
+class nosPeerConnectionObserver : public webrtc::PeerConnectionObserver {
 public:
-	mzPeerConnectionObserver(int peerConnectionID);
+	nosPeerConnectionObserver(int peerConnectionID);
     
     void SetSignalingChangeCallback(std::function<void(webrtc::PeerConnectionInterface::SignalingState, int)> callback);
     void SetAddTrackCallback(std::function<void(rtc::scoped_refptr<webrtc::RtpReceiverInterface>,

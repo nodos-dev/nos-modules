@@ -6,7 +6,7 @@
 #include <rtc_base/physical_socket_server.h>
 #include <rtc_base/third_party/sigslot/sigslot.h>
 #include <nlohmann/json.hpp>
-#include "mzWebSocketClient.h"
+#include "WebSocketClient.h"
 
 typedef std::map<int, std::string> Peers;
 
@@ -19,15 +19,15 @@ enum EClientState {
 	SIGNING_OUT,
 };
 
-class mzWebRTCClient : public sigslot::has_slots<> {
+class nosWebRTCClient : public sigslot::has_slots<> {
 public:
-	mzWebRTCClient();
+	nosWebRTCClient();
 	/// <summary>
 	/// Create client with name
 	/// </summary>
 	/// <param name="name"></param>
-	mzWebRTCClient(std::string name);
-	~mzWebRTCClient() = default;
+	nosWebRTCClient(std::string name);
+	~nosWebRTCClient() = default;
 
 	void ConnectToServer(std::string fullAddres);
 	EClientState GetCurrentState() const;
@@ -52,7 +52,7 @@ private:
 	//Register this class' callbacks to websocket class
 	void RegisterWebSocketCallbacks();
 	//for re-usability. We need to re-create websocket if we want to change IP
-	std::unique_ptr<mzWebSocketClient> p_mzWebSocketClient; 
+	std::unique_ptr<nosWebSocketClient> p_nosWebSocketClient; 
 	//might need to hold prev state later?
 	Peers peers;
 	std::atomic<EClientState> currentState; 

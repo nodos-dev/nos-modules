@@ -1,11 +1,11 @@
 {
     "info": {
         "id": {
-            "name": "mz.subsystem.test",
+            "name": "nos.subsystem.test",
             "version": "0.1.0"
         },
         "display_name": "Test Subsystem",
         "description": "Subsystem for testing purposes."
     },
-    "binary_path": "../Binaries/mzTestSubsystem"
+    "binary_path": "../Binaries/nosTestSubsystem"
 }

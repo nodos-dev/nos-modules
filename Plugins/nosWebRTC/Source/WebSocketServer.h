@@ -8,17 +8,17 @@
 typedef struct lws WebSocketInstance;
 static int mz_ws_server_callback(struct lws* WSI, enum lws_callback_reasons reason, void* user, void* in, size_t len);
 
-class mzWebSocketServer {
+class nosWebSocketServer {
 public:
 	//TODO: we may need to specify a limit for max number of connections
-	mzWebSocketServer(std::vector<int>&& portNumber);
+	nosWebSocketServer(std::vector<int>&& portNumber);
 	//Set html and css files for server
-	mzWebSocketServer(std::vector<int>&& portNumber, std::string httpMountOrigin, std::string defaultFilename);
+	nosWebSocketServer(std::vector<int>&& portNumber, std::string httpMountOrigin, std::string defaultFilename);
 
-	~mzWebSocketServer();
+	~nosWebSocketServer();
 
-	mzWebSocketServer(const mzWebSocketServer&) = delete;
-	mzWebSocketServer& operator=(const mzWebSocketServer&) = delete;
+	nosWebSocketServer(const nosWebSocketServer&) = delete;
+	nosWebSocketServer& operator=(const nosWebSocketServer&) = delete;
 
 	void SendMessageTo(int clientID, std::string&& data);
 

@@ -1,8 +1,8 @@
-#ifndef MZ_WEBRTC_JSON_CONFIG
-#define MZ_WEBRTC_JSON_CONFIG
+#ifndef NOS_WEBRTC_JSON_CONFIG
+#define NOS_WEBRTC_JSON_CONFIG
 
 #include <string>
-namespace mzWebRTCJsonConfig{
+namespace nosWebRTCJsonConfig{
 	static std::string candidateKey = "candidate";
 	static std::string sdpKey = "sdp";
 	static std::string sdpMidKey = "sdpMid";
@@ -14,4 +14,4 @@ namespace mzWebRTCJsonConfig{
 	static std::string typeICE = "iceCandidate";
 }
 
-#endif // !MZ_WEBRTC_JSON_CONFIG
+#endif // !NOS_WEBRTC_JSON_CONFIG

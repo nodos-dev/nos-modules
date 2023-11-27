@@ -1,42 +1,42 @@
 {
     "AJA": {
-        "target_name": "mzAJA",
-        "path": "mzAJA",
+        "target_name": "nosAJA",
+        "path": "nosAJA",
         "deps": [
-            "mzAJA/*",
+            "nosAJA/*",
             "External/ntv2/*",
             "External/stb/*"
         ]
     },
-    "mz.filters": {
-        "target_name": "mzFilters",
-        "path": "mzFilters",
+    "nos.filters": {
+        "target_name": "nosFilters",
+        "path": "nosFilters",
         "deps": [
-            "mzFilters/*",
+            "nosFilters/*",
             "Shaders/*"
         ]
     },
-    "mz.math": {
-        "target_name": "mzMath",
-        "path": "mzMath",
+    "nos.math": {
+        "target_name": "nosMath",
+        "path": "nosMath",
         "deps": [
-            "mzMath/*"
+            "nosMath/*"
         ]
     },
-    "mz.utilities": {
-        "target_name": "mzUtilities",
-        "path": "mzUtilities",
+    "nos.utilities": {
+        "target_name": "nosUtilities",
+        "path": "nosUtilities",
         "deps": [
-            "mzUtilities/*",
+            "nosUtilities/*",
             "Shaders/*",
             "External/stb/*"
         ]
     },
-	"mz.WebRTC": {
-        "target_name": "mzWebRTC",
-        "path": "mzWebRTC",
+	"nos.WebRTC": {
+        "target_name": "nosWebRTC",
+        "path": "nosWebRTC",
         "deps": [
-            "mzWebRTC/*"  
+            "nosWebRTC/*"  
 		]
     }
 }

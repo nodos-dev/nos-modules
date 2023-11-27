@@ -10,7 +10,7 @@
             "pins": [
                 {
                     "name": "Squares",
-                    "type_name": "mz.fb.vec2i",
+                    "type_name": "nos.fb.vec2i",
                     "show_as": "INPUT_PIN",
                     "can_show_as": "INPUT_PIN_OR_PROPERTY",
                     "data": {
@@ -25,7 +25,7 @@
                 },
                 {
                     "name": "OddColor",
-                    "type_name": "mz.fb.vec4",
+                    "type_name": "nos.fb.vec4",
                     "show_as": "INPUT_PIN",
                     "can_show_as": "INPUT_PIN_OR_PROPERTY",
                     "visualizer": {
@@ -41,7 +41,7 @@
                 },
                 {
                     "name": "EvenColor",
-                    "type_name": "mz.fb.vec4",
+                    "type_name": "nos.fb.vec4",
                     "show_as": "INPUT_PIN",
                     "can_show_as": "INPUT_PIN_OR_PROPERTY",
                     "visualizer": {
@@ -57,7 +57,7 @@
                 },
                 {
                     "name": "Output",
-                    "type_name": "mz.fb.Texture",
+                    "type_name": "nos.fb.Texture",
                     "show_as": "OUTPUT_PIN",
                     "can_show_as": "OUTPUT_PIN_OR_PROPERTY"
                 }

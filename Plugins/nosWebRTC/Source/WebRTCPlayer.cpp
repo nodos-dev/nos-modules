@@ -1,9 +1,9 @@
-#include <MediaZ/PluginAPI.h>
+#include <Nodos/PluginAPI.h>
 #include <Builtins_generated.h>
-#include <MediaZ/Helpers.hpp>
+#include <Nodos/Helpers.hpp>
 #include <AppService_generated.h>
 #include <AppEvents_generated.h>
-#include <mzUtil/Thread.h>
+#include <nosUtil/Thread.h>
 
 #include <Windows.h>
 #include <shellapi.h>  // must come after windows.h
@@ -17,7 +17,7 @@
 #include "rtc_base/win32_socket_init.h"
 #include "system_wrappers/include/field_trial.h"
 #include "test/field_trial.h"
-#include "mzCustomVideoSource.h"
+#include "CustomVideoSource.h"
 #include <memory>
 
 #include <string>
@@ -33,28 +33,28 @@
 #include "test/field_trial.h"
 #include "api/video/i420_buffer.h"
 #include "api/video/video_frame.h"
-#include "mzWebRTCManager.h"
-#include "mzWebRTCClient.h"
+#include "WebRTCManager.h"
+#include "WebRTCClient.h"
 #include "YUV420toRGB.comp.spv.dat"
-#include "mzLinearI420Buffer.h"
-#include "mzI420Buffer.h"
-#include "mzWebRTCCommon.h"
+#include "LinearI420Buffer.h"
+#include "I420Buffer.h"
+#include "WebRTCCommon.h"
 
-// mzNodes
+// nosNodes
 
-MZ_REGISTER_NAME(Out)
-MZ_REGISTER_NAME(ServerIP)
-MZ_REGISTER_NAME(StreamerID)
-MZ_REGISTER_NAME(MaxFPS)
-MZ_REGISTER_NAME(WebRTCPlayer);
-MZ_REGISTER_NAME(TargetBitrate);
+NOS_REGISTER_NAME(Out)
+NOS_REGISTER_NAME(ServerIP)
+NOS_REGISTER_NAME(StreamerID)
+NOS_REGISTER_NAME(MaxFPS)
+NOS_REGISTER_NAME(WebRTCPlayer);
+NOS_REGISTER_NAME(TargetBitrate);
 
-MZ_REGISTER_NAME(YUV420toRGB_Compute_Shader);
-MZ_REGISTER_NAME(YUV420toRGB_Compute_Pass);
-MZ_REGISTER_NAME(Output);
-MZ_REGISTER_NAME(PlaneY);
-MZ_REGISTER_NAME(PlaneU);
-MZ_REGISTER_NAME(PlaneV);
+NOS_REGISTER_NAME(YUV420toRGB_Compute_Shader);
+NOS_REGISTER_NAME(YUV420toRGB_Compute_Pass);
+NOS_REGISTER_NAME(Output);
+NOS_REGISTER_NAME(PlaneY);
+NOS_REGISTER_NAME(PlaneU);
+NOS_REGISTER_NAME(PlaneV);
 
 enum EWebRTCPlayerStates {
 	eNONE,
@@ -66,18 +66,18 @@ enum EWebRTCPlayerStates {
 };
 
 //The interface between medaiZ and WebRTC, stores the task qeueue and launches the connection thread
-struct mzWebRTCPlayerInterface {
+struct nosWebRTCPlayerInterface {
 public:
 	std::chrono::steady_clock::time_point frameReceived;
-	rtc::scoped_refptr<mzWebRTCManager> manager;
-	mzWebRTCClient client;
-	rtc::scoped_refptr<mzCustomVideoSink> mzVideoSink;
-	mzWebRTCPlayerInterface() {
-		mzVideoSink = rtc::scoped_refptr<mzCustomVideoSink>( new mzCustomVideoSink());
-		manager = rtc::scoped_refptr<mzWebRTCManager>(new mzWebRTCManager(&client));
-		manager->AddVideoSink(mzVideoSink);
+	rtc::scoped_refptr<nosWebRTCManager> manager;
+	nosWebRTCClient client;
+	rtc::scoped_refptr<nosCustomVideoSink> nosVideoSink;
+	nosWebRTCPlayerInterface() {
+		nosVideoSink = rtc::scoped_refptr<nosCustomVideoSink>( new nosCustomVideoSink());
+		manager = rtc::scoped_refptr<nosWebRTCManager>(new nosWebRTCManager(&client));
+		manager->AddVideoSink(nosVideoSink);
 	}
-	~mzWebRTCPlayerInterface() {
+	~nosWebRTCPlayerInterface() {
 		manager->Dispose();
 		Dispose();
 	}
@@ -90,7 +90,7 @@ public:
 			client.ConnectToServer(server_port);
 		}
 		catch (std::exception& E) {
-			mzEngine.LogE(E.what());
+			nosEngine.LogE(E.what());
 		}
 	}
 
@@ -130,22 +130,22 @@ private:
 	}
 };
 
-std::pair<mz::Name, std::vector<uint8_t>> YUV420toRGBShader;
+std::pair<nos::Name, std::vector<uint8_t>> YUV420toRGBShader;
 
-struct WebRTCPlayerNodeContext : mz::NodeContext {
-	mzWebRTCStatsLogger PlayerBeginCopyToLogger;
-	mzWebRTCStatsLogger PlayerOnFrameLogger;
+struct WebRTCPlayerNodeContext : nos::NodeContext {
+	nosWebRTCStatsLogger PlayerBeginCopyToLogger;
+	nosWebRTCStatsLogger PlayerOnFrameLogger;
 
-	std::unique_ptr<mzWebRTCPlayerInterface> p_mzWebRTC;
+	std::unique_ptr<nosWebRTCPlayerInterface> p_nosWebRTC;
 	std::unique_ptr<RingProxy> RGBAConversionRing;
 	std::unique_ptr<RingProxy> OutputRing;
 
 	std::atomic<EWebRTCPlayerStates> currentState;
-	mzUUID NodeID;
-	mzUUID OutputPinUUID;
-	mzUUID ConnectToServerID;
-	mzUUID ConnectToPeerID;
-	mzUUID DisconnectFromServerID;
+	nosUUID NodeID;
+	nosUUID OutputPinUUID;
+	nosUUID ConnectToServerID;
+	nosUUID ConnectToPeerID;
+	nosUUID DisconnectFromServerID;
 
 	std::atomic<bool> shouldConvertFrame = false;
 	std::atomic<bool> checkCallbacks = true;
@@ -159,12 +159,12 @@ struct WebRTCPlayerNodeContext : mz::NodeContext {
 	std::thread FrameConverterThread;
 	std::thread CallbackHandlerThread;
 
-	mzResourceShareInfo OutputRGBA8 = {};
+	nosResourceShareInfo OutputRGBA8 = {};
 
-	std::vector<mzResourceShareInfo> ConvertedTextures = {};
-	std::vector<mzResourceShareInfo> OnFrameYBuffers;
-	std::vector<mzResourceShareInfo> OnFrameUBuffers;
-	std::vector<mzResourceShareInfo> OnFrameVBuffers;
+	std::vector<nosResourceShareInfo> ConvertedTextures = {};
+	std::vector<nosResourceShareInfo> OnFrameYBuffers;
+	std::vector<nosResourceShareInfo> OnFrameUBuffers;
+	std::vector<nosResourceShareInfo> OnFrameVBuffers;
 
 	std::atomic_int PeerCount = 0;
 	std::string server;
@@ -175,29 +175,29 @@ struct WebRTCPlayerNodeContext : mz::NodeContext {
 
 
 	//On Node Created
-	WebRTCPlayerNodeContext(mz::fb::Node const* node) :NodeContext
+	WebRTCPlayerNodeContext(nos::fb::Node const* node) :NodeContext
 	(node), currentState(EWebRTCPlayerStates::eNONE), PlayerBeginCopyToLogger("WebRTC Player BeginCopyFrom"), PlayerOnFrameLogger("WebRTC Player OnVideoFrame") {
-		OutputRGBA8.Info.Texture.Format = MZ_FORMAT_R8G8B8A8_SRGB;
-		OutputRGBA8.Info.Type = MZ_RESOURCE_TYPE_TEXTURE;
-		OutputRGBA8.Info.Texture.Usage = mzImageUsage(MZ_IMAGE_USAGE_TRANSFER_SRC | MZ_IMAGE_USAGE_TRANSFER_DST);
+		OutputRGBA8.Info.Texture.Format = NOS_FORMAT_R8G8B8A8_SRGB;
+		OutputRGBA8.Info.Type = NOS_RESOURCE_TYPE_TEXTURE;
+		OutputRGBA8.Info.Texture.Usage = nosImageUsage(NOS_IMAGE_USAGE_TRANSFER_SRC | NOS_IMAGE_USAGE_TRANSFER_DST);
 		OutputRGBA8.Info.Texture.Width = 1280;
 		OutputRGBA8.Info.Texture.Height = 720;
 
-		mzEngine.Create(&OutputRGBA8);
+		nosEngine.Create(&OutputRGBA8);
 
 		for (int i = 0; i < 5; i++) {
-			mzResourceShareInfo tex = {};
-			tex.Info.Texture.Format = MZ_FORMAT_R8G8B8A8_SRGB;
-			tex.Info.Type = MZ_RESOURCE_TYPE_TEXTURE;
-			tex.Info.Texture.Usage = mzImageUsage(MZ_IMAGE_USAGE_TRANSFER_SRC | MZ_IMAGE_USAGE_TRANSFER_DST);
+			nosResourceShareInfo tex = {};
+			tex.Info.Texture.Format = NOS_FORMAT_R8G8B8A8_SRGB;
+			tex.Info.Type = NOS_RESOURCE_TYPE_TEXTURE;
+			tex.Info.Texture.Usage = nosImageUsage(NOS_IMAGE_USAGE_TRANSFER_SRC | NOS_IMAGE_USAGE_TRANSFER_DST);
 			tex.Info.Texture.Width = OutputRGBA8.Info.Texture.Width;
 			tex.Info.Texture.Height = OutputRGBA8.Info.Texture.Height;
-			mzEngine.Create(&tex);
+			nosEngine.Create(&tex);
 			ConvertedTextures.push_back(std::move(tex));
 
-			mzResourceShareInfo tmpY = {};
-			mzResourceShareInfo tmpU = {};
-			mzResourceShareInfo tmpV = {};
+			nosResourceShareInfo tmpY = {};
+			nosResourceShareInfo tmpU = {};
+			nosResourceShareInfo tmpV = {};
 			OnFrameYBuffers.push_back(std::move(tmpY));
 			OnFrameUBuffers.push_back(std::move(tmpU));
 			OnFrameVBuffers.push_back(std::move(tmpV));
@@ -208,10 +208,10 @@ struct WebRTCPlayerNodeContext : mz::NodeContext {
 		OutputRing = std::make_unique<RingProxy>(ConvertedTextures.size(), "WebRTCPlayer Output Ring");
 
 		for (auto pin : *node->pins()) {
-			if (pin->show_as() == mz::fb::ShowAs::OUTPUT_PIN) {
+			if (pin->show_as() == nos::fb::ShowAs::OUTPUT_PIN) {
 				OutputPinUUID = *pin->id();
 			}
-			if (MZN_MaxFPS.Compare(pin->name()->c_str()) == 0)
+			if (NSN_MaxFPS.Compare(pin->name()->c_str()) == 0)
 			{
 				FPS = *(float*)pin->data()->data();
 				auto time = std::chrono::duration<float>(1.0f / FPS);
@@ -233,13 +233,13 @@ struct WebRTCPlayerNodeContext : mz::NodeContext {
 		
 		checkCallbacks = true;
 
-		mzEngine.SchedulePin(OutputPinUUID, { 0,1 });
+		nosEngine.SchedulePin(OutputPinUUID, { 0,1 });
 
 		flatbuffers::FlatBufferBuilder fbb;
 
 		HandleEvent(
-			mz::CreateAppEvent(fbb, mz::CreatePartialNodeUpdateDirect(fbb, &DisconnectFromServerID,
-				mz::ClearFlags::NONE, 0, 0, 0, 0, 0, 0, 0, 0, 0, mz::fb::CreateOrphanStateDirect(fbb, true))));
+			nos::CreateAppEvent(fbb, nos::CreatePartialNodeUpdateDirect(fbb, &DisconnectFromServerID,
+				nos::ClearFlags::NONE, 0, 0, 0, 0, 0, 0, 0, 0, 0, nos::fb::CreateOrphanStateDirect(fbb, true))));
 	}
 
 	~WebRTCPlayerNodeContext() override {
@@ -252,12 +252,12 @@ struct WebRTCPlayerNodeContext : mz::NodeContext {
 			CallbackHandlerThread.join();
 		}
 		for (const auto& text : ConvertedTextures) {
-			mzEngine.Destroy(&text);
+			nosEngine.Destroy(&text);
 		}
 	}
 
-	void  OnPinValueChanged(mz::Name pinName, mzUUID pinId, mzBuffer* value) override {
-		if (pinName == MZN_MaxFPS) {
+	void  OnPinValueChanged(nos::Name pinName, nosUUID pinId, nosBuffer* value) override {
+		if (pinName == NSN_MaxFPS) {
 			FPS = *(static_cast<float*>(value->Data));
 			auto time = std::chrono::duration<float>(1.0f / FPS);
 			timeLimit = std::chrono::round<std::chrono::microseconds>(time);
@@ -266,12 +266,12 @@ struct WebRTCPlayerNodeContext : mz::NodeContext {
 	
 	void InitializeNodeInternals() {
 
-		p_mzWebRTC.reset(new mzWebRTCPlayerInterface());
-		p_mzWebRTC->manager->SetPeerConnectedCallback([this]() {this->OnPeerConnected(); });
-		p_mzWebRTC->manager->SetPeerDisconnectedCallback([this]() {this->OnPeerDisconnected(); });
-		p_mzWebRTC->manager->SetServerConnectionSuccesfulCallback([this]() {this->OnConnectedToServer(); });
-		p_mzWebRTC->manager->SetServerConnectionFailedCallback([this]() {this->OnDisconnectedFromServer(); });
-		p_mzWebRTC->mzVideoSink->SetOnFrameCallback([this](const webrtc::VideoFrame& frame) {this->OnVideoFrame(frame); });
+		p_nosWebRTC.reset(new nosWebRTCPlayerInterface());
+		p_nosWebRTC->manager->SetPeerConnectedCallback([this]() {this->OnPeerConnected(); });
+		p_nosWebRTC->manager->SetPeerDisconnectedCallback([this]() {this->OnPeerDisconnected(); });
+		p_nosWebRTC->manager->SetServerConnectionSuccesfulCallback([this]() {this->OnConnectedToServer(); });
+		p_nosWebRTC->manager->SetServerConnectionFailedCallback([this]() {this->OnDisconnectedFromServer(); });
+		p_nosWebRTC->nosVideoSink->SetOnFrameCallback([this](const webrtc::VideoFrame& frame) {this->OnVideoFrame(frame); });
 
 		if (!CallbackHandlerThread.joinable()) {
 			CallbackHandlerThread = std::thread([this]() {this->HandleWebRTCCallbacks(); });
@@ -284,7 +284,7 @@ struct WebRTCPlayerNodeContext : mz::NodeContext {
 			FrameConverterThread.join();
 		}
 
-		p_mzWebRTC.reset();
+		p_nosWebRTC.reset();
 
 	}
 
@@ -293,7 +293,7 @@ struct WebRTCPlayerNodeContext : mz::NodeContext {
 		PlayerOnFrameLogger.LogStats();
 		auto buffer = frame.video_frame_buffer()->GetI420();
 		if (!RGBAConversionRing->IsWriteable()) {
-			mzEngine.LogW("WebRTC Player dropped a frame");
+			nosEngine.LogW("WebRTC Player dropped a frame");
 			return;
 		}
 
@@ -301,51 +301,51 @@ struct WebRTCPlayerNodeContext : mz::NodeContext {
 
 		if (OnFrameYBuffers[writeIndex].Info.Texture.Width != buffer->width() || OnFrameYBuffers[writeIndex].Info.Texture.Height != buffer->height()) {
 			if(OnFrameYBuffers[writeIndex].Memory.Handle != NULL) {
-				mzEngine.Destroy(&OnFrameYBuffers[writeIndex]);
-				mzEngine.Destroy(&OnFrameUBuffers[writeIndex]);
-				mzEngine.Destroy(&OnFrameVBuffers[writeIndex]);
+				nosEngine.Destroy(&OnFrameYBuffers[writeIndex]);
+				nosEngine.Destroy(&OnFrameUBuffers[writeIndex]);
+				nosEngine.Destroy(&OnFrameVBuffers[writeIndex]);
 			}
-			OnFrameYBuffers[writeIndex].Info.Texture.Format = MZ_FORMAT_R8_SRGB;
-			OnFrameYBuffers[writeIndex].Info.Type = MZ_RESOURCE_TYPE_TEXTURE;
-			OnFrameYBuffers[writeIndex].Info.Texture.Usage = mzImageUsage(MZ_IMAGE_USAGE_TRANSFER_SRC | MZ_IMAGE_USAGE_TRANSFER_DST);
+			OnFrameYBuffers[writeIndex].Info.Texture.Format = NOS_FORMAT_R8_SRGB;
+			OnFrameYBuffers[writeIndex].Info.Type = NOS_RESOURCE_TYPE_TEXTURE;
+			OnFrameYBuffers[writeIndex].Info.Texture.Usage = nosImageUsage(NOS_IMAGE_USAGE_TRANSFER_SRC | NOS_IMAGE_USAGE_TRANSFER_DST);
 			OnFrameYBuffers[writeIndex].Info.Texture.Width = buffer->width();
 			OnFrameYBuffers[writeIndex].Info.Texture.Height = buffer->height();
-			mzEngine.Create(&OnFrameYBuffers[writeIndex]);
+			nosEngine.Create(&OnFrameYBuffers[writeIndex]);
 
-			OnFrameUBuffers[writeIndex].Info.Texture.Format = MZ_FORMAT_R8_SRGB;
-			OnFrameUBuffers[writeIndex].Info.Type = MZ_RESOURCE_TYPE_TEXTURE;
-			OnFrameUBuffers[writeIndex].Info.Texture.Usage = mzImageUsage(MZ_IMAGE_USAGE_TRANSFER_SRC | MZ_IMAGE_USAGE_TRANSFER_DST);
+			OnFrameUBuffers[writeIndex].Info.Texture.Format = NOS_FORMAT_R8_SRGB;
+			OnFrameUBuffers[writeIndex].Info.Type = NOS_RESOURCE_TYPE_TEXTURE;
+			OnFrameUBuffers[writeIndex].Info.Texture.Usage = nosImageUsage(NOS_IMAGE_USAGE_TRANSFER_SRC | NOS_IMAGE_USAGE_TRANSFER_DST);
 			OnFrameUBuffers[writeIndex].Info.Texture.Width = buffer->width() / 2;
 			OnFrameUBuffers[writeIndex].Info.Texture.Height = buffer->height() / 2;
-			mzEngine.Create(&OnFrameUBuffers[writeIndex]);
+			nosEngine.Create(&OnFrameUBuffers[writeIndex]);
 
-			OnFrameVBuffers[writeIndex].Info.Texture.Format = MZ_FORMAT_R8_SRGB;
-			OnFrameVBuffers[writeIndex].Info.Type = MZ_RESOURCE_TYPE_TEXTURE;
-			OnFrameVBuffers[writeIndex].Info.Texture.Usage = mzImageUsage(MZ_IMAGE_USAGE_TRANSFER_SRC | MZ_IMAGE_USAGE_TRANSFER_DST);
+			OnFrameVBuffers[writeIndex].Info.Texture.Format = NOS_FORMAT_R8_SRGB;
+			OnFrameVBuffers[writeIndex].Info.Type = NOS_RESOURCE_TYPE_TEXTURE;
+			OnFrameVBuffers[writeIndex].Info.Texture.Usage = nosImageUsage(NOS_IMAGE_USAGE_TRANSFER_SRC | NOS_IMAGE_USAGE_TRANSFER_DST);
 			OnFrameVBuffers[writeIndex].Info.Texture.Width = buffer->width() / 2;
 			OnFrameVBuffers[writeIndex].Info.Texture.Height = buffer->height() / 2;
-			mzEngine.Create(&OnFrameVBuffers[writeIndex]);
+			nosEngine.Create(&OnFrameVBuffers[writeIndex]);
 		}
 		
 
-		mzEngine.ImageLoad(buffer->DataY(), mzVec2u(buffer->width(), buffer->height()), MZ_FORMAT_R8_SRGB, &OnFrameYBuffers[writeIndex]);
-		mzEngine.ImageLoad(buffer->DataU(), mzVec2u(buffer->width() / 2, buffer->height() / 2), MZ_FORMAT_R8_SRGB, &OnFrameUBuffers[writeIndex]);
-		mzEngine.ImageLoad(buffer->DataV(), mzVec2u(buffer->width() / 2, buffer->height() / 2), MZ_FORMAT_R8_SRGB, &OnFrameVBuffers[writeIndex]);
+		nosEngine.ImageLoad(buffer->DataY(), nosVec2u(buffer->width(), buffer->height()), NOS_FORMAT_R8_SRGB, &OnFrameYBuffers[writeIndex]);
+		nosEngine.ImageLoad(buffer->DataU(), nosVec2u(buffer->width() / 2, buffer->height() / 2), NOS_FORMAT_R8_SRGB, &OnFrameUBuffers[writeIndex]);
+		nosEngine.ImageLoad(buffer->DataV(), nosVec2u(buffer->width() / 2, buffer->height() / 2), NOS_FORMAT_R8_SRGB, &OnFrameVBuffers[writeIndex]);
 		RGBAConversionRing->SetWrote();
 		FrameConversionCV.notify_one();
 	}
 
 	
 
-	mzResult BeginCopyFrom(mzCopyInfo* copyInfo) override{
+	nosResult BeginCopyFrom(nosCopyInfo* copyInfo) override{
 		
 		if (!OutputRing->IsReadable()) {
-			return MZ_RESULT_FAILED;
+			return NOS_RESULT_FAILED;
 		}
 		auto now = std::chrono::high_resolution_clock::now();
 		if (timeLimit.count() > std::chrono::duration_cast<std::chrono::microseconds>(now - LastCopyTime).count()) {
-			//mzEngine.LogW("Too fast");
-			return MZ_RESULT_FAILED;
+			//nosEngine.LogW("Too fast");
+			return NOS_RESULT_FAILED;
 		}
 		LastCopyTime = std::chrono::high_resolution_clock::now();
 
@@ -353,13 +353,13 @@ struct WebRTCPlayerNodeContext : mz::NodeContext {
 		int readIndex = OutputRing->GetNextReadable();
 		copyInfo->ShouldCopyTexture = true;
 		copyInfo->CopyTextureFrom = ConvertedTextures[readIndex];
-		copyInfo->CopyTextureTo = mz::DeserializeTextureInfo(copyInfo->SrcPinData.Data);
+		copyInfo->CopyTextureTo = nos::DeserializeTextureInfo(copyInfo->SrcPinData.Data);
 		copyInfo->ShouldSubmitAndWait = true;
 		copyInfo->Stop = true;
-		return MZ_RESULT_SUCCESS;
+		return NOS_RESULT_SUCCESS;
 	}
 
-	void EndCopyFrom(mzCopyInfo* cpy) override {
+	void EndCopyFrom(nosCopyInfo* cpy) override {
 		OutputRing->SetRead();
 		FrameConversionCV.notify_one();
 	}
@@ -377,38 +377,38 @@ struct WebRTCPlayerNodeContext : mz::NodeContext {
 			int readIndex = RGBAConversionRing->GetNextReadable();
 			auto t_start = std::chrono::high_resolution_clock::now();
 			int writeIndex = OutputRing->GetNextWritable();
-			std::vector<mzShaderBinding> inputs;
-			inputs.emplace_back(mz::ShaderBinding(MZN_Output, ConvertedTextures[writeIndex]));
-			inputs.emplace_back(mz::ShaderBinding(MZN_PlaneY, OnFrameYBuffers[readIndex]));
-			inputs.emplace_back(mz::ShaderBinding(MZN_PlaneU, OnFrameUBuffers[readIndex]));
-			inputs.emplace_back(mz::ShaderBinding(MZN_PlaneV, OnFrameVBuffers[readIndex]));
+			std::vector<nosShaderBinding> inputs;
+			inputs.emplace_back(nos::ShaderBinding(NSN_Output, ConvertedTextures[writeIndex]));
+			inputs.emplace_back(nos::ShaderBinding(NSN_PlaneY, OnFrameYBuffers[readIndex]));
+			inputs.emplace_back(nos::ShaderBinding(NSN_PlaneU, OnFrameUBuffers[readIndex]));
+			inputs.emplace_back(nos::ShaderBinding(NSN_PlaneV, OnFrameVBuffers[readIndex]));
 
 
-			mzCmd cmdRunPass;
-			mzEngine.Begin(&cmdRunPass);
+			nosCmd cmdRunPass;
+			nosEngine.Begin(&cmdRunPass);
 			auto t0 = std::chrono::high_resolution_clock::now();
 			{
-				mzRunComputePassParams pass = {};
-				pass.Key = MZN_YUV420toRGB_Compute_Pass;
-				pass.DispatchSize = mzVec2u(OutputRGBA8.Info.Texture.Width / 20, OutputRGBA8.Info.Texture.Height / 12);
+				nosRunComputePassParams pass = {};
+				pass.Key = NSN_YUV420toRGB_Compute_Pass;
+				pass.DispatchSize = nosVec2u(OutputRGBA8.Info.Texture.Width / 20, OutputRGBA8.Info.Texture.Height / 12);
 				pass.Bindings = inputs.data();
 				pass.BindingCount = inputs.size();
 				pass.Benchmark = 0;
-				mzEngine.RunComputePass(cmdRunPass, &pass);
+				nosEngine.RunComputePass(cmdRunPass, &pass);
 			}
-			mzEngine.End(cmdRunPass);
+			nosEngine.End(cmdRunPass);
 			OutputRing->SetWrote();
 
 			//auto t1 = std::chrono::high_resolution_clock::now();
-			//mzEngine.WatchLog("WebRTC Player-Compute Pass Time(us)", std::to_string(std::chrono::duration_cast<std::chrono::microseconds>(t1 - t0).count()).c_str());
+			//nosEngine.WatchLog("WebRTC Player-Compute Pass Time(us)", std::to_string(std::chrono::duration_cast<std::chrono::microseconds>(t1 - t0).count()).c_str());
 			//auto t_end = std::chrono::high_resolution_clock::now();
 			//
-			//mzEngine.WatchLog("WebRTC Player Run Time(us)", std::to_string(std::chrono::duration_cast<std::chrono::microseconds>(t_end - t_start).count()).c_str());
+			//nosEngine.WatchLog("WebRTC Player Run Time(us)", std::to_string(std::chrono::duration_cast<std::chrono::microseconds>(t_end - t_start).count()).c_str());
 			RGBAConversionRing->SetRead();
 		}
 	}
 
-	void OnPinConnected(mz::Name pinName, mzUUID connectedPin) override
+	void OnPinConnected(nos::Name pinName, nosUUID connectedPin) override
 	{
 
 	}
@@ -421,7 +421,7 @@ struct WebRTCPlayerNodeContext : mz::NodeContext {
 	void OnDisconnectedFromServer() {
 		currentState = EWebRTCPlayerStates::eDISCONNECTED_FROM_SERVER;
 		WebRTCCallbacksCV.notify_one();
-		//p_mzWebRTC.reset(new mzWebRTCInterface());
+		//p_nosWebRTC.reset(new nosWebRTCInterface());
 	}
 
 	void OnPeerConnected() {
@@ -436,27 +436,27 @@ struct WebRTCPlayerNodeContext : mz::NodeContext {
 		WebRTCCallbacksCV.notify_one();
 	}
 
-	static mzResult GetFunctions(size_t* count, mzName* names, mzPfnNodeFunctionExecute* fns) {
+	static nosResult GetFunctions(size_t* count, nosName* names, nosPfnNodeFunctionExecute* fns) {
 		*count = 3;
 		if (!names || !fns)
-			return MZ_RESULT_SUCCESS;
+			return NOS_RESULT_SUCCESS;
 
-		names[0] = MZ_NAME_STATIC("ConnectToServer");
-		fns[0] = [](void* ctx, const mzNodeExecuteArgs* nodeArgs, const mzNodeExecuteArgs* functionArgs) {
+		names[0] = NOS_NAME_STATIC("ConnectToServer");
+		fns[0] = [](void* ctx, const nosNodeExecuteArgs* nodeArgs, const nosNodeExecuteArgs* functionArgs) {
 				if (WebRTCPlayerNodeContext* playerNode = static_cast<WebRTCPlayerNodeContext*>(ctx)) {
-					auto values = mz::GetPinValues(nodeArgs);
+					auto values = nos::GetPinValues(nodeArgs);
 					
 					playerNode->InitializeNodeInternals();
-					playerNode->server = mz::GetPinValue<const char>(values, MZN_ServerIP);
-					playerNode->p_mzWebRTC->StartConnection(playerNode->server);
+					playerNode->server = nos::GetPinValue<const char>(values, NSN_ServerIP);
+					playerNode->p_nosWebRTC->StartConnection(playerNode->server);
 				}
 				
 			};
 
-		names[1] = MZ_NAME_STATIC("DisconnectFromServer");
-		fns[1] = [](void* ctx, const mzNodeExecuteArgs* nodeArgs, const mzNodeExecuteArgs* functionArgs) {
+		names[1] = NOS_NAME_STATIC("DisconnectFromServer");
+		fns[1] = [](void* ctx, const nosNodeExecuteArgs* nodeArgs, const nosNodeExecuteArgs* functionArgs) {
 			if (WebRTCPlayerNodeContext* playerNode = static_cast<WebRTCPlayerNodeContext*>(ctx)) {
-				auto values = mz::GetPinValues(nodeArgs);
+				auto values = nos::GetPinValues(nodeArgs);
 
 				playerNode->currentState = EWebRTCPlayerStates::eDISCONNECTED_FROM_SERVER;
 				playerNode->WebRTCCallbacksCV.notify_one();
@@ -464,17 +464,17 @@ struct WebRTCPlayerNodeContext : mz::NodeContext {
 
 			};
 
-		names[2] = MZ_NAME_STATIC("ConnectToPeer");
-		fns[2] = [](void* ctx, const mzNodeExecuteArgs* nodeArgs, const mzNodeExecuteArgs* functionArgs) {
+		names[2] = NOS_NAME_STATIC("ConnectToPeer");
+		fns[2] = [](void* ctx, const nosNodeExecuteArgs* nodeArgs, const nosNodeExecuteArgs* functionArgs) {
 			if (WebRTCPlayerNodeContext* playerNode = static_cast<WebRTCPlayerNodeContext*>(ctx)) {
-				auto values = mz::GetPinValues(nodeArgs);
+				auto values = nos::GetPinValues(nodeArgs);
 
-				playerNode->p_mzWebRTC->SendOffer(*mz::GetPinValue<int>(values, MZN_StreamerID));
+				playerNode->p_nosWebRTC->SendOffer(*nos::GetPinValue<int>(values, NSN_StreamerID));
 			}
 
 			};
 
-		return MZ_RESULT_SUCCESS;
+		return NOS_RESULT_SUCCESS;
 	}
 
 	void HandleWebRTCCallbacks() {
@@ -491,22 +491,22 @@ struct WebRTCPlayerNodeContext : mz::NodeContext {
 				}
 				case EWebRTCPlayerStates::eREQUESTED_TO_CONNECT_SERVER:
 				{
-					p_mzWebRTC->StartConnection(server);
+					p_nosWebRTC->StartConnection(server);
 					currentState = EWebRTCPlayerStates::eNONE;
 					break;
 				}
 				case EWebRTCPlayerStates::eCONNECTED_TO_SERVER:
 				{
-					mzEngine.LogI("WebRTC Player connected to server");
+					nosEngine.LogI("WebRTC Player connected to server");
 
 					flatbuffers::FlatBufferBuilder fbb;
 					HandleEvent(
-						mz::CreateAppEvent(fbb, mz::CreatePartialNodeUpdateDirect(fbb, &ConnectToServerID, 
-							mz::ClearFlags::NONE, 0, 0, 0, 0, 0, 0, 0, 0, 0, mz::fb::CreateOrphanStateDirect(fbb, true))));
+						nos::CreateAppEvent(fbb, nos::CreatePartialNodeUpdateDirect(fbb, &ConnectToServerID, 
+							nos::ClearFlags::NONE, 0, 0, 0, 0, 0, 0, 0, 0, 0, nos::fb::CreateOrphanStateDirect(fbb, true))));
 
 					HandleEvent(
-						mz::CreateAppEvent(fbb, mz::CreatePartialNodeUpdateDirect(fbb, &DisconnectFromServerID,
-							mz::ClearFlags::NONE, 0, 0, 0, 0, 0, 0, 0, 0, 0, mz::fb::CreateOrphanStateDirect(fbb, false))));
+						nos::CreateAppEvent(fbb, nos::CreatePartialNodeUpdateDirect(fbb, &DisconnectFromServerID,
+							nos::ClearFlags::NONE, 0, 0, 0, 0, 0, 0, 0, 0, 0, nos::fb::CreateOrphanStateDirect(fbb, false))));
 
 					currentState = EWebRTCPlayerStates::eNONE;
 					break;
@@ -519,22 +519,22 @@ struct WebRTCPlayerNodeContext : mz::NodeContext {
 					}
 					flatbuffers::FlatBufferBuilder fbb;
 					HandleEvent(
-						mz::CreateAppEvent(fbb, mz::CreatePartialNodeUpdateDirect(fbb, &ConnectToPeerID,
-							mz::ClearFlags::NONE, 0, 0, 0, 0, 0, 0, 0, 0, 0, mz::fb::CreateOrphanStateDirect(fbb, true))));
+						nos::CreateAppEvent(fbb, nos::CreatePartialNodeUpdateDirect(fbb, &ConnectToPeerID,
+							nos::ClearFlags::NONE, 0, 0, 0, 0, 0, 0, 0, 0, 0, nos::fb::CreateOrphanStateDirect(fbb, true))));
 					currentState = EWebRTCPlayerStates::eNONE;
 					break;
 				}
 				case EWebRTCPlayerStates::eDISCONNECTED_FROM_SERVER:
 				{
-					mzEngine.LogI("WebRTC Player disconnected from server");
+					nosEngine.LogI("WebRTC Player disconnected from server");
 
 					flatbuffers::FlatBufferBuilder fbb;
 					HandleEvent(
-						mz::CreateAppEvent(fbb, mz::CreatePartialNodeUpdateDirect(fbb, &ConnectToServerID, mz::ClearFlags::NONE, 0, 0, 0, 0, 0, 0, 0, 0, 0, mz::fb::CreateOrphanStateDirect(fbb, false))));
+						nos::CreateAppEvent(fbb, nos::CreatePartialNodeUpdateDirect(fbb, &ConnectToServerID, nos::ClearFlags::NONE, 0, 0, 0, 0, 0, 0, 0, 0, 0, nos::fb::CreateOrphanStateDirect(fbb, false))));
 					
 					HandleEvent(
-						mz::CreateAppEvent(fbb, mz::CreatePartialNodeUpdateDirect(fbb, &DisconnectFromServerID,
-							mz::ClearFlags::NONE, 0, 0, 0, 0, 0, 0, 0, 0, 0, mz::fb::CreateOrphanStateDirect(fbb, true))));
+						nos::CreateAppEvent(fbb, nos::CreatePartialNodeUpdateDirect(fbb, &DisconnectFromServerID,
+							nos::ClearFlags::NONE, 0, 0, 0, 0, 0, 0, 0, 0, 0, nos::fb::CreateOrphanStateDirect(fbb, true))));
 					
 					ClearNodeInternals();
 					
@@ -546,8 +546,8 @@ struct WebRTCPlayerNodeContext : mz::NodeContext {
 					//shouldSendFrame = false;
 					flatbuffers::FlatBufferBuilder fbb;
 					HandleEvent(
-						mz::CreateAppEvent(fbb, mz::CreatePartialNodeUpdateDirect(fbb, &ConnectToPeerID,
-							mz::ClearFlags::NONE, 0, 0, 0, 0, 0, 0, 0, 0, 0, mz::fb::CreateOrphanStateDirect(fbb, false))));
+						nos::CreateAppEvent(fbb, nos::CreatePartialNodeUpdateDirect(fbb, &ConnectToPeerID,
+							nos::ClearFlags::NONE, 0, 0, 0, 0, 0, 0, 0, 0, 0, nos::fb::CreateOrphanStateDirect(fbb, false))));
 
 					currentState = EWebRTCPlayerStates::eNONE;
 					break;
@@ -557,35 +557,35 @@ struct WebRTCPlayerNodeContext : mz::NodeContext {
 		}
 	}
 
-	static mzResult GetShaders(size_t* outCount, mzShaderInfo* outShaders) {
+	static nosResult GetShaders(size_t* outCount, nosShaderInfo* outShaders) {
 		*outCount = 1;
 		if (!outShaders)
-			return MZ_RESULT_SUCCESS;
+			return NOS_RESULT_SUCCESS;
 
 		*outShaders++ = {
 		.Key = YUV420toRGBShader.first,
 		.Source = {.SpirvBlob = { YUV420toRGBShader.second.data(), YUV420toRGBShader.second.size() }},
 		};
-		return MZ_RESULT_SUCCESS;
+		return NOS_RESULT_SUCCESS;
 
 	}
 
-	static mzResult GetPasses(size_t* count, mzPassInfo* passes) {
+	static nosResult GetPasses(size_t* count, nosPassInfo* passes) {
 
 		*count = 1;
 
 		if (!passes)
-			return MZ_RESULT_SUCCESS;
+			return NOS_RESULT_SUCCESS;
 		*passes++ = {
-			.Key = MZN_YUV420toRGB_Compute_Pass, .Shader = MZN_YUV420toRGB_Compute_Shader, .MultiSample = 1
+			.Key = NSN_YUV420toRGB_Compute_Pass, .Shader = NSN_YUV420toRGB_Compute_Shader, .MultiSample = 1
 		};
 
-		return MZ_RESULT_SUCCESS;
+		return NOS_RESULT_SUCCESS;
 	};
 };
 
-void RegisterWebRTCPlayer(mzNodeFunctions* outFunctions) {
-	MZ_BIND_NODE_CLASS(MZN_WebRTCPlayer, WebRTCPlayerNodeContext, outFunctions);
+void RegisterWebRTCPlayer(nosNodeFunctions* outFunctions) {
+	NOS_BIND_NODE_CLASS(NSN_WebRTCPlayer, WebRTCPlayerNodeContext, outFunctions);
 
-	YUV420toRGBShader = { MZN_YUV420toRGB_Compute_Shader, {std::begin(YUV420toRGB_comp_spv), std::end(YUV420toRGB_comp_spv)} };
+	YUV420toRGBShader = { NSN_YUV420toRGB_Compute_Shader, {std::begin(YUV420toRGB_comp_spv), std::end(YUV420toRGB_comp_spv)} };
 }

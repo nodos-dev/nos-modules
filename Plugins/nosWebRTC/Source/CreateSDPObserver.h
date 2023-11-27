@@ -2,9 +2,9 @@
 #include "api/peer_connection_interface.h"
 #include "api/scoped_refptr.h"
 
-class mzCreateSDPObserver : public webrtc::CreateSessionDescriptionObserver {
+class nosCreateSDPObserver : public webrtc::CreateSessionDescriptionObserver {
 public:
-	mzCreateSDPObserver(int id);
+	nosCreateSDPObserver(int id);
 	void SetSuccessCallback(std::function<void(webrtc::SessionDescriptionInterface*, int)> callback);
 	void SetFailureCallback(std::function<void(webrtc::RTCError, int)> callback);
 

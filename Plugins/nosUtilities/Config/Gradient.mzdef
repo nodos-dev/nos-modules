@@ -10,7 +10,7 @@
             "pins": [
                 {
                     "name": "OddColor",
-                    "type_name": "mz.fb.vec4",
+                    "type_name": "nos.fb.vec4",
                     "show_as": "INPUT_PIN",
                     "can_show_as": "INPUT_PIN_OR_PROPERTY",
                     "visualizer": {
@@ -26,7 +26,7 @@
                 },
                 {
                     "name": "EvenColor",
-                    "type_name": "mz.fb.vec4",
+                    "type_name": "nos.fb.vec4",
                     "show_as": "INPUT_PIN",
                     "can_show_as": "INPUT_PIN_OR_PROPERTY",
                     "visualizer": {
@@ -42,14 +42,14 @@
                 },
                 {
                     "name": "Kind",
-                    "type_name": "mz.fb.GradientKind",
+                    "type_name": "nos.fb.GradientKind",
                     "show_as": "PROPERTY",
                     "can_show_as": "INPUT_PIN_OR_PROPERTY",
                     "description": "Sets the output images gradient type"
                 },
                 {
                     "name": "Output",
-                    "type_name": "mz.fb.Texture",
+                    "type_name": "nos.fb.Texture",
                     "show_as": "OUTPUT_PIN",
                     "can_show_as": "OUTPUT_PIN_OR_PROPERTY"
                 }

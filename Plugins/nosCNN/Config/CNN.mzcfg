@@ -1,7 +1,7 @@
 {
     "info": {
         "id": {
-            "name": "mz.ML.CNN",
+            "name": "nos.ML.CNN",
             "version": "0.1.0"
         },
         "description": "CNN model runner",

@@ -1,16 +1,16 @@
 #pragma once
 #include "api/video/i420_buffer.h"
 #include "api/video/video_frame.h"
-class mzI420Buffer : public webrtc::I420BufferInterface
+class nosI420Buffer : public webrtc::I420BufferInterface
 {
 public:
-	mzI420Buffer(unsigned int width, unsigned int height)
+	nosI420Buffer(unsigned int width, unsigned int height)
 	:m_width(width), m_height(height) {
 		m_strideY = width;
 		m_strideU = (width + 1) / 2;
 		m_strideV = (width + 1) / 2;
 	}
-	virtual ~mzI420Buffer() = default;
+	virtual ~nosI420Buffer() = default;
 	virtual int width() const override { return m_width; }
 	virtual int height() const override { return m_height; }
 	

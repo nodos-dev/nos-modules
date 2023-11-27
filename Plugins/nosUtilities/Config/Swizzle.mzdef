@@ -10,7 +10,7 @@
             "pins": [
                 {
                     "name": "RedSource",
-                    "type_name": "mz.fb.Source",
+                    "type_name": "nos.fb.Source",
                     "show_as": "PROPERTY",
                     "can_show_as" : "PROPERTY_ONLY",
                     "pin_category" : "RED",
@@ -18,7 +18,7 @@
                 },
                 {
                     "name": "RedChannel",
-                    "type_name": "mz.fb.Channel",
+                    "type_name": "nos.fb.Channel",
                     "show_as": "PROPERTY",
                     "can_show_as" : "PROPERTY_ONLY",
                     "pin_category" : "RED",
@@ -46,7 +46,7 @@
 
                 {
                     "name": "GreenSource",
-                    "type_name": "mz.fb.Source",
+                    "type_name": "nos.fb.Source",
                     "show_as": "PROPERTY",
                     "can_show_as" : "PROPERTY_ONLY",
                     "pin_category" : "GREEN",
@@ -54,7 +54,7 @@
                 },
                 {
                     "name": "GreenChannel",
-                    "type_name": "mz.fb.Channel",
+                    "type_name": "nos.fb.Channel",
                     "show_as": "PROPERTY",
                     "can_show_as" : "PROPERTY_ONLY",
                     "pin_category" : "GREEN",
@@ -82,7 +82,7 @@
 
                 {
                     "name": "BlueSource",
-                    "type_name": "mz.fb.Source",
+                    "type_name": "nos.fb.Source",
                     "show_as": "PROPERTY",
                     "can_show_as" : "PROPERTY_ONLY",
                     "pin_category" : "BLUE",
@@ -90,7 +90,7 @@
                 },
                 {
                     "name": "BlueChannel",
-                    "type_name": "mz.fb.Channel",
+                    "type_name": "nos.fb.Channel",
                     "show_as": "PROPERTY",
                     "can_show_as" : "PROPERTY_ONLY",
                     "pin_category" : "BLUE",
@@ -118,7 +118,7 @@
                 
                 {
                     "name": "AlphaSource",
-                    "type_name": "mz.fb.Source",
+                    "type_name": "nos.fb.Source",
                     "show_as": "PROPERTY",
                     "can_show_as" : "PROPERTY_ONLY",
                     "pin_category" : "ALPHA",
@@ -126,7 +126,7 @@
                 },
                 {
                     "name": "AlphaChannel",
-                    "type_name": "mz.fb.Channel",
+                    "type_name": "nos.fb.Channel",
                     "show_as": "PROPERTY",
                     "can_show_as" : "PROPERTY_ONLY",
                     "pin_category" : "ALPHA",
@@ -153,26 +153,26 @@
 
                 {
                     "name": "Input1",
-                    "type_name": "mz.fb.Texture",
+                    "type_name": "nos.fb.Texture",
                     "show_as": "INPUT_PIN",
                     "can_show_as" : "INPUT_PIN_OR_PROPERTY"
                 },
                 {
                     "name": "Input2",
-                    "type_name": "mz.fb.Texture",
+                    "type_name": "nos.fb.Texture",
                     "show_as": "INPUT_PIN",
                     "can_show_as" : "INPUT_PIN_OR_PROPERTY"
                 },
                 {
                     "name": "Input3",
-                    "type_name": "mz.fb.Texture",
+                    "type_name": "nos.fb.Texture",
                     "show_as": "INPUT_PIN",
                     "can_show_as" : "INPUT_PIN_OR_PROPERTY"
                 },
 
                 {
                     "name": "Input4",
-                    "type_name": "mz.fb.Texture",
+                    "type_name": "nos.fb.Texture",
                     "show_as": "INPUT_PIN",
                     "can_show_as" : "INPUT_PIN_OR_PROPERTY"
                 },
@@ -180,7 +180,7 @@
 
                 {
                     "name": "Output",
-                    "type_name": "mz.fb.Texture",
+                    "type_name": "nos.fb.Texture",
                     "show_as": "OUTPUT_PIN",
                     "can_show_as" : "OUTPUT_PIN_ONLY"
                 }

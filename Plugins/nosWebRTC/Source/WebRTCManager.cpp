@@ -31,36 +31,36 @@
 #include <rtc_base/strings/json.h>
 #include <test/vcm_capturer.h>
 #include <nlohmann/json.hpp>
-#include "mzWebRTCManager.h"
-#include "mzCustomVideoSource.h"
-#include "mzWebRTCJsonConfig.h"
-#include "mzVideoEncoderFactory.h"
+#include "WebRTCManager.h"
+#include "CustomVideoSource.h"
+#include "WebRTCJsonConfig.h"
+#include "VideoEncoderFactory.h"
 
 using json = nlohmann::json;
 
-mzWebRTCManager::mzWebRTCManager(mzWebRTCClient* client) :p_mzWebRTCClient(client)
+nosWebRTCManager::nosWebRTCManager(nosWebRTCClient* client) :p_nosWebRTCClient(client)
 {
     //TODO: switch to factory pattern in future for checking 
     //if this is succesful or not:
     if (!p_PeerConnectionFactory) {
         if (!SignalingThread) {
             SignalingThread = rtc::Thread::Create();
-            SignalingThread->SetName("mzWebRTCSignalingThread",nullptr);
+            SignalingThread->SetName("nosWebRTCSignalingThread",nullptr);
             SignalingThread->Start();
         }
         if (!WorkerThread) {
             WorkerThread = rtc::Thread::Create();
-            WorkerThread->SetName("mzWebRTCWorkerThread", nullptr);
+            WorkerThread->SetName("nosWebRTCWorkerThread", nullptr);
             WorkerThread->Start();
         }
-        p_encodeObserver = std::make_unique<mzEncodeImageObserver>([this]() {this->OnImageEncoded(); });
+        p_encodeObserver = std::make_unique<nosEncodeImageObserver>([this]() {this->OnImageEncoded(); });
         auto  a =webrtc::CreateBuiltinVideoEncoderFactory();
         p_PeerConnectionFactory = webrtc::CreatePeerConnectionFactory(
             nullptr /* network_thread */, WorkerThread.get() /* worker_thread */,
             SignalingThread.get() /* signaling_thread */, nullptr /* default_adm */,
             webrtc::CreateBuiltinAudioEncoderFactory(),
             webrtc::CreateBuiltinAudioDecoderFactory(),
-            std::make_unique<mzVideoEncoderFactory>(p_encodeObserver.get()),
+            std::make_unique<nosVideoEncoderFactory>(p_encodeObserver.get()),
             webrtc::CreateBuiltinVideoDecoderFactory(), nullptr /* audio_mixer */,
             nullptr /* audio_processing */);
     }
@@ -69,12 +69,12 @@ mzWebRTCManager::mzWebRTCManager(mzWebRTCClient* client) :p_mzWebRTCClient(clien
     RegisterToWebRTCClientCallbacks();
 }
 
-mzWebRTCManager::~mzWebRTCManager()
+nosWebRTCManager::~nosWebRTCManager()
 {
     Dispose();
 }
 
-bool mzWebRTCManager::MainLoop(int cms)
+bool nosWebRTCManager::MainLoop(int cms)
 {
     /*if (SignalingThread) {
         SignalingThread->ProcessMessages(cms);
@@ -86,7 +86,7 @@ bool mzWebRTCManager::MainLoop(int cms)
 }
 
 
-bool mzWebRTCManager::AddPeerConnection() {
+bool nosWebRTCManager::AddPeerConnection() {
     
     webrtc::PeerConnectionInterface::RTCConfiguration config;
     config.sdp_semantics = webrtc::SdpSemantics::kUnifiedPlan;
@@ -97,7 +97,7 @@ bool mzWebRTCManager::AddPeerConnection() {
 
     int lastIdx = p_PeerConnections.size();
 
-    p_PeerConnectionObservers.push_back(std::make_shared<mzPeerConnectionObserver>(lastIdx));
+    p_PeerConnectionObservers.push_back(std::make_shared<nosPeerConnectionObserver>(lastIdx));
     RegisterToPeerConnectionObserverCallbacks(p_PeerConnectionObservers[lastIdx].get());
 
     p_PeerConnections.push_back(
@@ -108,14 +108,14 @@ bool mzWebRTCManager::AddPeerConnection() {
     
     //Add video tracks
     for (auto track : p_VideoTracks) {
-        auto err = p_PeerConnections[lastIdx]->AddTrack(track, {"mediaZStreamID"} );
+        auto err = p_PeerConnections[lastIdx]->AddTrack(track, {"NodosStreamID"} );
         //TODO: handle errors?
     }
 
     return true;
 }
 
-void mzWebRTCManager::RemovePeerConnection(int id)
+void nosWebRTCManager::RemovePeerConnection(int id)
 {
     if (p_PeerConnections.empty() || !PeerConnectionIdx_PeerID.contains(id))
         return;
@@ -138,7 +138,7 @@ void mzWebRTCManager::RemovePeerConnection(int id)
     p_SetSDPObservers.erase(p_SetSDPObservers.begin() + id);
 }
 
-void mzWebRTCManager::Dispose()
+void nosWebRTCManager::Dispose()
 {
     if (IsDisposed)
         return;
@@ -176,18 +176,18 @@ void mzWebRTCManager::Dispose()
     WorkerThread->Stop();
 
     p_encodeObserver.reset();
-    p_mzWebRTCClient = nullptr;
+    p_nosWebRTCClient = nullptr;
     PeerConnectionIdx_PeerID.clear();
 
     IsDisposed = true;
 }
 
-void mzWebRTCManager::OnImageEncoded()
+void nosWebRTCManager::OnImageEncoded()
 {
     ImageEncodeCompletedCallback();
 }
 
-void mzWebRTCManager::SendOffer(int id)
+void nosWebRTCManager::SendOffer(int id)
 {
     if (AddPeerConnection()) {
         int internalID = p_PeerConnections.size() - 1;
@@ -196,10 +196,10 @@ void mzWebRTCManager::SendOffer(int id)
         PeerConnectionIdx_PeerID.insert({ internalID, id });
 
         //TODO: may be make a function for this purpose:
-        p_SetSDPObservers.push_back(new mzSetSDPObserver(internalID));
+        p_SetSDPObservers.push_back(new nosSetSDPObserver(internalID));
         RegisterToSetSDPObserverCallbacks(p_SetSDPObservers[internalID].get());
 
-        p_CreateSDPObservers.push_back(new mzCreateSDPObserver(internalID));
+        p_CreateSDPObservers.push_back(new nosCreateSDPObserver(internalID));
         RegisterToCreateSDPObserverCallbacks(p_CreateSDPObservers[internalID].get());
         webrtc::PeerConnectionInterface::RTCOfferAnswerOptions offerOptions;
         offerOptions.offer_to_receive_video = 1;
@@ -209,7 +209,7 @@ void mzWebRTCManager::SendOffer(int id)
     }
 }
 
-void mzWebRTCManager::UpdateBitrates(int bitrateKBPS)
+void nosWebRTCManager::UpdateBitrates(int bitrateKBPS)
 {
     targetKbps = bitrateKBPS;
 
@@ -226,7 +226,7 @@ void mzWebRTCManager::UpdateBitrates(int bitrateKBPS)
     }
 }
 
-void mzWebRTCManager::AddVideoSource(rtc::scoped_refptr<mzCustomVideoSource> source)
+void nosWebRTCManager::AddVideoSource(rtc::scoped_refptr<nosCustomVideoSource> source)
 {
     if (!p_PeerConnectionFactory)
         return;
@@ -235,42 +235,42 @@ void mzWebRTCManager::AddVideoSource(rtc::scoped_refptr<mzCustomVideoSource> sou
 
 }
 
-void mzWebRTCManager::AddVideoSink(rtc::scoped_refptr<mzCustomVideoSink> sink)
+void nosWebRTCManager::AddVideoSink(rtc::scoped_refptr<nosCustomVideoSink> sink)
 {
     p_VideoSinks.push_back(sink);
 }
 
-void mzWebRTCManager::SetImageEncodeCompletedCallback(std::function<void()> callback)
+void nosWebRTCManager::SetImageEncodeCompletedCallback(std::function<void()> callback)
 {
     ImageEncodeCompletedCallback = callback;
 }
 
-void mzWebRTCManager::SetPeerConnectedCallback(std::function<void()> callback)
+void nosWebRTCManager::SetPeerConnectedCallback(std::function<void()> callback)
 {
     PeerConnectedCallback = callback;
 }
 
-void mzWebRTCManager::SetPeerDisconnectedCallback(std::function<void()> callback)
+void nosWebRTCManager::SetPeerDisconnectedCallback(std::function<void()> callback)
 {
     PeerDisconnectedCallback = callback;
 }
 
-void mzWebRTCManager::SetServerConnectionSuccesfulCallback(std::function<void()> callback)
+void nosWebRTCManager::SetServerConnectionSuccesfulCallback(std::function<void()> callback)
 {
     ServerConnectionSuccesfulCallback = callback;
 }
 
-void mzWebRTCManager::SetServerConnectionFailedCallback(std::function<void()> callback)
+void nosWebRTCManager::SetServerConnectionFailedCallback(std::function<void()> callback)
 {
     ServerConnectionFailedCallback = callback;
 }
 
-void mzWebRTCManager::AddRef() const
+void nosWebRTCManager::AddRef() const
 {
     ref_count_.IncRef();
 }
 
-rtc::RefCountReleaseStatus mzWebRTCManager::Release() const
+rtc::RefCountReleaseStatus nosWebRTCManager::Release() const
 {
     const auto status = ref_count_.DecRef();
     if (status == rtc::RefCountReleaseStatus::kDroppedLastRef) {
@@ -280,13 +280,13 @@ rtc::RefCountReleaseStatus mzWebRTCManager::Release() const
 }
 
 #pragma region CreateSDPObserver Implementation
-void mzWebRTCManager::RegisterToCreateSDPObserverCallbacks(mzCreateSDPObserver* observer)
+void nosWebRTCManager::RegisterToCreateSDPObserverCallbacks(nosCreateSDPObserver* observer)
 {
     observer->SetSuccessCallback([this](auto desc, int id) {this->OnSDPCreateSuccess(desc, id); });
     observer->SetFailureCallback([this](auto error, int id) {this->OnSDPCreateFailure(error, id); });
 }
 
-void mzWebRTCManager::OnSDPCreateSuccess(webrtc::SessionDescriptionInterface* desc, int id)
+void nosWebRTCManager::OnSDPCreateSuccess(webrtc::SessionDescriptionInterface* desc, int id)
 {
     [[unlikely]]
     if (p_PeerConnections.empty())
@@ -307,11 +307,11 @@ void mzWebRTCManager::OnSDPCreateSuccess(webrtc::SessionDescriptionInterface* de
         SDP.replace(bwdth, 7, newbw);
     }
 
-    jsonSDP[mzWebRTCJsonConfig::typeKey] = webrtc::SdpTypeToString(desc->GetType());
-    jsonSDP[mzWebRTCJsonConfig::sdpKey] = SDP;
-    jsonSDP[mzWebRTCJsonConfig::peerIDKey] = std::to_string(PeerConnectionIdx_PeerID[id]);
+    jsonSDP[nosWebRTCJsonConfig::typeKey] = webrtc::SdpTypeToString(desc->GetType());
+    jsonSDP[nosWebRTCJsonConfig::sdpKey] = SDP;
+    jsonSDP[nosWebRTCJsonConfig::peerIDKey] = std::to_string(PeerConnectionIdx_PeerID[id]);
     
-    p_mzWebRTCClient->SendMessageToServer(jsonSDP.dump());
+    p_nosWebRTCClient->SendMessageToServer(jsonSDP.dump());
 
 
     if (p_PeerConnections[id]->GetSenders().size() > 0) {
@@ -326,30 +326,30 @@ void mzWebRTCManager::OnSDPCreateSuccess(webrtc::SessionDescriptionInterface* de
 
 }
 
-void mzWebRTCManager::OnSDPCreateFailure(webrtc::RTCError error, int id)
+void nosWebRTCManager::OnSDPCreateFailure(webrtc::RTCError error, int id)
 {
     RTC_LOG(LS_ERROR) << ToString(error.type()) << ": " << error.message();
 }
 #pragma endregion
 
-void mzWebRTCManager::RegisterToSetSDPObserverCallbacks(mzSetSDPObserver* observer)
+void nosWebRTCManager::RegisterToSetSDPObserverCallbacks(nosSetSDPObserver* observer)
 {
     observer->SetSuccessCallback([this](int id) {OnSDPSetSuccess(id); });
     observer->SetFailureCallback([this](auto error,int id) {OnSDPSetFailure(error, id); });
 }
 
 #pragma region SetSDP Callbacks
-void mzWebRTCManager::OnSDPSetSuccess(int id)
+void nosWebRTCManager::OnSDPSetSuccess(int id)
 {
     // no problem
 }
 
-void mzWebRTCManager::OnSDPSetFailure(webrtc::RTCError error, int id)
+void nosWebRTCManager::OnSDPSetFailure(webrtc::RTCError error, int id)
 {
     //TODO: should handle some stuff for SDPSetFailure
 }
 
-bool mzWebRTCManager::ReadInternalIDFromPeerID(int& internalID, int peerID)
+bool nosWebRTCManager::ReadInternalIDFromPeerID(int& internalID, int peerID)
 {
     for (auto [_internalID, _peerID] : PeerConnectionIdx_PeerID) {
         if (_peerID == peerID) {
@@ -362,22 +362,22 @@ bool mzWebRTCManager::ReadInternalIDFromPeerID(int& internalID, int peerID)
 #pragma endregion
 
 
-#pragma region mzWebRTCClient Implementation
-void mzWebRTCManager::RegisterToWebRTCClientCallbacks()
+#pragma region nosWebRTCClient Implementation
+void nosWebRTCManager::RegisterToWebRTCClientCallbacks()
 {
-    if (!p_mzWebRTCClient)
+    if (!p_nosWebRTCClient)
         return;
 
-    p_mzWebRTCClient->SetConnectionSuccesfulCallback([this]() {this->OnServerConnectionSuccesful(); });
-    p_mzWebRTCClient->SetConnectionErrorCallback([this]() {this->OnServerConnectionError(); });
-    p_mzWebRTCClient->SetConnectionClosedCallback([this]() {this->OnServerConnectionClosed(); });
-    p_mzWebRTCClient->SetRawMessageReceivedCallback([this](void* data, size_t length) {this->OnRawMessageReceived(data, length); });
-    p_mzWebRTCClient->SetSDPOfferReceivedCallback([this](std::string&& message) {this->OnSDPOfferReceived(std::move(message)); });
-    p_mzWebRTCClient->SetSDPAnswerReceivedCallback([this](std::string&& message) {this->OnSDPAnswerReceived(std::move(message)); });
-    p_mzWebRTCClient->SetICECandidateReceivedCallback([this](std::string&& message) {this->OnICECandidateReceived(std::move(message)); });
+    p_nosWebRTCClient->SetConnectionSuccesfulCallback([this]() {this->OnServerConnectionSuccesful(); });
+    p_nosWebRTCClient->SetConnectionErrorCallback([this]() {this->OnServerConnectionError(); });
+    p_nosWebRTCClient->SetConnectionClosedCallback([this]() {this->OnServerConnectionClosed(); });
+    p_nosWebRTCClient->SetRawMessageReceivedCallback([this](void* data, size_t length) {this->OnRawMessageReceived(data, length); });
+    p_nosWebRTCClient->SetSDPOfferReceivedCallback([this](std::string&& message) {this->OnSDPOfferReceived(std::move(message)); });
+    p_nosWebRTCClient->SetSDPAnswerReceivedCallback([this](std::string&& message) {this->OnSDPAnswerReceived(std::move(message)); });
+    p_nosWebRTCClient->SetICECandidateReceivedCallback([this](std::string&& message) {this->OnICECandidateReceived(std::move(message)); });
 }
 
-void mzWebRTCManager::OnServerConnectionSuccesful()
+void nosWebRTCManager::OnServerConnectionSuccesful()
 {
     if (ServerConnectionSuccesfulCallback) {
 
@@ -385,7 +385,7 @@ void mzWebRTCManager::OnServerConnectionSuccesful()
     }
 }
 
-void mzWebRTCManager::OnServerConnectionError()
+void nosWebRTCManager::OnServerConnectionError()
 {
     if (ServerConnectionFailedCallback) {
         Dispose();
@@ -393,7 +393,7 @@ void mzWebRTCManager::OnServerConnectionError()
     }
 }
 
-void mzWebRTCManager::OnServerConnectionClosed()
+void nosWebRTCManager::OnServerConnectionClosed()
 {
     if (ServerConnectionFailedCallback) {
         Dispose();
@@ -401,17 +401,17 @@ void mzWebRTCManager::OnServerConnectionClosed()
     }
 }
 
-void mzWebRTCManager::OnRawMessageReceived(void* data, size_t length)
+void nosWebRTCManager::OnRawMessageReceived(void* data, size_t length)
 {
 }
 
-void mzWebRTCManager::OnSDPOfferReceived(std::string&& offer)
+void nosWebRTCManager::OnSDPOfferReceived(std::string&& offer)
 {
     //
     if (AddPeerConnection()) {
         json jsonOffer = json::parse(offer);
         {
-            std::string peerIDstr = jsonOffer[mzWebRTCJsonConfig::peerIDKey];
+            std::string peerIDstr = jsonOffer[nosWebRTCJsonConfig::peerIDKey];
             int peerID = std::stoi(peerIDstr);
             int internalID = p_PeerConnections.size() - 1;
             
@@ -421,7 +421,7 @@ void mzWebRTCManager::OnSDPOfferReceived(std::string&& offer)
             webrtc::SdpParseError error;
             
             std::unique_ptr<webrtc::SessionDescriptionInterface> webRTCSessionDescription =
-                webrtc::CreateSessionDescription(webrtc::SdpType::kOffer, jsonOffer[mzWebRTCJsonConfig::sdpKey].get<std::string>(), &error);
+                webrtc::CreateSessionDescription(webrtc::SdpType::kOffer, jsonOffer[nosWebRTCJsonConfig::sdpKey].get<std::string>(), &error);
 
             if (!webRTCSessionDescription) {
                 //abort the mission. Clear the recently created objects in AddPeerConnection and remove them from map.
@@ -435,13 +435,13 @@ void mzWebRTCManager::OnSDPOfferReceived(std::string&& offer)
             }
 
             //TODO: may be make a function for this purpose:
-            p_SetSDPObservers.push_back(new mzSetSDPObserver(internalID));
+            p_SetSDPObservers.push_back(new nosSetSDPObserver(internalID));
             RegisterToSetSDPObserverCallbacks(p_SetSDPObservers[internalID].get());
 
             p_PeerConnections[internalID]->SetRemoteDescription(
                 p_SetSDPObservers[internalID].get(), webRTCSessionDescription.release());
 
-            p_CreateSDPObservers.push_back(new mzCreateSDPObserver(internalID));
+            p_CreateSDPObservers.push_back(new nosCreateSDPObserver(internalID));
             RegisterToCreateSDPObserverCallbacks(p_CreateSDPObservers[internalID].get());
 
             p_PeerConnections[internalID]->CreateAnswer(
@@ -451,12 +451,12 @@ void mzWebRTCManager::OnSDPOfferReceived(std::string&& offer)
     }
 }
 
-void mzWebRTCManager::OnSDPAnswerReceived(std::string&& answer)
+void nosWebRTCManager::OnSDPAnswerReceived(std::string&& answer)
 {
     //Get the peerID from the answer and use the corresponding PeerConnection for the rest
     json jsonAnswer = json::parse(answer);
     {
-        std::string peerIDstr = jsonAnswer[mzWebRTCJsonConfig::peerIDKey];
+        std::string peerIDstr = jsonAnswer[nosWebRTCJsonConfig::peerIDKey];
         int peerID = std::stoi(peerIDstr);
         int internalID = -1;
         if(!ReadInternalIDFromPeerID(internalID, peerID)){
@@ -469,7 +469,7 @@ void mzWebRTCManager::OnSDPAnswerReceived(std::string&& answer)
         webrtc::SdpParseError error;
 
         std::unique_ptr<webrtc::SessionDescriptionInterface> webRTCSessionDescription =
-            webrtc::CreateSessionDescription(webrtc::SdpType::kAnswer, jsonAnswer[mzWebRTCJsonConfig::sdpKey].get<std::string>(), &error);
+            webrtc::CreateSessionDescription(webrtc::SdpType::kAnswer, jsonAnswer[nosWebRTCJsonConfig::sdpKey].get<std::string>(), &error);
 
         if (!webRTCSessionDescription) {
             //Abort the mission, clear corresponding items
@@ -490,18 +490,18 @@ void mzWebRTCManager::OnSDPAnswerReceived(std::string&& answer)
     }
 }
 
-void mzWebRTCManager::OnICECandidateReceived(std::string&& iceCandidate)
+void nosWebRTCManager::OnICECandidateReceived(std::string&& iceCandidate)
 {
     json jsonICE = json::parse(iceCandidate);
-    int peerID = std::stoi(jsonICE[mzWebRTCJsonConfig::peerIDKey].get<std::string>());
+    int peerID = std::stoi(jsonICE[nosWebRTCJsonConfig::peerIDKey].get<std::string>());
     int internalID;
     if (!ReadInternalIDFromPeerID(internalID, peerID)) {
         std::cerr << "No corresponding peer connection found for the ICE candidate from peer: " << peerID;
         return;
     }
-    int sdpMidLineIdx = jsonICE[mzWebRTCJsonConfig::candidateKey][mzWebRTCJsonConfig::sdpMidLineIndexKey].get<int>();
-    std::string sdpMid = jsonICE[mzWebRTCJsonConfig::candidateKey][mzWebRTCJsonConfig::sdpMidKey].get<std::string>();
-    std::string candidateStr = jsonICE[mzWebRTCJsonConfig::candidateKey][mzWebRTCJsonConfig::candidateKey].get<std::string>();
+    int sdpMidLineIdx = jsonICE[nosWebRTCJsonConfig::candidateKey][nosWebRTCJsonConfig::sdpMidLineIndexKey].get<int>();
+    std::string sdpMid = jsonICE[nosWebRTCJsonConfig::candidateKey][nosWebRTCJsonConfig::sdpMidKey].get<std::string>();
+    std::string candidateStr = jsonICE[nosWebRTCJsonConfig::candidateKey][nosWebRTCJsonConfig::candidateKey].get<std::string>();
     webrtc::SdpParseError error;
 
     std::unique_ptr<webrtc::IceCandidateInterface> candidate(webrtc::CreateIceCandidate(sdpMid, sdpMidLineIdx, candidateStr, &error));
@@ -515,7 +515,7 @@ void mzWebRTCManager::OnICECandidateReceived(std::string&& iceCandidate)
 #pragma endregion
 
 #pragma region PeerConnectionObserver Implementation
-void mzWebRTCManager::RegisterToPeerConnectionObserverCallbacks(mzPeerConnectionObserver* observer)
+void nosWebRTCManager::RegisterToPeerConnectionObserverCallbacks(nosPeerConnectionObserver* observer)
 {
     observer->SetSignalingChangeCallback(
         [this](auto new_state, int id) {this->OnSignalingChange(new_state, id); });
@@ -536,11 +536,11 @@ void mzWebRTCManager::RegisterToPeerConnectionObserverCallbacks(mzPeerConnection
 
 }
 
-void mzWebRTCManager::OnSignalingChange(webrtc::PeerConnectionInterface::SignalingState new_state, int id)
+void nosWebRTCManager::OnSignalingChange(webrtc::PeerConnectionInterface::SignalingState new_state, int id)
 {
 }
 
-void mzWebRTCManager::OnAddTrack(rtc::scoped_refptr<webrtc::RtpReceiverInterface> receiver, const std::vector<rtc::scoped_refptr<webrtc::MediaStreamInterface>>& streams, int id)
+void nosWebRTCManager::OnAddTrack(rtc::scoped_refptr<webrtc::RtpReceiverInterface> receiver, const std::vector<rtc::scoped_refptr<webrtc::MediaStreamInterface>>& streams, int id)
 {
     if (receiver->track()->kind() == webrtc::MediaStreamTrackInterface::kVideoKind) {
         auto track = receiver->track().release();
@@ -555,19 +555,19 @@ void mzWebRTCManager::OnAddTrack(rtc::scoped_refptr<webrtc::RtpReceiverInterface
     }
 }
 
-void mzWebRTCManager::OnRemoveTrack(rtc::scoped_refptr<webrtc::RtpReceiverInterface> receiver, int id)
+void nosWebRTCManager::OnRemoveTrack(rtc::scoped_refptr<webrtc::RtpReceiverInterface> receiver, int id)
 {
 }
 
-void mzWebRTCManager::OnDataChannel(rtc::scoped_refptr<webrtc::DataChannelInterface> channel, int id)
+void nosWebRTCManager::OnDataChannel(rtc::scoped_refptr<webrtc::DataChannelInterface> channel, int id)
 {
 }
 
-void mzWebRTCManager::OnRenegotiationNeeded(int id)
+void nosWebRTCManager::OnRenegotiationNeeded(int id)
 {
 }
 
-void mzWebRTCManager::OnIceConnectionChange(webrtc::PeerConnectionInterface::IceConnectionState new_state, int id)
+void nosWebRTCManager::OnIceConnectionChange(webrtc::PeerConnectionInterface::IceConnectionState new_state, int id)
 {
     if (new_state == webrtc::PeerConnectionInterface::IceConnectionState::kIceConnectionConnected
         && PeerConnectedCallback) {
@@ -587,11 +587,11 @@ void mzWebRTCManager::OnIceConnectionChange(webrtc::PeerConnectionInterface::Ice
     }
 }
 
-void mzWebRTCManager::OnIceGatheringChange(webrtc::PeerConnectionInterface::IceGatheringState new_state, int id)
+void nosWebRTCManager::OnIceGatheringChange(webrtc::PeerConnectionInterface::IceGatheringState new_state, int id)
 {
 }
 
-void mzWebRTCManager::OnIceCandidate(const webrtc::IceCandidateInterface* candidate, int id)
+void nosWebRTCManager::OnIceCandidate(const webrtc::IceCandidateInterface* candidate, int id)
 {
     //This callback indicates that ice candidates for US is ready and we should send it to the server.
     /*
@@ -612,11 +612,11 @@ void mzWebRTCManager::OnIceCandidate(const webrtc::IceCandidateInterface* candid
     candidate->ToString(&ICEcandidate);
     json jsonICE;
     
-    jsonICE[mzWebRTCJsonConfig::peerIDKey] = std::to_string(PeerConnectionIdx_PeerID[id]);
-    jsonICE[mzWebRTCJsonConfig::typeKey] = mzWebRTCJsonConfig::typeICE;
-    jsonICE[mzWebRTCJsonConfig::candidateKey][mzWebRTCJsonConfig::sdpMidKey] = candidate->sdp_mid();
-    jsonICE[mzWebRTCJsonConfig::candidateKey][mzWebRTCJsonConfig::sdpMidLineIndexKey] = candidate->sdp_mline_index();
-    jsonICE[mzWebRTCJsonConfig::candidateKey][mzWebRTCJsonConfig::candidateKey] = ICEcandidate;
-    p_mzWebRTCClient->SendMessageToServer(jsonICE.dump());
+    jsonICE[nosWebRTCJsonConfig::peerIDKey] = std::to_string(PeerConnectionIdx_PeerID[id]);
+    jsonICE[nosWebRTCJsonConfig::typeKey] = nosWebRTCJsonConfig::typeICE;
+    jsonICE[nosWebRTCJsonConfig::candidateKey][nosWebRTCJsonConfig::sdpMidKey] = candidate->sdp_mid();
+    jsonICE[nosWebRTCJsonConfig::candidateKey][nosWebRTCJsonConfig::sdpMidLineIndexKey] = candidate->sdp_mline_index();
+    jsonICE[nosWebRTCJsonConfig::candidateKey][nosWebRTCJsonConfig::candidateKey] = ICEcandidate;
+    p_nosWebRTCClient->SendMessageToServer(jsonICE.dump());
 }
 #pragma endregion

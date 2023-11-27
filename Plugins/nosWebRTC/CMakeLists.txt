@@ -27,13 +27,13 @@ find_library(libcrypto NAMES libcrypto.lib PATHS ${CMAKE_CURRENT_LIST_DIR}/Exter
 link_directories(${CMAKE_CURRENT_LIST_DIR}/External/lib/Release)
 
 ##Ordering of the 4 libraries (webrtc, websockets, libssl, libcrypto) matters!!!
-add_folder_as_plugin_project("mzWebRTC" 
+add_folder_as_plugin_project("nosWebRTC" 
 			"jsoncpp_static.lib;webrtc.lib;websockets_static.lib;libssl.lib;libcrypto.lib;WS2_32.LIB;GDI32.lib;USER32.lib;WinMM.Lib;dmoguids.lib;AdvAPI32.Lib;Secur32.lib;amstrmid.lib;strmiids.lib;Crypt32.Lib;wmcodecdspuuid.lib;iphlpapi.lib;msdmo.lib;"
  "${CMAKE_CURRENT_SOURCE_DIR}")
 
 #Always force MD (because webrtc.lib built in Release => MD )
-target_compile_options(mzWebRTC PRIVATE
+target_compile_options(nosWebRTC PRIVATE
     $<$<CXX_COMPILER_ID:MSVC>:/MD>)
-set_target_properties(mzWebRTC PROPERTIES OUTPUT_NAME "mzWebRTC")
+set_target_properties(nosWebRTC PROPERTIES OUTPUT_NAME "nosWebRTC")
 
 include_directories(${CMAKE_CURRENT_LIST_DIR}/External/include)

@@ -9,7 +9,7 @@
             "pins": [
                 {
                     "name": "Input",
-                    "type_name": "mz.fb.Texture",
+                    "type_name": "nos.fb.Texture",
                     "show_as": "INPUT_PIN",
                     "can_show_as": "INPUT_PIN_ONLY",
                     "data": {
@@ -43,7 +43,7 @@
                 },
                 {
                     "name": "Output",
-                    "type_name": "mz.fb.Texture",
+                    "type_name": "nos.fb.Texture",
                     "show_as": "OUTPUT_PIN",
                     "can_show_as": "OUTPUT_PIN_ONLY"
                 }

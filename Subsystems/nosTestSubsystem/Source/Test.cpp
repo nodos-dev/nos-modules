@@ -1,19 +1,19 @@
-// Copyright MediaZ AS. All Rights Reserved.
-#include <mzTestSubsystem/TestSubsystem.h>
-#include <MediaZ/SubsystemAPI.h>
+// Copyright Nodos AS. All Rights Reserved.
+#include <nosTestSubsystem/TestSubsystem.h>
+#include <Nodos/SubsystemAPI.h>
 
-MZ_INIT();
+NOS_INIT();
 
 extern "C"
 {
 
-MZAPI_ATTR mzResult MZAPI_CALL mzExportSubsystem(void** subsystemContext)
+NOSAPI_ATTR nosResult NOSAPI_CALL nosExportSubsystem(void** subsystemContext)
 {
 	*subsystemContext = new TestSubsystem;
-	return MZ_RESULT_SUCCESS;
+	return NOS_RESULT_SUCCESS;
 }
 
-MZAPI_ATTR bool MZAPI_CALL mzUnloadSubsystem(void* subsystemContext)
+NOSAPI_ATTR bool NOSAPI_CALL nosUnloadSubsystem(void* subsystemContext)
 {
 	delete static_cast<TestSubsystem*>(subsystemContext);
 	return true;

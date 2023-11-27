@@ -1,7 +1,7 @@
 {
     "info": {
         "id": {
-            "name": "mz.test",
+            "name": "nos.test",
             "version": "0.1.0"
         },
         "display_name": "Test",
@@ -11,7 +11,7 @@
     "node_definitions": [
         "Test.mzdef"
     ],
-    "binary_path": "../Binaries/mzTest",
+    "binary_path": "../Binaries/nosTest",
     "associated_nodes": [
         {
             "category": "Test",

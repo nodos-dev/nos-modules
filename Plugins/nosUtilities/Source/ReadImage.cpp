@@ -1,6 +1,6 @@
-// Copyright MediaZ AS. All Rights Reserved.
+// Copyright Nodos AS. All Rights Reserved.
 
-#include <MediaZ/Helpers.hpp>
+#include <Nodos/Helpers.hpp>
 
 // External
 #include <stb_image.h>
@@ -11,108 +11,108 @@
 #include <Builtins_generated.h>
 #include <AppService_generated.h>
 
-// mzNodes
+// nosNodes
 #include "../Shaders/SRGB2Linear.frag.spv.dat"
 
-namespace mz::utilities
+namespace nos::utilities
 {
 
-MZ_REGISTER_NAME(SRGB2Linear_Pass);
-MZ_REGISTER_NAME(SRGB2Linear_Shader);
-MZ_REGISTER_NAME(Path);
-MZ_REGISTER_NAME(Out);
-MZ_REGISTER_NAME_SPACED(Mz_Utilities_ReadImage, "mz.utilities.ReadImage")
+NOS_REGISTER_NAME(SRGB2Linear_Pass);
+NOS_REGISTER_NAME(SRGB2Linear_Shader);
+NOS_REGISTER_NAME(Path);
+NOS_REGISTER_NAME(Out);
+NOS_REGISTER_NAME_SPACED(Nos_Utilities_ReadImage, "nos.utilities.ReadImage")
 
-static mzResult GetShaders(size_t* outCount, mzShaderInfo* outShaders)
+static nosResult GetShaders(size_t* outCount, nosShaderInfo* outShaders)
 {
     *outCount = 1;
     if (!outShaders)
-        return MZ_RESULT_SUCCESS;
+        return NOS_RESULT_SUCCESS;
 
-	outShaders[0] = {.Key=MZN_SRGB2Linear_Shader, .Source = { .SpirvBlob = {(void*)SRGB2Linear_frag_spv, sizeof(SRGB2Linear_frag_spv)}}};
-    return MZ_RESULT_SUCCESS;
+	outShaders[0] = {.Key=NSN_SRGB2Linear_Shader, .Source = { .SpirvBlob = {(void*)SRGB2Linear_frag_spv, sizeof(SRGB2Linear_frag_spv)}}};
+    return NOS_RESULT_SUCCESS;
 }
 
-static mzResult GetPasses(size_t* count, mzPassInfo* passes)
+static nosResult GetPasses(size_t* count, nosPassInfo* passes)
 {
 	*count = 1;
 	if (!passes)
-		return MZ_RESULT_SUCCESS;
+		return NOS_RESULT_SUCCESS;
 
-	*passes = mzPassInfo{
-		.Key = MZN_SRGB2Linear_Pass,
-		.Shader = MZN_SRGB2Linear_Shader,
+	*passes = nosPassInfo{
+		.Key = NSN_SRGB2Linear_Pass,
+		.Shader = NSN_SRGB2Linear_Shader,
 		.Blend = 0,
 		.MultiSample = 1,
 	};
 
-	return MZ_RESULT_SUCCESS;
+	return NOS_RESULT_SUCCESS;
 }
 
-static mzResult GetFunctions(size_t* count, mzName* names, mzPfnNodeFunctionExecute* fns)
+static nosResult GetFunctions(size_t* count, nosName* names, nosPfnNodeFunctionExecute* fns)
 {
     *count = 1;
     if(!names || !fns)
-        return MZ_RESULT_SUCCESS;
+        return NOS_RESULT_SUCCESS;
     
-    *names = MZ_NAME_STATIC("ReadImage_Load");
-    *fns = [](void* ctx, const mzNodeExecuteArgs* nodeArgs, const mzNodeExecuteArgs* functionArgs)
+    *names = NOS_NAME_STATIC("ReadImage_Load");
+    *fns = [](void* ctx, const nosNodeExecuteArgs* nodeArgs, const nosNodeExecuteArgs* functionArgs)
     {
         auto values = GetPinValues(nodeArgs);
 		auto ids = GetPinIds(nodeArgs);
-		std::filesystem::path path = GetPinValue<const char>(values, MZN_Path);
+		std::filesystem::path path = GetPinValue<const char>(values, NSN_Path);
 		try
 		{
 			if (!std::filesystem::exists(path))
 			{
-				mzEngine.LogE("Read Image cannot load file %s", path.string().c_str());
+				nosEngine.LogE("Read Image cannot load file %s", path.string().c_str());
 				return;
 			}
-			mzResourceShareInfo out = DeserializeTextureInfo(GetPinValue<void>(values, MZN_Out));
-			mzResourceShareInfo tmp = out;
+			nosResourceShareInfo out = DeserializeTextureInfo(GetPinValue<void>(values, NSN_Out));
+			nosResourceShareInfo tmp = out;
 			
 			int w, h, n;
 			u8* img = stbi_load(path.string().c_str(), &w, &h, &n, 4);
-			mzEngine.ImageLoad(img, mzVec2u(w,h), MZ_FORMAT_R8G8B8A8_SRGB, &tmp);
+			nosEngine.ImageLoad(img, nosVec2u(w,h), NOS_FORMAT_R8G8B8A8_SRGB, &tmp);
 			free(img);
 
-			mzCmd cmd;
-			mzEngine.Begin(&cmd);
-			mzEngine.Copy(cmd, &tmp, &out, 0);
-			mzEngine.End(cmd);
-			mzEngine.Destroy(&tmp);
+			nosCmd cmd;
+			nosEngine.Begin(&cmd);
+			nosEngine.Copy(cmd, &tmp, &out, 0);
+			nosEngine.End(cmd);
+			nosEngine.Destroy(&tmp);
 
 			flatbuffers::FlatBufferBuilder fbb;
-			auto dirty = CreateAppEvent(fbb, app::CreatePinDirtied(fbb, &ids[MZN_Out]));
-			mzEngine.EnqueueEvent(&dirty);
+			auto dirty = CreateAppEvent(fbb, app::CreatePinDirtied(fbb, &ids[NSN_Out]));
+			nosEngine.EnqueueEvent(&dirty);
 		}
 		catch(const std::exception& e)
 		{
-			mzEngine.LogE("Error while loading image: %s", e.what());
+			nosEngine.LogE("Error while loading image: %s", e.what());
 		}
     };
     
-    return MZ_RESULT_SUCCESS;
+    return NOS_RESULT_SUCCESS;
 }
 
 
-void RegisterReadImage(mzNodeFunctions* fn)
+void RegisterReadImage(nosNodeFunctions* fn)
 {
-	fn->TypeName = MZN_Mz_Utilities_ReadImage;
+	fn->TypeName = NSN_Nos_Utilities_ReadImage;
 	fn->GetFunctions = GetFunctions;
     fn->GetShaders = GetShaders;
     fn->GetPasses = GetPasses;
 }
 
-// void RegisterReadImage(mzNodeFunctions* fn)
+// void RegisterReadImage(nosNodeFunctions* fn)
 // {
-	// auto& actions = functions["mz.ReadImage"];
+	// auto& actions = functions["nos.ReadImage"];
 
 	// actions.NodeCreated = [](fb::Node const& node, Args& args, void** context) {
 	// 	*context = new ReadImageContext(node);
 	// };
 
-	// actions.EntryPoint = [](mz::Args& args, void* context) mutable {
+	// actions.EntryPoint = [](nos::Args& args, void* context) mutable {
 	// 	auto path = args.Get<char>("Path");
 	// 	if (!path || strlen(path) == 0)
 	// 		return false;
@@ -123,13 +123,13 @@ void RegisterReadImage(mzNodeFunctions* fn)
 	// 	bool ret = !!img && ctx->Upload(img, width, height, args.GetBuffer("Out"));
 	// 	if (!ret)
 	// 	{
-	// 		mzEngine.LogE("ReadImage: Failed to load image");
+	// 		nosEngine.LogE("ReadImage: Failed to load image");
 	// 		flatbuffers::FlatBufferBuilder fbb;
-	// 		std::vector<flatbuffers::Offset<mz::fb::NodeStatusMessage>> messages{mz::fb::CreateNodeStatusMessageDirect(
-	// 			fbb, "Failed to load image", mz::fb::NodeStatusMessageType::FAILURE)};
+	// 		std::vector<flatbuffers::Offset<nos::fb::NodeStatusMessage>> messages{nos::fb::CreateNodeStatusMessageDirect(
+	// 			fbb, "Failed to load image", nos::fb::NodeStatusMessageType::FAILURE)};
 	// 		HandleEvent(CreateAppEvent(
 	// 			fbb,
-	// 			mz::CreatePartialNodeUpdateDirect(fbb, &ctx->NodeId, ClearFlags::NONE, 0, 0, 0, 0, 0, 0, &messages)));
+	// 			nos::CreatePartialNodeUpdateDirect(fbb, &ctx->NodeId, ClearFlags::NONE, 0, 0, 0, 0, 0, 0, &messages)));
 	// 	}
 	// 	if (img)
 	// 		stbi_image_free(img);
@@ -137,7 +137,7 @@ void RegisterReadImage(mzNodeFunctions* fn)
 	// 	return ret;
 	// };
 
-	// actions.NodeRemoved = [](void* ctx, mz::fb::UUID const& id) { delete static_cast<ReadImageContext*>(ctx); };
+	// actions.NodeRemoved = [](void* ctx, nos::fb::UUID const& id) { delete static_cast<ReadImageContext*>(ctx); };
 // }
 
-} // namespace mz::utilities
+} // namespace nos::utilities

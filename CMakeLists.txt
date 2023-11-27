@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.24.2)
-project("MZ Modules")
+project("NOS Modules")
 
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 set(CMAKE_CXX_STANDARD 20)
@@ -26,8 +26,8 @@ endmacro()
 
 add_subdirectory("Subsystems" "${CMAKE_CURRENT_BINARY_DIR}/Subsystems")
 get_targets(SUBSYSTEM_TARGETS "${CMAKE_CURRENT_BINARY_DIR}/Subsystems")
-group("${SUBSYSTEM_TARGETS}" "MZ Subsystems")
+group("${SUBSYSTEM_TARGETS}" "NOS Subsystems")
 
 add_subdirectory("Plugins" "${CMAKE_CURRENT_BINARY_DIR}/Plugins")
 get_targets(PLUGIN_TARGETS "${CMAKE_CURRENT_BINARY_DIR}/Plugins")
-group("${PLUGIN_TARGETS}" "MZ Plugins")
+group("${PLUGIN_TARGETS}" "NOS Plugins")

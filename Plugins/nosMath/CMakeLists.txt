@@ -1,1 +1,1 @@
-add_folder_as_plugin_project("mzMath" "" "")
+add_folder_as_plugin_project("nosMath" "" "")

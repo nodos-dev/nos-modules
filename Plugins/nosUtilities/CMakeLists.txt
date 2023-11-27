@@ -1,1 +1,1 @@
-add_folder_as_plugin_project("mzUtilities" stb "${CMAKE_CURRENT_SOURCE_DIR}")
+add_folder_as_plugin_project("nosUtilities" stb "${CMAKE_CURRENT_SOURCE_DIR}")

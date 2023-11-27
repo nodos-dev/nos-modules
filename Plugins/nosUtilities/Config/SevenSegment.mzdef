@@ -32,7 +32,7 @@
           },
           {
             "name": "Color",
-            "type_name": "mz.fb.vec4",
+            "type_name": "nos.fb.vec4",
             "show_as": "INPUT_PIN",
             "can_show_as": "INPUT_PIN_OR_PROPERTY",
             "visualizer": {
@@ -42,13 +42,13 @@
           },
           {
             "name": "Input",
-            "type_name": "mz.fb.Texture",
+            "type_name": "nos.fb.Texture",
             "show_as": "INPUT_PIN",
             "can_show_as": "INPUT_PIN_OR_PROPERTY"
           },
           {
             "name": "Output",
-            "type_name": "mz.fb.Texture",
+            "type_name": "nos.fb.Texture",
             "show_as": "OUTPUT_PIN",
             "can_show_as": "OUTPUT_PIN_OR_PROPERTY"
           }

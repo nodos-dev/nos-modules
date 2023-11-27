@@ -1,7 +1,7 @@
-// Copyright MediaZ AS. All Rights Reserved.
+// Copyright Nodos AS. All Rights Reserved.
 
 // Includes
-#include <MediaZ/PluginAPI.h>
+#include <Nodos/PluginAPI.h>
 #include <glm/glm.hpp>
 #include <Builtins_generated.h>
 
@@ -20,9 +20,9 @@
 // Nodes
 #include "GaussianBlur.hpp"
 
-MZ_INIT();
+NOS_INIT();
 
-namespace mz::filters
+namespace nos::filters
 {
 
 enum Filters : int
@@ -46,30 +46,30 @@ enum Filters : int
 extern "C"
 {
 
-MZAPI_ATTR mzResult MZAPI_CALL mzExportNodeFunctions(size_t* outSize, mzNodeFunctions** outList)
+NOSAPI_ATTR nosResult NOSAPI_CALL nosExportNodeFunctions(size_t* outSize, nosNodeFunctions** outList)
 {
 	if (!outList)
 	{
 		*outSize = Filters::Count;
-		return MZ_RESULT_SUCCESS;
+		return NOS_RESULT_SUCCESS;
 	}
 
 #define REGISTER_NODE(NODE) \
-	outList[Filters::NODE]->TypeName = MZ_NAME_STATIC("mz.filters." #NODE); \
-	outList[Filters::NODE]->GetShaderSource = [](mzShaderSource* src) -> mzResult { \
+	outList[Filters::NODE]->TypeName = NOS_NAME_STATIC("nos.filters." #NODE); \
+	outList[Filters::NODE]->GetShaderSource = [](nosShaderSource* src) -> nosResult { \
 		src->SpirvBlob.Data = (void*)(NODE##_frag_spv); \
 		src->SpirvBlob.Size = sizeof(NODE##_frag_spv); \
         src->GLSLPath = #NODE ".frag"; \
         src->SpirvPath = #NODE ".frag.spv"; \
-		return MZ_RESULT_SUCCESS; \
+		return NOS_RESULT_SUCCESS; \
 	};
 #define REGISTER_NODE_LICENSED(NODE, featureName, featureMessage)								\
 		REGISTER_NODE(NODE)																		\
-		outList[Filters::NODE]->OnNodeCreated = [](const mzFbNode* node, void** outCtxPtr) {	\
-		mzEngine.RegisterFeature(*node->id(), featureName, 1, featureMessage);					\
+		outList[Filters::NODE]->OnNodeCreated = [](const nosFbNode* node, void** outCtxPtr) {	\
+		nosEngine.RegisterFeature(*node->id(), featureName, 1, featureMessage);					\
 		};																						\
-		outList[Filters::NODE]->OnNodeDeleted = [](void* ctx, mzUUID nodeId) {					\
-		mzEngine.UnregisterFeature(nodeId, featureName);										\
+		outList[Filters::NODE]->OnNodeDeleted = [](void* ctx, nosUUID nodeId) {					\
+		nosEngine.UnregisterFeature(nodeId, featureName);										\
 		};
 
 	REGISTER_NODE(ColorCorrect);
@@ -83,7 +83,7 @@ MZAPI_ATTR mzResult MZAPI_CALL mzExportNodeFunctions(size_t* outSize, mzNodeFunc
 	REGISTER_NODE(Thresholder);
 	REGISTER_NODE(Sampler);
 	
-	return MZ_RESULT_SUCCESS;
+	return NOS_RESULT_SUCCESS;
 }
 }
 }

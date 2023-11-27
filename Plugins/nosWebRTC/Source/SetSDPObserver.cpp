@@ -1,35 +1,35 @@
-#include "mzSetSDPObserver.h"
+#include "SetSDPObserver.h"
 
-mzSetSDPObserver::mzSetSDPObserver(int id) : peerConnectionID(id)
+nosSetSDPObserver::nosSetSDPObserver(int id) : peerConnectionID(id)
 {
 }
 
-void mzSetSDPObserver::SetSuccessCallback(std::function<void(int)> callback)
+void nosSetSDPObserver::SetSuccessCallback(std::function<void(int)> callback)
 {
 	SuccessCallback = callback;
 }
 
-void mzSetSDPObserver::SetFailureCallback(std::function<void(webrtc::RTCError, int)> callback)
+void nosSetSDPObserver::SetFailureCallback(std::function<void(webrtc::RTCError, int)> callback)
 {
 	FailureCallback = callback;
 }
 
-void mzSetSDPObserver::OnSuccess()
+void nosSetSDPObserver::OnSuccess()
 {
 	SuccessCallback(peerConnectionID);
 }
 
-void mzSetSDPObserver::OnFailure(webrtc::RTCError error)
+void nosSetSDPObserver::OnFailure(webrtc::RTCError error)
 {
 	FailureCallback(error, peerConnectionID);
 }
 
-void mzSetSDPObserver::AddRef() const
+void nosSetSDPObserver::AddRef() const
 {
 	ref_count_.IncRef();
 }
 
-rtc::RefCountReleaseStatus mzSetSDPObserver::Release() const
+rtc::RefCountReleaseStatus nosSetSDPObserver::Release() const
 {
 	const auto status = ref_count_.DecRef();
 	if (status == rtc::RefCountReleaseStatus::kDroppedLastRef) {

@@ -1,172 +1,172 @@
-// Copyright MediaZ AS. All Rights Reserved.
-#include <MediaZ/Helpers.hpp>
+// Copyright Nodos AS. All Rights Reserved.
+#include <Nodos/Helpers.hpp>
 
 #include "Interlace.frag.spv.dat"
 #include "Deinterlace.frag.spv.dat"
 
-MZ_REGISTER_NAME(Input);
-MZ_REGISTER_NAME(Output);
-MZ_REGISTER_NAME(ShouldOutputOdd);
-MZ_REGISTER_NAME(IsOdd);
-MZ_REGISTER_NAME_SPACED(TypeName_Utilities_Interlace, "mz.utilities.Interlace")
-MZ_REGISTER_NAME_SPACED(TypeName_Utilities_Deinterlace, "mz.utilities.Deinterlace")
+NOS_REGISTER_NAME(Input);
+NOS_REGISTER_NAME(Output);
+NOS_REGISTER_NAME(ShouldOutputOdd);
+NOS_REGISTER_NAME(IsOdd);
+NOS_REGISTER_NAME_SPACED(TypeName_Utilities_Interlace, "nos.utilities.Interlace")
+NOS_REGISTER_NAME_SPACED(TypeName_Utilities_Deinterlace, "nos.utilities.Deinterlace")
 
-MZ_REGISTER_NAME(Utilities_Interlace_Fragment_Shader);
-MZ_REGISTER_NAME(Utilities_Interlace_Pass);
+NOS_REGISTER_NAME(Utilities_Interlace_Fragment_Shader);
+NOS_REGISTER_NAME(Utilities_Interlace_Pass);
 
-MZ_REGISTER_NAME(Utilities_Deinterlace_Fragment_Shader);
-MZ_REGISTER_NAME(Utilities_Deinterlace_Pass);
+NOS_REGISTER_NAME(Utilities_Deinterlace_Fragment_Shader);
+NOS_REGISTER_NAME(Utilities_Deinterlace_Pass);
 
-namespace mz::utilities
+namespace nos::utilities
 {
 
 struct InterlaceNode : NodeContext
 {
-	mzTextureFieldType Field = MZ_TEXTURE_FIELD_TYPE_EVEN;
+	nosTextureFieldType Field = NOS_TEXTURE_FIELD_TYPE_EVEN;
 
-	InterlaceNode(mzFbNode const* node) : NodeContext(node) {}
+	InterlaceNode(nosFbNode const* node) : NodeContext(node) {}
 
 	~InterlaceNode() {}
 
-	void OnPinValueChanged(mz::Name pinName, mzUUID pinId, mzBuffer* value) override {}
+	void OnPinValueChanged(nos::Name pinName, nosUUID pinId, nosBuffer* value) override {}
 
-	mzResult BeginCopyFrom(mzCopyInfo* copyInfo) override {
+	nosResult BeginCopyFrom(nosCopyInfo* copyInfo) override {
 		copyInfo->CopyTextureFrom.Info.Texture.FieldType = Field;
 		Field = FlippedField(Field);
-		return MZ_RESULT_SUCCESS;
+		return NOS_RESULT_SUCCESS;
 	}
 
-	virtual mzResult ExecuteNode(const mzNodeExecuteArgs* args) {
+	virtual nosResult ExecuteNode(const nosNodeExecuteArgs* args) {
 		auto pinIds = GetPinIds(args);
 		auto pinValues = GetPinValues(args);
-		auto inputTextureInfo = DeserializeTextureInfo(pinValues[MZN_Input]);
-		auto outputTextureInfo = DeserializeTextureInfo(pinValues[MZN_Output]);
-		mzRunPassParams interlacePass = {};
-		interlacePass.Key = MZN_Utilities_Interlace_Pass;
+		auto inputTextureInfo = DeserializeTextureInfo(pinValues[NSN_Input]);
+		auto outputTextureInfo = DeserializeTextureInfo(pinValues[NSN_Output]);
+		nosRunPassParams interlacePass = {};
+		interlacePass.Key = NSN_Utilities_Interlace_Pass;
 		uint32_t isOdd = Field - 1;
 		std::vector bindings = {
-			ShaderBinding(MZN_Input, inputTextureInfo),
-			ShaderBinding(MZN_ShouldOutputOdd, isOdd),
+			ShaderBinding(NSN_Input, inputTextureInfo),
+			ShaderBinding(NSN_ShouldOutputOdd, isOdd),
 		};
 		interlacePass.Bindings = bindings.data();
 		interlacePass.BindingCount = bindings.size();
 		interlacePass.Output = outputTextureInfo;
-		mzEngine.RunPass(0, &interlacePass);
-		return MZ_RESULT_SUCCESS;
+		nosEngine.RunPass(0, &interlacePass);
+		return NOS_RESULT_SUCCESS;
 	}
 
-	static mzResult GetShaders(size_t* outCount, mzShaderInfo* outShaders)
+	static nosResult GetShaders(size_t* outCount, nosShaderInfo* outShaders)
 	{
 		*outCount = 1;
 		if (!outShaders)
-			return MZ_RESULT_SUCCESS;
-		outShaders[0] = {.Key = MZN_Utilities_Interlace_Fragment_Shader,
+			return NOS_RESULT_SUCCESS;
+		outShaders[0] = {.Key = NSN_Utilities_Interlace_Fragment_Shader,
 						 .Source = {.SpirvBlob = {(void*)Interlace_frag_spv, sizeof(Interlace_frag_spv)}}};
-		return MZ_RESULT_SUCCESS;
+		return NOS_RESULT_SUCCESS;
 	}
 
-	static mzResult GetPasses(size_t* count, mzPassInfo* passes)
+	static nosResult GetPasses(size_t* count, nosPassInfo* passes)
 	{
 		*count = 1;
 		if (!passes)
-			return MZ_RESULT_SUCCESS;
-		*passes = mzPassInfo{
-			.Key = MZN_Utilities_Interlace_Pass,
-			.Shader = MZN_Utilities_Interlace_Fragment_Shader,
+			return NOS_RESULT_SUCCESS;
+		*passes = nosPassInfo{
+			.Key = NSN_Utilities_Interlace_Pass,
+			.Shader = NSN_Utilities_Interlace_Fragment_Shader,
 			.Blend = 0,
 			.MultiSample = 1,
 		};
-		return MZ_RESULT_SUCCESS;
+		return NOS_RESULT_SUCCESS;
 	}
 
-	static mzResult GetFunctions(size_t* count, mzName* names, mzPfnNodeFunctionExecute* fns)
+	static nosResult GetFunctions(size_t* count, nosName* names, nosPfnNodeFunctionExecute* fns)
 	{
 		*count = 0;
 		if (!names || !fns)
-			return MZ_RESULT_SUCCESS;
-		return MZ_RESULT_SUCCESS;
+			return NOS_RESULT_SUCCESS;
+		return NOS_RESULT_SUCCESS;
 	}
 };
 
 struct DeinterlaceNode : NodeContext
 {
-	DeinterlaceNode(mzFbNode const* node) : NodeContext(node) {}
+	DeinterlaceNode(nosFbNode const* node) : NodeContext(node) {}
 
 	~DeinterlaceNode() {}
 
-	void OnPinValueChanged(mz::Name pinName, mzUUID pinId, mzBuffer* value) override {}
+	void OnPinValueChanged(nos::Name pinName, nosUUID pinId, nosBuffer* value) override {}
 
-	mzResult BeginCopyFrom(mzCopyInfo* copyInfo) override {
-		copyInfo->CopyTextureFrom.Info.Texture.FieldType = MZ_TEXTURE_FIELD_TYPE_PROGRESSIVE;
-		return MZ_RESULT_SUCCESS;
+	nosResult BeginCopyFrom(nosCopyInfo* copyInfo) override {
+		copyInfo->CopyTextureFrom.Info.Texture.FieldType = NOS_TEXTURE_FIELD_TYPE_PROGRESSIVE;
+		return NOS_RESULT_SUCCESS;
 	}
 
-	virtual mzResult ExecuteNode(const mzNodeExecuteArgs* args) {
+	virtual nosResult ExecuteNode(const nosNodeExecuteArgs* args) {
 		auto pinValues = GetPinValues(args);
-		auto inputTextureInfo = DeserializeTextureInfo(pinValues[MZN_Input]);
-		auto outputTextureInfo = DeserializeTextureInfo(pinValues[MZN_Output]);
-		mzRunPassParams deinterlacePass = {};
-		deinterlacePass.Key = MZN_Utilities_Deinterlace_Pass;
+		auto inputTextureInfo = DeserializeTextureInfo(pinValues[NSN_Input]);
+		auto outputTextureInfo = DeserializeTextureInfo(pinValues[NSN_Output]);
+		nosRunPassParams deinterlacePass = {};
+		deinterlacePass.Key = NSN_Utilities_Deinterlace_Pass;
 		auto field = inputTextureInfo.Info.Texture.FieldType;
 		bool isInterlaced = IsTextureFieldTypeInterlaced(field);
 		if (!isInterlaced) {
-			mzEngine.LogW("Deinterlace Node: Input is not interlaced!");
-			return MZ_RESULT_FAILED;
+			nosEngine.LogW("Deinterlace Node: Input is not interlaced!");
+			return NOS_RESULT_FAILED;
 		}
 		uint32_t isOdd = field - 1;
 		std::vector bindings = {
-			ShaderBinding(MZN_Input, inputTextureInfo),
-			ShaderBinding(MZN_IsOdd, isOdd)
+			ShaderBinding(NSN_Input, inputTextureInfo),
+			ShaderBinding(NSN_IsOdd, isOdd)
 		};
 		deinterlacePass.Bindings = bindings.data();
 		deinterlacePass.BindingCount = bindings.size();
 		deinterlacePass.Output = outputTextureInfo;
 		deinterlacePass.DoNotClear = true;
-		mzEngine.RunPass(0, &deinterlacePass);
-		return MZ_RESULT_SUCCESS;
+		nosEngine.RunPass(0, &deinterlacePass);
+		return NOS_RESULT_SUCCESS;
 	}
 
-	static mzResult GetShaders(size_t* outCount, mzShaderInfo* outShaders)
+	static nosResult GetShaders(size_t* outCount, nosShaderInfo* outShaders)
 	{
 		*outCount = 1;
 		if (!outShaders)
-			return MZ_RESULT_SUCCESS;
-		outShaders[0] = { .Key = MZN_Utilities_Deinterlace_Fragment_Shader,
+			return NOS_RESULT_SUCCESS;
+		outShaders[0] = { .Key = NSN_Utilities_Deinterlace_Fragment_Shader,
 						 .Source = {.SpirvBlob = {(void*)Deinterlace_frag_spv, sizeof(Deinterlace_frag_spv)}} };
-		return MZ_RESULT_SUCCESS;
+		return NOS_RESULT_SUCCESS;
 	}
 
-	static mzResult GetPasses(size_t* count, mzPassInfo* passes)
+	static nosResult GetPasses(size_t* count, nosPassInfo* passes)
 	{
 		*count = 1;
 		if (!passes)
-			return MZ_RESULT_SUCCESS;
-		*passes = mzPassInfo {
-			.Key = MZN_Utilities_Deinterlace_Pass,
-			.Shader = MZN_Utilities_Deinterlace_Fragment_Shader,
+			return NOS_RESULT_SUCCESS;
+		*passes = nosPassInfo {
+			.Key = NSN_Utilities_Deinterlace_Pass,
+			.Shader = NSN_Utilities_Deinterlace_Fragment_Shader,
 			.Blend = 0,
 			.MultiSample = 1,
 		};
-		return MZ_RESULT_SUCCESS;
+		return NOS_RESULT_SUCCESS;
 	}
 
-	static mzResult GetFunctions(size_t* count, mzName* names, mzPfnNodeFunctionExecute* fns)
+	static nosResult GetFunctions(size_t* count, nosName* names, nosPfnNodeFunctionExecute* fns)
 	{
 		*count = 0;
 		if (!names || !fns)
-			return MZ_RESULT_SUCCESS;
-		return MZ_RESULT_SUCCESS;
+			return NOS_RESULT_SUCCESS;
+		return NOS_RESULT_SUCCESS;
 	}
 };
 
-void RegisterInterlace(mzNodeFunctions* nodeFunctions)
+void RegisterInterlace(nosNodeFunctions* nodeFunctions)
 {
-	MZ_BIND_NODE_CLASS(MZN_TypeName_Utilities_Interlace, InterlaceNode, nodeFunctions);
+	NOS_BIND_NODE_CLASS(NSN_TypeName_Utilities_Interlace, InterlaceNode, nodeFunctions);
 }
 
-void RegisterDeinterlace(mzNodeFunctions* nodeFunctions)
+void RegisterDeinterlace(nosNodeFunctions* nodeFunctions)
 {
-	MZ_BIND_NODE_CLASS(MZN_TypeName_Utilities_Deinterlace, DeinterlaceNode, nodeFunctions);
+	NOS_BIND_NODE_CLASS(NSN_TypeName_Utilities_Deinterlace, DeinterlaceNode, nodeFunctions);
 }
 
-} // namespace mz::utilities
+} // namespace nos::utilities

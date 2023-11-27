@@ -1,7 +1,7 @@
 {
     "info": {
         "id": {
-            "name": "mz.filters",
+            "name": "nos.filters",
             "version": "1.0.0"
         },
         "display_name": "Filters",
@@ -22,7 +22,7 @@
     "custom_types" :[
       "Thresholder.fbs"  
     ],
-    "binary_path": "../Binaries/mzFilters",
+    "binary_path": "../Binaries/nosFilters",
     "associated_nodes": [
         {
             "category": "Filters",

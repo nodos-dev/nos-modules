@@ -1,7 +1,7 @@
 {
     "info": {
         "id": {
-            "name": "mz.math",
+            "name": "nos.math",
             "version": "1.0.0"
         },
         "description": "Nodes for math operations.",
@@ -11,7 +11,7 @@
     "node_definitions": [
         "Math.mzdef"
     ],
-    "binary_path": "../Binaries/mzMath",
+    "binary_path": "../Binaries/nosMath",
     "associated_nodes": [
         {
             "category": "Math",

@@ -7,28 +7,28 @@
 #include <vector>
 #include "api/media_stream_interface.h"
 #include "api/peer_connection_interface.h"
-#include "mzCustomVideoSource.h"
-#include "mzWebRTCClient.h"
-#include "mzCreateSDPObserver.h"
-#include "mzSetSDPObserver.h"
-#include "mzPeerConnectionObserver.h"
-#include "mzEncodeImageObserver.h"
-#include "mzCustomVideoSink.h"
+#include "CustomVideoSource.h"
+#include "WebRTCClient.h"
+#include "CreateSDPObserver.h"
+#include "SetSDPObserver.h"
+#include "PeerConnectionObserver.h"
+#include "EncodeImageObserver.h"
+#include "CustomVideoSink.h"
 
 typedef rtc::scoped_refptr<webrtc::PeerConnectionInterface> PeerConnectionPtr;
 
-class mzWebRTCManager {
+class nosWebRTCManager {
 public:
 
-    mzWebRTCManager(mzWebRTCClient* p_mzWebRTCClient);
-    ~mzWebRTCManager();
+    nosWebRTCManager(nosWebRTCClient* p_nosWebRTCClient);
+    ~nosWebRTCManager();
 
     bool MainLoop(int cms=0);
 
     void SendOffer(int id);
     void UpdateBitrates(int bitrateKBPS);
-    void AddVideoSource(rtc::scoped_refptr<mzCustomVideoSource> source);
-    void AddVideoSink(rtc::scoped_refptr<mzCustomVideoSink> sink);
+    void AddVideoSource(rtc::scoped_refptr<nosCustomVideoSource> source);
+    void AddVideoSink(rtc::scoped_refptr<nosCustomVideoSink> sink);
 
     void SetImageEncodeCompletedCallback(std::function<void()> callback);
     void SetPeerConnectedCallback(std::function<void()> callback);
@@ -46,7 +46,7 @@ protected:
 
     void OnImageEncoded();
 
-    #pragma region mzWebRTCClient Region
+    #pragma region nosWebRTCClient Region
 
     void RegisterToWebRTCClientCallbacks();
     void OnServerConnectionSuccesful();
@@ -59,9 +59,9 @@ protected:
 
     #pragma endregion
 
-    #pragma region mzPeerConnectionObserver Region
+    #pragma region nosPeerConnectionObserver Region
    
-    void RegisterToPeerConnectionObserverCallbacks(mzPeerConnectionObserver* observer);
+    void RegisterToPeerConnectionObserverCallbacks(nosPeerConnectionObserver* observer);
     void OnSignalingChange( webrtc::PeerConnectionInterface::SignalingState new_state, int id);
     void OnAddTrack( rtc::scoped_refptr<webrtc::RtpReceiverInterface> receiver,
         const std::vector<rtc::scoped_refptr<webrtc::MediaStreamInterface>>& streams, int id);
@@ -74,15 +74,15 @@ protected:
 
     #pragma endregion
     
-    #pragma region mzCreateSDPObserver Region
-    void RegisterToCreateSDPObserverCallbacks(mzCreateSDPObserver* observer);
+    #pragma region nosCreateSDPObserver Region
+    void RegisterToCreateSDPObserverCallbacks(nosCreateSDPObserver* observer);
     // Will be called when SDP creation is succesful.
     void OnSDPCreateSuccess(webrtc::SessionDescriptionInterface* desc, int id);
     void OnSDPCreateFailure(webrtc::RTCError error, int id);
     #pragma endregion
 
-    #pragma region mzSetSDPObserver Region
-    void RegisterToSetSDPObserverCallbacks(mzSetSDPObserver* observer);
+    #pragma region nosSetSDPObserver Region
+    void RegisterToSetSDPObserverCallbacks(nosSetSDPObserver* observer);
     //Will be called when SDP set to PeerConnection succesfully
     void OnSDPSetSuccess(int id);
     void OnSDPSetFailure(webrtc::RTCError error, int id);
@@ -95,18 +95,18 @@ protected:
     std::unique_ptr<rtc::Thread> WorkerThread;
     //We will register ourselves so that we will be notified whether SDP creation succeed or failed
     rtc::scoped_refptr<webrtc::PeerConnectionFactoryInterface> p_PeerConnectionFactory;
-    std::vector<std::shared_ptr<mzPeerConnectionObserver>> p_PeerConnectionObservers;
-    std::vector<rtc::scoped_refptr<mzCreateSDPObserver>> p_CreateSDPObservers;
-    std::vector<rtc::scoped_refptr<mzSetSDPObserver>> p_SetSDPObservers;
+    std::vector<std::shared_ptr<nosPeerConnectionObserver>> p_PeerConnectionObservers;
+    std::vector<rtc::scoped_refptr<nosCreateSDPObserver>> p_CreateSDPObservers;
+    std::vector<rtc::scoped_refptr<nosSetSDPObserver>> p_SetSDPObservers;
     std::vector<PeerConnectionPtr> p_PeerConnections;
     
     std::map<int, int> PeerConnectionIdx_PeerID;
-    std::vector<rtc::scoped_refptr<mzCustomVideoSource>> p_VideoSources;
-    std::vector<rtc::scoped_refptr<mzCustomVideoSink>> p_VideoSinks;
+    std::vector<rtc::scoped_refptr<nosCustomVideoSource>> p_VideoSources;
+    std::vector<rtc::scoped_refptr<nosCustomVideoSink>> p_VideoSinks;
     std::vector<rtc::scoped_refptr<webrtc::VideoTrackInterface>> p_VideoTracks;
 
-    std::unique_ptr<mzEncodeImageObserver> p_encodeObserver;
-    mzWebRTCClient* p_mzWebRTCClient;
+    std::unique_ptr<nosEncodeImageObserver> p_encodeObserver;
+    nosWebRTCClient* p_nosWebRTCClient;
     
     
     int targetKbps = 5000;
@@ -119,8 +119,8 @@ protected:
     std::function<void()> ServerConnectionFailedCallback;
     mutable webrtc::webrtc_impl::RefCounter ref_count_{ 0 };
 
-    friend mzPeerConnectionObserver;
-    friend mzCreateSDPObserver;
-    friend mzSetSDPObserver;
+    friend nosPeerConnectionObserver;
+    friend nosCreateSDPObserver;
+    friend nosSetSDPObserver;
 
 };

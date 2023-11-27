@@ -1,10 +1,10 @@
 #pragma once
 #include <api/video_codecs/video_encoder.h>
-#include "mzEncodeImageObserver.h"
+#include "EncodeImageObserver.h"
 
-class mzVideoEncoder : public webrtc::VideoEncoder {
+class nosVideoEncoder : public webrtc::VideoEncoder {
 public:
-	mzVideoEncoder(mzEncodeImageObserver* callback);
+	nosVideoEncoder(nosEncodeImageObserver* callback);
 	// Inherited via VideoEncoder
 	virtual int InitEncode(const webrtc::VideoCodec* codec_settings, const VideoEncoder::Settings& settings);
 	//virtual webrtc::VideoEncoder::EncoderInfo GetEncoderInfo() const override;
@@ -14,5 +14,5 @@ public:
 	void SetRates(const RateControlParameters& parameters) override;
 private:
 	std::unique_ptr<webrtc::VideoEncoder> internalEncoder;
-	mzEncodeImageObserver* observer;
+	nosEncodeImageObserver* observer;
 };

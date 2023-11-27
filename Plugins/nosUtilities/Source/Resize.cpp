@@ -1,52 +1,52 @@
-﻿#include <MediaZ/Helpers.hpp>
+﻿#include <Nodos/Helpers.hpp>
 
 #include "../Shaders/Resize.frag.spv.dat"
 
 #include "Builtins_generated.h"
 
-namespace mz::utilities
+namespace nos::utilities
 {
 
-MZ_REGISTER_NAME(Resize_Pass);
-MZ_REGISTER_NAME(Resize_Shader);
-MZ_REGISTER_NAME(Input);
-MZ_REGISTER_NAME(Method);
-MZ_REGISTER_NAME(Output);
-MZ_REGISTER_NAME(Size);
-MZ_REGISTER_NAME_SPACED(Mz_Utilities_Resize, "mz.utilities.Resize")
+NOS_REGISTER_NAME(Resize_Pass);
+NOS_REGISTER_NAME(Resize_Shader);
+NOS_REGISTER_NAME(Input);
+NOS_REGISTER_NAME(Method);
+NOS_REGISTER_NAME(Output);
+NOS_REGISTER_NAME(Size);
+NOS_REGISTER_NAME_SPACED(Nos_Utilities_Resize, "nos.utilities.Resize")
 
-static mzResult GetPasses(size_t* outCount, mzPassInfo* infos)
+static nosResult GetPasses(size_t* outCount, nosPassInfo* infos)
 {
 	*outCount = 1;
 	if(!infos)
-		return MZ_RESULT_SUCCESS;
+		return NOS_RESULT_SUCCESS;
 
-	infos->Key = MZN_Resize_Pass;
-	infos->Shader = MZN_Resize_Shader;
+	infos->Key = NSN_Resize_Pass;
+	infos->Shader = NSN_Resize_Shader;
 	infos->Blend = false;
 	infos->MultiSample = 1;
 
-	return MZ_RESULT_SUCCESS;
+	return NOS_RESULT_SUCCESS;
 }
 
-static mzResult GetShaders(size_t* outCount, mzShaderInfo* outShaders)
+static nosResult GetShaders(size_t* outCount, nosShaderInfo* outShaders)
 {
     *outCount = 1;
     if (!outShaders)
-        return MZ_RESULT_SUCCESS;
+        return NOS_RESULT_SUCCESS;
 
-	outShaders[0] = {.Key=MZN_Resize_Shader, .Source = {.SpirvBlob = {(void*)Resize_frag_spv, sizeof(Resize_frag_spv)}}};
-    return MZ_RESULT_SUCCESS;
+	outShaders[0] = {.Key=NSN_Resize_Shader, .Source = {.SpirvBlob = {(void*)Resize_frag_spv, sizeof(Resize_frag_spv)}}};
+    return NOS_RESULT_SUCCESS;
 }
 
-static mzResult ExecuteNode(void* ctx, const mzNodeExecuteArgs* args)
+static nosResult ExecuteNode(void* ctx, const nosNodeExecuteArgs* args)
 {
 	auto pins = GetPinValues(args);
-	auto inputTex = DeserializeTextureInfo(pins[MZN_Input]);
-	auto method = GetPinValue<uint32_t>(pins, MZN_Method);
+	auto inputTex = DeserializeTextureInfo(pins[NSN_Input]);
+	auto method = GetPinValue<uint32_t>(pins, NSN_Method);
 		
-	auto tex = DeserializeTextureInfo(pins[MZN_Output]);
-	auto size = GetPinValue<mzVec2u>(pins, MZN_Size);
+	auto tex = DeserializeTextureInfo(pins[NSN_Output]);
+	auto size = GetPinValue<nosVec2u>(pins, NSN_Size);
 		
 	if(size->x != tex.Info.Texture.Width ||
 		size->y != tex.Info.Texture.Height)
@@ -57,14 +57,14 @@ static mzResult ExecuteNode(void* ctx, const mzNodeExecuteArgs* args)
 		prevTex.Info.Texture.Height = size->y;
 		auto texFb = ConvertTextureInfo(prevTex);
 		texFb.unscaled = true;
-		auto texFbBuf = mz::Buffer::From(texFb);
-		mzEngine.SetPinValue(args->PinIds[1], {.Data = texFbBuf.data(), .Size = texFbBuf.size()});
+		auto texFbBuf = nos::Buffer::From(texFb);
+		nosEngine.SetPinValue(args->PinIds[1], {.Data = texFbBuf.data(), .Size = texFbBuf.size()});
 	}
 
-	std::vector bindings = {ShaderBinding(MZN_Input, inputTex), ShaderBinding(MZN_Method, method)};
+	std::vector bindings = {ShaderBinding(NSN_Input, inputTex), ShaderBinding(NSN_Method, method)};
 		
-	mzRunPassParams resizeParam {
-		.Key = MZN_Resize_Pass,
+	nosRunPassParams resizeParam {
+		.Key = NSN_Resize_Pass,
 		.Bindings = bindings.data(),
 		.BindingCount = 2,
 		.Output = tex,
@@ -72,19 +72,19 @@ static mzResult ExecuteNode(void* ctx, const mzNodeExecuteArgs* args)
 		.Benchmark = 0,
 	};
 
-	mzEngine.RunPass(nullptr, &resizeParam);
+	nosEngine.RunPass(nullptr, &resizeParam);
 
-	return MZ_RESULT_SUCCESS;
+	return NOS_RESULT_SUCCESS;
 }
 
-void RegisterResize(mzNodeFunctions* out)
+void RegisterResize(nosNodeFunctions* out)
 {
-	out->TypeName = MZN_Mz_Utilities_Resize;
+	out->TypeName = NSN_Nos_Utilities_Resize;
 	out->GetPasses = GetPasses;
 	out->GetShaders = GetShaders;
 	out->ExecuteNode = ExecuteNode;
 }
 
-} // namespace mz::utilities
+} // namespace nos::utilities
 
 

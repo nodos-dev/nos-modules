@@ -1,53 +1,53 @@
-#include "mzWebRTCClient.h"
-#include "mzWebRTCJsonConfig.h"
+#include "WebRTCClient.h"
+#include "WebRTCJsonConfig.h"
 
 using json = nlohmann::json;
 
-mzWebRTCClient::mzWebRTCClient() :
-	currentState(EClientState::eNOT_CONNECTED), p_mzWebSocketClient(nullptr), clientID(-1)
+nosWebRTCClient::nosWebRTCClient() :
+	currentState(EClientState::eNOT_CONNECTED), p_nosWebSocketClient(nullptr), clientID(-1)
 {
-	clientName = "mzWebRTCClient_" +  std::to_string(rand());
+	clientName = "nosWebRTCClient_" +  std::to_string(rand());
 }
 
-mzWebRTCClient::mzWebRTCClient(std::string name) : 
-	currentState(EClientState::eNOT_CONNECTED), clientName(name), p_mzWebSocketClient(nullptr) , clientID(-1)
+nosWebRTCClient::nosWebRTCClient(std::string name) : 
+	currentState(EClientState::eNOT_CONNECTED), clientName(name), p_nosWebSocketClient(nullptr) , clientID(-1)
 {
 }
 
-void mzWebRTCClient::ConnectToServer(std::string fullAddres)
+void nosWebRTCClient::ConnectToServer(std::string fullAddres)
 {
-	p_mzWebSocketClient.reset(new mzWebSocketClient(fullAddres));
+	p_nosWebSocketClient.reset(new nosWebSocketClient(fullAddres));
 	RegisterWebSocketCallbacks();
 }
 
-EClientState mzWebRTCClient::GetCurrentState() const
+EClientState nosWebRTCClient::GetCurrentState() const
 {
 	return currentState;
 }
 
-const Peers& mzWebRTCClient::GetPeers() const
+const Peers& nosWebRTCClient::GetPeers() const
 {
 	return peers;
 }
 
-void mzWebRTCClient::SendMessageToServer(std::string&& message)
+void nosWebRTCClient::SendMessageToServer(std::string&& message)
 {
- 	p_mzWebSocketClient->PushData(std::move(message));
+ 	p_nosWebSocketClient->PushData(std::move(message));
 }
 
-const int mzWebRTCClient::GetID() const
+const int nosWebRTCClient::GetID() const
 {
 	return clientID;
 }
 
-void mzWebRTCClient::Update()
+void nosWebRTCClient::Update()
 {
-	if (p_mzWebSocketClient) {
-		p_mzWebSocketClient->Update();
+	if (p_nosWebSocketClient) {
+		p_nosWebSocketClient->Update();
 	}
 }
 
-void mzWebRTCClient::OnConnectionSuccesful()
+void nosWebRTCClient::OnConnectionSuccesful()
 {
 	currentState = eCONNECTED;
 
@@ -55,13 +55,13 @@ void mzWebRTCClient::OnConnectionSuccesful()
 		ConnectionSuccesfulCallback();
 }
 
-void mzWebRTCClient::OnMessageReceived(void* data, size_t length)
+void nosWebRTCClient::OnMessageReceived(void* data, size_t length)
 {
 	InterpretReceivedMessage();
 	MessageReceivedCallback(data, length);
 }
 
-void mzWebRTCClient::OnConnectionError()
+void nosWebRTCClient::OnConnectionError()
 {
 	currentState = eNOT_CONNECTED;
 	
@@ -69,7 +69,7 @@ void mzWebRTCClient::OnConnectionError()
 		ConnectionErrorCallback();
 }
 
-void mzWebRTCClient::OnConnectionClosed()
+void nosWebRTCClient::OnConnectionClosed()
 {
 	currentState = eNOT_CONNECTED;
 
@@ -77,82 +77,82 @@ void mzWebRTCClient::OnConnectionClosed()
 		ConnectionClosedCallback();
 }
 
-void mzWebRTCClient::InterpretReceivedMessage()
+void nosWebRTCClient::InterpretReceivedMessage()
 {
-	if (!p_mzWebSocketClient) {
+	if (!p_nosWebSocketClient) {
 		return;
 	}
 
-	std::string currentMessage = p_mzWebSocketClient->GetReceivedDataAsString();
+	std::string currentMessage = p_nosWebSocketClient->GetReceivedDataAsString();
 	if (!currentMessage.empty()) {
 		json jsonMessage = json::parse(currentMessage);
-		if (jsonMessage.contains(mzWebRTCJsonConfig::typeKey) && jsonMessage.contains(mzWebRTCJsonConfig::peerIDKey)) {
+		if (jsonMessage.contains(nosWebRTCJsonConfig::typeKey) && jsonMessage.contains(nosWebRTCJsonConfig::peerIDKey)) {
 			// Offers/answers has sdp key 
-			if (jsonMessage.contains(mzWebRTCJsonConfig::sdpKey)) {
-				if (jsonMessage[mzWebRTCJsonConfig::typeKey] == mzWebRTCJsonConfig::typeOffer && SDPOfferReceivedCallback) {
+			if (jsonMessage.contains(nosWebRTCJsonConfig::sdpKey)) {
+				if (jsonMessage[nosWebRTCJsonConfig::typeKey] == nosWebRTCJsonConfig::typeOffer && SDPOfferReceivedCallback) {
 					SDPOfferReceivedCallback(std::move(currentMessage));
 				}
-				else if (jsonMessage[mzWebRTCJsonConfig::typeKey] == mzWebRTCJsonConfig::typeAnswer && SDPAnswerReceivedCallback) {
+				else if (jsonMessage[nosWebRTCJsonConfig::typeKey] == nosWebRTCJsonConfig::typeAnswer && SDPAnswerReceivedCallback) {
 					SDPAnswerReceivedCallback(std::move(currentMessage));
 				}
 			}
-			else if (jsonMessage.contains(mzWebRTCJsonConfig::candidateKey)) {
+			else if (jsonMessage.contains(nosWebRTCJsonConfig::candidateKey)) {
 				ICECandidateReceivedCallback(std::move(currentMessage));
 			}
 		}
 	}
 }
 
-void mzWebRTCClient::ResetConnections()
+void nosWebRTCClient::ResetConnections()
 {
 	peers.clear();
 	currentState = EClientState::eNOT_CONNECTED;
 	clientID = -1;
 }
 
-void mzWebRTCClient::RegisterWebSocketCallbacks()
+void nosWebRTCClient::RegisterWebSocketCallbacks()
 {
-	if (!p_mzWebSocketClient)
+	if (!p_nosWebSocketClient)
 		return;
-	p_mzWebSocketClient->SetConnectionClosedCallback([this]() {this->OnConnectionClosed(); });
-	p_mzWebSocketClient->SetConnectionErrorCallback([this]() {this->OnConnectionError(); });
-	p_mzWebSocketClient->SetConnectionSuccesfulCallback([this]() {this->OnConnectionSuccesful(); });
-	p_mzWebSocketClient->SetRawMessageReceivedCallback([this](void* data, size_t length) {this->OnMessageReceived(data, length); });
+	p_nosWebSocketClient->SetConnectionClosedCallback([this]() {this->OnConnectionClosed(); });
+	p_nosWebSocketClient->SetConnectionErrorCallback([this]() {this->OnConnectionError(); });
+	p_nosWebSocketClient->SetConnectionSuccesfulCallback([this]() {this->OnConnectionSuccesful(); });
+	p_nosWebSocketClient->SetRawMessageReceivedCallback([this](void* data, size_t length) {this->OnMessageReceived(data, length); });
 }
 
 #pragma region Set Callbacks
 
-void mzWebRTCClient::SetConnectionErrorCallback(const std::function<void()> connectionErr)
+void nosWebRTCClient::SetConnectionErrorCallback(const std::function<void()> connectionErr)
 {
 	ConnectionErrorCallback = connectionErr;
 }
 
-void mzWebRTCClient::SetRawMessageReceivedCallback(const std::function<void(void*, size_t)> messageReceived)
+void nosWebRTCClient::SetRawMessageReceivedCallback(const std::function<void(void*, size_t)> messageReceived)
 {
 	MessageReceivedCallback = messageReceived;
 }
 
-void mzWebRTCClient::SetConnectionSuccesfulCallback(const std::function<void()> connectionSuccesful)
+void nosWebRTCClient::SetConnectionSuccesfulCallback(const std::function<void()> connectionSuccesful)
 {
 	ConnectionSuccesfulCallback = connectionSuccesful;
 }
 
-void mzWebRTCClient::SetConnectionClosedCallback(const std::function<void()> connectionClosed)
+void nosWebRTCClient::SetConnectionClosedCallback(const std::function<void()> connectionClosed)
 {
 	ConnectionClosedCallback = connectionClosed;
 }
 
-void mzWebRTCClient::SetSDPOfferReceivedCallback(std::function<void(std::string&&)> sdpOfferReceived)
+void nosWebRTCClient::SetSDPOfferReceivedCallback(std::function<void(std::string&&)> sdpOfferReceived)
 {
 	SDPOfferReceivedCallback = sdpOfferReceived;
 }
 
-void mzWebRTCClient::SetSDPAnswerReceivedCallback(std::function<void(std::string&&)> sdpAnswerReceived)
+void nosWebRTCClient::SetSDPAnswerReceivedCallback(std::function<void(std::string&&)> sdpAnswerReceived)
 {
 	SDPAnswerReceivedCallback = sdpAnswerReceived;
 }
 
-void mzWebRTCClient::SetICECandidateReceivedCallback(std::function<void(std::string&&)> iceCandidateReceived)
+void nosWebRTCClient::SetICECandidateReceivedCallback(std::function<void(std::string&&)> iceCandidateReceived)
 {
 	ICECandidateReceivedCallback = iceCandidateReceived;
 }

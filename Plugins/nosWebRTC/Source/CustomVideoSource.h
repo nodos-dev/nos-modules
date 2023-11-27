@@ -41,10 +41,10 @@
 #include "media/base/adapted_video_track_source.h"
 #include "rtc_base/ref_counter.h"
 
-class mzCustomVideoSource : public rtc::AdaptedVideoTrackSource {
+class nosCustomVideoSource : public rtc::AdaptedVideoTrackSource {
 public:
-    mzCustomVideoSource();
-	virtual ~mzCustomVideoSource() = default;
+    nosCustomVideoSource();
+	virtual ~nosCustomVideoSource() = default;
 
 	void PushFrame(webrtc::VideoFrame& frame);
 

@@ -1,6 +1,6 @@
-// Copyright MediaZ AS. All Rights Reserved.
+// Copyright Nodos AS. All Rights Reserved.
 
-#include <MediaZ/Helpers.hpp>
+#include <Nodos/Helpers.hpp>
 #include "Builtins_generated.h"
 #include <AppService_generated.h>
 
@@ -11,17 +11,17 @@
 
 #include <mutex>
 
-namespace mz::utilities
+namespace nos::utilities
 {
-MZ_REGISTER_NAME(Linear2SRGB_Pass);
-MZ_REGISTER_NAME(Linear2SRGB_Shader);
-MZ_REGISTER_NAME(Path);
-MZ_REGISTER_NAME(In);
-MZ_REGISTER_NAME_SPACED(Mz_Utilities_WriteImage, "mz.utilities.WriteImage")
+NOS_REGISTER_NAME(Linear2SRGB_Pass);
+NOS_REGISTER_NAME(Linear2SRGB_Shader);
+NOS_REGISTER_NAME(Path);
+NOS_REGISTER_NAME(In);
+NOS_REGISTER_NAME_SPACED(Nos_Utilities_WriteImage, "nos.utilities.WriteImage")
 
 struct WriteImage : NodeContext {
     std::filesystem::path Path;
-    mzResourceShareInfo Input;
+    nosResourceShareInfo Input;
     std::atomic_bool WriteRequested = false;
     std::condition_variable CV;
     std::mutex Mutex;
@@ -29,7 +29,7 @@ struct WriteImage : NodeContext {
     std::atomic_bool Write = false;
     std::atomic_bool ShouldStop = false;
 
-    WriteImage(mzFbNode const* node) : NodeContext(node){
+    WriteImage(nosFbNode const* node) : NodeContext(node){
         Worker = std::thread([this] {
             while (!ShouldStop) {
                 std::unique_lock<std::mutex> lock(Mutex);
@@ -44,8 +44,8 @@ struct WriteImage : NodeContext {
         });
         for (auto* pin : *node->pins()) {
             auto* pinData = pin->data();
-            mzBuffer value = { .Data = (void*)pinData->data(), .Size = pinData->size() };
-            OnPinValueChanged(mzEngine.GetName(pin->name()->c_str()), *pin->id(), &value);
+            nosBuffer value = { .Data = (void*)pinData->data(), .Size = pinData->size() };
+            OnPinValueChanged(nosEngine.GetName(pin->name()->c_str()), *pin->id(), &value);
         }
     }
 
@@ -61,23 +61,23 @@ struct WriteImage : NodeContext {
 		CV.notify_all();
 	}
 
-    void OnPinValueChanged(mz::Name pinName, mzUUID pinId, mzBuffer* value) override 
+    void OnPinValueChanged(nos::Name pinName, nosUUID pinId, nosBuffer* value) override 
     {
         std::unique_lock<std::mutex> lock(Mutex);
-		if (pinName == MZN_In)
+		if (pinName == NSN_In)
 			Input = DeserializeTextureInfo(value->Data);
-		else if (pinName == MZN_Path)
+		else if (pinName == NSN_Path)
 			Path = std::string((const char*)value->Data, value->Size);
 	}
 
-    mzResult BeginCopyTo(mzCopyInfo* copyInfo) override
+    nosResult BeginCopyTo(nosCopyInfo* copyInfo) override
     {
         copyInfo->ShouldSubmitAndWait = true;
         copyInfo->Stop = true;
-        return MZ_RESULT_SUCCESS;
+        return NOS_RESULT_SUCCESS;
     }
 
-    void EndCopyTo(mzCopyInfo* copyInfo) override
+    void EndCopyTo(nosCopyInfo* copyInfo) override
     {
         if (WriteRequested) {
             WriteRequested = false;
@@ -93,85 +93,85 @@ struct WriteImage : NodeContext {
                 std::filesystem::create_directories(path.parent_path());
         }
         catch (std::filesystem::filesystem_error& e) {
-            mzEngine.LogE("WriteImage - %s: %s", path.string().c_str(), e.what());
+            nosEngine.LogE("WriteImage - %s: %s", path.string().c_str(), e.what());
             return;
         }
-        mzEngine.LogI("WriteImage: Writing frame to file %s", path.string().c_str());
+        nosEngine.LogI("WriteImage: Writing frame to file %s", path.string().c_str());
 
         struct Captures
         {
-            mzResourceShareInfo SRGB;
-            mzResourceShareInfo Buf = {};
+            nosResourceShareInfo SRGB;
+            nosResourceShareInfo Buf = {};
             std::filesystem::path Path;
         } captures = Captures{ .SRGB = input,.Path = path };
 
-        captures.SRGB.Info.Texture.Format = MZ_FORMAT_R8G8B8A8_SRGB;
-        captures.SRGB.Info.Texture.Usage = mzImageUsage(MZ_IMAGE_USAGE_TRANSFER_SRC | MZ_IMAGE_USAGE_TRANSFER_DST);
-        mzEngine.Create(&captures.SRGB);
+        captures.SRGB.Info.Texture.Format = NOS_FORMAT_R8G8B8A8_SRGB;
+        captures.SRGB.Info.Texture.Usage = nosImageUsage(NOS_IMAGE_USAGE_TRANSFER_SRC | NOS_IMAGE_USAGE_TRANSFER_DST);
+        nosEngine.Create(&captures.SRGB);
 
-        mzCmd cmd;
-        mzEngine.Begin(&cmd);
-        mzEngine.Copy(cmd, &input, &captures.SRGB, nullptr);
-        mzEngine.Download(cmd, &captures.SRGB, &captures.Buf);
-        mzEngine.End(cmd);
+        nosCmd cmd;
+        nosEngine.Begin(&cmd);
+        nosEngine.Copy(cmd, &input, &captures.SRGB, nullptr);
+        nosEngine.Download(cmd, &captures.SRGB, &captures.Buf);
+        nosEngine.End(cmd);
 
-        if (auto buf2write = mzEngine.Map(&captures.Buf))
+        if (auto buf2write = nosEngine.Map(&captures.Buf))
             if (!stbi_write_png(captures.Path.string().c_str(), captures.SRGB.Info.Texture.Width, captures.SRGB.Info.Texture.Height, 4, buf2write, captures.SRGB.Info.Texture.Width * 4))
-                mzEngine.LogE("WriteImage: Unable to write frame to file", "");
+                nosEngine.LogE("WriteImage: Unable to write frame to file", "");
             else
-                mzEngine.LogI("WriteImage: Wrote frame to file %s", captures.Path.string().c_str());
-        mzEngine.Destroy(&captures.Buf);
-        mzEngine.Destroy(&captures.SRGB);
+                nosEngine.LogI("WriteImage: Wrote frame to file %s", captures.Path.string().c_str());
+        nosEngine.Destroy(&captures.Buf);
+        nosEngine.Destroy(&captures.SRGB);
     }
 
-	static mzResult GetShaders(size_t* outCount, mzShaderInfo* outShaders)
+	static nosResult GetShaders(size_t* outCount, nosShaderInfo* outShaders)
 	{
 		*outCount = 1;
 		if (!outShaders)
-			return MZ_RESULT_SUCCESS;
-        outShaders[0] = {.Key = MZN_Linear2SRGB_Shader, .Source = {.SpirvBlob = {(void*)Linear2SRGB_frag_spv, sizeof(Linear2SRGB_frag_spv) }}};
-		return MZ_RESULT_SUCCESS;
+			return NOS_RESULT_SUCCESS;
+        outShaders[0] = {.Key = NSN_Linear2SRGB_Shader, .Source = {.SpirvBlob = {(void*)Linear2SRGB_frag_spv, sizeof(Linear2SRGB_frag_spv) }}};
+		return NOS_RESULT_SUCCESS;
 	}
 
-    static mzResult GetPasses(size_t* count, mzPassInfo* passes)
+    static nosResult GetPasses(size_t* count, nosPassInfo* passes)
     {
         *count = 1;
         if (!passes)
-            return MZ_RESULT_SUCCESS;
+            return NOS_RESULT_SUCCESS;
 
-        *passes = mzPassInfo{
-            .Key = MZN_Linear2SRGB_Pass,
-            .Shader = MZN_Linear2SRGB_Shader,
+        *passes = nosPassInfo{
+            .Key = NSN_Linear2SRGB_Pass,
+            .Shader = NSN_Linear2SRGB_Shader,
             .Blend = 0,
             .MultiSample = 1,
         };
 
-        return MZ_RESULT_SUCCESS;
+        return NOS_RESULT_SUCCESS;
     }
 
-    static mzResult GetFunctions(size_t* count, mzName* names, mzPfnNodeFunctionExecute* fns)
+    static nosResult GetFunctions(size_t* count, nosName* names, nosPfnNodeFunctionExecute* fns)
     {
         *count = 1;
         if (!names || !fns)
-            return MZ_RESULT_SUCCESS;
+            return NOS_RESULT_SUCCESS;
 
-        *names = MZ_NAME_STATIC("WriteImage_Save");
-        *fns = [](void* ctx, const mzNodeExecuteArgs* nodeArgs, const mzNodeExecuteArgs* functionArgs)
+        *names = NOS_NAME_STATIC("WriteImage_Save");
+        *fns = [](void* ctx, const nosNodeExecuteArgs* nodeArgs, const nosNodeExecuteArgs* functionArgs)
         {
             auto writeImage = (WriteImage*)ctx;
             auto ids = GetPinIds(nodeArgs);
             writeImage->WriteRequested = true;
-            mzEngine.SchedulePin(ids[MZN_In], {0, 1});
-            mzEngine.LogI("WriteImage: Write requested");
+            nosEngine.SchedulePin(ids[NSN_In], {0, 1});
+            nosEngine.LogI("WriteImage: Write requested");
         };
 
-        return MZ_RESULT_SUCCESS;
+        return NOS_RESULT_SUCCESS;
     }
 };
 
-void RegisterWriteImage(mzNodeFunctions* fn)
+void RegisterWriteImage(nosNodeFunctions* fn)
 {
-    MZ_BIND_NODE_CLASS(MZN_Mz_Utilities_WriteImage, WriteImage, fn);
+    NOS_BIND_NODE_CLASS(NSN_Nos_Utilities_WriteImage, WriteImage, fn);
 }
 
-} // namespace mz
+} // namespace nos

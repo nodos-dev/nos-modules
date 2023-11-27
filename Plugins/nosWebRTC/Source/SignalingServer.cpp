@@ -1,20 +1,20 @@
-#include "mzSignalingServer.h"
-#include "mzWebRTCJsonConfig.h"
+#include "SignalingServer.h"
+#include "WebRTCJsonConfig.h"
 #include "nlohmann/json.hpp"
 #include <iostream>
 using json = nlohmann::json;
-mzSignalingServer::mzSignalingServer()
+nosSignalingServer::nosSignalingServer()
 {
-	//p_streamerSocket.reset(new mzWebSocketServer(1919));
-	//p_playerSocket.reset(new mzWebSocketServer(7070));
+	//p_streamerSocket.reset(new nosWebSocketServer(1919));
+	//p_playerSocket.reset(new nosWebSocketServer(7070));
 }
-mzSignalingServer::~mzSignalingServer()
+nosSignalingServer::~nosSignalingServer()
 {
 	p_ServerSocket.reset();
 }
-void mzSignalingServer::StartServer(int streamerPort, int playerPort)
+void nosSignalingServer::StartServer(int streamerPort, int playerPort)
 {
-	p_ServerSocket.reset(new mzWebSocketServer({ streamerPort,playerPort }));
+	p_ServerSocket.reset(new nosWebSocketServer({ streamerPort,playerPort }));
 
 	p_ServerSocket->SetClientConnectedCallback(streamerPort, [this](int id, std::string path) {this->OnNewStreamerConnected(id, path); });
 	p_ServerSocket->SetClientConnectedCallback(playerPort, [this](int id, std::string path) {this->OnNewPlayerConnected(id, path); });
@@ -26,61 +26,61 @@ void mzSignalingServer::StartServer(int streamerPort, int playerPort)
 	p_ServerSocket->SetServerDestroyedCallback([this]() {this->OnServerDestroyed(); });
 }
 
-void mzSignalingServer::Update()
+void nosSignalingServer::Update()
 {
 	if (p_ServerSocket) {
 		p_ServerSocket->Update();
 	}
 }
 
-void mzSignalingServer::StopServer()
+void nosSignalingServer::StopServer()
 {
 	p_ServerSocket.reset();
 }
 
-void mzSignalingServer::SetServerCreatedCallback(const std::function<void()> callback)
+void nosSignalingServer::SetServerCreatedCallback(const std::function<void()> callback)
 {
 	ServerCreatedCallback = callback;
 }
 
-void mzSignalingServer::SetServerDestroyedCallback(const std::function<void()> callback)
+void nosSignalingServer::SetServerDestroyedCallback(const std::function<void()> callback)
 {
 	ServerDestroyedCallback = callback;
 }
 
-void mzSignalingServer::SetStreamerConnectedCallback(std::function<void(int, std::string)> callback)
+void nosSignalingServer::SetStreamerConnectedCallback(std::function<void(int, std::string)> callback)
 {
 	StreamerConnectedCallback = callback;
 }
 
-void mzSignalingServer::SetStreamerDisconnectedCallback(std::function<void(int, std::string)> callback)
+void nosSignalingServer::SetStreamerDisconnectedCallback(std::function<void(int, std::string)> callback)
 {
 	StreamerDisconnectedCallback = callback;
 }
 
-void mzSignalingServer::SetPlayerConnectedCallback(std::function<void(int, std::string)> callback)
+void nosSignalingServer::SetPlayerConnectedCallback(std::function<void(int, std::string)> callback)
 {
 	PlayerConnectedCallback = callback;
 }
 
-void mzSignalingServer::SetPlayerDisconnectedCallback(std::function<void(int, std::string)> callback)
+void nosSignalingServer::SetPlayerDisconnectedCallback(std::function<void(int, std::string)> callback)
 {
 	PlayerDisconnectedCallback = callback;
 }
 
-void mzSignalingServer::OnServerCreated()
+void nosSignalingServer::OnServerCreated()
 {
 	if(ServerCreatedCallback)
 		ServerCreatedCallback();
 }
 
-void mzSignalingServer::OnServerDestroyed()
+void nosSignalingServer::OnServerDestroyed()
 {
 	if(ServerDestroyedCallback)
 		ServerDestroyedCallback();
 }
 
-void mzSignalingServer::OnNewStreamerConnected(int id, std::string path)
+void nosSignalingServer::OnNewStreamerConnected(int id, std::string path)
 {
 	if (streamerPathIDMap.contains(path)) {
 		//TODO: give warning to user because we will override old server on the same path from now on
@@ -92,7 +92,7 @@ void mzSignalingServer::OnNewStreamerConnected(int id, std::string path)
 	p_ServerSocket->SetNotifyOnClientMessage(id, [this, thePath = std::move(path), id](std::string&& message) {this->OnStreamerMessage(id, thePath, std::move(message)); });
 }
 
-void mzSignalingServer::OnStreamerDisconnected(int id, std::string path)
+void nosSignalingServer::OnStreamerDisconnected(int id, std::string path)
 {
 	if (streamerPathIDMap.contains(path)) {
 		streamerPathIDMap.erase(path);
@@ -102,7 +102,7 @@ void mzSignalingServer::OnStreamerDisconnected(int id, std::string path)
 	}
 }
 
-void mzSignalingServer::OnNewPlayerConnected(int id, std::string path)
+void nosSignalingServer::OnNewPlayerConnected(int id, std::string path)
 {
 	playerPathIDMap[path].push_back(id);
 	if (PlayerConnectedCallback) {
@@ -111,7 +111,7 @@ void mzSignalingServer::OnNewPlayerConnected(int id, std::string path)
 	p_ServerSocket->SetNotifyOnClientMessage(id, [this, thePath = std::move(path), id](std::string&& message) {this->OnPlayerMessage(id, thePath, std::move(message)); });
 }
 
-void mzSignalingServer::OnPlayerDisconnected(int id, std::string path)
+void nosSignalingServer::OnPlayerDisconnected(int id, std::string path)
 {
 	if (playerPathIDMap.contains(path)) {
 		auto it = std::find(playerPathIDMap[path].begin(), playerPathIDMap[path].end(), id);
@@ -126,7 +126,7 @@ void mzSignalingServer::OnPlayerDisconnected(int id, std::string path)
 
 //TODO: we may ensure the message is in correct format
 //but this is an internal server so additional work may not worth for now
-void mzSignalingServer::OnStreamerMessage(int id, std::string path, std::string message)
+void nosSignalingServer::OnStreamerMessage(int id, std::string path, std::string message)
 {
 	//First look for any player on the same path with the streamer
 	if (playerPathIDMap.contains(path)) {
@@ -139,9 +139,9 @@ void mzSignalingServer::OnStreamerMessage(int id, std::string path, std::string 
 			std::cerr << "Failed to parse streamer message: " << e.what() << std::endl;
 			return;
 		}
-		int playerID = std::stoi(jsonMessage[mzWebRTCJsonConfig::peerIDKey].get<std::string>());
+		int playerID = std::stoi(jsonMessage[nosWebRTCJsonConfig::peerIDKey].get<std::string>());
 		//Retrieve the playerId field of json
-		jsonMessage[mzWebRTCJsonConfig::peerIDKey] = std::to_string(id);
+		jsonMessage[nosWebRTCJsonConfig::peerIDKey] = std::to_string(id);
 
 
 		//Check if the playerID in the same path 
@@ -153,7 +153,7 @@ void mzSignalingServer::OnStreamerMessage(int id, std::string path, std::string 
 	}
 }
 
-void mzSignalingServer::OnPlayerMessage(int id, std::string path, std::string message)
+void nosSignalingServer::OnPlayerMessage(int id, std::string path, std::string message)
 {
 	//First look if there is a streamer on that path
 	if (streamerPathIDMap.contains(path)) {
@@ -166,7 +166,7 @@ void mzSignalingServer::OnPlayerMessage(int id, std::string path, std::string me
 			std::cerr << "Failed to parse streamer message: " << e.what() << std::endl;
 			return;
 		}
-		jsonMessage[mzWebRTCJsonConfig::peerIDKey] = std::to_string(id);
+		jsonMessage[nosWebRTCJsonConfig::peerIDKey] = std::to_string(id);
 		p_ServerSocket->SendMessageTo(streamerPathIDMap[path], std::move(jsonMessage.dump()));
 	}
 }

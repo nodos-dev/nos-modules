@@ -2,10 +2,10 @@
 #include <media/base/video_common.h>
 #include <api/video/video_frame.h>
 #include <api/media_stream_interface.h>
-#include "mzI420Buffer.h"
-class mzCustomVideoSink : public rtc::VideoSinkInterface<webrtc::VideoFrame> {
+#include "I420Buffer.h"
+class nosCustomVideoSink : public rtc::VideoSinkInterface<webrtc::VideoFrame> {
 public:
-	mzCustomVideoSink();
+	nosCustomVideoSink();
 	void SetOnFrameCallback(const std::function<void(const webrtc::VideoFrame&)>& callback);
 	// Inherited via VideoSinkInterface
 	void OnFrame(const webrtc::VideoFrame& frame) override;

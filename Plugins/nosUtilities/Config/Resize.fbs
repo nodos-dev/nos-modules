@@ -1,4 +1,4 @@
-namespace mz.fb;
+namespace nos.fb;
 
 enum ResizeMethod: uint
 {

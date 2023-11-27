@@ -1,8 +1,8 @@
-#include "mzWebSocketClient.h"
+#include "WebSocketClient.h"
 #include <iostream>
 #include <exception>
 
-mzWebSocketClient::mzWebSocketClient(const std::string fullIP)
+nosWebSocketClient::nosWebSocketClient(const std::string fullIP)
 {
 	try {
 		auto [_server, _port, _path] = ResolveAddres(fullIP);
@@ -16,13 +16,13 @@ mzWebSocketClient::mzWebSocketClient(const std::string fullIP)
 	}
 }
 
-mzWebSocketClient::mzWebSocketClient(const std::string server, const int _port, const std::string _path)
+nosWebSocketClient::nosWebSocketClient(const std::string server, const int _port, const std::string _path)
 	:serverAddres(server), port(_port), path(_path)
 {	
 	StartWebSocket();
 }
 
-mzWebSocketClient::~mzWebSocketClient()
+nosWebSocketClient::~nosWebSocketClient()
 {
  	shouldUpdate = false;
 	if (pContext) {
@@ -32,14 +32,14 @@ mzWebSocketClient::~mzWebSocketClient()
 
 //Not the most efficient way but does the job now
 //Also webrtc does not communicates with server very often
-void mzWebSocketClient::PushData(std::string&& message)
+void nosWebSocketClient::PushData(std::string&& message)
 {
 	message = std::string(LWS_PRE, ' ') + message;
 	sendQueue.push(std::move(message));
 }
 
 //We trust return value optimization for large datas
-std::string mzWebSocketClient::GetReceivedDataAsString()
+std::string nosWebSocketClient::GetReceivedDataAsString()
 {
 	if (receivedQueue.empty())
 		return std::string();
@@ -50,7 +50,7 @@ std::string mzWebSocketClient::GetReceivedDataAsString()
 }
 
 //Use this in a thread
-void mzWebSocketClient::Update()
+void nosWebSocketClient::Update()
 {
 	if (pContext) {
 		lws_service(pContext, 0);
@@ -58,27 +58,27 @@ void mzWebSocketClient::Update()
 	}
 }
 
-void mzWebSocketClient::SetConnectionErrorCallback(const std::function<void()>& connectionErr)
+void nosWebSocketClient::SetConnectionErrorCallback(const std::function<void()>& connectionErr)
 {
 	ConnectionErrorCallback = connectionErr;
 }
 
-void mzWebSocketClient::SetRawMessageReceivedCallback(const std::function<void(void*, size_t)>& messageReceived)
+void nosWebSocketClient::SetRawMessageReceivedCallback(const std::function<void(void*, size_t)>& messageReceived)
 {
 	MessageReceivedCallback = messageReceived;
 }
 
-void mzWebSocketClient::SetConnectionSuccesfulCallback(const std::function<void()>& connectionSuccesful)
+void nosWebSocketClient::SetConnectionSuccesfulCallback(const std::function<void()>& connectionSuccesful)
 {
 	ConnectionSuccesfulCallback = connectionSuccesful;
 }
 
-void mzWebSocketClient::SetConnectionClosedCallback(const std::function<void()>& connectionClosed)
+void nosWebSocketClient::SetConnectionClosedCallback(const std::function<void()>& connectionClosed)
 {
 	ConnectionClosedCallback = connectionClosed;
 }
 
-void mzWebSocketClient::Send()
+void nosWebSocketClient::Send()
 {
 	if (sendQueue.empty())
 		return;
@@ -89,12 +89,12 @@ void mzWebSocketClient::Send()
 		int sent = lws_write(pWSI, (unsigned char*)&message[LWS_PRE], message.size() - LWS_PRE, (lws_write_protocol)LWS_WRITE_TEXT);
 		remainingDataToSent -= sent;
 		if (remainingDataToSent > 0) {
-			std::cout << "Data partially send in mzWebSocketClient" << std::endl;
+			std::cout << "Data partially send in nosWebSocketClient" << std::endl;
 		}
 	}
 }
 
-void mzWebSocketClient::StartWebSocket()
+void nosWebSocketClient::StartWebSocket()
 {
 	//Library handles http handshake?
 	pContext = nullptr;
@@ -137,7 +137,7 @@ void mzWebSocketClient::StartWebSocket()
 	connect_info.port = port; // Port of the WebSocket server
 	connect_info.path = path.c_str(); // The path of the WebSocket resource
 	connect_info.host = serverAddres.c_str(); // Set the hostname
-	connect_info.origin = "mediaZ"; // Origin might be used by server for security checks to prevent possible attacks
+	connect_info.origin = "Nodos"; // Origin might be used by server for security checks to prevent possible attacks
 	connect_info.protocol = Protocols[0].name; // The first protocol we've defined
 
 	pWSI = lws_client_connect_via_info(&connect_info);
@@ -146,7 +146,7 @@ void mzWebSocketClient::StartWebSocket()
 
 }
 
-std::tuple<std::string, int, std::string> mzWebSocketClient::ResolveAddres(std::string fullAddress)
+std::tuple<std::string, int, std::string> nosWebSocketClient::ResolveAddres(std::string fullAddress)
 {
 	std::string server;
 	int port;
@@ -174,7 +174,7 @@ std::tuple<std::string, int, std::string> mzWebSocketClient::ResolveAddres(std::
 }
 
 //TODO: make it so that it can handle large chunks
-void mzWebSocketClient::ProcessReceivedData(void* data, size_t length)
+void nosWebSocketClient::ProcessReceivedData(void* data, size_t length)
 {
 	//TODO: make it safer
 	std::string strData = std::string(reinterpret_cast<char *>(data), length);
@@ -184,7 +184,7 @@ void mzWebSocketClient::ProcessReceivedData(void* data, size_t length)
 static int mz_ws_callback(struct lws* WSI, enum lws_callback_reasons Reason, void* User, void* In, size_t Len)
 {
 	struct lws_context* Context = lws_get_context(WSI);
-	mzWebSocketClient* Socket = (mzWebSocketClient*)lws_context_user(Context);
+	nosWebSocketClient* Socket = (nosWebSocketClient*)lws_context_user(Context);
 	switch (Reason)
 	{
 		case LWS_CALLBACK_CLIENT_ESTABLISHED:

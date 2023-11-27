@@ -1,1 +1,1 @@
-add_folder_as_subsystem_project("mzTestSubsystem" "" "${CMAKE_CURRENT_SOURCE_DIR}/Include")
+add_folder_as_subsystem_project("nosTestSubsystem" "" "${CMAKE_CURRENT_SOURCE_DIR}/Include")

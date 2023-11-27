@@ -1,7 +1,7 @@
 {
     "info": {
         "id": {
-            "name": "mz.WebRTC",
+            "name": "nos.WebRTC",
             "version": "1.0.0"
         },
         "description": "WebRTC Nodes",
@@ -13,7 +13,7 @@
         "WebRTCSignalingServer.mzdef"
     ],
     "custom_types": [],
-    "binary_path": "../Binaries/mzWebRTC",
+    "binary_path": "../Binaries/nosWebRTC",
     "associated_nodes": [
       {
         "category": "WebRTC|Streamer",

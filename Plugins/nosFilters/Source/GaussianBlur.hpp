@@ -1,7 +1,7 @@
-// Copyright MediaZ AS. All Rights Reserved.
+// Copyright Nodos AS. All Rights Reserved.
 
 #pragma once
 
-#include <MediaZ/Helpers.hpp>
+#include <Nodos/Helpers.hpp>
 
-void RegisterGaussianBlur(mzNodeFunctions* out);
+void RegisterGaussianBlur(nosNodeFunctions* out);

@@ -1,14 +1,14 @@
-#include "mzWebSocketClient.h"
-#include "mzWebSocketServer.h"
-#include "mzWebRTCManager.h"
+#include "WebSocketClient.h"
+#include "WebSocketServer.h"
+#include "WebRTCManager.h"
 #include "rtc_base/ssl_adapter.h"
 #include "rtc_base/string_utils.h"  // For ToUtf8
 #include "rtc_base/win32_socket_init.h"
 #include "rtc_base/win32_socket_init.h"
 #include "rtc_base/win32_socket_server.h"
 #include <iostream>
-#include "mzSignalingServer.h"
-mzSignalingServer* server;
+#include "SignalingServer.h"
+nosSignalingServer* server;
 int id = -1;
 
 void PlayerConnected(int id, std::string path) {
@@ -27,7 +27,7 @@ void StreamerDisconnected(int id, std::string path) {
 }
 
 int main() {
-	server = new mzSignalingServer();
+	server = new nosSignalingServer();
 	server->SetPlayerConnectedCallback(PlayerConnected);
 	server->SetPlayerDisconnectedCallback(PlayerDisconnected);
 	server->SetStreamerConnectedCallback(StreamerConnected);

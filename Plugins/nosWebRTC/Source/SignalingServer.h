@@ -1,5 +1,5 @@
 #pragma once
-#include "mzWebSocketServer.h"
+#include "WebSocketServer.h"
 
 /*				 ___________________________________________
 				|			SIGNALING SERVER				|
@@ -17,10 +17,10 @@
 	Therefore we need to hold 
 */
 
-class mzSignalingServer {
+class nosSignalingServer {
 public:
-	mzSignalingServer();
-	~mzSignalingServer();
+	nosSignalingServer();
+	~nosSignalingServer();
 
 	void StartServer(int playerPort, int streamerPort);
 	void Update();
@@ -45,7 +45,7 @@ private:
 
 	void OnPlayerMessage(int id, std::string path, std::string message);
 
-	std::unique_ptr<mzWebSocketServer> p_ServerSocket;
+	std::unique_ptr<nosWebSocketServer> p_ServerSocket;
 	
 	std::unordered_map<std::string, int> streamerPathIDMap;
 	std::unordered_map<std::string, std::vector<int>> playerPathIDMap;

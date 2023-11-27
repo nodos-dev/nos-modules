@@ -1,6 +1,6 @@
 # Plugins
 
-This folder contains the plugins that will be distributed with MediaZ.
+This folder contains the plugins that will be distributed with Nodos.
 
 ## Build Instructions
 ```bash
@@ -26,4 +26,4 @@ SomePlugin/
 
 ## Current Plugin SDK Status
 
-MediaZ Plugin SDK is active in development. It's interface is not stable and contains references to C++ standard library. 
+Nodos Plugin SDK is active in development. It's interface is not stable and contains references to C++ standard library. 

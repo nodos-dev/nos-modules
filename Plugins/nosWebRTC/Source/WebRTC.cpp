@@ -1,24 +1,24 @@
-#include <MediaZ/PluginAPI.h>
+#include <Nodos/PluginAPI.h>
 #include <Builtins_generated.h>
-#include <MediaZ/Helpers.hpp>
+#include <Nodos/Helpers.hpp>
 #include <AppService_generated.h>
 #include <AppEvents_generated.h>
 
-MZ_INIT();
-void RegisterWebRTCPlayer(mzNodeFunctions* outFunctions);
-void RegisterWebRTCStreamer(mzNodeFunctions* outFunctions);
-void RegisterWebRTCSignalingServer(mzNodeFunctions* outFunctions);
+NOS_INIT();
+void RegisterWebRTCPlayer(nosNodeFunctions* outFunctions);
+void RegisterWebRTCStreamer(nosNodeFunctions* outFunctions);
+void RegisterWebRTCSignalingServer(nosNodeFunctions* outFunctions);
 extern "C"
 {
-	MZAPI_ATTR mzResult MZAPI_CALL mzExportNodeFunctions(size_t* outCount, mzNodeFunctions** outFunctions) {
+	NOSAPI_ATTR nosResult NOSAPI_CALL nosExportNodeFunctions(size_t* outCount, nosNodeFunctions** outFunctions) {
 		*outCount = (size_t)(3);
 		if (!outFunctions)
-			return MZ_RESULT_SUCCESS;
+			return NOS_RESULT_SUCCESS;
 
 		RegisterWebRTCStreamer(outFunctions[0]);
 		RegisterWebRTCPlayer(outFunctions[1]);
 		RegisterWebRTCSignalingServer(outFunctions[2]);
 
-		return MZ_RESULT_SUCCESS;
+		return NOS_RESULT_SUCCESS;
 	}
 }

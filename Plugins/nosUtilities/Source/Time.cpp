@@ -1,32 +1,32 @@
-#include <MediaZ/Helpers.hpp>
+#include <Nodos/Helpers.hpp>
 
-namespace mz::utilities
+namespace nos::utilities
 {
-MZ_REGISTER_NAME(Seconds);
-MZ_REGISTER_NAME(Time_Pass);
-MZ_REGISTER_NAME(Time_Shader);
-MZ_REGISTER_NAME_SPACED(Mz_Utilities_Time, "mz.utilities.Time")
+NOS_REGISTER_NAME(Seconds);
+NOS_REGISTER_NAME(Time_Pass);
+NOS_REGISTER_NAME(Time_Shader);
+NOS_REGISTER_NAME_SPACED(Nos_Utilities_Time, "nos.utilities.Time")
 struct TimeNodeContext : NodeContext
 {
-	TimeNodeContext(mzFbNode const* node) : NodeContext(node) {}
+	TimeNodeContext(nosFbNode const* node) : NodeContext(node) {}
 
-	mzResult ExecuteNode(const mzNodeExecuteArgs* args) override
+	nosResult ExecuteNode(const nosNodeExecuteArgs* args) override
 	{
 		auto pin = GetPinValues(args);
-		auto sec = GetPinValue<float>(pin, MZN_Seconds);
+		auto sec = GetPinValue<float>(pin, NSN_Seconds);
 		float time = (args->DeltaSeconds.x * frameCount++) / (double)args->DeltaSeconds.y;
-		mzEngine.SetPinValue(args->PinIds[0], { .Data = &time, .Size = sizeof(float) });
-		return MZ_RESULT_SUCCESS;
+		nosEngine.SetPinValue(args->PinIds[0], { .Data = &time, .Size = sizeof(float) });
+		return NOS_RESULT_SUCCESS;
 	}
 
 	uint64_t frameCount = 0;
 };
 
 
-void RegisterTime(mzNodeFunctions* fn)
+void RegisterTime(nosNodeFunctions* fn)
 {
-	MZ_BIND_NODE_CLASS(MZN_Mz_Utilities_Time, TimeNodeContext, fn);
-	// functions["mz.CalculateNodalPoint"].EntryPoint = [](mz::Args& args, void* ctx){
+	NOS_BIND_NODE_CLASS(NSN_Nos_Utilities_Time, TimeNodeContext, fn);
+	// functions["nos.CalculateNodalPoint"].EntryPoint = [](nos::Args& args, void* ctx){
 	// 	auto pos = args.Get<glm::dvec3>("Camera Position");
 	// 	auto rot = args.Get<glm::dvec3>("Camera Orientation");
 	// 	auto sca = args.Get<f64>("Nodal Offset");
@@ -40,4 +40,4 @@ void RegisterTime(mzNodeFunctions* fn)
 	// };
 }
 
-} // namespace mz
+} // namespace nos

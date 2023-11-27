@@ -7,7 +7,7 @@ import fnmatch
 import json
 from subprocess import PIPE, CompletedProcess, run, call, Popen
 
-parser = argparse.ArgumentParser(description="Generate releases for MZ Plugin Bundle")
+parser = argparse.ArgumentParser(description="Generate releases for NOS Plugin Bundle")
 
 subparsers = parser.add_subparsers(dest="command", help="Subcommands")
 
@@ -75,28 +75,28 @@ def custom_run(args, dry_run):
 
 
 def get_plugin_api_version():
-    sdk_dir = os.getenv("MZ_SDK_DIR")
+    sdk_dir = os.getenv("NODOS_SDK_DIR")
     if sdk_dir is None or sdk_dir == "":
-        logger.error("MZ_SDK_DIR is not set.")
+        logger.error("NODOS_SDK_DIR is not set.")
         exit(1)
-    mz_plugin_api_h = os.path.join(sdk_dir, "include", "MediaZ", "PluginAPI.h")
-    if not os.path.exists(mz_plugin_api_h):
-        logger.error("MZ_SDK_DIR is not set correctly.")
+    nos_plugin_api_h = os.path.join(sdk_dir, "include", "Nodos", "PluginAPI.h")
+    if not os.path.exists(nos_plugin_api_h):
+        logger.error("NODOS_SDK_DIR is not set correctly.")
         exit(1)
-    with open(mz_plugin_api_h, "r") as f:
+    with open(nos_plugin_api_h, "r") as f:
         major = None
         minor = None
         patch = None
         for line in f.readlines():
             # 👏👏👏
-            if line.startswith("#define MZ_PLUGIN_API_VERSION_MAJOR"):
+            if line.startswith("#define NOS_PLUGIN_API_VERSION_MAJOR"):
                 major = int(line.split(" ")[-1])
-            elif line.startswith("#define MZ_PLUGIN_API_VERSION_MINOR"):
+            elif line.startswith("#define NOS_PLUGIN_API_VERSION_MINOR"):
                 minor = int(line.split(" ")[-1])
-            elif line.startswith("#define MZ_PLUGIN_API_VERSION_PATCH"):
+            elif line.startswith("#define NOS_PLUGIN_API_VERSION_PATCH"):
                 patch = int(line.split(" ")[-1])
         if major is None or minor is None or patch is None:
-            logger.error("Failed to parse MZ_PLUGIN_API_VERSION")
+            logger.error("Failed to parse NOS_PLUGIN_API_VERSION")
             exit(1)
         return {"major": major, "minor": minor, "patch": patch}
 
@@ -173,7 +173,7 @@ def upload_releases(repo_url, org_name, repo_name, cloned_release_repo, dry_run)
     logger.debug(f"Found zip files: {zip_files}")
     logger.info(f"GitHub Release: Pushing release artifacts to repo {repo_org_name}")
     artifacts = zip_files
-    # https://github.com/mediaz/mediaz/releases/download/v0.1.0.b1769/mediaZ-SDK-v0.1.0.b1769.zip
+    # https://github.com/mediaz/mediaz/releases/download/v0.1.0.b1769/Nodos-SDK-v0.1.0.b1769.zip
     for artifact in artifacts:
         os.chdir(cloned_release_repo)
 
