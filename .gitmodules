@@ -5,11 +5,11 @@
 	path = Plugins/Shaders
 	url = https://github.com/mediaz/shaders
 [submodule "mzCNN/External/cnn-models"]
-	path = Plugins/mzCNN/External/cnn-models
+	path = Plugins/nosCNN/External/cnn-models
 	url = https://github.com/mediaz/cnn-models.git
 [submodule "mzWebRTC/External"]
-	path = Plugins/mzWebRTC/External
+	path = Plugins/nosWebRTC/External
 	url = https://github.com/mediaz/webRTC-builds.git
 [submodule "Subsystems/mzVulkanSubsystem/External/mzVulkan"]
-	path = Subsystems/mzVulkanSubsystem/External/mzVulkan
+	path = Subsystems/nosVulkanSubsystem/External/nosVulkan
 	url = https://github.com/mediaz/mzVulkan.git
