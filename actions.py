@@ -7,7 +7,7 @@ import fnmatch
 import json
 from subprocess import PIPE, CompletedProcess, run, call, Popen, check_output
 
-parser = argparse.ArgumentParser(description="Plugin Bundle Release Tool")
+parser = argparse.ArgumentParser(description="Modules Release Tool")
 
 parser.add_argument('--cloned-release-repo-dir',
                     action='store',
@@ -44,18 +44,13 @@ parser.add_argument('--dry-run',
                     help="Dry run, do not upload anything.",
                     default=False)
 
-parser.add_argument('--plugins-file', 
-                    action='store',
-                    default="plugins.json",
-                    help="The path to the JSON file that contains the list of plugins to release. Default: plugins.json")
-
 parser.add_argument('--build-all',
                     action='store_true',
                     required=False,
                     default=False,
-                    help="Build all plugins.",)
+                    help="Build all modules.",)
 
-PLUGINS = {}
+MODULES = {}
 
 def custom_run(args, dry_run):
     if dry_run:
@@ -106,12 +101,12 @@ def get_list_of_changed_files_between(prev_tag, cur_tag):
 
 if __name__ == "__main__":
     logger.remove()
-    logger.add(sys.stdout, format="<green>[Plugin Bundle Release Tool]</green> <level>{time:HH:mm:ss.SSS}</level> <level>{level}</level> <level>{message}</level>")
+    logger.add(sys.stdout, format="<green>[Modules Release Tool]</green> <level>{time:HH:mm:ss.SSS}</level> <level>{level}</level> <level>{message}</level>")
 
     args = parser.parse_args()
 
-    with open(args.plugins_file, "r") as f:
-        PLUGINS = json.load(f)
+    with open(f"./modules.json", "r") as f:
+        MODULES = json.load(f)
 
     logger.info(f"Target: {args.repo_url}")
     logger.info(f"Build number: {args.build_number}")
@@ -130,53 +125,56 @@ if __name__ == "__main__":
     if os.path.exists("./Releases"):
         shutil.rmtree("./Releases")
 
-    plugins_to_release = set()
+    modules_to_release = set()
     if args.build_all:
-        plugins_to_release = set(PLUGINS.keys())
+        for type, modules in MODULES:
+            modules_to_release.update(modules.keys())
     else:
         latest_tag = get_latest_release_tag()
         logger.info(f"Latest release tag: {latest_tag}")
         if latest_tag is None:
-            logger.info("Including all plugins in the release")
-            plugins_to_release = set(PLUGINS.keys())
+            logger.info("Including all modules in the release")
+            for type, modules in MODULES:
+                modules_to_release.update(modules.keys())
         else:
             changed_files = get_list_of_changed_files_between(latest_tag, "HEAD")
             logger.debug(f"Changed files: {changed_files}")
-            for plugin_name, plugin_info in PLUGINS.items():
-                for dep in plugin_info["deps"]:
-                    for changed_file in changed_files:
-                        if fnmatch.fnmatch(changed_file, dep):
-                            plugins_to_release.add(plugin_name)
-                            break
+            for type, modules in MODULES.items():
+                for module_name, module_info in modules.items():
+                    for dep in module_info["deps"]:
+                        for changed_file in changed_files:
+                            if fnmatch.fnmatch(changed_file, dep):
+                                modules_to_release.add(module_name)
+                                break
 
-    if len(plugins_to_release) == 0:
-        logger.info("None of the plugins have changed. No need to release.")
+    if len(modules_to_release) == 0:
+        logger.info("None of the modules have changed. No need to release.")
         exit(0)
 
-    logger.info(f"Plugins to release: {plugins_to_release}")
+    logger.info(f"Modules to release: {modules_to_release}")
 
     # Run python release.py --gh-release-repo="{args.gh_release_repo}" make --build-number="{args.build_number}"  
-    #       --release-target={target_name} --cmake-build-dir={args.cmake_build_dir} --plugin-dir="{plugin_folder}" 
-    # TODO: release.py is not parallelizable yet, so we run it sequentially for each plugin. Make it parallel.
+    #       --release-target={target_name} --cmake-build-dir={args.cmake_build_dir} --module-dir="{module_folder}" 
+    # TODO: release.py is not parallelizable yet, so we run it sequentially for each module. Make it parallel.
     ok = True
-    for plugin_name in plugins_to_release:
-        plugin_info = PLUGINS[plugin_name]
+    for module_name in modules_to_release:
+        module_info = MODULES[module_name]
         proc_args = ["python", "release.py",
                       "make", "--build-number", args.build_number, 
-                      "--release-target", plugin_info["target_name"], 
+                      "--release-target", module_info["target_name"], 
                       "--cmake-build-dir", args.cmake_build_dir, 
-                      "--plugin-dir", plugin_info["path"]]
-        logger.info(f"Creating plugin release for {plugin_name} with command: {' '.join(proc_args)}")
+                      "--module-dir", module_info["path"]]
+        logger.info(f"Creating module release for {module_name} with command: {' '.join(proc_args)}")
         re = custom_run(proc_args, args.dry_run)
         if re.returncode != 0:
-            logger.error(f"Failed to release plugin {plugin_name}")
+            logger.error(f"Failed to release module {module_name}")
             ok = False
 
     if not ok:
         exit(1)
     
     # Upload releases
-    logger.info(f"Uploading releases of plugins {plugins_to_release} to {args.repo_url}")
+    logger.info(f"Uploading releases of modules {modules_to_release} to {args.repo_url}")
     re = custom_run(["python", "release.py", "upload", "--cloned-release-repo", args.cloned_release_repo_dir, 
               "--repo-url", args.repo_url, "--repo-org", args.repo_org, "--repo-name", args.repo_name],
              args.dry_run)
@@ -186,9 +184,9 @@ if __name__ == "__main__":
 
     # Create tag to specify the latest release
     tag_msg = f"Build {args.build_number}\n\n"
-    tag_msg += "Plugins in this release:\n"
-    for plugin_name in plugins_to_release:
-        tag_msg += f"\n{plugin_name}"
+    tag_msg += "Modules in this release:\n"
+    for module_name in modules_to_release:
+        tag_msg += f"\n{module_name}"
     re = custom_run(["git" ,"tag", "-a", f"build-{args.build_number}", "-m", tag_msg], args.dry_run)
     if re.returncode != 0:
         logger.error(f"Failed to create tag")

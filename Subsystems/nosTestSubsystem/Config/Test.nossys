@@ -1,7 +1,7 @@
 {
     "info": {
         "id": {
-            "name": "nos.subsystem.test",
+            "name": "nos.sys.test",
             "version": "0.1.0"
         },
         "display_name": "Test Subsystem",

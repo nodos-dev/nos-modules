@@ -7,11 +7,11 @@ import fnmatch
 import json
 from subprocess import PIPE, CompletedProcess, run, call, Popen
 
-parser = argparse.ArgumentParser(description="Generate releases for NOS Plugin Bundle")
+parser = argparse.ArgumentParser(description="Generates releases for Nodos modules")
 
 subparsers = parser.add_subparsers(dest="command", help="Subcommands")
 
-make = subparsers.add_parser("make", help="Create a release zip for a plugin")
+make = subparsers.add_parser("make", help="Create a release zip for a module")
 
 make.add_argument('--build-number',
                     action='store',
@@ -21,17 +21,17 @@ make.add_argument('--build-number',
 make.add_argument('--release-target',
                     action='store',
                     required=True,
-                    help="Which plugin should I create release zip of?")
+                    help="Which module should I create release zip of?")
 
 make.add_argument('--cmake-build-dir',
                     action='store',
                     required=True,
                     help="The CMake build directory of the release.")
 
-make.add_argument('--plugin-dir',
+make.add_argument('--module-dir',
                     action='store',
                     required=True,
-                    help="Plugin directory that contains binaries, and config files. Files in this folder will be used to create the release zip.")
+                    help="Module directory that contains binaries, and config files. Files in this folder will be used to create the release zip.")
 
 make.add_argument('--exclude',
                     action='store',
@@ -74,29 +74,29 @@ def custom_run(args, dry_run):
     return run(args, env=os.environ.copy())
 
 
-def get_plugin_api_version():
+def get_api_version(api_header, api_name):
     sdk_dir = os.getenv("NODOS_SDK_DIR")
     if sdk_dir is None or sdk_dir == "":
         logger.error("NODOS_SDK_DIR is not set.")
         exit(1)
-    nos_plugin_api_h = os.path.join(sdk_dir, "include", "Nodos", "PluginAPI.h")
-    if not os.path.exists(nos_plugin_api_h):
+    nos_api_h = os.path.join(sdk_dir, "include", "Nodos", api_header)
+    if not os.path.exists(nos_api_h):
         logger.error("NODOS_SDK_DIR is not set correctly.")
         exit(1)
-    with open(nos_plugin_api_h, "r") as f:
+    with open(nos_api_h, "r") as f:
         major = None
         minor = None
         patch = None
         for line in f.readlines():
             # 👏👏👏
-            if line.startswith("#define NOS_PLUGIN_API_VERSION_MAJOR"):
+            if line.startswith(f"#define NOS_{api_name}_API_VERSION_MAJOR"):
                 major = int(line.split(" ")[-1])
-            elif line.startswith("#define NOS_PLUGIN_API_VERSION_MINOR"):
+            elif line.startswith(f"#define NOS_{api_name}_API_VERSION_MINOR"):
                 minor = int(line.split(" ")[-1])
-            elif line.startswith("#define NOS_PLUGIN_API_VERSION_PATCH"):
+            elif line.startswith(f"#define NOS_{api_name}_API_VERSION_PATCH"):
                 patch = int(line.split(" ")[-1])
         if major is None or minor is None or patch is None:
-            logger.error("Failed to parse NOS_PLUGIN_API_VERSION")
+            logger.error(f"Failed to parse NOS_{api_name}_API_VERSION")
             exit(1)
         return {"major": major, "minor": minor, "patch": patch}
 
@@ -115,29 +115,29 @@ def make_release(args):
     logger.debug(f"Creating a release zip for {args.release_target}")
     
     collected_files = []
-    noscfg_file = None
-    for root, dirs, files in os.walk(args.plugin_dir):
+    nos_module_file = None
+    for root, dirs, files in os.walk(args.module_dir):
         for file in files:
             full_path = os.path.join(root, file)
             if not any([fnmatch.fnmatch(full_path, pattern) for pattern in args.exclude.split(",")]):
                 collected_files.append(full_path)
             # Find .noscfg file:
-            if file.endswith(".noscfg"):
-                noscfg_file = full_path
+            if file.endswith(".noscfg") or file.endswith(".nossys"):
+                nos_module_file = full_path
 
-    if noscfg_file is None:
-        logger.error(f"Failed to find .noscfg file in {args.plugin_dir}")
+    if nos_module_file is None:
+        logger.error(f"Failed to find .noscfg or .nossys file in {args.module_dir}")
         exit(1)
 
-    noscfg = None
-    with open(noscfg_file, "r") as f:
-        noscfg = json.load(f)
+    nos_module_json = None
+    with open(nos_module_file, "r") as f:
+        nos_module_json = json.load(f)
     
-    plugin_version = noscfg["info"]["id"]["version"]
-    plugin_version = f"{plugin_version}.b{args.build_number}"
-    noscfg["info"]["id"]["version"] = plugin_version
-    with open(noscfg_file, "w") as f:
-        json.dump(noscfg, f, indent=4)
+    module_version = nos_module_json["info"]["id"]["version"]
+    module_version = f"{module_version}.b{args.build_number}"
+    nos_module_json["info"]["id"]["version"] = module_version
+    with open(nos_module_file, "w") as f:
+        json.dump(nos_module_json, f, indent=4)
 
     os.makedirs("Stage", exist_ok=True)
     logger.debug(f"Collected files: {collected_files}")
@@ -145,13 +145,13 @@ def make_release(args):
     # Copy files to "./Stage", while preserving the directory structure. Eg. "./Stage/..."
     # Create directories if they don't exist.
     for file in collected_files:
-        target_dir = os.path.join("Stage", os.path.dirname(os.path.relpath(file, args.plugin_dir)))
+        target_dir = os.path.join("Stage", os.path.dirname(os.path.relpath(file, args.module_dir)))
         os.makedirs(target_dir, exist_ok=True)
         shutil.copy(file, target_dir)
     
     logger.info(f"Creating release zip")
-    plugin_name = noscfg["info"]["id"]["name"]
-    zip_name = f"{plugin_name}-{plugin_version}"
+    module_name = nos_module_json["info"]["id"]["name"]
+    zip_name = f"{module_name}-{module_version}"
     shutil.make_archive(zip_name, "zip", "Stage")
     os.makedirs("Releases", exist_ok=True)
     shutil.move(f"{zip_name}.zip", os.path.join("Releases", f"{zip_name}.zip"))
@@ -162,7 +162,6 @@ def make_release(args):
 
 
 def upload_releases(repo_url, org_name, repo_name, cloned_release_repo, dry_run):
-    plugin_api_ver = get_plugin_api_version()
     repo_org_name = f"{org_name}/{repo_name}"
     # Collect zip files under "./Releases"
     zip_files = []
@@ -173,23 +172,34 @@ def upload_releases(repo_url, org_name, repo_name, cloned_release_repo, dry_run)
     logger.debug(f"Found zip files: {zip_files}")
     logger.info(f"GitHub Release: Pushing release artifacts to repo {repo_org_name}")
     artifacts = zip_files
-    # https://github.com/mediaz/mediaz/releases/download/v0.1.0.b1769/Nodos-SDK-v0.1.0.b1769.zip
+    # https://github.com/mediaz/nodos/releases/download/v0.1.0.b1769/Nodos-SDK-v0.1.0.b1769.zip
+    
+    with open(f"./modules.json", "r") as f:
+        MODULES = json.load(f)
+
     for artifact in artifacts:
         os.chdir(cloned_release_repo)
 
         filename = os.path.basename(artifact)
-        plugin_name = filename.split("-")[0]
-        plugin_version = filename.split("-")[1].split(".zip")[0]
-        tag = f"{plugin_name}-{plugin_version}"
-        logger.info(f"Updating index file for {plugin_name} {plugin_version}")
-        os.makedirs(f"{plugin_name}", exist_ok=True)
-        index = { "name": plugin_name, "releases": [] }
-        if os.path.exists(f"{plugin_name}/index.json"):
-            with open(f"{plugin_name}/index.json", "r") as f:
+        module_name = filename.split("-")[0]
+        module_version = filename.split("-")[1].split(".zip")[0]
+        tag = f"{module_name}-{module_version}"
+
+        logger.info(f"Updating index file for {module_name} {module_version}")
+        os.makedirs(f"{module_name}", exist_ok=True)
+        index = { "name": module_name, "releases": [] }
+        if os.path.exists(f"{module_name}/index.json"):
+            with open(f"{module_name}/index.json", "r") as f:
                 index = json.load(f)
         release_zip_download_url = f"{repo_url}/releases/download/{tag}/{filename}"
-        index["releases"].insert(0, { "version": plugin_version, "url": release_zip_download_url, "plugin_api_version": plugin_api_ver })
-        with open(f"{plugin_name}/index.json", "w") as f:
+        release_info = { "version": module_version, "url": release_zip_download_url }
+        if module_name in MODULES["plugins"]:
+            release_info["plugin_api_version"] = get_api_version("PluginAPI.h", "PLUGIN")
+        elif module_name in MODULES["subsystems"]:
+            release_info["subsystem_api_version"] = get_api_version("SubsystemAPI.h", "SUBSYSTEM")
+
+        index["releases"].insert(0, release_info)
+        with open(f"{module_name}/index.json", "w") as f:
             json.dump(index, f, indent=4)
 
         author_email = os.getenv("GIT_EMAIL")
@@ -211,11 +221,11 @@ def upload_releases(repo_url, org_name, repo_name, cloned_release_repo, dry_run)
             exit(re.returncode)
 
         # Commit the result and create a release
-        re = custom_run(["git", "add", f"{plugin_name}/index.json"], dry_run)
+        re = custom_run(["git", "add", f"{module_name}/index.json"], dry_run)
         if re.returncode != 0:
             logger.error(f"Failed to add index file: {re.stderr}")
             exit(re.returncode)
-        re = custom_run(["git", "commit", "-m", f"Update index file for {plugin_name} {plugin_version}"], dry_run)
+        re = custom_run(["git", "commit", "-m", f"Update index file for {module_name} {module_version}"], dry_run)
         if re.returncode != 0:
             logger.error(f"Failed to commit index file: {re.stderr}")
             exit(re.returncode)
@@ -232,7 +242,7 @@ def upload_releases(repo_url, org_name, repo_name, cloned_release_repo, dry_run)
 
 if __name__ == "__main__":
     logger.remove()
-    logger.add(sys.stdout, format="<green>[Plugin Bundle Release Tool]</green> <level>{time:HH:mm:ss.SSS}</level> <level>{level}</level> <level>{message}</level>")
+    logger.add(sys.stdout, format="<green>[Modules Release Tool]</green> <level>{time:HH:mm:ss.SSS}</level> <level>{level}</level> <level>{message}</level>")
     args = parser.parse_args()
     if args.command == "make":
         make_release(args)

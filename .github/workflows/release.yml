@@ -1,16 +1,16 @@
 # This is a basic workflow to help you get started with Actions
 
-name: Plugin Releases
+name: Modules Releases
 
 # Controls when the workflow will run
 on:
   push:
-    branches: [ master ]
+    branches: [ dev ]
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
     inputs:
       build_all:
-        description: 'Build all plugins'
+        description: 'Build all modules'
         required: false
         default: 'false'
       nodos_sdk_version:
@@ -21,9 +21,9 @@ on:
 env:
   BUILD_NUMBER: ${{ github.run_number }}
   GH_USERNAME: "mediaz-bot"
-  GH_RELEASE_REPO_URL: "https://github.com/mediaz/plugins-releases"
+  GH_RELEASE_REPO_URL: "https://github.com/mediaz/modules-releases"
   GH_RELEASE_REPO_ORG: "mediaz"
-  GH_RELEASE_REPO_NAME: "plugins-releases"
+  GH_RELEASE_REPO_NAME: "modules-releases"
   GIT_EMAIL: "bot@mediaz.io"
   NODOS_SDK_DIR: ${{ github.workspace }}/nosSDK
   GH_TOKEN: ${{ secrets.CI_TOKEN }}
@@ -65,14 +65,14 @@ jobs:
       - name: Download Nodos SDK (Specific Version)
         if: ${{  github.event_name == 'workflow_dispatch' && github.event.inputs.nodos_sdk_version != '' }}
         run: |
-          gh release download ${{ github.event.inputs.nodos_sdk_version }} --repo mediaz/mediaz --pattern "Nodos-SDK-*.zip" --clobber
+          gh release download ${{ github.event.inputs.nodos_sdk_version }} --repo mediaz/nodos --pattern "Nodos-SDK-*.zip" --clobber
 
       - name: Download Nodos SDK (Latest Stable)
         shell: pwsh
         if: ${{  github.event_name != 'workflow_dispatch' || github.event.inputs.nodos_sdk_version == '' }}
         run: |
-          $ReleaseTag = (gh release list --repo mediaz/mediaz | Select-String -Pattern 'stable' | Select-Object -First 1).Line.Split()[0]
-          gh release download $ReleaseTag --repo mediaz/mediaz --pattern "Nodos-SDK-*.zip"
+          $ReleaseTag = (gh release list --repo mediaz/nodos | Select-String -Pattern 'stable' | Select-Object -First 1).Line.Split()[0]
+          gh release download $ReleaseTag --repo mediaz/nodos --pattern "Nodos-SDK-*.zip"
 
       - name: Unzip Nodos SDK
         run: |
