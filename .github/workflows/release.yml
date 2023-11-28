@@ -67,11 +67,11 @@ jobs:
         run: |
           gh release download ${{ github.event.inputs.nodos_sdk_version }} --repo mediaz/nodos --pattern "Nodos-SDK-*.zip" --clobber
 
-      - name: Download Nodos SDK (Latest Stable)
+      - name: Download Nodos SDK (Latest dev)
         shell: pwsh
         if: ${{  github.event_name != 'workflow_dispatch' || github.event.inputs.nodos_sdk_version == '' }}
         run: |
-          $ReleaseTag = (gh release list --repo mediaz/nodos | Select-String -Pattern 'stable' | Select-Object -First 1).Line.Split()[0]
+          $ReleaseTag = (gh release list --repo mediaz/nodos | Select-String -Pattern 'dev' | Select-Object -First 1).Line.Split()[0]
           gh release download $ReleaseTag --repo mediaz/nodos --pattern "Nodos-SDK-*.zip"
 
       - name: Unzip Nodos SDK
