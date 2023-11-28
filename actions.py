@@ -107,6 +107,9 @@ if __name__ == "__main__":
 
     with open(f"./modules.json", "r") as f:
         MODULES = json.load(f)
+        MODULES_FLAT = dict()
+        for type, modules in MODULES.items():
+            MODULES_FLAT.update(modules)
 
     logger.info(f"Target: {args.repo_url}")
     logger.info(f"Build number: {args.build_number}")
@@ -127,25 +130,22 @@ if __name__ == "__main__":
 
     modules_to_release = set()
     if args.build_all:
-        for type, modules in MODULES:
-            modules_to_release.update(modules.keys())
+        modules_to_release.update(MODULES_FLAT.keys())
     else:
         latest_tag = get_latest_release_tag()
         logger.info(f"Latest release tag: {latest_tag}")
         if latest_tag is None:
             logger.info("Including all modules in the release")
-            for type, modules in MODULES:
-                modules_to_release.update(modules.keys())
+            modules_to_release.update(MODULES_FLAT.keys())
         else:
             changed_files = get_list_of_changed_files_between(latest_tag, "HEAD")
             logger.debug(f"Changed files: {changed_files}")
-            for type, modules in MODULES.items():
-                for module_name, module_info in modules.items():
-                    for dep in module_info["deps"]:
-                        for changed_file in changed_files:
-                            if fnmatch.fnmatch(changed_file, dep):
-                                modules_to_release.add(module_name)
-                                break
+            for module_name, module_info in MODULES_FLAT.items():
+                for dep in module_info["deps"]:
+                    for changed_file in changed_files:
+                        if fnmatch.fnmatch(changed_file, dep):
+                            modules_to_release.add(module_name)
+                            break
 
     if len(modules_to_release) == 0:
         logger.info("None of the modules have changed. No need to release.")
@@ -158,12 +158,12 @@ if __name__ == "__main__":
     # TODO: release.py is not parallelizable yet, so we run it sequentially for each module. Make it parallel.
     ok = True
     for module_name in modules_to_release:
-        module_info = MODULES[module_name]
+        module_info = MODULES_FLAT[module_name]
         proc_args = ["python", "release.py",
                       "make", "--build-number", args.build_number, 
                       "--release-target", module_info["target_name"], 
                       "--cmake-build-dir", args.cmake_build_dir, 
-                      "--module-dir", module_info["path"]]
+                      "--module-dir", f"{'Plugins' if module_name in MODULES['plugins'] else 'Subsystems'}/{module_info['path']}"]
         logger.info(f"Creating module release for {module_name} with command: {' '.join(proc_args)}")
         re = custom_run(proc_args, args.dry_run)
         if re.returncode != 0:

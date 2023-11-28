@@ -39,7 +39,7 @@ jobs:
     name: Configure
     runs-on: self-hosted
     steps:
-      - uses: actions/checkout@v3 # checkout the repository content to github runner.
+      - uses: actions/checkout@v4 # checkout the repository content to github runner.
         with:
           submodules: recursive
           token: ${{ secrets.CI_TOKEN }}
