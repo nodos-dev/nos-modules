@@ -8,16 +8,16 @@
         "description": "Collection of image filters."
     },
     "node_definitions": [
-        "ColorCorrect.mzdef",
-        "Diff.mzdef",
-        "GaussianBlur.mzdef",
-        "KawaseLightStreak.mzdef",
-        "Kuwahara.mzdef",
-        "PremultiplyAlpha.mzdef",
-        "Sampler.mzdef",
-        "Sharpen.mzdef",
-        "Sobel.mzdef",
-        "Thresholder.mzdef"
+        "ColorCorrect.nosdef",
+        "Diff.nosdef",
+        "GaussianBlur.nosdef",
+        "KawaseLightStreak.nosdef",
+        "Kuwahara.nosdef",
+        "PremultiplyAlpha.nosdef",
+        "Sampler.nosdef",
+        "Sharpen.nosdef",
+        "Sobel.nosdef",
+        "Thresholder.nosdef"
     ],
     "custom_types" :[
       "Thresholder.fbs"  

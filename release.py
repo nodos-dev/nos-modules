@@ -115,29 +115,29 @@ def make_release(args):
     logger.debug(f"Creating a release zip for {args.release_target}")
     
     collected_files = []
-    mzcfg_file = None
+    noscfg_file = None
     for root, dirs, files in os.walk(args.plugin_dir):
         for file in files:
             full_path = os.path.join(root, file)
             if not any([fnmatch.fnmatch(full_path, pattern) for pattern in args.exclude.split(",")]):
                 collected_files.append(full_path)
-            # Find .mzcfg file:
-            if file.endswith(".mzcfg"):
-                mzcfg_file = full_path
+            # Find .noscfg file:
+            if file.endswith(".noscfg"):
+                noscfg_file = full_path
 
-    if mzcfg_file is None:
-        logger.error(f"Failed to find .mzcfg file in {args.plugin_dir}")
+    if noscfg_file is None:
+        logger.error(f"Failed to find .noscfg file in {args.plugin_dir}")
         exit(1)
 
-    mzcfg = None
-    with open(mzcfg_file, "r") as f:
-        mzcfg = json.load(f)
+    noscfg = None
+    with open(noscfg_file, "r") as f:
+        noscfg = json.load(f)
     
-    plugin_version = mzcfg["info"]["id"]["version"]
+    plugin_version = noscfg["info"]["id"]["version"]
     plugin_version = f"{plugin_version}.b{args.build_number}"
-    mzcfg["info"]["id"]["version"] = plugin_version
-    with open(mzcfg_file, "w") as f:
-        json.dump(mzcfg, f, indent=4)
+    noscfg["info"]["id"]["version"] = plugin_version
+    with open(noscfg_file, "w") as f:
+        json.dump(noscfg, f, indent=4)
 
     os.makedirs("Stage", exist_ok=True)
     logger.debug(f"Collected files: {collected_files}")
@@ -150,7 +150,7 @@ def make_release(args):
         shutil.copy(file, target_dir)
     
     logger.info(f"Creating release zip")
-    plugin_name = mzcfg["info"]["id"]["name"]
+    plugin_name = noscfg["info"]["id"]["name"]
     zip_name = f"{plugin_name}-{plugin_version}"
     shutil.make_archive(zip_name, "zip", "Stage")
     os.makedirs("Releases", exist_ok=True)

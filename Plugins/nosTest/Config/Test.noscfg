@@ -9,7 +9,7 @@
     },
     "custom_types": [ "Test.fbs" ],
     "node_definitions": [
-        "Test.mzdef"
+        "Test.nosdef"
     ],
     "binary_path": "../Binaries/nosTest",
     "associated_nodes": [

@@ -18,8 +18,8 @@ SomePlugin/
 │  ├─ SomePlugin.dll
 ├─ Config/ (shipped)
 │  ├─ SomePlugin.fbs
-│  ├─ SomePlugin.mzcfg
-│  ├─ SomePlugin.mzdef
+│  ├─ SomePlugin.noscfg
+│  ├─ SomePlugin.nosdef
 ├─ Source/ (example)
 │  ├─ SomePlugin.cpp
 ```

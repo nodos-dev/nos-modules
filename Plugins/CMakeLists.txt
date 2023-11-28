@@ -23,7 +23,7 @@ function(add_folder_as_plugin_project NAME DEPENDENCIES INCLUDE_FOLDERS)
     list(APPEND CONFIG_FILES)
     foreach(CONFIG_FOLDER ${CONFIG_FOLDERS})
         file(GLOB_RECURSE CUR_CONFIG_FILES CONFIGURE_DEPENDS ${CONFIG_FOLDER} 
-            "${CONFIG_FOLDER}/*.mzcfg" "${CONFIG_FOLDER}/*.mzdef" "${CONFIG_FOLDER}/*.fbs")
+            "${CONFIG_FOLDER}/*.noscfg" "${CONFIG_FOLDER}/*.nosdef" "${CONFIG_FOLDER}/*.fbs")
         list(APPEND CONFIG_FILES ${CUR_CONFIG_FILES})
     endforeach()
     file(GLOB_RECURSE HEADERS CONFIGURE_DEPENDS ${SOURCE_FOLDER} "${SOURCE_FOLDER}/*.h" "${SOURCE_FOLDER}/*.hpp")

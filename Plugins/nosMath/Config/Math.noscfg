@@ -9,7 +9,7 @@
     },
     "custom_types": [],
     "node_definitions": [
-        "Math.mzdef"
+        "Math.nosdef"
     ],
     "binary_path": "../Binaries/nosMath",
     "associated_nodes": [

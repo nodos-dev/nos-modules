@@ -8,7 +8,7 @@
         "display_name": "CNN"
     },
     "node_definitions": [
-        "CNN.mzdef"
+        "CNN.nosdef"
     ],
     "custom_types": [],
     "binary_path": "../Binaries/CNN",
