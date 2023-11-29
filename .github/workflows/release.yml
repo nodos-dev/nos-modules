@@ -64,6 +64,7 @@ jobs:
       - name: Cleanup
         run: |
           Remove-Item -Recurse -Force -ErrorAction SilentlyContinue Nodos-SDK*
+          Remove-Item -Recurse -Force -ErrorAction SilentlyContinue ${{ env.NODOS_SDK_DIR }}
           Remove-Item -Recurse -Force -ErrorAction SilentlyContinue ./release-target-repo
         shell: pwsh
 
