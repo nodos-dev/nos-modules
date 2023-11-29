@@ -59,6 +59,10 @@ def custom_run(args, dry_run):
     return run(args, env=os.environ.copy())
 
 
+def get_branch():
+    return check_output(["git", "rev-parse", "--abbrev-ref", "HEAD"]).decode().strip()
+
+
 def get_latest_release_tag():
     '''
     Returns the latest release tag in the repo. 
@@ -79,7 +83,7 @@ def get_latest_release_tag():
     git_tags = check_output(["git", "tag"]).decode().splitlines()
 
     # Filter tags with prefix "build-"
-    release_tags = [tag for tag in git_tags if tag.startswith("build-")]
+    release_tags = [tag for tag in git_tags if tag.startswith(f"build.{get_branch()}")]
 
     if release_tags:
         # Sort the tags and get the latest one
@@ -187,7 +191,7 @@ if __name__ == "__main__":
     tag_msg += "Modules in this release:\n"
     for module_name in modules_to_release:
         tag_msg += f"\n{module_name}"
-    re = custom_run(["git" ,"tag", "-a", f"build-{args.build_number}", "-m", tag_msg], args.dry_run)
+    re = custom_run(["git" ,"tag", "-a", f"build.{get_branch()}-{args.build_number}", "-m", tag_msg], args.dry_run)
     if re.returncode != 0:
         logger.error(f"Failed to create tag")
         exit(re.returncode)
