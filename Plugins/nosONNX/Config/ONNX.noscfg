@@ -1,0 +1,22 @@
+{
+    "info": {
+        "id": {
+            "name": "nos.ML.ONNX",
+            "version": "1.0.0"
+        },
+        "description": "ONNX Nodes",
+        "display_name": "ONNX"
+    },
+    "node_definitions": [
+        "ONNXRunner.nosdef"
+    ],
+    "custom_types": [],
+    "binary_path": "../Binaries/nosONNX",
+    "associated_nodes": [
+      {
+        "category": "ML|ONNXRunner",
+        "class_name": "ONNXRunner",
+        "display_name": "ONNX Runner"
+      }
+    ]
+}
