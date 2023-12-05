@@ -17,14 +17,14 @@ struct ONNXRunnerNodeContext : nos::NodeContext
 	Ort::Env env;
 	Ort::Session ModelSession{nullptr};
 
-	nos::fb::Tensor nosInputTensor, nosOutputTensor;
+	nos::fb::TTensor nosInputTensor, nosOutputTensor;
 	nosTensor InputTensor;
 	nosTensor OutputTensor;
 	std::string InputName, OutputName;
 	nosUUID NodeID;
 
 
-	ONNXRunnerNodeContext(nos::fb::Node const* node) :NodeContext(node) {
+	ONNXRunnerNodeContext(nos::fb::Node const* node) :NodeContext(node)  {
 		NodeID = *node->id();
 	}
 
@@ -55,10 +55,22 @@ struct ONNXRunnerNodeContext : nos::NodeContext
 					int InputCount = onnxNode->ModelSession.GetInputCount();
 					int OutputCount = onnxNode->ModelSession.GetOutputCount();
 
+					onnxNode->nosInputTensor.shape = onnxNode->InputTensor.GetShape();
+					onnxNode->nosOutputTensor.shape = onnxNode->OutputTensor.GetShape();
+
+					flatbuffers::FlatBufferBuilder fbb_t;
+					
+					auto bufInput = nos::Buffer::From(onnxNode->nosInputTensor);
+					auto inputTensorData = std::vector<uint8_t>((uint8_t*)bufInput.data(), (uint8_t*)bufInput.data() + bufInput.size());
+
+					auto bufOutput = nos::Buffer::From(onnxNode->nosOutputTensor);
+					auto outputTensorData = std::vector<uint8_t>((uint8_t*)bufOutput.data(), (uint8_t*)bufOutput.data() + bufOutput.size());
+
 					std::vector<flatbuffers::Offset<nos::fb::Pin>> InputPins;
 					std::vector<flatbuffers::Offset<nos::fb::Pin>> OutputPins;
 					flatbuffers::FlatBufferBuilder fbb;
 					flatbuffers::FlatBufferBuilder fbb2;
+					
 
 					std::optional<Ort::AllocatedStringPtr> inputName;
 					std::optional<Ort::AllocatedStringPtr> outputName;
@@ -71,26 +83,34 @@ struct ONNXRunnerNodeContext : nos::NodeContext
 
 					inputName->reset();
 					outputName->reset();
-					
+					nosUUID id;
+					UUIDGenerator generator;
 					for (int i = 0; i < InputCount; i++) {
 						inputName.emplace(onnxNode->ModelSession.GetInputNameAllocated(i, ortAllocator));
 						InputPins.push_back(nos::fb::CreatePinDirect(fbb,
-																(nosUUID*)nos::generator().as_bytes().data(),
+																(nosUUID*)generator.Generate()().as_bytes().data(),
 																inputName->get(),
 																"nos.fb.Tensor",
 																nos::fb::ShowAs::INPUT_PIN,
-																nos::fb::CanShowAs::INPUT_PIN_ONLY));
+																nos::fb::CanShowAs::INPUT_PIN_ONLY,
+																0,
+																0,
+																&inputTensorData));
 						inputName->reset();
 					}
 
 					for (int i = 0; i < OutputCount; i++) {
 						outputName.emplace(onnxNode->ModelSession.GetOutputNameAllocated(i, ortAllocator));
+
 						OutputPins.push_back(nos::fb::CreatePinDirect(fbb2,
-																	(nosUUID*)nos::generator().as_bytes().data(),
-																	outputName->get(),
-																	"nos.fb.Tensor",
-																	nos::fb::ShowAs::OUTPUT_PIN,
-																	nos::fb::CanShowAs::OUTPUT_PIN_OR_PROPERTY));
+																(nosUUID*)generator.Generate()().as_bytes().data(), outputName->get(),
+																"nos.fb.Tensor",
+																nos::fb::ShowAs::OUTPUT_PIN,
+																nos::fb::CanShowAs::OUTPUT_PIN_OR_PROPERTY,
+																0,
+																0,
+																&outputTensorData));
+
 						outputName->reset();
 					}
 

@@ -8,7 +8,8 @@
         "display_name": "ONNX"
     },
     "node_definitions": [
-        "ONNXRunner.nosdef"
+      "ONNXRunner.nosdef",
+      "RGBAtoTensor.nosdef"
     ],
     "custom_types": [],
     "binary_path": "../Binaries/nosONNX",
@@ -17,6 +18,11 @@
         "category": "ML|ONNXRunner",
         "class_name": "ONNXRunner",
         "display_name": "ONNX Runner"
+      },
+      {
+        "category": "ML|ONNXRunner",
+        "class_name": "RGBAtoTensor",
+        "display_name": "RGBA to Tensor"
       }
     ]
 }
