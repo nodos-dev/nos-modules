@@ -44,6 +44,9 @@ function(add_folder_as_subsystem_project NAME DEPENDENCIES INCLUDE_FOLDERS)
 
     target_link_libraries(${NAME} PRIVATE ${DEPENDENCIES})
     target_link_libraries(${NAME} PUBLIC nosSubsystemSDK)
+
+    file(GLOB_RECURSE SHADERS CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/Source/**.frag" "${CMAKE_CURRENT_SOURCE_DIR}/Source/**.vert")
+    compile_shaders("${TOOLS_DIR}" "${SHADERS}")
 endfunction()
 
 # Dependencies
