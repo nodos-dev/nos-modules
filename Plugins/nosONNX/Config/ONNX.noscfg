@@ -12,7 +12,9 @@
       "RGBAtoTensor.nosdef",
       "TensorVisualizer.nosdef"
     ],
-    "custom_types": [],
+    "custom_types": [
+      "ONNX.fbs"
+    ],
     "binary_path": "../Binaries/nosONNX",
     "associated_nodes": [
       {

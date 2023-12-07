@@ -5,6 +5,7 @@
 #include <AppEvents_generated.h>
 #include <onnxruntime_cxx_api.h>
 #include "ONNXRTCommon.h"
+#include "Tensor.h"
 
 NOS_REGISTER_NAME(RGBAtoTensor);
 NOS_REGISTER_NAME(In);
@@ -123,6 +124,7 @@ struct RGBAtoTensorNodeContext : nos::NodeContext
 			
 			nosOutputTensor.buffer = (uint64_t)(data);
 			nosOutputTensor.shape = OutputTensor.GetShape();
+			nosOutputTensor.type = nos::fb::TensorElementType::UINT8;
 
 			nosEngine.SetPinValue(OutputID, nos::Buffer::From(nosOutputTensor));
 

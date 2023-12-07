@@ -5,6 +5,7 @@
 #include <AppEvents_generated.h>
 #include <onnxruntime_cxx_api.h>
 #include "ONNXRTCommon.h"
+#include "Tensor.h"
 
 NOS_REGISTER_NAME(ONNXRunner);
 NOS_REGISTER_NAME(In);
@@ -17,6 +18,7 @@ struct ONNXRunnerNodeContext : nos::NodeContext
 	Ort::Session ModelSession{nullptr};
 
 	nos::fb::TTensor nosInputTensor, nosOutputTensor;
+
 	std::string InputName, OutputName;
 	nosUUID NodeID, InputID, OutputID;
 	nosTensor InputTensor, OutputTensor;
@@ -95,7 +97,7 @@ struct ONNXRunnerNodeContext : nos::NodeContext
 				return;
 			}
 			nosInputTensor.buffer = tensor->buffer();
-			InputTensor.CreateTensor<uint8_t>(reinterpret_cast<uint8_t*>(nosInputTensor.buffer), InputTensor.GetLength(), true);
+			InputTensor.CreateTensor<uint8_t>(reinterpret_cast<uint8_t*>(nosInputTensor.buffer), InputTensor.GetLength());
 			WaitInput.notify_one();
 			
 		}
@@ -114,7 +116,7 @@ struct ONNXRunnerNodeContext : nos::NodeContext
 			const char* output_names[] = { OutputName.c_str() };
 			ModelSession.Run(Ort::RunOptions{nullptr}, input_names, InputTensor.GetORTValuePointer(), 1, output_names, OutputTensor.GetORTValuePointer(), 1);
 			//OutputTensor.ApplySoftmax();
-			nosOutputTensor.buffer = (uint64_t)OutputTensor.GetData();
+			nosOutputTensor.buffer = (uint64_t)OutputTensor.GetRawData();
 			nosEngine.SetPinValue(OutputID, nos::Buffer::From(nosOutputTensor));
 		}
 	}
@@ -123,12 +125,20 @@ struct ONNXRunnerNodeContext : nos::NodeContext
 		if (std::filesystem::exists(modelPath)) {
 
 			ModelSession = Ort::Session{ env, modelPath.c_str(), Ort::SessionOptions{nullptr} };
-
+			//TODO: We now only focused on 1 INPUT case for development purposes but must not rely on this
 			InputTensor.SetShape(ModelSession.GetInputTypeInfo(0).GetTensorTypeAndShapeInfo().GetShape());
+			InputTensor.SetType(ModelSession.GetInputTypeInfo(0).GetTensorTypeAndShapeInfo().GetElementType());
 			OutputTensor.SetShape(ModelSession.GetOutputTypeInfo(0).GetTensorTypeAndShapeInfo().GetShape());
+			OutputTensor.SetType(ModelSession.GetOutputTypeInfo(0).GetTensorTypeAndShapeInfo().GetElementType());
 			OutputTensor.CreateEmpty();
+
 			nosInputTensor.shape = ModelSession.GetInputTypeInfo(0).GetTensorTypeAndShapeInfo().GetShape();
+			nosInputTensor.type = InputTensor.GetType();
+			
 			nosOutputTensor.shape = ModelSession.GetOutputTypeInfo(0).GetTensorTypeAndShapeInfo().GetShape();
+			nosOutputTensor.type = OutputTensor.GetType();
+
+			auto type = ModelSession.GetOutputTypeInfo(0).GetTensorTypeAndShapeInfo().GetElementType();
 			if (!isReload) {
 				int InputCount = ModelSession.GetInputCount();
 				int OutputCount = ModelSession.GetOutputCount();
