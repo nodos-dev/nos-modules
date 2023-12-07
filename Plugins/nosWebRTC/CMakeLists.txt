@@ -36,4 +36,6 @@ target_compile_options(nosWebRTC PRIVATE
     $<$<CXX_COMPILER_ID:MSVC>:/MD>)
 set_target_properties(nosWebRTC PROPERTIES OUTPUT_NAME "nosWebRTC")
 
-include_directories(${CMAKE_CURRENT_LIST_DIR}/External/include)
+include_directories(
+	${CMAKE_CURRENT_LIST_DIR}/External/include
+    ${SUBSYSTEMS_SOURCE_DIR}/nosVulkanSubsystem/Include)

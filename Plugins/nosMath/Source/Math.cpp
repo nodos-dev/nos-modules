@@ -7,7 +7,7 @@
 #include <glm/gtx/euler_angles.hpp>
 
 #include <chrono>
-#include <Nodos/Helpers.hpp>
+#include <Nodos/PluginHelpers.hpp>
 
 NOS_INIT();
 
@@ -52,9 +52,9 @@ template<class T> T Div(T x, T y) { return x / y; }
 template<class T, T F(T, T)>
 nosResult ScalarBinopExecute(void* ctx, const nosNodeExecuteArgs* args)
 {
-	auto X = reinterpret_cast<T*>(args->PinValues[0].Data);
-	auto Y = reinterpret_cast<T*>(args->PinValues[1].Data);
-	auto Z = reinterpret_cast<T*>(args->PinValues[2].Data);
+	auto X = static_cast<T*>(args->Pins[0].Data->Data);
+	auto Y = static_cast<T*>(args->Pins[1].Data->Data);
+	auto Z = static_cast<T*>(args->Pins[2].Data->Data);
 	*Z = F(*X, *Y);
 	return NOS_RESULT_SUCCESS;
 }
@@ -92,9 +92,9 @@ struct Vec {
 template<class T, int Dim, Vec<T,Dim>F(Vec<T,Dim>,Vec<T,Dim>)>
 nosResult VecBinopExecute(void* ctx, const nosNodeExecuteArgs* args)
 {
-	auto X = reinterpret_cast<Vec<T, Dim>*>(args->PinValues[0].Data);
-	auto Y = reinterpret_cast<Vec<T, Dim>*>(args->PinValues[1].Data);
-	auto Z = reinterpret_cast<Vec<T, Dim>*>(args->PinValues[2].Data);
+	auto X = static_cast<Vec<T, Dim>*>(args->Pins[0].Data->Data);
+	auto Y = static_cast<Vec<T, Dim>*>(args->Pins[1].Data->Data);
+	auto Z = static_cast<Vec<T, Dim>*>(args->Pins[2].Data->Data);
 	*Z = F(*X, *Y);
 	return NOS_RESULT_SUCCESS;
 }
@@ -137,7 +137,7 @@ nosResult VecBinopExecute(void* ctx, const nosNodeExecuteArgs* args)
 
 #define GEN_CASE_SCALAR(op, t, sz) \
 	case MathNodeTypes::NODE_NAME(op, t, sz, ): { \
-		node->TypeName = NOS_NAME_STATIC("nos.math." #op "_" #t #sz); \
+		node->ClassName = NOS_NAME_STATIC("nos.math." #op "_" #t #sz); \
 		node->ExecuteNode = ScalarBinopExecute<t ##sz, op<t ##sz>>; \
 		break; \
 	}
@@ -158,7 +158,7 @@ nosResult VecBinopExecute(void* ctx, const nosNodeExecuteArgs* args)
 
 #define GEN_CASE_VEC(op, namePostfix, t, dim) \
 	case MathNodeTypes::NODE_NAME(op, vec, dim, namePostfix): { \
-		node->TypeName = NOS_NAME_STATIC("nos.math." #op "_vec" #dim #namePostfix); \
+		node->ClassName = NOS_NAME_STATIC("nos.math." #op "_vec" #dim #namePostfix); \
 		node->ExecuteNode = VecBinopExecute<t, dim, op>; \
 		break; \
 	}
@@ -200,9 +200,9 @@ enum class MathNodeTypes : int {
 template<class T>
 nosResult ToString(void* ctx, const nosNodeExecuteArgs* args)
 {
-	auto* in = reinterpret_cast<u32*>(args->PinValues[0].Data);
+	auto* in = static_cast<u32*>(args->Pins[0].Data->Data);
 	auto s = std::to_string(*in);
-	return nosEngine.SetPinValue(args->PinIds[1], nosBuffer { .Data = (void*)s.c_str(), .Size = s.size() + 1 });
+	return nosEngine.SetPinValue(args->Pins[1].Id, nosBuffer { .Data = (void*)s.c_str(), .Size = s.size() + 1 });
 }
 
 template<u32 hi, class F, u32 i = 0>
@@ -301,7 +301,7 @@ NOSAPI_ATTR nosResult NOSAPI_CALL nosExportNodeFunctions(size_t* outCount, nosNo
 		{
 		GEN_ALL_CASES()
 		case MathNodeTypes::U32ToString: {
-				node->TypeName = NOS_NAME_STATIC("nos.math.U32ToString");
+				node->ClassName = NOS_NAME_STATIC("nos.math.U32ToString");
 				node->ExecuteNode = ToString<u32>;
 				break;
 			}
@@ -310,16 +310,16 @@ NOSAPI_ATTR nosResult NOSAPI_CALL nosExportNodeFunctions(size_t* outCount, nosNo
 			break;
 		}
 		case MathNodeTypes::Clamp: {
-			node->TypeName = NOS_NAME_STATIC("nos.math.Clamp");
+			node->ClassName = NOS_NAME_STATIC("nos.math.Clamp");
 			node->ExecuteNode = [](void* ctx, const nosNodeExecuteArgs* args) {
 				constexpr uint32_t PIN_IN = 0;
 				constexpr uint32_t PIN_MIN = 1;
 				constexpr uint32_t PIN_MAX = 2;
 				constexpr uint32_t PIN_OUT = 3;
-				auto valueBuf = &args->PinValues[PIN_IN];
-				auto minBuf = &args->PinValues[PIN_MIN];
-				auto maxBuf = &args->PinValues[PIN_MAX];
-				auto outBuf = &args->PinValues[PIN_OUT];
+				auto valueBuf = args->Pins[PIN_IN].Data;
+				auto minBuf = args->Pins[PIN_MIN].Data;
+				auto maxBuf = args->Pins[PIN_MAX].Data;
+				auto outBuf = args->Pins[PIN_OUT].Data;
 				float value = *static_cast<float*>(valueBuf->Data);
 				float min = *static_cast<float*>(minBuf->Data);
 				float max = *static_cast<float*>(maxBuf->Data);
@@ -329,12 +329,12 @@ NOSAPI_ATTR nosResult NOSAPI_CALL nosExportNodeFunctions(size_t* outCount, nosNo
 			break;
 		}
 		case MathNodeTypes::Absolute: {
-			node->TypeName = NOS_NAME_STATIC("nos.math.Absolute");
+			node->ClassName = NOS_NAME_STATIC("nos.math.Absolute");
 			node->ExecuteNode = [](void* ctx, const nosNodeExecuteArgs* args) {
 				constexpr uint32_t PIN_IN = 0;
 				constexpr uint32_t PIN_OUT = 1;
-				auto valueBuf = &args->PinValues[PIN_IN];
-				auto outBuf = &args->PinValues[PIN_OUT];
+				auto valueBuf = args->Pins[PIN_IN].Data;
+				auto outBuf = args->Pins[PIN_OUT].Data;
 				float value = *static_cast<float*>(valueBuf->Data);
 				*(static_cast<float*>(outBuf->Data)) = std::abs(value);
 				return NOS_RESULT_SUCCESS;
@@ -342,17 +342,17 @@ NOSAPI_ATTR nosResult NOSAPI_CALL nosExportNodeFunctions(size_t* outCount, nosNo
 			break;
 		}
 		case MathNodeTypes::AddTrack: {
-			node->TypeName = NOS_NAME_STATIC("nos.math.Add_Track");
+			node->ClassName = NOS_NAME_STATIC("nos.math.Add_Track");
 			node->ExecuteNode = AddTrack;
 			break;
 		}
 		case MathNodeTypes::AddTransform: {
-			node->TypeName = NOS_NAME_STATIC("nos.math.Add_Transform");
+			node->ClassName = NOS_NAME_STATIC("nos.math.Add_Transform");
 			node->ExecuteNode = AddTransform;
 			break;
 		}
 		case MathNodeTypes::PerspectiveView: {
-			node->TypeName = NOS_NAME_STATIC("nos.math.PerspectiveView");
+			node->ClassName = NOS_NAME_STATIC("nos.math.PerspectiveView");
 			node->ExecuteNode = [](void* ctx, const nosNodeExecuteArgs* args)
 			{
 				auto pins = GetPinValues(args);

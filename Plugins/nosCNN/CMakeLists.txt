@@ -1,1 +1,1 @@
-add_folder_as_plugin_project("CNN" stb "${CMAKE_CURRENT_SOURCE_DIR}")
+add_folder_as_plugin_project("CNN" stb "${CMAKE_CURRENT_SOURCE_DIR};${SUBSYSTEMS_SOURCE_DIR}/nosVulkanSubsystem/Include")

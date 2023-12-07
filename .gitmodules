@@ -1,5 +1,5 @@
 [submodule "tools"]
-	path = tools
+	path = Tools
 	url = https://github.com/mediaz/tools
 [submodule "Shaders"]
 	path = Plugins/Shaders

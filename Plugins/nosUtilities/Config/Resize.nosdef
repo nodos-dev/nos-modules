@@ -1,22 +1,19 @@
-{    
+{
     "nodes": [
         {
             "class_name": "Resize",
             "contents_type": "Job",
-            "contents": {
-                "type": "CPU"
-            },
             "description": "Scales the input image to the desired output size (FILL as alignment method)\nusing various scaling algorithms",
             "pins": [
                 {
                     "name": "Input",
-                    "type_name": "nos.fb.Texture",
+                    "type_name": "nos.sys.vulkan.Texture",
                     "show_as": "INPUT_PIN",
                     "can_show_as": "INPUT_PIN_ONLY"
                 },
                 {
                     "name": "Output",
-                    "type_name": "nos.fb.Texture",
+                    "type_name": "nos.sys.vulkan.Texture",
                     "show_as": "OUTPUT_PIN",
                     "can_show_as": "OUTPUT_PIN_ONLY",
                     "data": {
@@ -35,7 +32,10 @@
                     "type_name": "nos.fb.vec2u",
                     "show_as": "PROPERTY",
                     "can_show_as": "INPUT_OUTPUT_PROPERTY",
-                    "data" : { "x": 1920, "y": 1080 },
+                    "data": {
+                        "x": 1920,
+                        "y": 1080
+                    },
                     "description": "Output size which the input image is scaled to"
                 }
             ]

@@ -1,58 +1,66 @@
 {
-    "nodes": [
-      {
-        "class_name": "SevenSegment",
-        "contents_type": "Job",
-        "always_execute": "true",
-        "contents": {
-          "type": "GPU"
+  "nodes": [
+    {
+      "class_name": "SevenSegment",
+      "contents_type": "Job",
+      "always_execute": "true",
+      "contents": {
+        "type": "nos.sys.vulkan.GPUNode",
+        "options": {
+          "shader": "../Shaders/SevenSegment.frag"
+        }
+      },
+      "description": "Show a number on top of the input texture",
+      "pins": [
+        {
+          "name": "Number",
+          "type_name": "uint",
+          "show_as": "INPUT_PIN",
+          "can_show_as": "INPUT_PIN_OR_PROPERTY",
+          "description": "Number to display"
         },
-        "description": "Show a number on top of the input texture",
-        "pins": [
-          {
-            "name": "Number",
-            "type_name": "uint",
-            "show_as": "INPUT_PIN",
-            "can_show_as": "INPUT_PIN_OR_PROPERTY",
-            "description":  "Number to display"
+        {
+          "name": "RenderFrameNo",
+          "type_name": "uint",
+          "show_as": "INPUT_PIN",
+          "can_show_as": "INPUT_PIN_OR_PROPERTY",
+          "description": "1 if number should be render frame no"
+        },
+        {
+          "name": "SampleInput",
+          "type_name": "uint",
+          "show_as": "INPUT_PIN",
+          "can_show_as": "INPUT_PIN_OR_PROPERTY",
+          "description": "1 if input texture should be sampled"
+        },
+        {
+          "name": "Color",
+          "type_name": "nos.fb.vec4",
+          "show_as": "INPUT_PIN",
+          "can_show_as": "INPUT_PIN_OR_PROPERTY",
+          "visualizer": {
+            "type": "COLOR_PICKER"
           },
-          {
-            "name": "RenderFrameNo",
-            "type_name": "uint",
-            "show_as": "INPUT_PIN",
-            "can_show_as": "INPUT_PIN_OR_PROPERTY",
-            "description": "1 if number should be render frame no"
-          },
-          {
-            "name": "SampleInput",
-            "type_name": "uint",
-            "show_as": "INPUT_PIN",
-            "can_show_as": "INPUT_PIN_OR_PROPERTY",
-            "description": "1 if input texture should be sampled"
-          },
-          {
-            "name": "Color",
-            "type_name": "nos.fb.vec4",
-            "show_as": "INPUT_PIN",
-            "can_show_as": "INPUT_PIN_OR_PROPERTY",
-            "visualizer": {
-              "type": "COLOR_PICKER"
-            },
-            "data" :{"x" : 1, "y" : 0.5, "z" : 0.5, "w" : 1}
-          },
-          {
-            "name": "Input",
-            "type_name": "nos.fb.Texture",
-            "show_as": "INPUT_PIN",
-            "can_show_as": "INPUT_PIN_OR_PROPERTY"
-          },
-          {
-            "name": "Output",
-            "type_name": "nos.fb.Texture",
-            "show_as": "OUTPUT_PIN",
-            "can_show_as": "OUTPUT_PIN_OR_PROPERTY"
+          "data": {
+            "x": 1,
+            "y": 0.5,
+            "z": 0.5,
+            "w": 1
           }
-        ]
-      }
-    ]
+        },
+        {
+          "name": "Input",
+          "type_name": "nos.sys.vulkan.Texture",
+          "show_as": "INPUT_PIN",
+          "can_show_as": "INPUT_PIN_OR_PROPERTY"
+        },
+        {
+          "name": "Output",
+          "type_name": "nos.sys.vulkan.Texture",
+          "show_as": "OUTPUT_PIN",
+          "can_show_as": "OUTPUT_PIN_OR_PROPERTY"
+        }
+      ]
+    }
+  ]
 }

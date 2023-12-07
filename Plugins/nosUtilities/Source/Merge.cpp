@@ -1,10 +1,14 @@
 // Copyright Nodos AS. All Rights Reserved.
 
-#include <Nodos/Helpers.hpp>
-#include <Nodos/PluginAPI.h>
+#include <Nodos/PluginHelpers.hpp>
+
+#include <nosVulkanSubsystem/nosVulkanSubsystem.h>
+#include <nosVulkanSubsystem/Helpers.hpp>
 #include "../Shaders/Merge.frag.spv.dat"
 
 #include <random>
+
+#include "Names.h"
 
 namespace nos
 {
@@ -24,7 +28,8 @@ uuids::uuid_random_generator generator(mtengine);
 
 namespace nos::utilities
 {
-NOS_REGISTER_NAME(Out);
+extern nosVulkanSubsystem* nosVulkan;
+
 NOS_REGISTER_NAME(Textures);
 NOS_REGISTER_NAME(Texture_Count);
 NOS_REGISTER_NAME(Merge_Pass);
@@ -86,7 +91,7 @@ struct MergeContext : NodeContext
 	nosResult ExecuteNode(const nosNodeExecuteArgs* args) override
 	{
 		auto values = GetPinValues(args);
-		const nosResourceShareInfo output = DeserializeTextureInfo(values[NSN_Out]);
+		const nosResourceShareInfo output = vkss::DeserializeTextureInfo(values[NSN_Out]);
 
 		std::vector<nosShaderBinding> bindings;
 		std::vector<nosResourceShareInfo> textures(TextureCount);
@@ -98,31 +103,31 @@ struct MergeContext : NodeContext
 		
 		for (size_t i = 0; i < args->PinCount; ++i)
 		{
-			if(NSN_Out == args->PinNames[i])
+			if(NSN_Out == args->Pins[i].Name)
 				continue;
 
-			nosBuffer val = args->PinValues[i];
-			if (NSN_Background_Color == args->PinNames[i])
+			auto val = args->Pins[i].Data;
+			if (NSN_Background_Color == args->Pins[i].Name)
 			{
-				bindings.emplace_back(nosShaderBinding{ .Name = Name(args->PinNames[i]), .Data = val.Data, .Size = val.Size });
+				bindings.emplace_back(nosShaderBinding{ .Name = Name(args->Pins[i].Name), .Data = val->Data, .Size = val->Size });
 				continue;
 			}
 
-			std::string name = Name(args->PinNames[i]).AsString();
+			std::string name = Name(args->Pins[i].Name).AsString();
 			uint32_t idx = std::stoi(name.substr(name.find_last_of('_') + 1));
 		
 			switch (name[0])
 			{
-			case 'T': textures[idx] = DeserializeTextureInfo(val.Data); break;
-			case 'B': blends[idx] = *(int*)val.Data; break;
-			case 'O': opacities[idx] = *(float*)val.Data; break;
+			case 'T': textures[idx] = vkss::DeserializeTextureInfo(val->Data); break;
+			case 'B': blends[idx] = *(int*)val->Data; break;
+			case 'O': opacities[idx] = *(float*)val->Data; break;
 			}
 		}
 
-		bindings.emplace_back(ShaderBinding(NSN_Blends, blends));
-		bindings.emplace_back(ShaderBinding(NSN_Opacities, opacities));
-		bindings.emplace_back(ShaderBinding(NSN_Texture_Count, TextureCount));
-		bindings.emplace_back(ShaderBinding(NSN_Textures, textures.data(), textures.size()));
+		bindings.emplace_back(vkss::ShaderBinding(NSN_Blends, blends));
+		bindings.emplace_back(vkss::ShaderBinding(NSN_Opacities, opacities));
+		bindings.emplace_back(vkss::ShaderBinding(NSN_Texture_Count, TextureCount));
+		bindings.emplace_back(vkss::ShaderBinding(NSN_Textures, textures.data(), textures.size()));
 
 		nosRunPassParams mergePass{
 			.Key = NSN_Merge_Pass,
@@ -131,7 +136,7 @@ struct MergeContext : NodeContext
 			.Output = output,
 		};
 
-		nosEngine.RunPass(nullptr, &mergePass);
+		nosVulkan->RunPass(nullptr, &mergePass);
 		return NOS_RESULT_SUCCESS;
 	}
 
@@ -165,7 +170,7 @@ struct MergeContext : NodeContext
 		{
 			auto count = std::to_string(TextureCount++);
 			nosBuffer buffer;
-			nosEngine.GetDefaultValueOfType(NOS_NAME_STATIC("nos.fb.Texture"), &buffer);
+			nosEngine.GetDefaultValueOfType(NOS_NAME_STATIC("nos.sys.vulkan.Texture"), &buffer);
 
 			std::string texPinName = "Texture_" + count;
 			nosUUID texId = *(nosUUID*)nos::generator().as_bytes().data();
@@ -190,7 +195,7 @@ struct MergeContext : NodeContext
 				fb::CreatePinDirect(fbb,
 				                    &texId,
 				                    texPinName.c_str(),
-				                    "nos.fb.Texture",
+				                    "nos.sys.vulkan.Texture",
 				                    fb::ShowAs::INPUT_PIN,
 				                    fb::CanShowAs::INPUT_PIN_ONLY,
 				                    pinCategory.c_str(),
@@ -244,37 +249,28 @@ struct MergeContext : NodeContext
 			}
 		}
 	}
-    
-	inline static nosShaderSource MergeSource = { .SpirvBlob = {(void*)Merge_frag_spv, sizeof(Merge_frag_spv) } };
-    
-
-	static nosResult GetShaders(size_t* outCount, nosShaderInfo* outShaders)
-	{
-		*outCount = 1;
-		if (!outShaders)
-			return NOS_RESULT_SUCCESS;
-		outShaders[0] = {.Key = NSN_Merge_Shader, .Source = MergeSource };
-		return NOS_RESULT_SUCCESS;
-	}
-
-	static nosResult GetPasses(size_t* outCount, nosPassInfo* passes)
-	{
-		*outCount = 1;
-		if (!passes)
-			return NOS_RESULT_SUCCESS;
-		*passes = {
-			.Key = NSN_Merge_Pass,
-			.Shader = NSN_Merge_Shader,
-			.Blend = 1,
-			.MultiSample = 1,
-		};
-		return NOS_RESULT_SUCCESS;
-	}
 };
 
-void RegisterMerge(nosNodeFunctions* out)
+nosResult RegisterMerge(nosNodeFunctions* out)
 {
 	NOS_BIND_NODE_CLASS(NSN_Merge, MergeContext, out);
+
+	static nosShaderSource MergeSource = { .SpirvBlob = {(void*)Merge_frag_spv, sizeof(Merge_frag_spv) } };
+
+	// Register shaders
+	nosShaderInfo shader = {.Key = NSN_Merge_Shader, .Source = MergeSource };
+	auto ret = nosVulkan->RegisterShaders(1, &shader);
+	if (NOS_RESULT_SUCCESS != ret)
+		return ret;
+
+	nosPassInfo pass = {
+		.Key = NSN_Merge_Pass,
+		.Shader = NSN_Merge_Shader,
+		.Blend = 1,
+		.MultiSample = 1,
+	};
+	ret = nosVulkan->RegisterPasses(1, &pass);
+	return ret;
 }
 
 }

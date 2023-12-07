@@ -3,13 +3,10 @@
         {
             "class_name": "GaussianBlur",
             "contents_type": "Job",
-            "contents": {
-                "type": "CPU"
-            },
             "pins": [
                 {
                     "name": "Input",
-                    "type_name": "nos.fb.Texture",
+                    "type_name": "nos.sys.vulkan.Texture",
                     "show_as": "INPUT_PIN",
                     "can_show_as": "INPUT_PIN_OR_PROPERTY",
                     "data": {
@@ -45,7 +42,7 @@
                 },
                 {
                     "name": "Output",
-                    "type_name": "nos.fb.Texture",
+                    "type_name": "nos.sys.vulkan.Texture",
                     "show_as": "OUTPUT_PIN",
                     "can_show_as": "OUTPUT_PIN_OR_PROPERTY"
                 }

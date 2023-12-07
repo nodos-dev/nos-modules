@@ -3,16 +3,13 @@
         {
             "class_name": "ChannelViewer",
             "contents_type": "Job",
-            "contents": {
-              "type": "CPU"
-            },
             "description": "Outputs the selected channel of a texture.\nRed, Green, Blue, Alpha or Y, Cb, Cr channels are supported",
             "pins": [
                 {
                     "name": "Input",
-                    "type_name": "nos.fb.Texture",
+                    "type_name": "nos.sys.vulkan.Texture",
                     "show_as": "INPUT_PIN",
-                    "can_show_as" : "INPUT_PIN_ONLY",
+                    "can_show_as": "INPUT_PIN_ONLY",
                     "data": {
                         "filtering": "LINEAR"
                     }
@@ -21,23 +18,23 @@
                     "name": "Channel",
                     "type_name": "nos.fb.ChannelViewerChannels",
                     "show_as": "PROPERTY",
-                    "can_show_as" : "PROPERTY_ONLY",
+                    "can_show_as": "PROPERTY_ONLY",
                     "data": "A",
-					"description": "Sets the channel to output"
+                    "description": "Sets the channel to output"
                 },
                 {
                     "name": "Format",
                     "type_name": "nos.fb.ChannelViewerFormats",
                     "show_as": "PROPERTY",
-                    "can_show_as" : "PROPERTY_ONLY",
+                    "can_show_as": "PROPERTY_ONLY",
                     "data": "Rec_709",
-					"description": "Sets the input texture color space,\nRequired for correct YCbCr conversion"
+                    "description": "Sets the input texture color space,\nRequired for correct YCbCr conversion"
                 },
                 {
                     "name": "Output",
-                    "type_name": "nos.fb.Texture",
+                    "type_name": "nos.sys.vulkan.Texture",
                     "show_as": "OUTPUT_PIN",
-                    "can_show_as" : "OUTPUT_PIN_ONLY"
+                    "can_show_as": "OUTPUT_PIN_ONLY"
                 }
             ]
         }

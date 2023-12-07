@@ -1,11 +1,11 @@
 #include <Nodos/PluginAPI.h>
 #include <Builtins_generated.h>
-#include <Nodos/Helpers.hpp>
+#include <Nodos/PluginHelpers.hpp>
 #include <AppService_generated.h>
 #include <Windows.h>
 #include <nosUtil/Thread.h>
 // nosNodes
-#
+#include <nosVulkanSubsystem/Helpers.hpp>
 #include "../Shaders/SRGB2Linear.frag.spv.dat"
 #include <stb_image.h>
 #include <stb_image_write.h>
@@ -20,6 +20,7 @@ NOS_REGISTER_NAME(SRGB2Linear_Pass);
 NOS_REGISTER_NAME(SRGB2Linear_Shader);
 NOS_REGISTER_NAME(CNN);
 
+nosVulkanSubsystem* nosVulkan = nullptr;
 
 //TODO: Do not use globals
 //struct CNNObject
@@ -113,15 +114,15 @@ struct CNNThread : public nos::Thread{
 
 			auto t0 = std::chrono::high_resolution_clock::now();
 			nosCmd cmd;
-			nosEngine.Begin(&cmd);
-			nosEngine.Copy(cmd, &InputRGBA8, &Buf, 0);
-			nosEngine.End(cmd);
+			nosVulkan->Begin("Input Download", &cmd);
+			nosVulkan->Copy(cmd, &InputRGBA8, &Buf, 0);
+			nosVulkan->End(cmd, NOS_FALSE);
 			
 			auto t1 = std::chrono::high_resolution_clock::now();
 
 			nosEngine.WatchLog("CNN Download Time (us)", std::to_string(std::chrono::duration_cast<std::chrono::microseconds>(t1 - t0).count()).c_str());
 
-			auto buf2write = nosEngine.Map(&Buf);
+			auto buf2write = nosVulkan->Map(&Buf);
 			t0 = std::chrono::high_resolution_clock::now();
 			memcpy(data, buf2write, size);
 			t1 = std::chrono::high_resolution_clock::now();
@@ -159,33 +160,33 @@ struct CNNNodeContext :  nos::NodeContext {
 		Worker.InputRGBA8.Info.Texture.Format = NOS_FORMAT_R8G8B8A8_SRGB;
 		Worker.InputRGBA8.Info.Texture.Usage = nosImageUsage(NOS_IMAGE_USAGE_TRANSFER_SRC | NOS_IMAGE_USAGE_TRANSFER_DST);
 		
-		nosEngine.Create(&Worker.InputRGBA8);
+		nosVulkan->CreateResource(&Worker.InputRGBA8);
 
 		Worker.Buf.Info.Type = NOS_RESOURCE_TYPE_BUFFER;
 		Worker.size = Worker.InputRGBA8.Info.Texture.Width * Worker.InputRGBA8.Info.Texture.Height * 4 * sizeof(uint8_t);
 		Worker.Buf.Info.Buffer.Size = Worker.size;
 		Worker.Buf.Info.Buffer.Usage = nosBufferUsage(NOS_BUFFER_USAGE_TRANSFER_SRC | NOS_BUFFER_USAGE_TRANSFER_DST);
 		Worker.data = new uint8_t[Worker.size];
-		nosEngine.Create(&Worker.Buf);
+		nosVulkan->CreateResource(&Worker.Buf);
 
 		Worker.Start();
 	}
 
 	~CNNNodeContext() override {
 		Worker.Stop();
-		nosEngine.Destroy(&Worker.InputRGBA8);
-		nosEngine.Destroy(&Worker.Buf);
+		nosVulkan->DestroyResource(&Worker.InputRGBA8);
+		nosVulkan->DestroyResource(&Worker.Buf);
 		delete[] Worker.data;
 	}
 
-	void  OnPinValueChanged(nos::Name pinName, nosUUID pinId, nosBuffer* value) override {
+	void  OnPinValueChanged(nos::Name pinName, nosUUID pinId, nosBuffer value) override {
 		if (dllLoader.cnnDLL == 0) {
 			nosEngine.LogE("Missing CNN dll, no execution will be performed.");
 			return;
 		}
 		if (pinName == NSN_In) {
 
-			dllLoader.Input = nos::DeserializeTextureInfo(value->Data);
+			dllLoader.Input = nos::vkss::DeserializeTextureInfo(value.Data);
 			nosEngine.LogI("Input value on CNN changed!");
 		}
 	}
@@ -200,17 +201,17 @@ struct CNNNodeContext :  nos::NodeContext {
 
 		if (Worker.isDone) {
 			Worker.isNewFrameReady = true;
-			nosResourceShareInfo out = nos::DeserializeTextureInfo(values[NSN_Out]);;
+			nosResourceShareInfo out = nos::vkss::DeserializeTextureInfo(values[NSN_Out]);;
 			nosResourceShareInfo tmp = out;
-			nosEngine.ImageLoad(Worker.data,
+			nosVulkan->ImageLoad(Worker.data,
 				nosVec2u(out.Info.Texture.Width, out.Info.Texture.Height),
 				NOS_FORMAT_R8G8B8A8_SRGB, &tmp);
 			{
 				nosCmd cmd;
-				nosEngine.Begin(&cmd);
-				nosEngine.Copy(cmd, &tmp, &out, 0);
-				nosEngine.End(cmd);
-				nosEngine.Destroy(&tmp);
+				nosVulkan->Begin("Copy to Out", &cmd);
+				nosVulkan->Copy(cmd, &tmp, &out, 0);
+				nosVulkan->End(cmd, NOS_FALSE);
+				nosVulkan->DestroyResource(&tmp);
 			}
 			//return NOS_RESULT_SUCCESS;
 		}
@@ -220,10 +221,11 @@ struct CNNNodeContext :  nos::NodeContext {
 	}
 
 	nosResult BeginCopyTo(nosCopyInfo* cpy) override {
-		cpy->ShouldCopyTexture = true;
-		cpy->CopyTextureFrom = dllLoader.Input;
-		cpy->CopyTextureTo = Worker.InputRGBA8;
-		cpy->ShouldSubmitAndWait = true;
+		auto* texCpy = static_cast<nosTextureCopyInfo*>(cpy->TypeCopyInfo);
+		texCpy->ShouldCopyTexture = true;
+		texCpy->CopyTextureFrom = dllLoader.Input;
+		texCpy->CopyTextureTo = Worker.InputRGBA8;
+		texCpy->ShouldSubmitAndWait = true;
 		return NOS_RESULT_SUCCESS;
 	}
 
@@ -247,30 +249,6 @@ struct CNNNodeContext :  nos::NodeContext {
 
 		return NOS_RESULT_SUCCESS;
 	}
-
-	static nosResult GetShaders(size_t* outCount, nosShaderInfo* outShaders) {
-		*outCount = 1;
-		if (!outShaders)
-			return NOS_RESULT_SUCCESS;
-
-		outShaders[0] = { .Key = NSN_SRGB2Linear_Shader, .Source = {.SpirvBlob = {(void*)SRGB2Linear_frag_spv, sizeof(SRGB2Linear_frag_spv)}} };
-		return NOS_RESULT_SUCCESS;
-	}
-
-	static nosResult GetPasses(size_t* count, nosPassInfo* passes) {
-		*count = 1;
-		if (!passes)
-			return NOS_RESULT_SUCCESS;
-
-		*passes = nosPassInfo{
-			.Key = NSN_SRGB2Linear_Pass,
-			.Shader = NSN_SRGB2Linear_Shader,
-			.Blend = 0,
-			.MultiSample = 1,
-		};
-
-		return NOS_RESULT_SUCCESS;
-	}
 };
 
 extern "C"
@@ -281,10 +259,24 @@ extern "C"
 		if (!outFunctions)
 			return NOS_RESULT_SUCCESS;
 
+		auto ret = nosEngine.RequestSubsystem(NOS_NAME_STATIC("nos.sys.vulkan"), 0, 1, (void**)&nosVulkan);
+		if (NOS_RESULT_SUCCESS != ret)
+			return ret;
+
 		NOS_BIND_NODE_CLASS(NSN_CNN, CNNNodeContext, outFunctions[0]);
 
+		nosShaderInfo shader = { .Key = NSN_SRGB2Linear_Shader, .Source = {.SpirvBlob = {(void*)SRGB2Linear_frag_spv, sizeof(SRGB2Linear_frag_spv)}} };
+		ret = nosVulkan->RegisterShaders(1, &shader);
+		if (NOS_RESULT_SUCCESS != ret)
+			return ret;
 
-		return NOS_RESULT_SUCCESS;
+		nosPassInfo pass = {
+			.Key = NSN_SRGB2Linear_Pass,
+			.Shader = NSN_SRGB2Linear_Shader,
+			.Blend = 0,
+			.MultiSample = 1,
+		};
+		return nosVulkan->RegisterPasses(1, &pass);
 	}
 }
 

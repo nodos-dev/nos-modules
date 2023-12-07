@@ -3,47 +3,51 @@
         {
             "class_name": "Merge",
             "contents_type": "Job",
-            "contents": {
-                "type": "CPU"
-            },
             "description": "Layers multiple images together using various blend modes,\nwhile obeying each layers alpha channel",
             "pins": [
                 {
                     "name": "Background_Color",
                     "type_name": "nos.fb.vec4",
                     "show_as": "PROPERTY",
-                    "can_show_as" : "INPUT_PIN_OR_PROPERTY",
-                     "visualizer" : {"type": "COLOR_PICKER"},
-                    "data" : { "x" : 1.0, "y" : 1.0, "z" : 1.0, "w" : 1.0 },
+                    "can_show_as": "INPUT_PIN_OR_PROPERTY",
+                    "visualizer": {
+                        "type": "COLOR_PICKER"
+                    },
+                    "data": {
+                        "x": 1.0,
+                        "y": 1.0,
+                        "z": 1.0,
+                        "w": 1.0
+                    },
                     "description": "Solid RGBA color for background"
                 },
                 {
                     "name": "Opacity_0",
                     "type_name": "float",
                     "show_as": "PROPERTY",
-                    "can_show_as" : "INPUT_PIN_OR_PROPERTY",
+                    "can_show_as": "INPUT_PIN_OR_PROPERTY",
                     "data": 1.0,
-                    "pin_category" : "Layer (0)",
-                    "min" : 0.0,
-                    "max" : 1.0
+                    "pin_category": "Layer (0)",
+                    "min": 0.0,
+                    "max": 1.0
                 },
                 {
                     "name": "Opacity_1",
                     "type_name": "float",
                     "show_as": "PROPERTY",
-                    "can_show_as" : "INPUT_PIN_OR_PROPERTY",
+                    "can_show_as": "INPUT_PIN_OR_PROPERTY",
                     "data": 1.0,
-                    "pin_category" : "Layer (1)",
-                    "min" : 0.0,
-                    "max" : 1.0
+                    "pin_category": "Layer (1)",
+                    "min": 0.0,
+                    "max": 1.0
                 },
                 {
                     "name": "Blend_Mode_0",
                     "type_name": "nos.fb.BlendMode",
                     "show_as": "PROPERTY",
                     "data": "Normal",
-                    "pin_category" : "Layer (0)",
-                    "can_show_as" : "INPUT_PIN_OR_PROPERTY",
+                    "pin_category": "Layer (0)",
+                    "can_show_as": "INPUT_PIN_OR_PROPERTY",
                     "description": "Supported blendmodes:\nNormal, Additive, Add, Subtract, Multiply, Divide, Screen, Min, Max"
                 },
                 {
@@ -51,29 +55,29 @@
                     "type_name": "nos.fb.BlendMode",
                     "show_as": "PROPERTY",
                     "data": "Normal",
-                    "pin_category" : "Layer (1)",
-                    "can_show_as" : "INPUT_PIN_OR_PROPERTY",
+                    "pin_category": "Layer (1)",
+                    "can_show_as": "INPUT_PIN_OR_PROPERTY",
                     "description": "Supported blendmodes:\nNormal, Additive, Add, Subtract, Multiply, Divide, Screen, Min, Max"
                 },
                 {
                     "name": "Texture_0",
-                    "type_name": "nos.fb.Texture",
+                    "type_name": "nos.sys.vulkan.Texture",
                     "show_as": "INPUT_PIN",
-                    "can_show_as" : "INPUT_PIN_ONLY",
-                    "pin_category" : "Layer (0)"
+                    "can_show_as": "INPUT_PIN_ONLY",
+                    "pin_category": "Layer (0)"
                 },
                 {
                     "name": "Texture_1",
-                    "type_name": "nos.fb.Texture",
+                    "type_name": "nos.sys.vulkan.Texture",
                     "show_as": "INPUT_PIN",
-                    "can_show_as" : "INPUT_PIN_ONLY",
-                    "pin_category" : "Layer (1)"
+                    "can_show_as": "INPUT_PIN_ONLY",
+                    "pin_category": "Layer (1)"
                 },
                 {
                     "name": "Out",
-                    "type_name": "nos.fb.Texture",
+                    "type_name": "nos.sys.vulkan.Texture",
                     "show_as": "OUTPUT_PIN",
-                    "can_show_as" : "OUTPUT_PIN_ONLY"
+                    "can_show_as": "OUTPUT_PIN_ONLY"
                 }
             ]
         }

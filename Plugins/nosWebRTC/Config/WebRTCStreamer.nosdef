@@ -4,13 +4,10 @@
             "class_name": "WebRTCStreamer",
             "contents_type": "Job",
 			"always_execute": true,
-            "contents": {
-                "type": "CPU"
-            },
           "pins": [
             {
               "name": "In",
-              "type_name": "nos.fb.Texture",
+              "type_name": "nos.sys.vulkan.Texture",
               "show_as": "INPUT_PIN",
               "can_show_as": "INPUT_PIN_OR_PROPERTY",
 			        "live":true,

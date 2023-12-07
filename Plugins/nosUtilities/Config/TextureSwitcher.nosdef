@@ -4,7 +4,10 @@
             "class_name": "TextureSwitcher",
             "contents_type": "Job",
             "contents": {
-              "type": "GPU"
+                "type": "nos.sys.vulkan.GPUNode",
+                "options": {
+                    "shader": "../Shaders/TextureSwitcher.frag"
+                }
             },
             "description": "Used for switching between multiple textures",
             "pins": [
@@ -18,69 +21,69 @@
                 },
                 {
                     "name": "Channel_1",
-                    "type_name": "nos.fb.Texture",
+                    "type_name": "nos.sys.vulkan.Texture",
                     "show_as": "INPUT_PIN",
-                    "can_show_as" : "INPUT_PIN_ONLY"
+                    "can_show_as": "INPUT_PIN_ONLY"
                 },
                 {
                     "name": "Channel_2",
-                    "type_name": "nos.fb.Texture",
+                    "type_name": "nos.sys.vulkan.Texture",
                     "show_as": "INPUT_PIN",
-                    "can_show_as" : "INPUT_PIN_ONLY"
+                    "can_show_as": "INPUT_PIN_ONLY"
                 },
                 {
                     "name": "Channel_3",
-                    "type_name": "nos.fb.Texture",
+                    "type_name": "nos.sys.vulkan.Texture",
                     "show_as": "INPUT_PIN",
-                    "can_show_as" : "INPUT_PIN_ONLY"
+                    "can_show_as": "INPUT_PIN_ONLY"
                 },
                 {
                     "name": "Channel_4",
-                    "type_name": "nos.fb.Texture",
+                    "type_name": "nos.sys.vulkan.Texture",
                     "show_as": "INPUT_PIN",
-                    "can_show_as" : "INPUT_PIN_ONLY"
+                    "can_show_as": "INPUT_PIN_ONLY"
                 },
                 {
                     "name": "Channel_5",
-                    "type_name": "nos.fb.Texture",
+                    "type_name": "nos.sys.vulkan.Texture",
                     "show_as": "INPUT_PIN",
-                    "can_show_as" : "INPUT_PIN_ONLY"
+                    "can_show_as": "INPUT_PIN_ONLY"
                 },
                 {
                     "name": "Channel_6",
-                    "type_name": "nos.fb.Texture",
+                    "type_name": "nos.sys.vulkan.Texture",
                     "show_as": "INPUT_PIN",
-                    "can_show_as" : "INPUT_PIN_ONLY"
+                    "can_show_as": "INPUT_PIN_ONLY"
                 },
                 {
                     "name": "Channel_7",
-                    "type_name": "nos.fb.Texture",
+                    "type_name": "nos.sys.vulkan.Texture",
                     "show_as": "INPUT_PIN",
-                    "can_show_as" : "INPUT_PIN_ONLY"
+                    "can_show_as": "INPUT_PIN_ONLY"
                 },
                 {
                     "name": "Channel_8",
-                    "type_name": "nos.fb.Texture",
+                    "type_name": "nos.sys.vulkan.Texture",
                     "show_as": "INPUT_PIN",
-                    "can_show_as" : "INPUT_PIN_ONLY"
+                    "can_show_as": "INPUT_PIN_ONLY"
                 },
                 {
                     "name": "Channel_9",
-                    "type_name": "nos.fb.Texture",
+                    "type_name": "nos.sys.vulkan.Texture",
                     "show_as": "INPUT_PIN",
-                    "can_show_as" : "INPUT_PIN_ONLY"
+                    "can_show_as": "INPUT_PIN_ONLY"
                 },
                 {
                     "name": "Channel_10",
-                    "type_name": "nos.fb.Texture",
+                    "type_name": "nos.sys.vulkan.Texture",
                     "show_as": "INPUT_PIN",
-                    "can_show_as" : "INPUT_PIN_ONLY"
+                    "can_show_as": "INPUT_PIN_ONLY"
                 },
                 {
                     "name": "Output",
-                    "type_name": "nos.fb.Texture",
+                    "type_name": "nos.sys.vulkan.Texture",
                     "show_as": "OUTPUT_PIN",
-                    "can_show_as" : "OUTPUT_PIN_ONLY"
+                    "can_show_as": "OUTPUT_PIN_ONLY"
                 }
             ]
         }

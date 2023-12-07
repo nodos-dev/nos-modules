@@ -1,6 +1,6 @@
 #include <Nodos/PluginAPI.h>
 #include <Builtins_generated.h>
-#include <Nodos/Helpers.hpp>
+#include <Nodos/PluginHelpers.hpp>
 #include <AppService_generated.h>
 #include <AppEvents_generated.h>
 #include "SignalingServer.h"

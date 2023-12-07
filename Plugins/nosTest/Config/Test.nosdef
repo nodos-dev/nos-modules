@@ -3,17 +3,11 @@
 		{
 			"class_name": "NodeTest",
 			"contents_type": "Job",
-			"contents": {
-				"type": "CPU"
-			},
 			"description": "test online update",
 			"functions": [
 				{
 					"class_name": "TestFunction",
 					"contents_type": "Job",
-					"contents": {
-						"type": "CPU"
-					},
 					"description": "Test function description",
 					"pins": [
 						{
@@ -70,16 +64,10 @@
 		{
 			"class_name": "NodeWithCategories",
 			"contents_type": "Job",
-			"contents": {
-				"type": "CPU"
-			},
 			"functions": [
 				{
 					"class_name": "TestFunction",
 					"contents_type": "Job",
-					"contents": {
-						"type": "CPU"
-					},
 					"function_category": "A",
 					"pins": [
 						{
@@ -132,16 +120,10 @@
 		{
 			"class_name": "NodeWithFunctions",
 			"contents_type": "Job",
-			"contents": {
-				"type": "CPU"
-			},
 			"functions": [
 				{
 					"class_name": "TestFunction",
 					"contents_type": "Job",
-					"contents": {
-						"type": "CPU"
-					},
 					"function_category": "A",
 					"pins": [
 						{
@@ -166,9 +148,6 @@
 				{
 					"class_name": "TestFunction2",
 					"contents_type": "Job",
-					"contents": {
-						"type": "CPU"
-					},
 					"function_category": "A|B",
 					"pins": [
 						{
@@ -193,9 +172,6 @@
 				{
 					"class_name": "TestFunction3",
 					"contents_type": "Job",
-					"contents": {
-						"type": "CPU"
-					},
 					"function_category": "B",
 					"pins": [
 						{
@@ -220,9 +196,6 @@
 				{
 					"class_name": "TestFunction3",
 					"contents_type": "Job",
-					"contents": {
-						"type": "CPU"
-					},
 					"function_category": "A",
 					"pins": [
 						{
@@ -275,16 +248,10 @@
 		{
 			"class_name": "NodeWithCustomTypes",
 			"contents_type": "Job",
-			"contents": {
-				"type": "CPU"
-			},
 			"functions": [
 				{
 					"class_name": "TestFunction",
 					"contents_type": "Job",
-					"contents": {
-						"type": "CPU"
-					},
 					"function_category": "A",
 					"pins": [
 						{
@@ -338,12 +305,15 @@
 			"class_name": "GpuStress",
 			"contents_type": "Job",
 			"contents": {
-				"type": "GPU"
+			    "type": "nos.sys.vulkan.GPUNode",
+			    "options": {
+			        "shader": "../Source/GpuStress.frag"
+			    }
 			},
 			"pins": [
 				{
 					"name": "Input",
-					"type_name": "nos.fb.Texture",
+					"type_name": "nos.sys.vulkan.Texture",
 					"show_as": "INPUT_PIN",
 					"can_show_as": "INPUT_PIN_OR_PROPERTY"
 				},
@@ -358,7 +328,7 @@
 				},
 				{
 					"name": "Output",
-					"type_name": "nos.fb.Texture",
+					"type_name": "nos.sys.vulkan.Texture",
 					"show_as": "OUTPUT_PIN",
 					"can_show_as": "OUTPUT_PIN_OR_PROPERTY"
 				}
@@ -367,19 +337,16 @@
 		{
 			"class_name": "CopyTest",
 			"contents_type": "Job",
-			"contents": {
-				"type": "CPU"
-			},
 			"pins": [
 				{
 					"name": "Input",
-					"type_name": "nos.fb.Texture",
+					"type_name": "nos.sys.vulkan.Texture",
 					"show_as": "INPUT_PIN",
 					"can_show_as": "INPUT_PIN_OR_PROPERTY"
 				},
 				{
 					"name": "Output",
-					"type_name": "nos.fb.Texture",
+					"type_name": "nos.sys.vulkan.Texture",
 					"show_as": "OUTPUT_PIN",
 					"can_show_as": "OUTPUT_PIN_OR_PROPERTY"
 				}

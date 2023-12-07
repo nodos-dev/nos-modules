@@ -4,7 +4,10 @@
             "class_name": "Swizzle",
             "contents_type": "Job",
             "contents": {
-              "type": "GPU"
+                "type": "nos.sys.vulkan.GPUNode",
+                "options": {
+                  "shader": "../Shaders/Swizzle.frag"
+                }
             },
             "description":  "Combine multiple textures (up to 4), channel by channel to a single RGBA texture",
             "pins": [
@@ -153,26 +156,26 @@
 
                 {
                     "name": "Input1",
-                    "type_name": "nos.fb.Texture",
+                    "type_name": "nos.sys.vulkan.Texture",
                     "show_as": "INPUT_PIN",
                     "can_show_as" : "INPUT_PIN_OR_PROPERTY"
                 },
                 {
                     "name": "Input2",
-                    "type_name": "nos.fb.Texture",
+                    "type_name": "nos.sys.vulkan.Texture",
                     "show_as": "INPUT_PIN",
                     "can_show_as" : "INPUT_PIN_OR_PROPERTY"
                 },
                 {
                     "name": "Input3",
-                    "type_name": "nos.fb.Texture",
+                    "type_name": "nos.sys.vulkan.Texture",
                     "show_as": "INPUT_PIN",
                     "can_show_as" : "INPUT_PIN_OR_PROPERTY"
                 },
 
                 {
                     "name": "Input4",
-                    "type_name": "nos.fb.Texture",
+                    "type_name": "nos.sys.vulkan.Texture",
                     "show_as": "INPUT_PIN",
                     "can_show_as" : "INPUT_PIN_OR_PROPERTY"
                 },
@@ -180,7 +183,7 @@
 
                 {
                     "name": "Output",
-                    "type_name": "nos.fb.Texture",
+                    "type_name": "nos.sys.vulkan.Texture",
                     "show_as": "OUTPUT_PIN",
                     "can_show_as" : "OUTPUT_PIN_ONLY"
                 }

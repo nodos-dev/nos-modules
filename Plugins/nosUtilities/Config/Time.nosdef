@@ -4,15 +4,12 @@
             "class_name": "Time",
             "contents_type": "Job",
             "always_execute": true,
-            "contents": {
-                "type": "CPU"
-            },
             "pins": [
                 {
                     "name": "Seconds",
                     "type_name": "float",
                     "show_as": "OUTPUT_PIN",
-                    "can_show_as" : "OUTPUT_PIN_OR_PROPERTY"
+                    "can_show_as": "OUTPUT_PIN_OR_PROPERTY"
                 }
             ]
         }

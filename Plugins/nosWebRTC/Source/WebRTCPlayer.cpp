@@ -1,9 +1,12 @@
 #include <Nodos/PluginAPI.h>
 #include <Builtins_generated.h>
-#include <Nodos/Helpers.hpp>
+#include <Nodos/PluginHelpers.hpp>
 #include <AppService_generated.h>
 #include <AppEvents_generated.h>
 #include <nosUtil/Thread.h>
+#include <nosVulkanSubsystem/nosVulkanSubsystem.h>
+#include <nosVulkanSubsystem/Helpers.hpp>
+#include "Names.h"
 
 #include <Windows.h>
 #include <shellapi.h>  // must come after windows.h
@@ -41,20 +44,6 @@
 #include "WebRTCCommon.h"
 
 // nosNodes
-
-NOS_REGISTER_NAME(Out)
-NOS_REGISTER_NAME(ServerIP)
-NOS_REGISTER_NAME(StreamerID)
-NOS_REGISTER_NAME(MaxFPS)
-NOS_REGISTER_NAME(WebRTCPlayer);
-NOS_REGISTER_NAME(TargetBitrate);
-
-NOS_REGISTER_NAME(YUV420toRGB_Compute_Shader);
-NOS_REGISTER_NAME(YUV420toRGB_Compute_Pass);
-NOS_REGISTER_NAME(Output);
-NOS_REGISTER_NAME(PlaneY);
-NOS_REGISTER_NAME(PlaneU);
-NOS_REGISTER_NAME(PlaneV);
 
 enum EWebRTCPlayerStates {
 	eNONE,
@@ -183,7 +172,7 @@ struct WebRTCPlayerNodeContext : nos::NodeContext {
 		OutputRGBA8.Info.Texture.Width = 1280;
 		OutputRGBA8.Info.Texture.Height = 720;
 
-		nosEngine.Create(&OutputRGBA8);
+		nosVulkan->CreateResource(&OutputRGBA8);
 
 		for (int i = 0; i < 5; i++) {
 			nosResourceShareInfo tex = {};
@@ -192,7 +181,7 @@ struct WebRTCPlayerNodeContext : nos::NodeContext {
 			tex.Info.Texture.Usage = nosImageUsage(NOS_IMAGE_USAGE_TRANSFER_SRC | NOS_IMAGE_USAGE_TRANSFER_DST);
 			tex.Info.Texture.Width = OutputRGBA8.Info.Texture.Width;
 			tex.Info.Texture.Height = OutputRGBA8.Info.Texture.Height;
-			nosEngine.Create(&tex);
+			nosVulkan->CreateResource(&tex);
 			ConvertedTextures.push_back(std::move(tex));
 
 			nosResourceShareInfo tmpY = {};
@@ -252,13 +241,13 @@ struct WebRTCPlayerNodeContext : nos::NodeContext {
 			CallbackHandlerThread.join();
 		}
 		for (const auto& text : ConvertedTextures) {
-			nosEngine.Destroy(&text);
+			nosVulkan->DestroyResource(&text);
 		}
 	}
 
-	void  OnPinValueChanged(nos::Name pinName, nosUUID pinId, nosBuffer* value) override {
+	void  OnPinValueChanged(nos::Name pinName, nosUUID pinId, nosBuffer value) override {
 		if (pinName == NSN_MaxFPS) {
-			FPS = *(static_cast<float*>(value->Data));
+			FPS = *(static_cast<float*>(value.Data));
 			auto time = std::chrono::duration<float>(1.0f / FPS);
 			timeLimit = std::chrono::round<std::chrono::microseconds>(time);
 		}
@@ -301,36 +290,42 @@ struct WebRTCPlayerNodeContext : nos::NodeContext {
 
 		if (OnFrameYBuffers[writeIndex].Info.Texture.Width != buffer->width() || OnFrameYBuffers[writeIndex].Info.Texture.Height != buffer->height()) {
 			if(OnFrameYBuffers[writeIndex].Memory.Handle != NULL) {
-				nosEngine.Destroy(&OnFrameYBuffers[writeIndex]);
-				nosEngine.Destroy(&OnFrameUBuffers[writeIndex]);
-				nosEngine.Destroy(&OnFrameVBuffers[writeIndex]);
+				nosVulkan->DestroyResource(&OnFrameYBuffers[writeIndex]);
+				nosVulkan->DestroyResource(&OnFrameUBuffers[writeIndex]);
+				nosVulkan->DestroyResource(&OnFrameVBuffers[writeIndex]);
 			}
 			OnFrameYBuffers[writeIndex].Info.Texture.Format = NOS_FORMAT_R8_SRGB;
 			OnFrameYBuffers[writeIndex].Info.Type = NOS_RESOURCE_TYPE_TEXTURE;
 			OnFrameYBuffers[writeIndex].Info.Texture.Usage = nosImageUsage(NOS_IMAGE_USAGE_TRANSFER_SRC | NOS_IMAGE_USAGE_TRANSFER_DST);
 			OnFrameYBuffers[writeIndex].Info.Texture.Width = buffer->width();
 			OnFrameYBuffers[writeIndex].Info.Texture.Height = buffer->height();
-			nosEngine.Create(&OnFrameYBuffers[writeIndex]);
+			nosVulkan->CreateResource(&OnFrameYBuffers[writeIndex]);
 
 			OnFrameUBuffers[writeIndex].Info.Texture.Format = NOS_FORMAT_R8_SRGB;
 			OnFrameUBuffers[writeIndex].Info.Type = NOS_RESOURCE_TYPE_TEXTURE;
 			OnFrameUBuffers[writeIndex].Info.Texture.Usage = nosImageUsage(NOS_IMAGE_USAGE_TRANSFER_SRC | NOS_IMAGE_USAGE_TRANSFER_DST);
 			OnFrameUBuffers[writeIndex].Info.Texture.Width = buffer->width() / 2;
 			OnFrameUBuffers[writeIndex].Info.Texture.Height = buffer->height() / 2;
-			nosEngine.Create(&OnFrameUBuffers[writeIndex]);
+			nosVulkan->CreateResource(&OnFrameUBuffers[writeIndex]);
 
 			OnFrameVBuffers[writeIndex].Info.Texture.Format = NOS_FORMAT_R8_SRGB;
 			OnFrameVBuffers[writeIndex].Info.Type = NOS_RESOURCE_TYPE_TEXTURE;
 			OnFrameVBuffers[writeIndex].Info.Texture.Usage = nosImageUsage(NOS_IMAGE_USAGE_TRANSFER_SRC | NOS_IMAGE_USAGE_TRANSFER_DST);
 			OnFrameVBuffers[writeIndex].Info.Texture.Width = buffer->width() / 2;
 			OnFrameVBuffers[writeIndex].Info.Texture.Height = buffer->height() / 2;
-			nosEngine.Create(&OnFrameVBuffers[writeIndex]);
+			nosVulkan->CreateResource(&OnFrameVBuffers[writeIndex]);
 		}
 		
 
-		nosEngine.ImageLoad(buffer->DataY(), nosVec2u(buffer->width(), buffer->height()), NOS_FORMAT_R8_SRGB, &OnFrameYBuffers[writeIndex]);
-		nosEngine.ImageLoad(buffer->DataU(), nosVec2u(buffer->width() / 2, buffer->height() / 2), NOS_FORMAT_R8_SRGB, &OnFrameUBuffers[writeIndex]);
-		nosEngine.ImageLoad(buffer->DataV(), nosVec2u(buffer->width() / 2, buffer->height() / 2), NOS_FORMAT_R8_SRGB, &OnFrameVBuffers[writeIndex]);
+		nosVulkan->ImageLoad(buffer->DataY(), nosVec2u(buffer->width(), buffer->height()), NOS_FORMAT_R8_SRGB, &OnFrameYBuffers[writeIndex]);
+		nosVulkan->ImageLoad(buffer->DataU(),
+							 nosVec2u(buffer->width() / 2, buffer->height() / 2),
+							 NOS_FORMAT_R8_SRGB,
+							 &OnFrameUBuffers[writeIndex]);
+		nosVulkan->ImageLoad(buffer->DataV(),
+							 nosVec2u(buffer->width() / 2, buffer->height() / 2),
+							 NOS_FORMAT_R8_SRGB,
+							 &OnFrameVBuffers[writeIndex]);
 		RGBAConversionRing->SetWrote();
 		FrameConversionCV.notify_one();
 	}
@@ -348,14 +343,14 @@ struct WebRTCPlayerNodeContext : nos::NodeContext {
 			return NOS_RESULT_FAILED;
 		}
 		LastCopyTime = std::chrono::high_resolution_clock::now();
+		auto& texCpy = *static_cast<nosTextureCopyInfo*>(copyInfo->TypeCopyInfo);
 
 		PlayerBeginCopyToLogger.LogStats();
 		int readIndex = OutputRing->GetNextReadable();
-		copyInfo->ShouldCopyTexture = true;
-		copyInfo->CopyTextureFrom = ConvertedTextures[readIndex];
-		copyInfo->CopyTextureTo = nos::DeserializeTextureInfo(copyInfo->SrcPinData.Data);
-		copyInfo->ShouldSubmitAndWait = true;
-		copyInfo->Stop = true;
+		texCpy.ShouldCopyTexture = true;
+		texCpy.CopyTextureFrom = ConvertedTextures[readIndex];
+		texCpy.CopyTextureTo = nos::vkss::DeserializeTextureInfo(copyInfo->SrcPinData->Data);
+		texCpy.ShouldSubmitAndWait = true;
 		return NOS_RESULT_SUCCESS;
 	}
 
@@ -378,14 +373,14 @@ struct WebRTCPlayerNodeContext : nos::NodeContext {
 			auto t_start = std::chrono::high_resolution_clock::now();
 			int writeIndex = OutputRing->GetNextWritable();
 			std::vector<nosShaderBinding> inputs;
-			inputs.emplace_back(nos::ShaderBinding(NSN_Output, ConvertedTextures[writeIndex]));
-			inputs.emplace_back(nos::ShaderBinding(NSN_PlaneY, OnFrameYBuffers[readIndex]));
-			inputs.emplace_back(nos::ShaderBinding(NSN_PlaneU, OnFrameUBuffers[readIndex]));
-			inputs.emplace_back(nos::ShaderBinding(NSN_PlaneV, OnFrameVBuffers[readIndex]));
+			inputs.emplace_back(nos::vkss::ShaderBinding(NSN_Output, ConvertedTextures[writeIndex]));
+			inputs.emplace_back(nos::vkss::ShaderBinding(NSN_PlaneY, OnFrameYBuffers[readIndex]));
+			inputs.emplace_back(nos::vkss::ShaderBinding(NSN_PlaneU, OnFrameUBuffers[readIndex]));
+			inputs.emplace_back(nos::vkss::ShaderBinding(NSN_PlaneV, OnFrameVBuffers[readIndex]));
 
 
 			nosCmd cmdRunPass;
-			nosEngine.Begin(&cmdRunPass);
+			nosVulkan->Begin("WebRTCPlayer.YUVConversion", &cmdRunPass);
 			auto t0 = std::chrono::high_resolution_clock::now();
 			{
 				nosRunComputePassParams pass = {};
@@ -394,9 +389,9 @@ struct WebRTCPlayerNodeContext : nos::NodeContext {
 				pass.Bindings = inputs.data();
 				pass.BindingCount = inputs.size();
 				pass.Benchmark = 0;
-				nosEngine.RunComputePass(cmdRunPass, &pass);
+				nosVulkan->RunComputePass(cmdRunPass, &pass);
 			}
-			nosEngine.End(cmdRunPass);
+			nosVulkan->End(cmdRunPass, NOS_FALSE);
 			OutputRing->SetWrote();
 
 			//auto t1 = std::chrono::high_resolution_clock::now();
@@ -556,36 +551,21 @@ struct WebRTCPlayerNodeContext : nos::NodeContext {
 			}
 		}
 	}
-
-	static nosResult GetShaders(size_t* outCount, nosShaderInfo* outShaders) {
-		*outCount = 1;
-		if (!outShaders)
-			return NOS_RESULT_SUCCESS;
-
-		*outShaders++ = {
-		.Key = YUV420toRGBShader.first,
-		.Source = {.SpirvBlob = { YUV420toRGBShader.second.data(), YUV420toRGBShader.second.size() }},
-		};
-		return NOS_RESULT_SUCCESS;
-
-	}
-
-	static nosResult GetPasses(size_t* count, nosPassInfo* passes) {
-
-		*count = 1;
-
-		if (!passes)
-			return NOS_RESULT_SUCCESS;
-		*passes++ = {
-			.Key = NSN_YUV420toRGB_Compute_Pass, .Shader = NSN_YUV420toRGB_Compute_Shader, .MultiSample = 1
-		};
-
-		return NOS_RESULT_SUCCESS;
-	};
 };
 
-void RegisterWebRTCPlayer(nosNodeFunctions* outFunctions) {
+nosResult RegisterWebRTCPlayer(nosNodeFunctions* outFunctions) {
 	NOS_BIND_NODE_CLASS(NSN_WebRTCPlayer, WebRTCPlayerNodeContext, outFunctions);
 
 	YUV420toRGBShader = { NSN_YUV420toRGB_Compute_Shader, {std::begin(YUV420toRGB_comp_spv), std::end(YUV420toRGB_comp_spv)} };
+
+	nosShaderInfo YUV420toRGBShaderInfo = {
+		.Key = YUV420toRGBShader.first,
+		.Source = {.SpirvBlob = {YUV420toRGBShader.second.data(), YUV420toRGBShader.second.size()}},
+	};
+	nosResult res = nosVulkan->RegisterShaders(1, &YUV420toRGBShaderInfo);
+	if (res != NOS_RESULT_SUCCESS)
+		return res;
+	nosPassInfo YUV420toRGBPassInfo = {
+		.Key = NSN_YUV420toRGB_Compute_Pass, .Shader = NSN_YUV420toRGB_Compute_Shader, .MultiSample = 1};
+	return nosVulkan->RegisterPasses(1, &YUV420toRGBPassInfo);
 }

@@ -1,6 +1,6 @@
 // Copyright Nodos AS. All Rights Reserved.
 
-#include <Nodos/Helpers.hpp>
+#include <Nodos/PluginHelpers.hpp>
 
 // External
 #include <stb_image.h>
@@ -12,42 +12,18 @@
 #include <AppService_generated.h>
 
 // nosNodes
+#include <nosVulkanSubsystem/Helpers.hpp>
 #include "../Shaders/SRGB2Linear.frag.spv.dat"
+
+#include "Names.h"
 
 namespace nos::utilities
 {
+extern nosVulkanSubsystem* nosVulkan;
 
 NOS_REGISTER_NAME(SRGB2Linear_Pass);
 NOS_REGISTER_NAME(SRGB2Linear_Shader);
-NOS_REGISTER_NAME(Path);
-NOS_REGISTER_NAME(Out);
 NOS_REGISTER_NAME_SPACED(Nos_Utilities_ReadImage, "nos.utilities.ReadImage")
-
-static nosResult GetShaders(size_t* outCount, nosShaderInfo* outShaders)
-{
-    *outCount = 1;
-    if (!outShaders)
-        return NOS_RESULT_SUCCESS;
-
-	outShaders[0] = {.Key=NSN_SRGB2Linear_Shader, .Source = { .SpirvBlob = {(void*)SRGB2Linear_frag_spv, sizeof(SRGB2Linear_frag_spv)}}};
-    return NOS_RESULT_SUCCESS;
-}
-
-static nosResult GetPasses(size_t* count, nosPassInfo* passes)
-{
-	*count = 1;
-	if (!passes)
-		return NOS_RESULT_SUCCESS;
-
-	*passes = nosPassInfo{
-		.Key = NSN_SRGB2Linear_Pass,
-		.Shader = NSN_SRGB2Linear_Shader,
-		.Blend = 0,
-		.MultiSample = 1,
-	};
-
-	return NOS_RESULT_SUCCESS;
-}
 
 static nosResult GetFunctions(size_t* count, nosName* names, nosPfnNodeFunctionExecute* fns)
 {
@@ -68,19 +44,19 @@ static nosResult GetFunctions(size_t* count, nosName* names, nosPfnNodeFunctionE
 				nosEngine.LogE("Read Image cannot load file %s", path.string().c_str());
 				return;
 			}
-			nosResourceShareInfo out = DeserializeTextureInfo(GetPinValue<void>(values, NSN_Out));
+			nosResourceShareInfo out = vkss::DeserializeTextureInfo(GetPinValue<void>(values, NSN_Out));
 			nosResourceShareInfo tmp = out;
 			
 			int w, h, n;
 			u8* img = stbi_load(path.string().c_str(), &w, &h, &n, 4);
-			nosEngine.ImageLoad(img, nosVec2u(w,h), NOS_FORMAT_R8G8B8A8_SRGB, &tmp);
+			nosVulkan->ImageLoad(img, nosVec2u(w,h), NOS_FORMAT_R8G8B8A8_SRGB, &tmp);
 			free(img);
 
 			nosCmd cmd;
-			nosEngine.Begin(&cmd);
-			nosEngine.Copy(cmd, &tmp, &out, 0);
-			nosEngine.End(cmd);
-			nosEngine.Destroy(&tmp);
+			nosVulkan->Begin("Read Image", &cmd);
+			nosVulkan->Copy(cmd, &tmp, &out, 0);
+			nosVulkan->End(cmd, NOS_FALSE);
+			nosVulkan->DestroyResource(&tmp);
 
 			flatbuffers::FlatBufferBuilder fbb;
 			auto dirty = CreateAppEvent(fbb, app::CreatePinDirtied(fbb, &ids[NSN_Out]));
@@ -96,12 +72,23 @@ static nosResult GetFunctions(size_t* count, nosName* names, nosPfnNodeFunctionE
 }
 
 
-void RegisterReadImage(nosNodeFunctions* fn)
+nosResult RegisterReadImage(nosNodeFunctions* fn)
 {
-	fn->TypeName = NSN_Nos_Utilities_ReadImage;
+	fn->ClassName = NSN_Nos_Utilities_ReadImage;
 	fn->GetFunctions = GetFunctions;
-    fn->GetShaders = GetShaders;
-    fn->GetPasses = GetPasses;
+
+	nosShaderInfo shader = {.Key=NSN_SRGB2Linear_Shader, .Source = { .SpirvBlob = {(void*)SRGB2Linear_frag_spv, sizeof(SRGB2Linear_frag_spv)}}};
+	auto ret = nosVulkan->RegisterShaders(1, &shader);
+	if (NOS_RESULT_SUCCESS != ret)
+		return ret;
+
+	nosPassInfo pass = {
+		.Key = NSN_SRGB2Linear_Pass,
+		.Shader = NSN_SRGB2Linear_Shader,
+		.Blend = 0,
+		.MultiSample = 1,
+	};
+	return nosVulkan->RegisterPasses(1, &pass);
 }
 
 // void RegisterReadImage(nosNodeFunctions* fn)

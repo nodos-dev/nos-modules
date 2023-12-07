@@ -4,18 +4,21 @@
             "class_name": "Sampler",
             "contents_type": "Job",
             "contents": {
-                "type": "GPU"
+                "type": "nos.sys.vulkan.GPUNode",
+                "options": {
+                    "shader": "../Shaders/Sampler.frag"
+                }
             },
             "pins": [
                 {
                     "name": "Input",
-                    "type_name": "nos.fb.Texture",
+                    "type_name": "nos.sys.vulkan.Texture",
                     "show_as": "INPUT_PIN",
                     "can_show_as": "INPUT_PIN_OR_PROPERTY"
                 },
                 {
                     "name": "Output",
-                    "type_name": "nos.fb.Texture",
+                    "type_name": "nos.sys.vulkan.Texture",
                     "show_as": "OUTPUT_PIN",
                     "can_show_as": "OUTPUT_PIN_OR_PROPERTY"
                 }

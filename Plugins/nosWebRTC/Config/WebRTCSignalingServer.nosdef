@@ -4,9 +4,6 @@
             "class_name": "WebRTCSignalingServer",
             "contents_type": "Job",
 			"always_execute": true,
-            "contents": {
-                "type": "CPU"
-            },
           "pins": [
             {
               "name": "StreamerPort",

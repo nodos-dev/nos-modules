@@ -4,41 +4,44 @@
             "class_name": "QuadMerge",
             "contents_type": "Job",
             "contents": {
-                "type": "GPU"
+                "type": "nos.sys.vulkan.GPUNode",
+                "options": {
+                  "shader": "../Shaders/QuadMerge.frag"
+                }
             },
             "description": "Creates an output texture using its 4 inputs for each quadrant.\nMay be used as a simple multi-viewer or as a combiner for quadrant image inputs",
             "pins": [
                 {
                     "name": "Input0",
-                    "type_name": "nos.fb.Texture",
+                    "type_name": "nos.sys.vulkan.Texture",
                     "show_as": "INPUT_PIN",
                     "can_show_as": "INPUT_PIN_OR_PROPERTY",
                     "description": "Quadrant 0: top/left"
                 },
                 {
                     "name": "Input1",
-                    "type_name": "nos.fb.Texture",
+                    "type_name": "nos.sys.vulkan.Texture",
                     "show_as": "INPUT_PIN",
                     "can_show_as": "INPUT_PIN_OR_PROPERTY",
                     "description": "Quadrant 1: top/right"
                 },
                 {
                     "name": "Input2",
-                    "type_name": "nos.fb.Texture",
+                    "type_name": "nos.sys.vulkan.Texture",
                     "show_as": "INPUT_PIN",
                     "can_show_as": "INPUT_PIN_OR_PROPERTY",
                     "description": "Quadrant 2: bottom/left"
                 },
                 {
                     "name": "Input3",
-                    "type_name": "nos.fb.Texture",
+                    "type_name": "nos.sys.vulkan.Texture",
                     "show_as": "INPUT_PIN",
                     "can_show_as": "INPUT_PIN_OR_PROPERTY",
                     "description": "Quadrant 3: bottom/right"
                 },
                 {
                     "name": "Output",
-                    "type_name": "nos.fb.Texture",
+                    "type_name": "nos.sys.vulkan.Texture",
                     "show_as": "OUTPUT_PIN",
                     "can_show_as": "OUTPUT_PIN_OR_PROPERTY"
                 }

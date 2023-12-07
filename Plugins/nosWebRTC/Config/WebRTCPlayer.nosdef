@@ -3,13 +3,10 @@
         {
             "class_name": "WebRTCPlayer",
             "contents_type": "Job",
-            "contents": {
-                "type": "CPU"
-            },
           "pins": [
             {
               "name": "Out",
-              "type_name": "nos.fb.Texture",
+              "type_name": "nos.sys.vulkan.Texture",
               "show_as": "OUTPUT_PIN",
               "can_show_as": "OUTPUT_PIN_OR_PROPERTY",
 			        "live":true,

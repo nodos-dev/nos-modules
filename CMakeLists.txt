@@ -24,6 +24,10 @@ macro(group targets name)
     endforeach()
 endmacro()
 
+include(${CMAKE_CURRENT_SOURCE_DIR}/CMake/GenerateFlatbuffers.cmake)
+set(TOOLS_DIR ${CMAKE_CURRENT_SOURCE_DIR}/Tools/${CMAKE_SYSTEM_NAME})
+
+set(SUBSYSTEMS_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/Subsystems)
 add_subdirectory("Subsystems" "${CMAKE_CURRENT_BINARY_DIR}/Subsystems")
 get_targets(SUBSYSTEM_TARGETS "${CMAKE_CURRENT_BINARY_DIR}/Subsystems")
 group("${SUBSYSTEM_TARGETS}" "NOS Subsystems")

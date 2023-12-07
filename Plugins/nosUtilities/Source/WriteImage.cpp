@@ -1,21 +1,25 @@
 // Copyright Nodos AS. All Rights Reserved.
 
-#include <Nodos/Helpers.hpp>
+#include <Nodos/PluginHelpers.hpp>
 #include "Builtins_generated.h"
 #include <AppService_generated.h>
 
 #include <stb_image.h>
 #include <stb_image_write.h>
 
+#include <nosVulkanSubsystem/Helpers.hpp>
 #include "../Shaders/Linear2SRGB.frag.spv.dat"
 
 #include <mutex>
 
+#include "Names.h"
+
 namespace nos::utilities
 {
+extern nosVulkanSubsystem* nosVulkan;
+
 NOS_REGISTER_NAME(Linear2SRGB_Pass);
 NOS_REGISTER_NAME(Linear2SRGB_Shader);
-NOS_REGISTER_NAME(Path);
 NOS_REGISTER_NAME(In);
 NOS_REGISTER_NAME_SPACED(Nos_Utilities_WriteImage, "nos.utilities.WriteImage")
 
@@ -45,7 +49,7 @@ struct WriteImage : NodeContext {
         for (auto* pin : *node->pins()) {
             auto* pinData = pin->data();
             nosBuffer value = { .Data = (void*)pinData->data(), .Size = pinData->size() };
-            OnPinValueChanged(nosEngine.GetName(pin->name()->c_str()), *pin->id(), &value);
+            OnPinValueChanged(nosEngine.GetName(pin->name()->c_str()), *pin->id(), value);
         }
     }
 
@@ -61,19 +65,20 @@ struct WriteImage : NodeContext {
 		CV.notify_all();
 	}
 
-    void OnPinValueChanged(nos::Name pinName, nosUUID pinId, nosBuffer* value) override 
+    void OnPinValueChanged(nos::Name pinName, nosUUID pinId, nosBuffer value) override 
     {
         std::unique_lock<std::mutex> lock(Mutex);
 		if (pinName == NSN_In)
-			Input = DeserializeTextureInfo(value->Data);
+			Input = vkss::DeserializeTextureInfo(value.Data);
 		else if (pinName == NSN_Path)
-			Path = std::string((const char*)value->Data, value->Size);
+			Path = std::string((const char*)value.Data, value.Size);
 	}
 
     nosResult BeginCopyTo(nosCopyInfo* copyInfo) override
     {
-        copyInfo->ShouldSubmitAndWait = true;
-        copyInfo->Stop = true;
+    	auto texCopy = static_cast<nosTextureCopyInfo*>(copyInfo->TypeCopyInfo);
+        texCopy->ShouldSubmitAndWait = true;
+        copyInfo->CopyToOptions.Stop = true;
         return NOS_RESULT_SUCCESS;
     }
 
@@ -107,46 +112,21 @@ struct WriteImage : NodeContext {
 
         captures.SRGB.Info.Texture.Format = NOS_FORMAT_R8G8B8A8_SRGB;
         captures.SRGB.Info.Texture.Usage = nosImageUsage(NOS_IMAGE_USAGE_TRANSFER_SRC | NOS_IMAGE_USAGE_TRANSFER_DST);
-        nosEngine.Create(&captures.SRGB);
+        nosVulkan->CreateResource(&captures.SRGB);
 
         nosCmd cmd;
-        nosEngine.Begin(&cmd);
-        nosEngine.Copy(cmd, &input, &captures.SRGB, nullptr);
-        nosEngine.Download(cmd, &captures.SRGB, &captures.Buf);
-        nosEngine.End(cmd);
+        nosVulkan->Begin("WriteImage: SRGB & Download Passes", &cmd);
+        nosVulkan->Copy(cmd, &input, &captures.SRGB, nullptr);
+        nosVulkan->Download(cmd, &captures.SRGB, &captures.Buf);
+        nosVulkan->End(cmd, NOS_FALSE);
 
-        if (auto buf2write = nosEngine.Map(&captures.Buf))
+        if (auto buf2write = nosVulkan->Map(&captures.Buf))
             if (!stbi_write_png(captures.Path.string().c_str(), captures.SRGB.Info.Texture.Width, captures.SRGB.Info.Texture.Height, 4, buf2write, captures.SRGB.Info.Texture.Width * 4))
                 nosEngine.LogE("WriteImage: Unable to write frame to file", "");
             else
                 nosEngine.LogI("WriteImage: Wrote frame to file %s", captures.Path.string().c_str());
-        nosEngine.Destroy(&captures.Buf);
-        nosEngine.Destroy(&captures.SRGB);
-    }
-
-	static nosResult GetShaders(size_t* outCount, nosShaderInfo* outShaders)
-	{
-		*outCount = 1;
-		if (!outShaders)
-			return NOS_RESULT_SUCCESS;
-        outShaders[0] = {.Key = NSN_Linear2SRGB_Shader, .Source = {.SpirvBlob = {(void*)Linear2SRGB_frag_spv, sizeof(Linear2SRGB_frag_spv) }}};
-		return NOS_RESULT_SUCCESS;
-	}
-
-    static nosResult GetPasses(size_t* count, nosPassInfo* passes)
-    {
-        *count = 1;
-        if (!passes)
-            return NOS_RESULT_SUCCESS;
-
-        *passes = nosPassInfo{
-            .Key = NSN_Linear2SRGB_Pass,
-            .Shader = NSN_Linear2SRGB_Shader,
-            .Blend = 0,
-            .MultiSample = 1,
-        };
-
-        return NOS_RESULT_SUCCESS;
+        nosVulkan->DestroyResource(&captures.Buf);
+        nosVulkan->DestroyResource(&captures.SRGB);
     }
 
     static nosResult GetFunctions(size_t* count, nosName* names, nosPfnNodeFunctionExecute* fns)
@@ -169,9 +149,22 @@ struct WriteImage : NodeContext {
     }
 };
 
-void RegisterWriteImage(nosNodeFunctions* fn)
+nosResult RegisterWriteImage(nosNodeFunctions* fn)
 {
     NOS_BIND_NODE_CLASS(NSN_Nos_Utilities_WriteImage, WriteImage, fn);
+
+	nosShaderInfo shader = {.Key = NSN_Linear2SRGB_Shader, .Source = {.SpirvBlob = {(void*)Linear2SRGB_frag_spv, sizeof(Linear2SRGB_frag_spv) }}};
+	auto ret = nosVulkan->RegisterShaders(1, &shader);
+	if (NOS_RESULT_SUCCESS != ret)
+		return ret;
+
+	nosPassInfo pass = {
+		.Key = NSN_Linear2SRGB_Pass,
+		.Shader = NSN_Linear2SRGB_Shader,
+		.Blend = 0,
+		.MultiSample = 1,
+	};
+	return nosVulkan->RegisterPasses(1, &pass);
 }
 
 } // namespace nos

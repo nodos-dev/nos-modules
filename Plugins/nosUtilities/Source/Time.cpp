@@ -1,4 +1,4 @@
-#include <Nodos/Helpers.hpp>
+#include <Nodos/PluginHelpers.hpp>
 
 namespace nos::utilities
 {
@@ -15,7 +15,7 @@ struct TimeNodeContext : NodeContext
 		auto pin = GetPinValues(args);
 		auto sec = GetPinValue<float>(pin, NSN_Seconds);
 		float time = (args->DeltaSeconds.x * frameCount++) / (double)args->DeltaSeconds.y;
-		nosEngine.SetPinValue(args->PinIds[0], { .Data = &time, .Size = sizeof(float) });
+		nosEngine.SetPinValue(args->Pins[0].Id, { .Data = &time, .Size = sizeof(float) });
 		return NOS_RESULT_SUCCESS;
 	}
 
@@ -23,7 +23,7 @@ struct TimeNodeContext : NodeContext
 };
 
 
-void RegisterTime(nosNodeFunctions* fn)
+nosResult RegisterTime(nosNodeFunctions* fn)
 {
 	NOS_BIND_NODE_CLASS(NSN_Nos_Utilities_Time, TimeNodeContext, fn);
 	// functions["nos.CalculateNodalPoint"].EntryPoint = [](nos::Args& args, void* ctx){
@@ -38,6 +38,7 @@ void RegisterTime(nosNodeFunctions* fn)
 	// 	*out = *pos + f **sca;
 	// 	return true;
 	// };
+	return NOS_RESULT_SUCCESS;
 }
 
 } // namespace nos

@@ -55,14 +55,8 @@ NOSAPI_ATTR nosResult NOSAPI_CALL nosExportNodeFunctions(size_t* outSize, nosNod
 	}
 
 #define REGISTER_NODE(NODE) \
-	outList[Filters::NODE]->TypeName = NOS_NAME_STATIC("nos.filters." #NODE); \
-	outList[Filters::NODE]->GetShaderSource = [](nosShaderSource* src) -> nosResult { \
-		src->SpirvBlob.Data = (void*)(NODE##_frag_spv); \
-		src->SpirvBlob.Size = sizeof(NODE##_frag_spv); \
-        src->GLSLPath = #NODE ".frag"; \
-        src->SpirvPath = #NODE ".frag.spv"; \
-		return NOS_RESULT_SUCCESS; \
-	};
+	outList[Filters::NODE]->ClassName = NOS_NAME_STATIC("nos.filters." #NODE); \
+	
 #define REGISTER_NODE_LICENSED(NODE, featureName, featureMessage)								\
 		REGISTER_NODE(NODE)																		\
 		outList[Filters::NODE]->OnNodeCreated = [](const nosFbNode* node, void** outCtxPtr) {	\

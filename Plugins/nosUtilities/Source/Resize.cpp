@@ -1,33 +1,19 @@
-﻿#include <Nodos/Helpers.hpp>
+﻿#include <Nodos/PluginHelpers.hpp>
 
+#include <nosVulkanSubsystem/Helpers.hpp>
 #include "../Shaders/Resize.frag.spv.dat"
 
-#include "Builtins_generated.h"
+#include "Names.h"
 
 namespace nos::utilities
 {
+extern nosVulkanSubsystem* nosVulkan;
 
 NOS_REGISTER_NAME(Resize_Pass);
 NOS_REGISTER_NAME(Resize_Shader);
-NOS_REGISTER_NAME(Input);
 NOS_REGISTER_NAME(Method);
-NOS_REGISTER_NAME(Output);
 NOS_REGISTER_NAME(Size);
 NOS_REGISTER_NAME_SPACED(Nos_Utilities_Resize, "nos.utilities.Resize")
-
-static nosResult GetPasses(size_t* outCount, nosPassInfo* infos)
-{
-	*outCount = 1;
-	if(!infos)
-		return NOS_RESULT_SUCCESS;
-
-	infos->Key = NSN_Resize_Pass;
-	infos->Shader = NSN_Resize_Shader;
-	infos->Blend = false;
-	infos->MultiSample = 1;
-
-	return NOS_RESULT_SUCCESS;
-}
 
 static nosResult GetShaders(size_t* outCount, nosShaderInfo* outShaders)
 {
@@ -42,10 +28,10 @@ static nosResult GetShaders(size_t* outCount, nosShaderInfo* outShaders)
 static nosResult ExecuteNode(void* ctx, const nosNodeExecuteArgs* args)
 {
 	auto pins = GetPinValues(args);
-	auto inputTex = DeserializeTextureInfo(pins[NSN_Input]);
+	auto inputTex = vkss::DeserializeTextureInfo(pins[NSN_Input]);
 	auto method = GetPinValue<uint32_t>(pins, NSN_Method);
 		
-	auto tex = DeserializeTextureInfo(pins[NSN_Output]);
+	auto tex = vkss::DeserializeTextureInfo(pins[NSN_Output]);
 	auto size = GetPinValue<nosVec2u>(pins, NSN_Size);
 		
 	if(size->x != tex.Info.Texture.Width ||
@@ -55,13 +41,13 @@ static nosResult ExecuteNode(void* ctx, const nosNodeExecuteArgs* args)
 		prevTex.Memory = {};
 		prevTex.Info.Texture.Width = size->x;
 		prevTex.Info.Texture.Height = size->y;
-		auto texFb = ConvertTextureInfo(prevTex);
+		auto texFb = vkss::ConvertTextureInfo(prevTex);
 		texFb.unscaled = true;
 		auto texFbBuf = nos::Buffer::From(texFb);
-		nosEngine.SetPinValue(args->PinIds[1], {.Data = texFbBuf.data(), .Size = texFbBuf.size()});
+		nosEngine.SetPinValue(args->Pins[1].Id, {.Data = texFbBuf.Data(), .Size = texFbBuf.Size()});
 	}
 
-	std::vector bindings = {ShaderBinding(NSN_Input, inputTex), ShaderBinding(NSN_Method, method)};
+	std::vector bindings = {vkss::ShaderBinding(NSN_Input, inputTex), vkss::ShaderBinding(NSN_Method, method)};
 		
 	nosRunPassParams resizeParam {
 		.Key = NSN_Resize_Pass,
@@ -72,17 +58,28 @@ static nosResult ExecuteNode(void* ctx, const nosNodeExecuteArgs* args)
 		.Benchmark = 0,
 	};
 
-	nosEngine.RunPass(nullptr, &resizeParam);
+	nosVulkan->RunPass(nullptr, &resizeParam);
 
 	return NOS_RESULT_SUCCESS;
 }
 
-void RegisterResize(nosNodeFunctions* out)
+nosResult RegisterResize(nosNodeFunctions* out)
 {
-	out->TypeName = NSN_Nos_Utilities_Resize;
-	out->GetPasses = GetPasses;
-	out->GetShaders = GetShaders;
+	out->ClassName = NSN_Nos_Utilities_Resize;
 	out->ExecuteNode = ExecuteNode;
+
+	nosShaderInfo shader = {.Key=NSN_Resize_Shader, .Source = {.SpirvBlob = {(void*)Resize_frag_spv, sizeof(Resize_frag_spv)}}};
+	auto ret = nosVulkan->RegisterShaders(1, &shader);
+	if (NOS_RESULT_SUCCESS != ret)
+		return ret;
+
+	nosPassInfo pass = {
+		.Key =  NSN_Resize_Pass,
+		.Shader = NSN_Resize_Shader,
+		.Blend = false,
+		.MultiSample = 1,
+	};
+	return nosVulkan->RegisterPasses(1, &pass);
 }
 
 } // namespace nos::utilities

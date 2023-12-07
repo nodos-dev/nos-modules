@@ -5,7 +5,13 @@
             "version": "1.0.0"
         },
         "description": "Various utility nodes.",
-        "display_name": "Utilities"
+        "display_name": "Utilities",
+       "dependencies": [
+           {
+               "name": "nos.sys.vulkan",
+               "version": "0.1.0"
+           }
+       ]
     },
     "node_definitions": [
         "Checkerboard.nosdef",

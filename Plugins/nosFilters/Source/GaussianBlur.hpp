@@ -3,5 +3,6 @@
 #pragma once
 
 #include <Nodos/Helpers.hpp>
+#include <Nodos/PluginAPI.h>
 
 void RegisterGaussianBlur(nosNodeFunctions* out);

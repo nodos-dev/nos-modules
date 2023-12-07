@@ -5,7 +5,13 @@
             "version": "0.1.0"
         },
         "display_name": "Test",
-        "description": "Plugin for testing purposes."
+        "description": "Plugin for testing purposes.",
+        "dependencies": [
+            {
+                "name": "nos.sys.vulkan",
+                "version": "0.1.0"
+            }
+        ]
     },
     "custom_types": [ "Test.fbs" ],
     "node_definitions": [
