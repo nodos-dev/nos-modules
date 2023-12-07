@@ -16,16 +16,18 @@ struct RGBAtoTensorNodeContext : nos::NodeContext
 	nosResourceShareInfo InputImage;
 	nos::fb::TTensor nosOutputTensor;
 	nosTensor OutputTensor;
-	nosUUID NodeID;
+	nosUUID NodeID, OutputID;
 	nosResourceShareInfo DummyInput = {};
+	nosResourceShareInfo InputFormatted = {};
 	//This is required for changing the size (not sure will use it?)
 	nosResourceShareInfo InputBuffer = {};
-	std::atomic_bool shouldStop = false;
+	std::atomic_bool shouldStop = false, isTensorReadable = false;
 	std::condition_variable WaitInput;
 	std::mutex InputMutex;
+	std::thread TensorConverter;
 	RGBAtoTensorNodeContext(nos::fb::Node const* node) : NodeContext(node) {
 
-		DummyInput.Info.Texture.Format = NOS_FORMAT_B8G8R8A8_SRGB;
+		DummyInput.Info.Texture.Format = NOS_FORMAT_R8G8B8A8_UNORM;
 		DummyInput.Info.Type = NOS_RESOURCE_TYPE_TEXTURE;
 
 		NodeID = *node->id();
@@ -36,6 +38,19 @@ struct RGBAtoTensorNodeContext : nos::NodeContext
 					OutputTensor.SetShape(std::vector<int64_t>(tensor->shape()->data(), tensor->shape()->data() + tensor->shape()->Length()));
 				}
 			}
+			if (NSN_Out.Compare(pin->name()->c_str()) == 0) {
+				OutputID = *pin->id();
+			}
+		}
+
+		TensorConverter = std::thread([this]() {this->ConvertRGBAtoTensor(); });
+	}
+
+	~RGBAtoTensorNodeContext() {
+		if (TensorConverter.joinable()) {
+			shouldStop = true;
+			WaitInput.notify_one();
+			TensorConverter.join();
 		}
 	}
 
@@ -56,60 +71,62 @@ struct RGBAtoTensorNodeContext : nos::NodeContext
 		}
 	}
 
-	nosResult ExecuteNode(const nosNodeExecuteArgs* args) {
-
-		if (DummyInput.Info.Texture.Width != OutputTensor.GetShape()[2] && DummyInput.Info.Texture.Height != OutputTensor.GetShape()[3]) {
-			if (InputBuffer.Memory.Handle != NULL)
-				nosEngine.Destroy(&InputBuffer);
-
-			InputBuffer.Info.Type = NOS_RESOURCE_TYPE_BUFFER;
-			InputBuffer.Info.Buffer.Size = DummyInput.Info.Texture.Width * DummyInput.Info.Texture.Height * sizeof(uint8_t);
-			InputBuffer.Info.Buffer.Usage = nosBufferUsage(NOS_BUFFER_USAGE_TRANSFER_SRC | NOS_BUFFER_USAGE_TRANSFER_DST);
-			nosEngine.Create(&InputBuffer);
-			std::vector<int64_t> tensorShape = { 1, 1, DummyInput.Info.Texture.Width, DummyInput.Info.Texture.Height };
-			OutputTensor.SetShape(std::move(tensorShape));
-		}
-
-		nosCmd downloadCmd;
-
-		nosEngine.Begin(&downloadCmd);
-		nosEngine.Download(&downloadCmd, &DummyInput, &InputBuffer); 
-		nosEngine.End(&downloadCmd);
-
-		auto data = nosEngine.Map(&InputBuffer);
-		OutputTensor.SetData<uint8_t>(data, OutputTensor.GetLength(), false);
-		nosOutputTensor.buffer = data;
-
-
-		return NOS_RESULT_SUCCESS;
-	}
-
-	void CreateTensor() {
+	void ConvertRGBAtoTensor() {
 		
 		while (!shouldStop) {
-			if (DummyInput.Info.Texture.Width != OutputTensor.GetShape()[2] && DummyInput.Info.Texture.Height != OutputTensor.GetShape()[3]) {
+
+			{
+				std::unique_lock<std::mutex> inputLock(InputMutex);
+				WaitInput.wait(inputLock);
+				if (shouldStop)
+					return;
+			}
+
+			isTensorReadable = false;
+
+			if (OutputTensor.GetShape().size() != 4 || DummyInput.Info.Texture.Width != OutputTensor.GetShape()[2] && DummyInput.Info.Texture.Height != OutputTensor.GetShape()[3]) {
+				
 				if (InputBuffer.Memory.Handle != NULL)
 					nosEngine.Destroy(&InputBuffer);
 
+				if (InputFormatted.Memory.Handle != NULL)
+					nosEngine.Destroy(&InputFormatted);
+
+				InputFormatted.Info.Type = NOS_RESOURCE_TYPE_TEXTURE;
+				InputFormatted.Info.Texture.Width = DummyInput.Info.Texture.Width;
+				InputFormatted.Info.Texture.Height = DummyInput.Info.Texture.Height;
+				//TODO: Make use of tensor type before deciding to this
+				InputFormatted.Info.Texture.Format = NOS_FORMAT_R8G8B8A8_SRGB;
+				InputFormatted.Info.Texture.Usage = nosImageUsage(NOS_IMAGE_USAGE_TRANSFER_SRC | NOS_IMAGE_USAGE_TRANSFER_DST);
+				nosEngine.Create(&InputFormatted);
+
+
 				InputBuffer.Info.Type = NOS_RESOURCE_TYPE_BUFFER;
-				InputBuffer.Info.Buffer.Size = DummyInput.Info.Texture.Width * DummyInput.Info.Texture.Height * sizeof(uint8_t);
+				InputBuffer.Info.Buffer.Size = DummyInput.Info.Texture.Width * DummyInput.Info.Texture.Height * sizeof(uint8_t) * 4;
 				InputBuffer.Info.Buffer.Usage = nosBufferUsage(NOS_BUFFER_USAGE_TRANSFER_SRC | NOS_BUFFER_USAGE_TRANSFER_DST);
 				nosEngine.Create(&InputBuffer);
 				std::vector<int64_t> tensorShape = { 1, 1, DummyInput.Info.Texture.Width, DummyInput.Info.Texture.Height };
 				OutputTensor.SetShape(std::move(tensorShape));
 			}
 
+			nosCmd blitCmd;
+			nosEngine.Begin(&blitCmd);
+			nosEngine.Copy(blitCmd, &DummyInput, &InputFormatted, nullptr);
+			nosEngine.End(blitCmd);
+
 			nosCmd downloadCmd;
-			
 			nosEngine.Begin(&downloadCmd);
-			nosEngine.Download(&downloadCmd, &DummyInput, &InputBuffer);
-			nosEngine.End(&downloadCmd);
+			nosEngine.Copy(downloadCmd, &InputFormatted, &InputBuffer, nullptr);
+			nosEngine.End(downloadCmd);
 
 			auto data = nosEngine.Map(&InputBuffer);
-			OutputTensor.SetData<uint8_t>(data, OutputTensor.GetLength());
+			
+			nosOutputTensor.buffer = (uint64_t)(data);
+			nosOutputTensor.shape = OutputTensor.GetShape();
 
-			std::unique_lock<std::mutex> inputLock(InputMutex);
-			WaitInput.wait(inputLock);
+			nosEngine.SetPinValue(OutputID, nos::Buffer::From(nosOutputTensor));
+
+			isTensorReadable = true;
 		}
 	}
 	

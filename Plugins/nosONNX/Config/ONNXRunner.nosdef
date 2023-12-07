@@ -3,7 +3,6 @@
         {
             "class_name": "ONNXRunner",
             "contents_type": "Job",
-			"always_execute": true,
             "contents": {
                 "type": "CPU"
             },

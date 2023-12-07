@@ -9,7 +9,8 @@
     },
     "node_definitions": [
       "ONNXRunner.nosdef",
-      "RGBAtoTensor.nosdef"
+      "RGBAtoTensor.nosdef",
+      "TensorVisualizer.nosdef"
     ],
     "custom_types": [],
     "binary_path": "../Binaries/nosONNX",
@@ -23,6 +24,11 @@
         "category": "ML|ONNXRunner",
         "class_name": "RGBAtoTensor",
         "display_name": "RGBA to Tensor"
+      },
+      {
+        "category": "ML|ONNXRunner",
+        "class_name": "TensorVisualizer",
+        "display_name": "Tensor Visualizer"
       }
     ]
 }
