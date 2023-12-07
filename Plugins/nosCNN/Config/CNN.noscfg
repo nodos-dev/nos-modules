@@ -5,7 +5,13 @@
             "version": "0.1.0"
         },
         "description": "CNN model runner",
-        "display_name": "CNN"
+        "display_name": "CNN",
+        "dependencies": [
+            {
+                "name": "nos.sys.vulkan",
+                "version": "0.1.0"
+            }
+        ]
     },
     "node_definitions": [
         "CNN.nosdef"

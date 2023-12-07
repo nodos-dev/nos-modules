@@ -1,11 +1,8 @@
     {
-    "nodes": [
+      "nodes": [
         {
-            "class_name": "CNN",
-            "contents_type": "Job",
-            "contents": {
-                "type": "CPU"
-            },
+          "class_name": "CNN",
+          "contents_type": "Job",
           "pins": [
             {
               "name": "In",
@@ -21,21 +18,27 @@
               "type_name": "string",
               "show_as": "PROPERTY",
               "can_show_as": "INPUT_PIN_OR_PROPERTY",
-              "visualizer": { "type": "FILE_PICKER" }
+              "visualizer": {
+                "type": "FILE_PICKER"
+              }
             },
             {
               "name": "ParamPath",
               "type_name": "string",
               "show_as": "PROPERTY",
               "can_show_as": "INPUT_PIN_OR_PROPERTY",
-              "visualizer": { "type": "FILE_PICKER" }
+              "visualizer": {
+                "type": "FILE_PICKER"
+              }
             },
             {
               "name": "BinPath",
               "type_name": "string",
               "show_as": "PROPERTY",
               "can_show_as": "INPUT_PIN_OR_PROPERTY",
-              "visualizer": { "type": "FILE_PICKER" }
+              "visualizer": {
+                "type": "FILE_PICKER"
+              }
             },
             {
               "name": "Out",
@@ -47,17 +50,13 @@
               }
             }
           ],
-            "functions": [
-                {
-                    "class_name": "CNNPlugin_LoadModel",
-                    "contents_type": "Job",
-                    "contents": {
-                        "type": "CPU"
-                    },
-                    "pins": [
-                    ]
-                }
-            ]
+          "functions": [
+            {
+              "class_name": "CNNPlugin_LoadModel",
+              "contents_type": "Job",
+              "pins": []
+            }
+          ]
         }
-    ]
-}
+      ]
+    }

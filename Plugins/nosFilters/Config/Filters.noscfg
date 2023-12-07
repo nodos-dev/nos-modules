@@ -5,7 +5,13 @@
             "version": "1.0.0"
         },
         "display_name": "Filters",
-        "description": "Collection of image filters."
+        "description": "Collection of image filters.",
+        "dependencies": [
+            {
+                "name": "nos.sys.vulkan",
+                "version": "0.1.0"
+            }
+        ]
     },
     "node_definitions": [
         "ColorCorrect.nosdef",
@@ -19,8 +25,8 @@
         "Sobel.nosdef",
         "Thresholder.nosdef"
     ],
-    "custom_types" :[
-      "Thresholder.fbs"  
+    "custom_types": [
+        "Thresholder.fbs"
     ],
     "binary_path": "../Binaries/nosFilters",
     "associated_nodes": [
