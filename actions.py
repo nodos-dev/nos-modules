@@ -147,7 +147,7 @@ if __name__ == "__main__":
             for module_name, module_info in MODULES_FLAT.items():
                 for dep in module_info["deps"]:
                     for changed_file in changed_files:
-                        if fnmatch.fnmatch(changed_file, dep):
+                        if fnmatch.fnmatch(changed_file, f"*/{dep}"):
                             modules_to_release.add(module_name)
                             break
 

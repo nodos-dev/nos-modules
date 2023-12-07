@@ -2,51 +2,51 @@
     "plugins": {
         "nos.aja": {
             "target_name": "nosAJA",
-            "path": "Plugins/nosAJA",
+            "path": "nosAJA",
             "deps": [
-                "Plugins/nosAJA/*",
-                "Plugins/External/ntv2/*",
-                "Plugins/External/stb/*"
+                "nosAJA/*",
+                "External/ntv2/*",
+                "External/stb/*"
             ]
         },
         "nos.filters": {
             "target_name": "nosFilters",
-            "path": "Plugins/nosFilters",
+            "path": "nosFilters",
             "deps": [
-                "Plugins/nosFilters/*",
-                "Plugins/Shaders/*"
+                "nosFilters/*",
+                "Shaders/*"
             ]
         },
         "nos.math": {
             "target_name": "nosMath",
-            "path": "Plugins/nosMath",
+            "path": "nosMath",
             "deps": [
-                "Plugins/nosMath/*"
+                "nosMath/*"
             ]
         },
         "nos.utilities": {
             "target_name": "nosUtilities",
-            "path": "Plugins/nosUtilities",
+            "path": "nosUtilities",
             "deps": [
-                "Plugins/nosUtilities/*",
-                "Plugins/Shaders/*",
-                "Plugins/External/stb/*"
+                "nosUtilities/*",
+                "Shaders/*",
+                "External/stb/*"
             ]
         },
         "nos.WebRTC": {
             "target_name": "nosWebRTC",
-            "path": "Plugins/nosWebRTC",
+            "path": "nosWebRTC",
             "deps": [
-                "Plugins/nosWebRTC/*"
+                "nosWebRTC/*"
             ]
         }
     },
     "subsystems": {
         "nos.sys.vulkan": {
             "target_name": "nosVulkanSubsystem",
-            "path": "Subsystems/nosVulkanSubsystem",
+            "path": "nosVulkanSubsystem",
             "deps": [
-                "Subsystems/nosVulkanSubsystem/*"
+                "nosVulkanSubsystem/*"
             ]
         }
     }
