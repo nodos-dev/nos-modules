@@ -13,3 +13,5 @@
 [submodule "Subsystems/mzVulkanSubsystem/External/mzVulkan"]
 	path = Subsystems/nosVulkanSubsystem/External/nosVulkan
 	url = https://github.com/mediaz/mzVulkan.git
+[submodule "Subsystems/nosVulkanSubsystem/External/nosVulkan"]
+	url = https://github.com/mediaz/nosVulkan.git
