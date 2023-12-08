@@ -65,6 +65,7 @@ struct RGBAtoTensorNodeContext : nos::NodeContext
 			if (tensor->shape() != nullptr) {
 				OutputTensor.SetShape(std::vector<int64_t>(tensor->shape()->data(), tensor->shape()->data() + tensor->shape()->Length()));
 			}
+
 			//For now dont allow to create data from editor
 			/*if (tensor->buffer() != nullptr) {
 				OutputTensor.SetData(std::vector<int64_t>(tensor->buffer()->data(), tensor->buffer()->data() + tensor->buffer()->Length()));
@@ -106,8 +107,16 @@ struct RGBAtoTensorNodeContext : nos::NodeContext
 				InputBuffer.Info.Buffer.Size = DummyInput.Info.Texture.Width * DummyInput.Info.Texture.Height * sizeof(uint8_t) * 4;
 				InputBuffer.Info.Buffer.Usage = nosBufferUsage(NOS_BUFFER_USAGE_TRANSFER_SRC | NOS_BUFFER_USAGE_TRANSFER_DST);
 				nosEngine.Create(&InputBuffer);
-				std::vector<int64_t> tensorShape = { 1, 1, DummyInput.Info.Texture.Width, DummyInput.Info.Texture.Height };
+				std::vector<int64_t> tensorShape = { 1, 4, DummyInput.Info.Texture.Width, DummyInput.Info.Texture.Height };
 				OutputTensor.SetShape(std::move(tensorShape));
+
+
+				flatbuffers::FlatBufferBuilder fbb;
+				std::vector<flatbuffers::Offset<nos::PartialPinUpdate>> Offsets;
+				Offsets.push_back(nos::CreatePartialPinUpdateDirect(fbb, &OutputID, 0, 0, nos::Action::NOP, nos::Action::NOP, 0, OutputTensor.GetShapeStr().c_str()));
+				HandleEvent(
+					nos::CreateAppEvent(fbb,
+						nos::CreatePartialNodeUpdateDirect(fbb, &NodeID, nos::ClearFlags::NONE, 0, 0, 0, 0, 0, 0, 0, &Offsets)));
 			}
 
 			nosCmd blitCmd;

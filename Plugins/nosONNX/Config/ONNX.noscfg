@@ -10,7 +10,8 @@
     "node_definitions": [
       "ONNXRunner.nosdef",
       "RGBAtoTensor.nosdef",
-      "TensorVisualizer.nosdef"
+      "TensorVisualizer.nosdef",
+      "TensorSlicer.nosdef"
     ],
     "custom_types": [
       "ONNX.fbs"
@@ -31,6 +32,11 @@
         "category": "ML|ONNXRunner",
         "class_name": "TensorVisualizer",
         "display_name": "Tensor Visualizer"
+      },
+      {
+        "category": "ML|ONNXRunner",
+        "class_name": "TensorSlicer",
+        "display_name": "Tensor Slicer"
       }
     ]
 }

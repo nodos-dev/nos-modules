@@ -112,7 +112,7 @@ struct TensorVisualizerNodeContext : nos::NodeContext {
 			UUIDGenerator generator;
 			flatbuffers::FlatBufferBuilder fbb;
 			std::vector<flatbuffers::Offset<nos::fb::Pin>> CreatedOutputPins;
-			std::string typeName = GetNOSNameFromType(type);
+			std::string typeName = nosInputTensor.GetNOSNameFromType();
 			for (int i = cachedSize; i < tensorLength; i++) {
 				auto buf = nos::Buffer::From(*(data + i));
 				auto pinData = std::vector<uint8_t>((uint8_t*)buf.data(), (uint8_t*)buf.data() + buf.size());
@@ -160,42 +160,6 @@ struct TensorVisualizerNodeContext : nos::NodeContext {
 		outputPins.erase(outputPins.begin(), outputPins.end());
 		HandleEvent(nos::CreateAppEvent(fbb,
 			nos::CreatePartialNodeUpdateDirect(fbb, &NodeID, nos::ClearFlags::CLEAR_PINS, &pinsToDelete)));
-	}
-
-	std::string GetNOSNameFromType(nos::fb::TensorElementType _type) {
-		switch (_type) {
-			case nos::fb::TensorElementType::UNDEFINED:
-				return std::string("Undefined");
-			case nos::fb::TensorElementType::UINT8:
-				return std::string("ubyte");
-			case nos::fb::TensorElementType::UINT16:
-				return std::string("ushort");
-			case nos::fb::TensorElementType::UINT32:
-				return std::string("uint");
-			case nos::fb::TensorElementType::UINT64:
-				return std::string("ulong");
-			case nos::fb::TensorElementType::INT8:
-				return std::string("byte");
-			case nos::fb::TensorElementType::INT16:
-				return std::string("short");
-			case nos::fb::TensorElementType::INT32:
-				return std::string("int");
-			case nos::fb::TensorElementType::INT64:
-				return std::string("long");
-			case nos::fb::TensorElementType::FLOAT:
-				return std::string("float");
-			case nos::fb::TensorElementType::FLOAT16:
-				return std::string("");
-			case nos::fb::TensorElementType::DOUBLE:
-				return std::string("double");
-			case nos::fb::TensorElementType::BOOL:
-				return std::string("bool");
-			case nos::fb::TensorElementType::STRING:
-				//SetPinValues<std::string>();
-				break;
-		}
-		return std::string("Undefined");
-
 	}
 };
 

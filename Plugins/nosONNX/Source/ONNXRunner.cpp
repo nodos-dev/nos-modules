@@ -116,7 +116,7 @@ struct ONNXRunnerNodeContext : nos::NodeContext
 			const char* output_names[] = { OutputName.c_str() };
 			ModelSession.Run(Ort::RunOptions{nullptr}, input_names, InputTensor.GetORTValuePointer(), 1, output_names, OutputTensor.GetORTValuePointer(), 1);
 			//OutputTensor.ApplySoftmax();
-			nosOutputTensor.buffer = (uint64_t)OutputTensor.GetRawData();
+			nosOutputTensor.buffer = (uint64_t)OutputTensor.GetRawDataPointer();
 			nosEngine.SetPinValue(OutputID, nos::Buffer::From(nosOutputTensor));
 		}
 	}
