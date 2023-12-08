@@ -5,8 +5,7 @@
 #include <nosVulkanSubsystem/Helpers.hpp>
 #include <nosVulkanSubsystem/Types_generated.h>
 
-namespace nos::utilities
-{
+nosVulkanSubsystem* nosVulkan = 0;
 
 NOS_REGISTER_NAME(Input);
 NOS_REGISTER_NAME(Output);
@@ -15,6 +14,9 @@ NOS_REGISTER_NAME(Kernel_Size);
 NOS_REGISTER_NAME(Pass_Type);
 NOS_REGISTER_NAME(Gaussian_Blur_Pass);
 NOS_REGISTER_NAME(Gaussian_Blur_Shader);
+
+namespace nos::utilities
+{
 
 struct GaussBlurContext
 {
@@ -34,31 +36,6 @@ struct GaussBlurContext
 	~GaussBlurContext()
 	{
 		DestroyResources();
-	}
-
-
-	static nosResult GetShaders(size_t* outCount, nosShaderInfo* outShaders)
-	{
-		*outCount = 1;
-		if (!outShaders)
-			return NOS_RESULT_SUCCESS;
-
-		outShaders[0] = {.Key=NSN_Gaussian_Blur_Shader, .Source = {.SpirvBlob  = {(void*)GaussianBlur_frag_spv, sizeof(GaussianBlur_frag_spv)}}};
-		return NOS_RESULT_SUCCESS;
-	}
-
-	static nosResult GetPasses(size_t* outCount, nosPassInfo* infos)
-	{
-		*outCount = 1;
-		if (!infos)
-			return NOS_RESULT_SUCCESS;
-
-		infos->Key    = NSN_Gaussian_Blur_Pass;
-		infos->Shader = NSN_Gaussian_Blur_Shader;
-		infos->Blend = false;
-		infos->MultiSample = 1;
-
-		return NOS_RESULT_SUCCESS;
 	}
 	
 	void DestroyResources()
@@ -120,10 +97,8 @@ struct GaussBlurContext
 		bindings[1] = nos::vkss::ShaderBinding(NSN_Kernel_Size, kernelSize.y);
 		bindings[2] = nos::vkss::ShaderBinding(NSN_Pass_Type, passType.y);
 
-
 		pass.Output = output;
 		vk->RunPass(0, &pass);
-
 	}
 };
 
@@ -142,6 +117,20 @@ void RegisterGaussianBlur(nosNodeFunctions* out)
 		((nos::utilities::GaussBlurContext*)ctx)->Run(args);
 		return NOS_RESULT_SUCCESS;
 	};
-	// out->GetShaders = nos::utilities::GaussBlurContext::GetShaders;
-	// out->GetPasses = nos::utilities::GaussBlurContext::GetPasses;
+
+	auto ret = nosEngine.RequestSubsystem(NOS_NAME_STATIC("nos.sys.vulkan"), 0, 1, (void**)&nosVulkan);
+	if (ret != NOS_RESULT_SUCCESS)
+		return;
+	
+	nosShaderInfo shader =  {.Key=NSN_Gaussian_Blur_Shader, .Source = {.SpirvBlob  = {(void*)GaussianBlur_frag_spv, sizeof(GaussianBlur_frag_spv)}}};
+	ret = nosVulkan->RegisterShaders(1, &shader);
+	if (ret != NOS_RESULT_SUCCESS)
+		return;
+	nosPassInfo pass = {
+		.Key = NSN_Gaussian_Blur_Pass,
+		.Shader = NSN_Gaussian_Blur_Shader,
+		.Blend = false,
+		.MultiSample = 1,
+	};
+	nosVulkan->RegisterPasses(1, &pass);
 }
