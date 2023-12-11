@@ -58,10 +58,8 @@ endfunction()
 
 # Update plugins.json if you add dependencies, so that CD can create releases.
 
-# stb
-if (NOT WITH_NODOS AND NOT TARGET stb)
-    add_subdirectory(${EXTERNAL_DIR}/stb "${CMAKE_CURRENT_BINARY_DIR}/stb")
-endif()
+# Common dependencies
+add_subdirectory(External)
 
 # Nodos Plugin SDK
 if (NOT WITH_NODOS)
@@ -98,3 +96,5 @@ add_subdirectory(nosTest)
 add_subdirectory(nosCNN)
 add_subdirectory(nosWebRTC)
 
+get_targets(PLUGINS_COMMON_EXTERNAL_TARGETS "./External")
+group_targets("${PLUGINS_COMMON_EXTERNAL_TARGETS}" "External")
