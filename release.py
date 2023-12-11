@@ -96,12 +96,10 @@ def get_api_version(api_header, api_name):
 
 
 def get_module_info(target_name):
-    logger.debug(f"Looking for module id of target {target_name}")
     for type, modules in MODULES.items():
         if type == "files":
             continue
-        for module_id, module in modules.items():
-            logger.debug(f"Module: {module_id}")
+        for _, module in modules.items():
             if module["target_name"] == target_name:
                 return module
     return None
@@ -132,7 +130,6 @@ def make_release(args):
             full_path = os.path.join(root, file)
             # Remove module_dir from path
             rel_path = os.path.relpath(full_path, args.module_dir)
-            logger.info(f"File: {rel_path}")
             if any([fnmatch.fnmatch(rel_path, pattern) for pattern in files_to_include]):
                 collected_files.append(full_path)
             # Find .noscfg file:
