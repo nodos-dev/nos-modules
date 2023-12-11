@@ -13,8 +13,6 @@ layout(binding = 1) uniform KawaseLightStreakParams
 layout(location = 0) out vec4 rt;
 layout(location = 0) in vec2 uv;
 
-#include "../../Shaders/ShaderCommon.glsl"
-
 void main()
 {
     vec2 TexelSize = 1.0 / vec2(textureSize(Input, 0));

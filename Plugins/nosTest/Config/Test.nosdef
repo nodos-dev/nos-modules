@@ -307,7 +307,7 @@
 			"contents": {
 			    "type": "nos.sys.vulkan.GPUNode",
 			    "options": {
-			        "shader": "../Source/GpuStress.frag"
+			        "shader": "../Source/GpuStress.frag.spv"
 			    }
 			},
 			"pins": [
