@@ -1,5 +1,5 @@
 {
-    "files": ["*.dll", "*.so", "*.dylib", "*.noscfg", "*.nossys", "*.nosdef"],
+    "files": ["*.dll", "*.so", "*.dylib", "*.fbs", "*.noscfg", "*.nossys", "*.nosdef"],
     "plugins": {
         "nos.aja": {
             "target_name": "nosAJA",
