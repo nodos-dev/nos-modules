@@ -1,4 +1,5 @@
 {
+    "files": ["*.dll", "*.so", "*.dylib", "*.noscfg", "*.nossys", "*.nosdef"],
     "plugins": {
         "nos.aja": {
             "target_name": "nosAJA",
@@ -15,7 +16,8 @@
             "deps": [
                 "nosFilters/*",
                 "Shaders/*"
-            ]
+            ],
+            "files": ["Shaders/*.frag", "Shaders/*.spv"]
         },
         "nos.math": {
             "target_name": "nosMath",
@@ -31,7 +33,8 @@
                 "nosUtilities/*",
                 "Shaders/*",
                 "External/stb/*"
-            ]
+            ],
+            "files": ["Shaders/*.frag", "Shaders/*.spv"]
         },
         "nos.WebRTC": {
             "target_name": "nosWebRTC",

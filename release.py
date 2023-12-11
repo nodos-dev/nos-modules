@@ -33,12 +33,6 @@ make.add_argument('--module-dir',
                     required=True,
                     help="Module directory that contains binaries, and config files. Files in this folder will be used to create the release zip.")
 
-make.add_argument('--exclude',
-                    action='store',
-                    required=False,
-                    default="*CMakeLists.txt,*.cpp,*.cc,*.c,*.h,*.hxx,*.hpp,*.dat,*.pdb,*External/*",
-                    help="Comma separated filenames and wildcards to exclude files from the release zip.")
-
 upload = subparsers.add_parser("upload", help="Create a release at GitHub")
 
 upload.add_argument('--cloned-release-repo-dir', 
@@ -101,6 +95,17 @@ def get_api_version(api_header, api_name):
         return {"major": major, "minor": minor, "patch": patch}
 
 
+def get_module_info(target_name):
+    logger.debug(f"Looking for module id of target {target_name}")
+    for type, modules in MODULES.items():
+        if type == "files":
+            continue
+        for module_id, module in modules.items():
+            logger.debug(f"Module: {module_id}")
+            if module["target_name"] == target_name:
+                return module
+    return None
+
 def make_release(args):
     logger.debug(f"Creating release zip for {args.release_target}")
     logger.info(f"Target: {args.release_target}")
@@ -113,13 +118,22 @@ def make_release(args):
     logger.info(f"Built {args.release_target} successfully")
 
     logger.debug(f"Creating a release zip for {args.release_target}")
-    
+
+    files_to_include = MODULES["files"]
+    module_info = get_module_info(args.release_target)
+    if module_info is not None and "files" in module_info.keys():
+        files_to_include.extend(module_info["files"])
+    logger.info(f"Collecting files: {files_to_include}")
+
     collected_files = []
     nos_module_file = None
     for root, dirs, files in os.walk(args.module_dir):
         for file in files:
             full_path = os.path.join(root, file)
-            if not any([fnmatch.fnmatch(full_path, pattern) for pattern in args.exclude.split(",")]):
+            # Remove module_dir from path
+            rel_path = os.path.relpath(full_path, args.module_dir)
+            logger.info(f"File: {rel_path}")
+            if any([fnmatch.fnmatch(rel_path, pattern) for pattern in files_to_include]):
                 collected_files.append(full_path)
             # Find .noscfg file:
             if file.endswith(".noscfg") or file.endswith(".nossys"):
@@ -173,9 +187,6 @@ def upload_releases(repo_url, org_name, repo_name, cloned_release_repo, dry_run)
     logger.info(f"GitHub Release: Pushing release artifacts to repo {repo_org_name}")
     artifacts = zip_files
     # https://github.com/mediaz/nodos/releases/download/v0.1.0.b1769/Nodos-SDK-v0.1.0.b1769.zip
-    
-    with open(f"./modules.json", "r") as f:
-        MODULES = json.load(f)
 
     for artifact in artifacts:
         os.chdir(cloned_release_repo)
@@ -244,6 +255,11 @@ if __name__ == "__main__":
     logger.remove()
     logger.add(sys.stdout, format="<green>[Modules Release Tool]</green> <level>{time:HH:mm:ss.SSS}</level> <level>{level}</level> <level>{message}</level>")
     args = parser.parse_args()
+
+    global MODULES
+    with open(f"./modules.json", "r") as f:
+        MODULES = json.load(f)
+
     if args.command == "make":
         make_release(args)
     elif args.command == "upload":

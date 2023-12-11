@@ -4,3 +4,4 @@
 *.spv.dat
 .vscode
 .vs
+.cache

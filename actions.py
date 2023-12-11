@@ -113,7 +113,8 @@ if __name__ == "__main__":
         MODULES = json.load(f)
         MODULES_FLAT = dict()
         for type, modules in MODULES.items():
-            MODULES_FLAT.update(modules)
+            if type != "files":
+                MODULES_FLAT.update(modules)
 
     logger.info(f"Target: {args.repo_url}")
     logger.info(f"Build number: {args.build_number}")
