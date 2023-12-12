@@ -11,7 +11,8 @@
       "ONNXRunner.nosdef",
       "RGBAtoTensor.nosdef",
       "TensorVisualizer.nosdef",
-      "TensorSlicer.nosdef"
+      "TensorSlicer.nosdef",
+      "TensorPreprocessor.nosdef"
     ],
     "custom_types": [
       "ONNX.fbs"
@@ -37,6 +38,11 @@
         "category": "ML|ONNXRunner",
         "class_name": "TensorSlicer",
         "display_name": "Tensor Slicer"
+      },
+      {
+        "category": "ML|ONNXRunner",
+        "class_name": "TensorPreprocessor",
+        "display_name": "Tensor Preprocessor"
       }
     ]
 }

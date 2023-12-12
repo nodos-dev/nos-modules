@@ -116,6 +116,52 @@ public:
 		}*/
 	}
 
+	void SetTensorData(nos::fb::TensorElementType _type, int64_t p_data, int64_t count) {
+		switch (type) {
+		case nos::fb::TensorElementType::UNDEFINED:
+			return;
+		case nos::fb::TensorElementType::UINT8:
+			return SetTensorData<uint8_t>(reinterpret_cast<uint8_t*>(p_data), count);
+		case nos::fb::TensorElementType::UINT16:
+			return SetTensorData<uint16_t>(reinterpret_cast<uint16_t*>(p_data), count);
+		case nos::fb::TensorElementType::UINT32:
+			return SetTensorData<uint32_t>(reinterpret_cast<uint32_t*>(p_data), count);
+		case nos::fb::TensorElementType::UINT64:
+			return SetTensorData<uint64_t>(reinterpret_cast<uint64_t*>(p_data), count);
+		case nos::fb::TensorElementType::INT8:
+			return SetTensorData<int8_t>(reinterpret_cast<int8_t*>(p_data), count);
+		case nos::fb::TensorElementType::INT16:
+			return SetTensorData<int16_t>(reinterpret_cast<int16_t*>(p_data), count);
+		case nos::fb::TensorElementType::INT32:
+			return SetTensorData<int32_t>(reinterpret_cast<int32_t*>(p_data), count);
+		case nos::fb::TensorElementType::INT64:
+			return SetTensorData<int64_t>(reinterpret_cast<int64_t*>(p_data), count);
+		case nos::fb::TensorElementType::FLOAT:
+			return SetTensorData<float>(reinterpret_cast<float*>(p_data), count);
+		case nos::fb::TensorElementType::FLOAT16:
+			return SetTensorData<float>(reinterpret_cast<float*>(p_data), count);
+		case nos::fb::TensorElementType::DOUBLE:
+			return SetTensorData<double>(reinterpret_cast<double*>(p_data), count);
+		case nos::fb::TensorElementType::BOOL:
+			return SetTensorData<bool>(reinterpret_cast<bool*>(p_data), count);
+		case nos::fb::TensorElementType::STRING:
+			//SetPinValues<std::string>();
+			break;
+		}
+		return;
+	}
+
+	//Does not copies or anything else, pure SET
+	template <typename T>
+	void SetTensorData(T* p_data, int64_t count) {
+		DeduceType<T>();
+		int length = GetLength();
+		assert(count == length);
+		auto memory_info = Ort::MemoryInfo::CreateCpu(OrtDeviceAllocator, OrtMemTypeCPU);
+		Value = Ort::Value::CreateTensor<T>(memory_info, p_data, count, Shape.data(), Shape.size());
+	}
+
+
 	//TODO: Make one for GPU
 	template <typename T>
 	void CreateTensor(T* p_data, int64_t count, bool shouldCopy = false) {

@@ -143,7 +143,7 @@ struct TensorVisualizerNodeContext : nos::NodeContext {
 			pinsToDelete.insert(pinsToDelete.begin(), outputPins.begin() + tensorLength, outputPins.end());
 			outputPins.erase(outputPins.begin() + tensorLength, outputPins.end());
 			HandleEvent(nos::CreateAppEvent(fbb,
-				nos::CreatePartialNodeUpdateDirect(fbb, &NodeID, nos::ClearFlags::CLEAR_PINS, &pinsToDelete)));
+				nos::CreatePartialNodeUpdateDirect(fbb, &NodeID, nos::ClearFlags::NONE, &pinsToDelete)));
 		}
 		else if (outputPins.size() == tensorLength) {
 			int cachedSize = outputPins.size();
@@ -159,7 +159,7 @@ struct TensorVisualizerNodeContext : nos::NodeContext {
 		pinsToDelete.insert(pinsToDelete.begin(), outputPins.begin(), outputPins.end());
 		outputPins.erase(outputPins.begin(), outputPins.end());
 		HandleEvent(nos::CreateAppEvent(fbb,
-			nos::CreatePartialNodeUpdateDirect(fbb, &NodeID, nos::ClearFlags::CLEAR_PINS, &pinsToDelete)));
+			nos::CreatePartialNodeUpdateDirect(fbb, &NodeID, nos::ClearFlags::NONE, &pinsToDelete)));
 	}
 };
 

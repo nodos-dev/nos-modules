@@ -8,6 +8,7 @@
 
 NOS_REGISTER_NAME(TensorSlicer);
 NOS_REGISTER_NAME(In);
+NOS_REGISTER_NAME(SliceFrom);
 
 struct TensorSlicerNodeContext : nos::NodeContext {
 	
@@ -20,12 +21,15 @@ struct TensorSlicerNodeContext : nos::NodeContext {
 	nos::fb::TensorElementType type;
 	std::vector<void*> SlicedData;
 
+	size_t SliceIndex = 0;
+	int64_t currentBuffer = 0;
+
 	TensorSlicerNodeContext(nos::fb::Node const* node) : NodeContext(node) {
 		NodeID = *node->id();
 
 	}
 
-	void  OnPinValueChanged(nos::Name pinName, nosUUID pinId, nosBuffer* value) {
+	void OnPinValueChanged(nos::Name pinName, nosUUID pinId, nosBuffer* value) {
 		if (pinName.Compare(NSN_In.AsCStr()) == 0) {
 			auto tensor = flatbuffers::GetRoot<nos::fb::Tensor>(value->Data);
 			
@@ -35,24 +39,23 @@ struct TensorSlicerNodeContext : nos::NodeContext {
 			for (int i = 0; i < newProxy.shape.size(); i++) {
 				if (!tensorChanged && newProxy.shape[i] != InputTensorProxy.shape[i]) {
 					tensorChanged = true;
+					break;
 				}
 			}
 
 			if (tensorChanged) {
 				InputTensorProxy = newProxy;
 				if (dimensionsChanged) {
-					
-					std::string sliceFrom("Slice From");
 					std::vector<std::string> list;
 					
 					for (int i = 0; i < newProxy.shape.size(); i++) {
-						list.push_back(std::string("Dimension") + std::to_string(i));
+						list.push_back(std::string("Dimension ") + std::to_string(i));
 					}
 
 					flatbuffers::FlatBufferBuilder fbb;
 					flatbuffers::FlatBufferBuilder fbb2;
 					std::vector<flatbuffers::Offset<nos::fb::Pin>> SliceFromPin;
-					nos::fb::TVisualizer vis = { .type = nos::fb::VisualizerType::COMBO_BOX, .name = sliceFrom };
+					nos::fb::TVisualizer vis = { .type = nos::fb::VisualizerType::COMBO_BOX, .name = NSN_SliceFrom.AsString() };
 					UUIDGenerator generator;
 
 					auto buf = std::vector<u8>((u8*)list.front().data(), (u8*)list.front().data() + list.front().size() + 1);
@@ -60,7 +63,7 @@ struct TensorSlicerNodeContext : nos::NodeContext {
 					SliceDimensionID = *(nosUUID*)generator.Generate()().as_bytes().data();
 					SliceFromPin.push_back(nos::fb::CreatePinDirect(fbb,
 						&SliceDimensionID,
-						sliceFrom.c_str(),
+						NSN_SliceFrom.AsCStr(),
 						"string",
 						nos::fb::ShowAs::PROPERTY,
 						nos::fb::CanShowAs::PROPERTY_ONLY,
@@ -72,8 +75,13 @@ struct TensorSlicerNodeContext : nos::NodeContext {
 						nos::CreatePartialNodeUpdateDirect(fbb, &NodeID, nos::ClearFlags::NONE, 0, &SliceFromPin)));
 
 					HandleEvent(nos::CreateAppEvent(
-						fbb2, nos::app::CreateUpdateStringList(fbb2, nos::fb::CreateStringList(fbb2, fbb2.CreateString(sliceFrom), fbb2.CreateVectorOfStrings(list)))));
+						fbb2, nos::app::CreateUpdateStringList(fbb2, nos::fb::CreateStringList(fbb2, fbb2.CreateString(NSN_SliceFrom.AsString()), fbb2.CreateVectorOfStrings(list)))));
 				}
+			}
+
+			if (currentBuffer != InputTensorProxy.buffer) {
+				DeduceTypeAndPropogate(InputTensorProxy);
+				currentBuffer = InputTensorProxy.buffer;
 			}
 			
 
@@ -82,40 +90,46 @@ struct TensorSlicerNodeContext : nos::NodeContext {
 			//DeduceTypeAndPropogate(InputTensorProxy);
 			//nosInputTensor.CreateEmpty();
 		}
-		if (pinId == SliceDimensionID) {
-			
+		if (SliceDimensionID == pinId) {
+			auto dimensionStr = std::string(static_cast<char*>(value->Data));
+			int tokenIdx = dimensionStr.find(" ");
+			SliceIndex = std::stoi(dimensionStr.substr(tokenIdx, std::string::npos));
+			if (currentBuffer != 0) {
+				DeduceTypeAndPropogate(InputTensorProxy);
+				currentBuffer = InputTensorProxy.buffer;
+			}
 		}
 
 	}
 
 	void DeduceTypeAndPropogate(nos::fb::TTensor& proxy) {
-		switch (type) {
+		switch (proxy.type) {
 		case nos::fb::TensorElementType::UNDEFINED:
 			return;
 		case nos::fb::TensorElementType::UINT8:
-			return SliceAndCopyData<uint8_t>(proxy);
+			return Slice<uint8_t>(proxy);
 		case nos::fb::TensorElementType::UINT16:
-			return SliceAndCopyData<uint16_t>(proxy);
+			return Slice<uint16_t>(proxy);
 		case nos::fb::TensorElementType::UINT32:
-			return SliceAndCopyData<uint32_t>(proxy);
+			return Slice<uint32_t>(proxy);
 		case nos::fb::TensorElementType::UINT64:
-			return SliceAndCopyData<uint64_t>(proxy);
+			return Slice<uint64_t>(proxy);
 		case nos::fb::TensorElementType::INT8:
-			return SliceAndCopyData<int8_t>(proxy);
+			return Slice<int8_t>(proxy);
 		case nos::fb::TensorElementType::INT16:
-			return SliceAndCopyData<int16_t>(proxy);
+			return Slice<int16_t>(proxy);
 		case nos::fb::TensorElementType::INT32:
-			return SliceAndCopyData<int32_t>(proxy);
+			return Slice<int32_t>(proxy);
 		case nos::fb::TensorElementType::INT64:
-			return SliceAndCopyData<int64_t>(proxy);
+			return Slice<int64_t>(proxy);
 		case nos::fb::TensorElementType::FLOAT:
-			return SliceAndCopyData<float>(proxy);
+			return Slice<float>(proxy);
 		case nos::fb::TensorElementType::FLOAT16:
-			return SliceAndCopyData<float>(proxy);
+			return Slice<float>(proxy);
 		case nos::fb::TensorElementType::DOUBLE:
-			return SliceAndCopyData<double>(proxy);
+			return Slice<double>(proxy);
 		case nos::fb::TensorElementType::BOOL:
-			return SliceAndCopyData<bool>(proxy);
+			return Slice<bool>(proxy);
 		case nos::fb::TensorElementType::STRING:
 			//SetPinValues<std::string>(proxy);
 			break;
@@ -124,47 +138,69 @@ struct TensorSlicerNodeContext : nos::NodeContext {
 	}
 
 	template <typename T>
-	void SliceAndCopyData(nos::fb::TTensor const &proxy) {
+	void Slice(nos::fb::TTensor const &proxy) {
 		//TODO: use this for slicing tensor where data is pointer:
 		// tensor_k = ( data + k*(MultiplicationOfRestOfDimensions), data + (k+1)*(MultiplicationOfRestOfDimensions) ) for k=0,dim-1
-		//T* incomingData = reinterpret_cast<T*>(proxy.buffer);
-		//
-		//int tensorLength = nosInputTensor.GetLength();
-		//std::vector<int> offsets;
-		//for (int i = 0; i < proxy.shape.size(); i++) {
-		//	int offset = (i == 0) ? (0) : 1;
-		//	bool shouldAllocate = true;
-		//	if (i < nosOutputTensors.size() && proxy.shape[i] == nosOutputTensors[i].GetLength() && SlicedData[i] != nullptr;) {
-		//		shouldAllocate = false;
-		//	}
+		T* incomingData = reinterpret_cast<T*>(proxy.buffer);
+		std::vector<int64_t> newShape;
+		int64_t offset = 1;
+		size_t shapeLength = proxy.shape.size();
+		size_t outputTensorCount = 0;
+		for (int i = 0; i < shapeLength; i++) {
+			if (i == SliceIndex) {
+				outputTensorCount = proxy.shape[i];
+				continue;
+			}
+			int64_t currentLength = proxy.shape[i];
+			newShape.push_back(currentLength);
+			offset *= currentLength;
+		}
 
-		//	offsets.push_back();
-		//	if (shouldAllocate) {
-		//		SlicedData.push_back(new T[proxy.shape[i]);
-		//		nosInputTensor tensor;
-		//		
-		//		nosOutputTensors.push_back(std::move(tensor));
-		//	}
-		//}
-
-		//for (int i = 0; i < offsets.size(); i++) {
-		//	int offset = offsets[i];
-		//	for (int j = 0; j < tensorLength; j+=offset) {
-		//		//Update the data
-		//		SlicedData[i][(j % offset)] = *(incomingData + j);
-		//	}
-		//	if (nosOutputTensors[i].GetRawDataPointer() == nullptr) {
-		//		nosOutputTensors[i].SetShape({ 1, offset });
-		//		nosOutputTensors[i].SetType(proxy.type);
-		//		nosOutputTensors[i].CreateTensor(slicedData[i], offset, false);
-		//	}
-		//}
+		OutputTensorProxies.clear();
+		for (int i = 0; i < outputTensorCount; i++) {
+			nos::fb::TTensor out;
+			out.shape = newShape;
+			out.buffer = proxy.buffer + i * offset;
+			out.type = proxy.type;
+			OutputTensorProxies.push_back(std::move(out));
+		}
+		CreateOutPins();
 	}
 
-	void CreateOutPins(nos::fb::TTensor const& proxy) {
+	void CreateOutPins() {
+		if (!outputPins.empty()) {
+			ClearAllOutPins();
+			outputPins.clear();
+		}
+
 		UUIDGenerator generator;
 		flatbuffers::FlatBufferBuilder fbb;
+		std::vector<flatbuffers::Offset<nos::fb::Pin>> CreatedOutputPins;
+		for (int i = 0; i < OutputTensorProxies.size(); i++) {
+			auto buf = nos::Buffer::From(OutputTensorProxies[i]);
+			auto pinData = std::vector<uint8_t>((uint8_t*)buf.data(), (uint8_t*)buf.data() + buf.size());
+			outputPins.push_back(*(nosUUID*)generator.Generate()().as_bytes().data());
+			CreatedOutputPins.push_back(nos::fb::CreatePinDirect(fbb,
+				&outputPins.back(),
+				std::string("Tensor " + std::to_string(i)).c_str(),
+				nos::fb::Tensor::GetFullyQualifiedName(),
+				nos::fb::ShowAs::OUTPUT_PIN,
+				nos::fb::CanShowAs::OUTPUT_PIN_OR_PROPERTY,
+				0,
+				0,
+				&pinData));
+		}
+		HandleEvent(nos::CreateAppEvent(fbb,
+			nos::CreatePartialNodeUpdateDirect(fbb, &NodeID, nos::ClearFlags::NONE, 0, &CreatedOutputPins)));
+	}
 
+	void ClearAllOutPins() {
+		flatbuffers::FlatBufferBuilder fbb;
+		std::vector<nos::fb::UUID> pinsToDelete;
+		pinsToDelete.insert(pinsToDelete.begin(), outputPins.begin(), outputPins.end());
+		outputPins.erase(outputPins.begin(), outputPins.end());
+		HandleEvent(nos::CreateAppEvent(fbb,
+			nos::CreatePartialNodeUpdateDirect(fbb, &NodeID, nos::ClearFlags::NONE, &pinsToDelete)));
 	}
 };
 

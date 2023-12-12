@@ -17,11 +17,11 @@ struct ONNXRunnerNodeContext : nos::NodeContext
 	Ort::Env env;
 	Ort::Session ModelSession{nullptr};
 
-	nos::fb::TTensor nosInputTensor, nosOutputTensor;
+	nos::fb::TTensor InputTensorProxy, OutputTensorProxy;
 
 	std::string InputName, OutputName;
 	nosUUID NodeID, InputID, OutputID;
-	nosTensor InputTensor, OutputTensor;
+	nosTensor nosInputTensor, nosOutputTensor;
 	std::atomic_bool shouldStop;
 	std::condition_variable WaitInput;
 	std::mutex InputMutex;
@@ -87,17 +87,17 @@ struct ONNXRunnerNodeContext : nos::NodeContext
 		if (pinName.Compare(InputName.c_str()) == 0){
 			auto tensor = flatbuffers::GetRoot<nos::fb::Tensor>(value->Data);
 			for (int i = 0; i < tensor->shape()->Length() && ((tensor->shape()->data() + i) != nullptr) ; i++) {
-				if (*(tensor->shape()->data() + i) != nosInputTensor.shape[i]) {
-					nosEngine.LogE("Input tensor is not compatible with model");
-					return;
+				if (*(tensor->shape()->data() + i) != InputTensorProxy.shape[i]) {
+					nosEngine.LogW("Input tensor is not compatible with model");
+					//return;
 				}
 			}
 			if (tensor->buffer() == NULL) {
 				nosEngine.LogW("Input tensor has no data");
 				return;
 			}
-			nosInputTensor.buffer = tensor->buffer();
-			InputTensor.CreateTensor<uint8_t>(reinterpret_cast<uint8_t*>(nosInputTensor.buffer), InputTensor.GetLength());
+			InputTensorProxy.buffer = tensor->buffer();
+			nosInputTensor.SetTensorData(InputTensorProxy.type, InputTensorProxy.buffer, nosInputTensor.GetLength());
 			WaitInput.notify_one();
 			
 		}
@@ -114,10 +114,10 @@ struct ONNXRunnerNodeContext : nos::NodeContext
 			}
 			const char* input_names[] = { InputName.c_str() };
 			const char* output_names[] = { OutputName.c_str() };
-			ModelSession.Run(Ort::RunOptions{nullptr}, input_names, InputTensor.GetORTValuePointer(), 1, output_names, OutputTensor.GetORTValuePointer(), 1);
+			ModelSession.Run(Ort::RunOptions{nullptr}, input_names, nosInputTensor.GetORTValuePointer(), 1, output_names, nosOutputTensor.GetORTValuePointer(), 1);
 			//OutputTensor.ApplySoftmax();
-			nosOutputTensor.buffer = (uint64_t)OutputTensor.GetRawDataPointer();
-			nosEngine.SetPinValue(OutputID, nos::Buffer::From(nosOutputTensor));
+			OutputTensorProxy.buffer = (uint64_t)nosOutputTensor.GetRawDataPointer();
+			nosEngine.SetPinValue(OutputID, nos::Buffer::From(OutputTensorProxy));
 		}
 	}
 
@@ -126,17 +126,17 @@ struct ONNXRunnerNodeContext : nos::NodeContext
 
 			ModelSession = Ort::Session{ env, modelPath.c_str(), Ort::SessionOptions{nullptr} };
 			//TODO: We now only focused on 1 INPUT case for development purposes but must not rely on this
-			InputTensor.SetShape(ModelSession.GetInputTypeInfo(0).GetTensorTypeAndShapeInfo().GetShape());
-			InputTensor.SetType(ModelSession.GetInputTypeInfo(0).GetTensorTypeAndShapeInfo().GetElementType());
-			OutputTensor.SetShape(ModelSession.GetOutputTypeInfo(0).GetTensorTypeAndShapeInfo().GetShape());
-			OutputTensor.SetType(ModelSession.GetOutputTypeInfo(0).GetTensorTypeAndShapeInfo().GetElementType());
-			OutputTensor.CreateEmpty();
+			nosInputTensor.SetShape(ModelSession.GetInputTypeInfo(0).GetTensorTypeAndShapeInfo().GetShape());
+			nosInputTensor.SetType(ModelSession.GetInputTypeInfo(0).GetTensorTypeAndShapeInfo().GetElementType());
+			nosOutputTensor.SetShape(ModelSession.GetOutputTypeInfo(0).GetTensorTypeAndShapeInfo().GetShape());
+			nosOutputTensor.SetType(ModelSession.GetOutputTypeInfo(0).GetTensorTypeAndShapeInfo().GetElementType());
+			nosOutputTensor.CreateEmpty();
 
-			nosInputTensor.shape = ModelSession.GetInputTypeInfo(0).GetTensorTypeAndShapeInfo().GetShape();
-			nosInputTensor.type = InputTensor.GetType();
+			InputTensorProxy.shape = ModelSession.GetInputTypeInfo(0).GetTensorTypeAndShapeInfo().GetShape();
+			InputTensorProxy.type = nosInputTensor.GetType();
 			
-			nosOutputTensor.shape = ModelSession.GetOutputTypeInfo(0).GetTensorTypeAndShapeInfo().GetShape();
-			nosOutputTensor.type = OutputTensor.GetType();
+			OutputTensorProxy.shape = ModelSession.GetOutputTypeInfo(0).GetTensorTypeAndShapeInfo().GetShape();
+			OutputTensorProxy.type = nosOutputTensor.GetType();
 
 			auto type = ModelSession.GetOutputTypeInfo(0).GetTensorTypeAndShapeInfo().GetElementType();
 			if (!isReload) {
@@ -145,10 +145,10 @@ struct ONNXRunnerNodeContext : nos::NodeContext
 
 				flatbuffers::FlatBufferBuilder fbb_t;
 
-				auto bufInput = nos::Buffer::From(nosInputTensor);
+				auto bufInput = nos::Buffer::From(InputTensorProxy);
 				auto inputTensorData = std::vector<uint8_t>((uint8_t*)bufInput.data(), (uint8_t*)bufInput.data() + bufInput.size());
 
-				auto bufOutput = nos::Buffer::From(nosOutputTensor);
+				auto bufOutput = nos::Buffer::From(OutputTensorProxy);
 				auto outputTensorData = std::vector<uint8_t>((uint8_t*)bufOutput.data(), (uint8_t*)bufOutput.data() + bufOutput.size());
 
 				std::vector<flatbuffers::Offset<nos::fb::Pin>> InputPins;
