@@ -37,7 +37,7 @@ float3 Correct(float3 WorkingColor, float4 Saturation, float4 Contrast, float4 G
 	WorkingColor = pow(WorkingColor * (1.0 / ContrastCenter), Contrast.xyz * Contrast.w) * ContrastCenter;
 	WorkingColor = pow(WorkingColor, 1.0 / (Gamma.xyz * Gamma.w));
 	WorkingColor = WorkingColor * (Gain.xyz * Gain.w) + Offset.xyz + Offset.w;
-	return mult(WorkingColor);
+	return WorkingColor;
 }
 
 
