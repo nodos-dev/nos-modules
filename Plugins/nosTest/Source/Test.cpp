@@ -54,11 +54,6 @@ public:
 		nosEngine.LogI("TestNode: " __FUNCTION__);
 		return NOS_RESULT_SUCCESS;
 	}
-	virtual nosResult CanCopy(nosCopyInfo* copyInfo)
-	{
-		nosEngine.LogI("TestNode: " __FUNCTION__);
-		return NOS_RESULT_SUCCESS;
-	}
 	virtual nosResult BeginCopyFrom(nosCopyInfo* copyInfo)
 	{
 		nosEngine.LogI("TestNode: " __FUNCTION__);
