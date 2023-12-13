@@ -6,7 +6,8 @@
             "contents": {
                 "type": "nos.sys.vulkan.GPUNode",
                 "options": {
-                    "shader": "../Shaders/ColorCorrect.frag"
+                    "shader": "../Shaders/ColorCorrect.hlsl",
+                    "stage": "FRAGMENT"
                 }
             },
             "pins": [
