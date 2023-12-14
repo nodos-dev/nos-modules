@@ -111,7 +111,7 @@ extern "C"
 			return NOS_RESULT_SUCCESS;
 
 		static nosVulkanSubsystem* nosVulkan = nullptr;
-		auto ret = nosEngine.RequestSubsystem(NOS_NAME_STATIC("nos.sys.vulkan"), 0, 1, (void**)&nosVulkan);
+		auto ret = nosEngine.RequestSubsystem(NOS_NAME_STATIC("nos.sys.vulkan"), 1, 0, (void**)&nosVulkan);
 		if (ret != NOS_RESULT_SUCCESS)
 			return ret;
 		

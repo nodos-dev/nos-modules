@@ -30,7 +30,7 @@ struct GaussBlurContext
 		IntermediateTexture.Info.Type = NOS_RESOURCE_TYPE_TEXTURE;
 		IntermediateTexture.Info.Texture.Filter = NOS_TEXTURE_FILTER_LINEAR;
 		IntermediateTexture.Info.Texture.Usage = nosImageUsage(NOS_IMAGE_USAGE_RENDER_TARGET | NOS_IMAGE_USAGE_SAMPLED); 
-		nosEngine.RequestSubsystem(NOS_NAME_STATIC("nos.sys.vulkan"), 0, 1, (void**)&vk);
+		nosEngine.RequestSubsystem(NOS_NAME_STATIC("nos.sys.vulkan"), 1, 0, (void**)&vk);
 	}
 
 	~GaussBlurContext()
@@ -118,7 +118,7 @@ void RegisterGaussianBlur(nosNodeFunctions* out)
 		return NOS_RESULT_SUCCESS;
 	};
 
-	auto ret = nosEngine.RequestSubsystem(NOS_NAME_STATIC("nos.sys.vulkan"), 0, 1, (void**)&nosVulkan);
+	auto ret = nosEngine.RequestSubsystem(NOS_NAME_STATIC("nos.sys.vulkan"), 1, 0, (void**)&nosVulkan);
 	if (ret != NOS_RESULT_SUCCESS)
 		return;
 	

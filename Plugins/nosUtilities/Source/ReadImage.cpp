@@ -32,11 +32,10 @@ static nosResult GetFunctions(size_t* count, nosName* names, nosPfnNodeFunctionE
         return NOS_RESULT_SUCCESS;
     
     *names = NOS_NAME_STATIC("ReadImage_Load");
-    *fns = [](void* ctx, const nosNodeExecuteArgs* nodeArgs, const nosNodeExecuteArgs* functionArgs)
+	*fns = [](void* ctx, const nosNodeExecuteArgs* nodeArgs, const nosNodeExecuteArgs* functionArgs)
     {
-        auto values = GetPinValues(nodeArgs);
-		auto ids = GetPinIds(nodeArgs);
-		std::filesystem::path path = GetPinValue<const char>(values, NSN_Path);
+		nos::NodeExecuteArgs args(nodeArgs);
+		std::filesystem::path path = InterpretPinValue<const char>(args[NSN_Path].Data->Data);
 		try
 		{
 			if (!std::filesystem::exists(path))
@@ -44,23 +43,35 @@ static nosResult GetFunctions(size_t* count, nosName* names, nosPfnNodeFunctionE
 				nosEngine.LogE("Read Image cannot load file %s", path.string().c_str());
 				return;
 			}
-			nosResourceShareInfo out = vkss::DeserializeTextureInfo(GetPinValue<void>(values, NSN_Out));
-			nosResourceShareInfo tmp = out;
 			
+			sys::vulkan::Texture* out = InterpretPinValue<sys::vulkan::Texture>(args[NSN_Out].Data->Data);
+
 			int w, h, n;
 			u8* img = stbi_load(path.string().c_str(), &w, &h, &n, 4);
-			nosVulkan->ImageLoad(img, nosVec2u(w,h), NOS_FORMAT_R8G8B8A8_SRGB, &tmp);
+			sys::vulkan::TTexture tex;
+			tex.width = w;
+			tex.height = h;
+
+			if (*InterpretPinValue<bool>(args[NSN_sRGB].Data->Data))
+				tex.format = sys::vulkan::Format::R8G8B8A8_SRGB;
+			else
+				tex.format = sys::vulkan::Format::R8G8B8A8_UNORM;
+
+			if (tex.width != out->width() || tex.height != out->height() || tex.format != out->format())
+			{
+				nosEngine.SetPinValue(args[NSN_Out].Id, nos::Buffer::From(tex));
+			}
+			nosResourceShareInfo outRes = vkss::DeserializeTextureInfo(args[NSN_Out].Data->Data);
+
+			nosCmd cmd{};
+			nosVulkan->Begin("ReadImage: Load", &cmd);
+			nosVulkan->ImageLoad(cmd, img, nosVec2u(w, h), NOS_FORMAT_R8G8B8A8_SRGB, &outRes);
+			nosVulkan->End(cmd, NOS_TRUE);
+			
 			free(img);
-
-			nosCmd cmd;
-			nosVulkan->Begin("Read Image", &cmd);
-			nosVulkan->Copy(cmd, &tmp, &out, 0);
-			nosVulkan->End(cmd, NOS_FALSE);
-			nosVulkan->DestroyResource(&tmp);
-
+			
 			flatbuffers::FlatBufferBuilder fbb;
-			auto dirty = CreateAppEvent(fbb, app::CreatePinDirtied(fbb, &ids[NSN_Out]));
-			nosEngine.EnqueueEvent(&dirty);
+			HandleEvent(CreateAppEvent(fbb, app::CreatePinDirtied(fbb, &args[NSN_Out].Id)));
 		}
 		catch(const std::exception& e)
 		{

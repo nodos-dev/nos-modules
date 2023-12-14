@@ -202,21 +202,14 @@ struct CNNNodeContext :  nos::NodeContext {
 		if (Worker.isDone) {
 			Worker.isNewFrameReady = true;
 			nosResourceShareInfo out = nos::vkss::DeserializeTextureInfo(values[NSN_Out]);;
-			nosResourceShareInfo tmp = out;
-			nosVulkan->ImageLoad(Worker.data,
+			nosCmd cmd;
+			nosVulkan->Begin("CNN Upload", &cmd);
+			nosVulkan->ImageLoad(cmd, Worker.data,
 				nosVec2u(out.Info.Texture.Width, out.Info.Texture.Height),
-				NOS_FORMAT_R8G8B8A8_SRGB, &tmp);
-			{
-				nosCmd cmd;
-				nosVulkan->Begin("Copy to Out", &cmd);
-				nosVulkan->Copy(cmd, &tmp, &out, 0);
-				nosVulkan->End(cmd, NOS_FALSE);
-				nosVulkan->DestroyResource(&tmp);
-			}
-			//return NOS_RESULT_SUCCESS;
+				NOS_FORMAT_R8G8B8A8_SRGB, &out);
+			nosVulkan->End(cmd, NOS_FALSE);
 		}
-
-		//return NOS_RESULT_FAILED;
+		
 		return NOS_RESULT_SUCCESS;
 	}
 
@@ -259,7 +252,7 @@ extern "C"
 		if (!outFunctions)
 			return NOS_RESULT_SUCCESS;
 
-		auto ret = nosEngine.RequestSubsystem(NOS_NAME_STATIC("nos.sys.vulkan"), 0, 1, (void**)&nosVulkan);
+		auto ret = nosEngine.RequestSubsystem(NOS_NAME_STATIC("nos.sys.vulkan"), 1, 0, (void**)&nosVulkan);
 		if (NOS_RESULT_SUCCESS != ret)
 			return ret;
 

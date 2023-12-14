@@ -315,14 +315,20 @@ struct WebRTCPlayerNodeContext : nos::NodeContext {
 			OnFrameVBuffers[writeIndex].Info.Texture.Height = buffer->height() / 2;
 			nosVulkan->CreateResource(&OnFrameVBuffers[writeIndex]);
 		}
-		
-
-		nosVulkan->ImageLoad(buffer->DataY(), nosVec2u(buffer->width(), buffer->height()), NOS_FORMAT_R8_SRGB, &OnFrameYBuffers[writeIndex]);
-		nosVulkan->ImageLoad(buffer->DataU(),
+		nosCmd cmd;
+		nosVulkan->Begin("WebRTCPlayer Upload", &cmd);
+		nosVulkan->ImageLoad(cmd,
+							 buffer->DataY(),
+							 nosVec2u(buffer->width(), buffer->height()),
+							 NOS_FORMAT_R8_SRGB,
+							 &OnFrameYBuffers[writeIndex]);
+		nosVulkan->ImageLoad(cmd,
+							 buffer->DataU(),
 							 nosVec2u(buffer->width() / 2, buffer->height() / 2),
 							 NOS_FORMAT_R8_SRGB,
 							 &OnFrameUBuffers[writeIndex]);
-		nosVulkan->ImageLoad(buffer->DataV(),
+		nosVulkan->ImageLoad(cmd,
+							 buffer->DataV(),
 							 nosVec2u(buffer->width() / 2, buffer->height() / 2),
 							 NOS_FORMAT_R8_SRGB,
 							 &OnFrameVBuffers[writeIndex]);

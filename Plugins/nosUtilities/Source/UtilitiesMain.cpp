@@ -14,6 +14,7 @@ NOS_REGISTER_NAME(Output);
 NOS_REGISTER_NAME(In);
 NOS_REGISTER_NAME(Out);
 NOS_REGISTER_NAME(Path);
+NOS_REGISTER_NAME(sRGB);
 
 namespace nos::utilities
 {
@@ -51,7 +52,7 @@ NOSAPI_ATTR nosResult NOSAPI_CALL nosExportNodeFunctions(size_t* outSize, nosNod
 	if (!outList)
 		return NOS_RESULT_SUCCESS;
 
-	auto ret = nosEngine.RequestSubsystem(NOS_NAME_STATIC("nos.sys.vulkan"), 0, 1, (void**)&nosVulkan);
+	auto ret = nosEngine.RequestSubsystem(NOS_NAME_STATIC("nos.sys.vulkan"), 1, 0, (void**)&nosVulkan);
 	if (ret != NOS_RESULT_SUCCESS)
 		return ret;
 

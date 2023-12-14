@@ -7,16 +7,16 @@ NOS_INIT();
 extern "C"
 {
 
-NOSAPI_ATTR nosResult NOSAPI_CALL nosExportSubsystem(void** subsystemContext)
+NOSAPI_ATTR nosResult NOSAPI_CALL nosExportSubsystem(nosSubsystemFunctions* subsystemFunctions, void** exported)
 {
-	*subsystemContext = new TestSubsystem;
+	*exported = new TestSubsystem;
 	return NOS_RESULT_SUCCESS;
 }
 
-NOSAPI_ATTR bool NOSAPI_CALL nosUnloadSubsystem(void* subsystemContext)
+NOSAPI_ATTR nosResult NOSAPI_CALL nosUnloadSubsystem(void* subsystemContext)
 {
 	delete static_cast<TestSubsystem*>(subsystemContext);
-	return true;
+	return NOS_RESULT_SUCCESS;
 }
 
 }
