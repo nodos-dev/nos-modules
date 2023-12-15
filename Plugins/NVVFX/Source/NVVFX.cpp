@@ -77,10 +77,7 @@ extern "C" __declspec(dllimport) void ProcessImage(uint8_t * inData, int width, 
 struct NVVFXNodeContext : nos::NodeContext {
 	nosWebRTCStatsLogger logger;
 	nos::fb::UUID NodeID, InputID, OutputID;
-	nosResourceShareInfo Input{};
 	nosResourceShareInfo InputFormatted{}, InputBuffer{};
-	nosResourceShareInfo OutputTexture{};
-	std::atomic_bool AIBusy = false, CanGet = false, DidSet = false, ResourcesReady = false, NeedCopy = false, ShouldRunThread = true;
 	int UpscaleFactor;
 	float UpscaleStrength;
 	uint8_t* OutData = nullptr;
@@ -105,18 +102,17 @@ struct NVVFXNodeContext : nos::NodeContext {
 
 	void  OnPinValueChanged(nos::Name pinName, nosUUID pinId, nosBuffer value) override {
 		if (pinName == NSN_In) {
-			Input = nos::vkss::DeserializeTextureInfo(value.Data);
-
+			nosResourceShareInfo input = nos::vkss::DeserializeTextureInfo(value.Data);
 			if(InputFormatted.Memory.Handle == NULL || 
-				(InputFormatted.Info.Texture.Width != Input.Info.Texture.Width || InputFormatted.Info.Texture.Height != Input.Info.Texture.Height))
+				(InputFormatted.Info.Texture.Width != input.Info.Texture.Width || InputFormatted.Info.Texture.Height != input.Info.Texture.Height))
 			{
 				if (InputFormatted.Memory.Handle != NULL) {
 					nosVulkan->DestroyResource(&InputFormatted);
 				}
 
 				InputFormatted.Info.Type = NOS_RESOURCE_TYPE_TEXTURE;
-				InputFormatted.Info.Texture.Width = Input.Info.Texture.Width;
-				InputFormatted.Info.Texture.Height = Input.Info.Texture.Height;
+				InputFormatted.Info.Texture.Width = input.Info.Texture.Width;
+				InputFormatted.Info.Texture.Height = input.Info.Texture.Height;
 				//TODO: Make use of tensor type before deciding to this
 				InputFormatted.Info.Texture.Format = NOS_FORMAT_R8G8B8A8_SRGB;
 				InputFormatted.Info.Texture.Usage = nosImageUsage(NOS_IMAGE_USAGE_TRANSFER_SRC | NOS_IMAGE_USAGE_TRANSFER_DST);
@@ -130,25 +126,6 @@ struct NVVFXNodeContext : nos::NodeContext {
 				InputBuffer.Info.Buffer.Size = InputFormatted.Info.Texture.Width * InputFormatted.Info.Texture.Height * sizeof(uint8_t) * 4;
 				InputBuffer.Info.Buffer.Usage = nosBufferUsage(NOS_BUFFER_USAGE_TRANSFER_SRC | NOS_BUFFER_USAGE_TRANSFER_DST);
 				nosVulkan->CreateResource(&InputBuffer);
-
-				int targetHeight = InputFormatted.Info.Texture.Height * UpscaleFactor;
-				int targetWidth = InputFormatted.Info.Texture.Width * UpscaleFactor;
-
-				/*
-				if (OutputTexture.Memory.Handle != NULL) {
-					nosVulkan->DestroyResource(&OutputTexture);
-				}
-				OutputTexture.Info.Type = NOS_RESOURCE_TYPE_TEXTURE;
-				OutputTexture.Info.Texture.Width = targetWidth;
-				OutputTexture.Info.Texture.Height = targetHeight;
-				//TODO: Make use of tensor type before deciding to this
-				OutputTexture.Info.Texture.Format = NOS_FORMAT_R8G8B8A8_SRGB;
-				OutputTexture.Info.Texture.Usage = nosImageUsage(NOS_IMAGE_USAGE_TRANSFER_SRC | NOS_IMAGE_USAGE_TRANSFER_DST);
-				OutputTexture.Info.Texture.Filter = Input.Info.Texture.Filter;
-				nosVulkan->CreateResource(&OutputTexture);
-				*/
-				ResourcesReady = true;
-				DidSet = false;
 			}
 		}
 		if (pinName == NSN_UpscaleFactor) {
@@ -159,21 +136,30 @@ struct NVVFXNodeContext : nos::NodeContext {
 		}
 	}
 
+	bool NeedsToUpdateOutput(nos::NodeExecuteArgs& args)
+	{
+		int targetHeight = InputFormatted.Info.Texture.Height * UpscaleFactor;
+		int targetWidth = InputFormatted.Info.Texture.Width * UpscaleFactor;
+		auto outInfo = nos::InterpretPinValue<nos::sys::vulkan::Texture>(args[NSN_Out].Data->Data);
+		return outInfo->width() != targetWidth || outInfo->height() != targetHeight ||
+			   outInfo->format() != (nos::sys::vulkan::Format)NOS_FORMAT_R8G8B8A8_SRGB || !outInfo->unscaled();
+	}
 
-	nosResult ExecuteNode(const nosNodeExecuteArgs* args) {
-		/*if (!DidSet) {
-			nosResourceShareInfo dummy;
-			dummy = OutputTexture;
-			auto texFb = nos::vkss::ConvertTextureInfo(dummy);
-			texFb.unscaled = true;
-			auto texFbBuf = nos::Buffer::From(texFb);
-			nosEngine.SetPinValue(OutputID, { .Data = texFbBuf.Data(), .Size = texFbBuf.Size() });
-			DidSet = true;
-			return NOS_RESULT_FAILED;
-		}*/
-
+	nosResult ExecuteNode(const nosNodeExecuteArgs* execArgs) {
+		nos::NodeExecuteArgs args(execArgs);
+		if (NeedsToUpdateOutput(args)) {
+			nos::sys::vulkan::TTexture tex{};
+			tex.unscaled = true;
+			tex.width = InputFormatted.Info.Texture.Width;
+			tex.height = InputFormatted.Info.Texture.Height;
+			tex.format = (nos::sys::vulkan::Format)InputFormatted.Info.Texture.Format;
+			nosEngine.SetPinValue(OutputID, nos::Buffer::From(tex));
+		}
+		
 		nosCmd downloadCmd;
+		nosResourceShareInfo in = nos::vkss::DeserializeTextureInfo(args[NSN_In].Data->Data);
 		nosVulkan->Begin("NVVFX Download", &downloadCmd);
+		nosVulkan->Copy(downloadCmd, &in, &InputFormatted, 0);
 		nosVulkan->Copy(downloadCmd, &InputFormatted, &InputBuffer, 0);
 		nosGPUEvent waitEvent;
 		nosVulkan->End2(downloadCmd, NOS_TRUE, &waitEvent);
@@ -189,26 +175,19 @@ struct NVVFXNodeContext : nos::NodeContext {
 		//stbi_write_png("C:/TRASH/RESULT_FROM_PLUGIN.png", OutputTexture.Info.Texture.Width, OutputTexture.Info.Texture.Height, 4, OutData, OutputTexture.Info.Texture.Width * sizeof(uint8_t));
 
 		
-		auto values = nos::GetPinValues(args);
-		nosResourceShareInfo out = nos::vkss::DeserializeTextureInfo(values[NSN_Out]);;
+		nosResourceShareInfo out = nos::vkss::DeserializeTextureInfo(args[NSN_Out].Data->Data);
 		nosCmd cmd;
 		nosVulkan->Begin("NVVFX Upload", &cmd);
 		nosVulkan->ImageLoad(cmd, data,
 			nosVec2u(InputFormatted.Info.Texture.Width, InputFormatted.Info.Texture.Height),
-			NOS_FORMAT_R8G8B8A8_SRGB, &out);
+			InputFormatted.Info.Texture.Format, &out);
 		nosVulkan->End(cmd, NOS_FALSE);
 
-		//nosEngine.SetPinValue(OutputID, nos::Buffer::From(nos::vkss::ConvertTextureInfo(OutputTexture)));
 		return NOS_RESULT_SUCCESS;
 
 	}
 
 	nosResult BeginCopyTo(nosCopyInfo* cpy) override {
-		auto texCpy = reinterpret_cast<nosTextureCopyInfo*>(cpy->TypeCopyInfo);
-		texCpy->ShouldCopyTexture = true;
-		texCpy->CopyTextureFrom = Input;
-		texCpy->CopyTextureTo = InputFormatted;
-		texCpy->ShouldSubmitAndWait = true;
 		return NOS_RESULT_SUCCESS;
 	}
 
