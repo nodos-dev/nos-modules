@@ -1,6 +1,3 @@
-[submodule "tools"]
-	path = Tools
-	url = https://github.com/mediaz/tools
 [submodule "Shaders"]
 	path = Plugins/Shaders
 	url = https://github.com/mediaz/shaders
@@ -15,3 +12,6 @@
 	url = https://github.com/mediaz/mzVulkan.git
 [submodule "Subsystems/nosVulkanSubsystem/External/nosVulkan"]
 	url = https://github.com/mediaz/nosVulkan.git
+[submodule "Subsystems/nosVulkanSubsystem/Binaries/tools"]
+	path = Subsystems/nosVulkanSubsystem/Binaries/tools
+	url = https://github.com/mediaz/tools.git
