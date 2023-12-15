@@ -60,5 +60,5 @@ if (NOT WITH_NODOS)
     find_package(nosSubsystemSDK)
 endif()
 
-add_subdirectory(nosTestSubsystem)
 add_subdirectory(nosVulkanSubsystem) # Subsystem prefix is only for distinguishing between nosVulkan repo and this.
+add_subdirectory(nosTestSubsystem)
