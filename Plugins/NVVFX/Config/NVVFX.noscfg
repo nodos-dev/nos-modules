@@ -1,0 +1,22 @@
+{
+  "info": {
+    "id": {
+      "name": "NVVFX",
+      "version": "1.0.0"
+    },
+    "description": "NVVFX Nodes",
+    "display_name": "NVVFX"
+  },
+  "node_definitions": [
+    "NVVFX.nosdef"
+  ],
+    "custom_types": [],
+    "binary_path": "../Binaries/NVVFX",
+    "associated_nodes": [
+      {
+        "category": "NVVFX",
+        "class_name": "NVVFX",
+        "display_name": "NVVFX"
+      }
+    ]
+}

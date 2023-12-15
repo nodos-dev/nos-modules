@@ -95,6 +95,7 @@ add_subdirectory(nosUtilities)
 add_subdirectory(nosTest)
 add_subdirectory(nosCNN)
 add_subdirectory(nosWebRTC)
+add_subdirectory(NVVFX)
 
 get_targets(PLUGINS_COMMON_EXTERNAL_TARGETS "./External")
 group_targets("${PLUGINS_COMMON_EXTERNAL_TARGETS}" "External")

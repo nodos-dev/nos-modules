@@ -1,0 +1,39 @@
+    {
+    "nodes": [
+        {
+            "class_name": "NVVFX",
+            "contents_type": "Job",
+          "pins": [
+            {
+              "name": "In",
+              "type_name": "nos.sys.vulkan.Texture",
+              "show_as": "INPUT_PIN",
+              "can_show_as": "INPUT_PIN_OR_PROPERTY",
+              "live": true
+            },
+            {
+              "name": "Out",
+              "type_name": "nos.sys.vulkan.Texture",
+              "show_as": "OUTPUT_PIN",
+              "can_show_as": "OUTPUT_PIN_OR_PROPERTY",
+              "live": true
+            },
+            {
+              "name": "UpscaleStrength",
+              "type_name": "float",
+              "show_as": "PROPERTY",
+              "can_show_as": "INPUT_PIN_OR_PROPERTY",
+              "data": 0.5
+            },
+            {
+              "name": "UpscaleFactor",
+              "type_name": "int",
+              "show_as": "PROPERTY",
+              "can_show_as": "INPUT_PIN_OR_PROPERTY",
+              "data": 2
+            }
+          ],
+            "functions": []
+        }
+    ]
+}
