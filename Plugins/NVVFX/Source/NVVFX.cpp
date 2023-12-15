@@ -173,7 +173,7 @@ struct NVVFXNodeContext : nos::NodeContext {
 		}*/
 
 		nosCmd downloadCmd;
-		nosVulkan->Begin(0, &downloadCmd);
+		nosVulkan->Begin("NVVFX Download", &downloadCmd);
 		nosVulkan->Copy(downloadCmd, &InputFormatted, &InputBuffer, 0);
 		nosGPUEvent waitEvent;
 		nosVulkan->End2(downloadCmd, NOS_TRUE, &waitEvent);
