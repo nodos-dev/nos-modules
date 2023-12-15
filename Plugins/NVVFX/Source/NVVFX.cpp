@@ -83,7 +83,7 @@ struct NVVFXNodeContext : nos::NodeContext {
 	uint8_t* OutData = nullptr;
 
 	NVVFXNodeContext(nos::fb::Node const* node) :NodeContext(node), logger("NVVFX") {
-		nosEngine.RequestSubsystem(NOS_NAME_STATIC(NOS_VULKAN_SUBSYSTEM_NAME), 0, 1, (void**)&nosVulkan);
+		nosEngine.RequestSubsystem(NOS_NAME_STATIC(NOS_VULKAN_SUBSYSTEM_NAME), 1, 0, (void**)&nosVulkan);
 		
 		for (const auto& pin : *node->pins()) {
 			if (NSN_UpscaleFactor.Compare(pin->name()->c_str()) == 0) {
@@ -150,8 +150,8 @@ struct NVVFXNodeContext : nos::NodeContext {
 		if (NeedsToUpdateOutput(args)) {
 			nos::sys::vulkan::TTexture tex{};
 			tex.unscaled = true;
-			tex.width = InputFormatted.Info.Texture.Width;
-			tex.height = InputFormatted.Info.Texture.Height;
+			tex.width = InputFormatted.Info.Texture.Width * UpscaleFactor;
+			tex.height = InputFormatted.Info.Texture.Height * UpscaleFactor;
 			tex.format = (nos::sys::vulkan::Format)InputFormatted.Info.Texture.Format;
 			nosEngine.SetPinValue(OutputID, nos::Buffer::From(tex));
 		}
@@ -171,15 +171,15 @@ struct NVVFXNodeContext : nos::NodeContext {
 		auto data = nosVulkan->Map(&InputBuffer);
 		//stbi_write_png("C:/TRASH/INPUT_FROM_PLUGIN.png", InputFormatted.Info.Texture.Width, InputFormatted.Info.Texture.Height, 4, data, InputFormatted.Info.Texture.Width * sizeof(uint8_t));
 
-		//ProcessImage(data, InputFormatted.Info.Texture.Width, InputFormatted.Info.Texture.Height, UpscaleStrength, targetHeight, OutData, "C:/WorkInParallel/MAXINE-VFX-SDK/models");
+		ProcessImage(data, InputFormatted.Info.Texture.Width, InputFormatted.Info.Texture.Height, UpscaleStrength, targetHeight, OutData, "C:/WorkInParallel/MAXINE-VFX-SDK/models");
 		//stbi_write_png("C:/TRASH/RESULT_FROM_PLUGIN.png", OutputTexture.Info.Texture.Width, OutputTexture.Info.Texture.Height, 4, OutData, OutputTexture.Info.Texture.Width * sizeof(uint8_t));
 
 		
 		nosResourceShareInfo out = nos::vkss::DeserializeTextureInfo(args[NSN_Out].Data->Data);
 		nosCmd cmd;
 		nosVulkan->Begin("NVVFX Upload", &cmd);
-		nosVulkan->ImageLoad(cmd, data,
-			nosVec2u(InputFormatted.Info.Texture.Width, InputFormatted.Info.Texture.Height),
+		nosVulkan->ImageLoad(cmd, OutData,
+			nosVec2u(targetWidth, targetHeight),
 			InputFormatted.Info.Texture.Format, &out);
 		nosVulkan->End(cmd, NOS_FALSE);
 
