@@ -1,0 +1,20 @@
+{
+    "info": {
+        "id": {
+            "name": "nos.CubeMask",
+            "version": "1.0.0"
+        },
+        "display_name": "CubeMask"
+    },
+    "node_definitions": [
+        "Config/CubeMask.nosdef"
+    ],
+    "binary_path": "Binaries/nosCubeMask",
+    "associated_nodes": [
+        {
+            "category": "Keying",
+            "class_name": "CubeMask",
+            "display_name": "CubeMask"
+        }
+    ]
+}

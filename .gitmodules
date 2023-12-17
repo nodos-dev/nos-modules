@@ -7,11 +7,11 @@
 [submodule "mzWebRTC/External"]
 	path = Plugins/nosWebRTC/External
 	url = https://github.com/mediaz/webRTC-builds.git
-[submodule "Subsystems/mzVulkanSubsystem/External/mzVulkan"]
+[submodule "Subsystems/mzVulkanSubsystem/External/nosVulkan"]
 	path = Subsystems/nosVulkanSubsystem/External/nosVulkan
-	url = https://github.com/mediaz/mzVulkan.git
+	url = https://github.com/mediaz/nosVulkan.git
 [submodule "Subsystems/nosVulkanSubsystem/External/nosVulkan"]
 	url = https://github.com/mediaz/nosVulkan.git
-[submodule "Subsystems/nosVulkanSubsystem/Binaries/tools"]
-	path = Subsystems/nosVulkanSubsystem/Binaries/tools
-	url = https://github.com/mediaz/tools.git
+[submodule "Plugins/nosCubeMask/External/glm"]
+	path = Plugins/nosCubeMask/External/glm
+	url = https://github.com/g-truc/glm.git
