@@ -368,36 +368,36 @@ NOSAPI_ATTR nosResult NOSAPI_CALL nosExportNodeFunctions(size_t* outSize, nosNod
 
 	nosEngine.RequestSubsystem(NOS_NAME_STATIC(NOS_VULKAN_SUBSYSTEM_NAME), 1, 0, (void**)&vk);
 
-	std::string root = nosEngine.Context->RootFolderPath;
-	{
-		std::string v0 = root + "./Shaders/CubeMask.vert";
-		std::string v1 = root + "./Shaders/CubeMask.frag";
+	// std::string root = nosEngine.Context->RootFolderPath;
+	// {
+	// 	std::string v0 = root + "./Shaders/CubeMask.vert";
+	// 	std::string v1 = root + "./Shaders/CubeMask.frag";
 
-		std::vector<nosShaderInfo> infos = {
-			{
-				.Key = NOS_NAME_STATIC("CUBE_MASK_VERT"),
-				.Source = {.Stage = NOS_SHADER_STAGE_VERT, .GLSLPath = v0.data()},
-			},
-			{
-				.Key = NOS_NAME_STATIC("CUBE_MASK_FRAG"),
-				.Source = {.Stage = NOS_SHADER_STAGE_FRAG, .GLSLPath = v1.data()},
-			},
-		};
-		vk->RegisterShaders(infos.size(), infos.data());
-	}
+	// 	std::vector<nosShaderInfo> infos = {
+	// 		{
+	// 			.Key = NOS_NAME_STATIC("CUBE_MASK_VERT"),
+	// 			.Source = {.Stage = NOS_SHADER_STAGE_VERT, .GLSLPath = v0.data()},
+	// 		},
+	// 		{
+	// 			.Key = NOS_NAME_STATIC("CUBE_MASK_FRAG"),
+	// 			.Source = {.Stage = NOS_SHADER_STAGE_FRAG, .GLSLPath = v1.data()},
+	// 		},
+	// 	};
+	// 	vk->RegisterShaders(infos.size(), infos.data());
+	// }
 
-	{
-		std::vector<nosPassInfo> infos = {
-			{
-				.Key = NOS_NAME_STATIC("CUBE_MASK_PASS"),
-				.Shader = NOS_NAME_STATIC("CUBE_MASK_FRAG"),
-				.VertexShader = NOS_NAME_STATIC("CUBE_MASK_VERT"),
-				.Blend = true,
-				.MultiSample = 1,
-			},
-		};
-		vk->RegisterPasses(infos.size(), infos.data());
-	}
+	// {
+	// 	std::vector<nosPassInfo> infos = {
+	// 		{
+	// 			.Key = NOS_NAME_STATIC("CUBE_MASK_PASS"),
+	// 			.Shader = NOS_NAME_STATIC("CUBE_MASK_FRAG"),
+	// 			.VertexShader = NOS_NAME_STATIC("CUBE_MASK_VERT"),
+	// 			.Blend = true,
+	// 			.MultiSample = 1,
+	// 		},
+	// 	};
+	// 	vk->RegisterPasses(infos.size(), infos.data());
+	// }
 	return NOS_RESULT_SUCCESS;
 }
 }
