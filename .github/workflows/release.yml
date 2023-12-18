@@ -92,7 +92,7 @@ jobs:
 
       - name: Configure
         run: |
-          cmake -S . -B Build -DCMAKE_BUILD_TYPE=Release
+          cmake -S . -B Build -DCMAKE_BUILD_TYPE=Release -DGENERATE_FLATBUFFERS_FILES=1
         working-directory: ./modules-${{ github.ref_name }}
 
       - name: Checkout Release Target Repo
