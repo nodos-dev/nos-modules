@@ -24,12 +24,6 @@ cbuffer ubo {
     float3 ContrastCenter;
 };
 
-template<class T>
-T mult(T v)
-{
-    return v * T(4, 1, 0.5);
-}
-
 float3 Correct(float3 WorkingColor, float4 Saturation, float4 Contrast, float4 Gamma, float4 Gain, float4 Offset, float3 ContrastCenter)
 {
 	float Luma = dot(WorkingColor, float3(0.2722287168,0.6740817658,0.0536895174));
