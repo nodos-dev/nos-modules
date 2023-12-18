@@ -7,7 +7,6 @@
 #include <stb_image_write.h>
 
 // Framework
-#include <Args.h>
 #include <Builtins_generated.h>
 #include <AppService_generated.h>
 
