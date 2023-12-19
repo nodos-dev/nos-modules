@@ -17,33 +17,11 @@
             "display_name": "CubeMask"
         }
     ],
-    "resources": [
+    "subsystem_options": [
         {
-            "type": "nos.sys.vulkan.ShaderInfo",
-            "info": {
-                "key": "CUBE_MASK_FRAG",
-                "path": "Shaders/CubeMask.frag",
-                "stage": "FRAGMENT",
-                "lang": "GLSL"
-            }
-        },
-        {
-            "type": "nos.sys.vulkan.ShaderInfo",
-            "info": {
-                "key": "CUBE_MASK_VERT",
-                "path": "Shaders/CubeMask.vert",
-                "stage": "VERTEX",
-                "lang": "GLSL"
-            }
-        },
-        {
-            "type": "nos.sys.vulkan.PassInfo",
-            "info": {
-                "key": "CUBE_MASK_PASS",
-                "shader": "CUBE_MASK_FRAG",
-                "vertex_shader": "CUBE_MASK_VERT",
-                "blend": true
-            }
+            "subsystem": "nos.sys.vulkan",
+            "type": "nos.sys.vulkan.Resources",
+            "path": "Config/Resources.json"
         }
     ]
 }

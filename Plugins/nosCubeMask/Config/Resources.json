@@ -1,0 +1,24 @@
+{
+    "shaders": [
+        {
+            "key": "CUBE_MASK_FRAG",
+            "path": "Shaders/CubeMask.frag",
+            "stage": "FRAGMENT",
+            "lang": "GLSL"
+        },
+        {
+            "key": "CUBE_MASK_VERT",
+            "path": "Shaders/CubeMask.vert",
+            "stage": "VERTEX",
+            "lang": "GLSL"
+        }
+    ],
+    "passes": [
+        {
+            "key": "CUBE_MASK_PASS",
+            "shader": "CUBE_MASK_FRAG",
+            "vertex_shader": "CUBE_MASK_VERT",
+            "blend": true
+        }
+    ]
+}
