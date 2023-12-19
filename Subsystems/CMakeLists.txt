@@ -31,7 +31,12 @@ function(add_folder_as_subsystem_project NAME DEPENDENCIES INCLUDE_FOLDERS)
         list(APPEND CONFIG_FILES ${CUR_CONFIG_FILES})
     endforeach()
 
-    add_library(${NAME} MODULE ${COLLECTED_SOURCES} ${COLLECTED_HEADERS} ${COLLECTED_RESOURCES} ${CONFIG_FILES})
+    if(TARGET ${NAME})
+        target_sources(${NAME} PRIVATE ${COLLECTED_SOURCES} ${COLLECTED_HEADERS} ${COLLECTED_RESOURCES} ${CONFIG_FILES})
+    else()
+        add_library(${NAME} MODULE ${COLLECTED_SOURCES} ${COLLECTED_HEADERS} ${COLLECTED_RESOURCES} ${CONFIG_FILES})
+    endif()
+    
     set_target_properties(${NAME} PROPERTIES
         CXX_STANDARD 20
         LIBRARY_OUTPUT_DIRECTORY_DEBUG "${CMAKE_CURRENT_SOURCE_DIR}/Binaries"
@@ -45,8 +50,6 @@ function(add_folder_as_subsystem_project NAME DEPENDENCIES INCLUDE_FOLDERS)
     target_link_libraries(${NAME} PRIVATE ${DEPENDENCIES})
     target_link_libraries(${NAME} PUBLIC nosSubsystemSDK)
 
-    file(GLOB_RECURSE SHADERS CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/Source/**.frag" "${CMAKE_CURRENT_SOURCE_DIR}/Source/**.vert")
-    compile_shaders("${TOOLS_DIR}" "${SHADERS}")
 endfunction()
 
 # Dependencies

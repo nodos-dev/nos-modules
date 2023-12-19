@@ -1,5 +1,14 @@
 {
-    "files": ["*.dll", "*.so", "*.dylib", "*.fbs", "*.noscfg", "*.nossys", "*.nosdef", "**/Defaults.json"],
+    "files": [
+        "*.dll",
+        "*.so",
+        "*.dylib",
+        "*.fbs",
+        "*.noscfg",
+        "*.nossys",
+        "*.nosdef",
+        "**/Defaults.json"
+    ],
     "plugins": {
         "nos.aja": {
             "target_name": "nosAJA",
@@ -17,7 +26,11 @@
                 "nosFilters/*",
                 "Shaders/*"
             ],
-            "files": ["Shaders/*.frag", "Shaders/*.hlsl", "Shaders/*.spv"]
+            "files": [
+                "Shaders/*.frag",
+                "Shaders/*.hlsl",
+                "Shaders/*.spv"
+            ]
         },
         "nos.math": {
             "target_name": "nosMath",
@@ -34,7 +47,11 @@
                 "Shaders/*",
                 "External/stb/*"
             ],
-            "files": ["Shaders/*.frag", "Shaders/*.hlsl", "Shaders/*.spv"]
+            "files": [
+                "Shaders/*.frag",
+                "Shaders/*.hlsl",
+                "Shaders/*.spv"
+            ]
         },
         "nos.WebRTC": {
             "target_name": "nosWebRTC",
@@ -51,7 +68,18 @@
             "deps": [
                 "nosVulkanSubsystem/*"
             ],
-            "files": ["Include/**"]
+            "files": [
+                "Include/**"
+            ]
+        },
+        "nos.sys.shaderc": {
+            "path": "nosShaderCompiler",
+            "deps": [
+                "nosShaderCompiler/*"
+            ],
+            "files": [
+                "Binaries/**"
+            ]
         }
     }
 }
