@@ -11,9 +11,11 @@ public:
 
 	nosResult InitializeCUDADevice(int device = 0);
 	int QueryCudaDeviceCount();
-	int* AllocateGPU(std::string name, size_t count);
+	template <typename T>
+	void* AllocateGPU(std::string name, size_t count);
+	void* GetGPUBuffer(std::string name);
 private:
 	NvCVImage NVVFX_Image;
-	std::unordered_map<std::string,int*> GPUBufferAddresses;
+	std::unordered_map<std::string,void*> GPUBufferAddresses;
 
 };
