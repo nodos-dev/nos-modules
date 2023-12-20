@@ -159,14 +159,14 @@ if __name__ == "__main__":
     logger.info(f"Modules to release: {modules_to_release}")
 
     # Run python release.py --gh-release-repo="{args.gh_release_repo}" make --build-number="{args.build_number}"  
-    #       --release-target={target_name} --cmake-build-dir={args.cmake_build_dir} --module-dir="{module_folder}" 
+    #       --module-name={target_name} --cmake-build-dir={args.cmake_build_dir} --module-dir="{module_folder}" 
     # TODO: release.py is not parallelizable yet, so we run it sequentially for each module. Make it parallel.
     ok = True
     for module_name in modules_to_release:
         module_info = MODULES_FLAT[module_name]
         proc_args = ["python", "release.py",
                       "make", "--build-number", args.build_number, 
-                      "--release-target", module_info["target_name"], 
+                      "--module-name", module_name,
                       "--cmake-build-dir", args.cmake_build_dir, 
                       "--module-dir", f"{'Plugins' if module_name in MODULES['plugins'] else 'Subsystems'}/{module_info['path']}"]
         logger.info(f"Creating module release for {module_name} with command: {' '.join(proc_args)}")

@@ -18,7 +18,7 @@ make.add_argument('--build-number',
                     required=True,
                     help="The version string of the release.")
 
-make.add_argument('--release-target',
+make.add_argument('--module-name',
                     action='store',
                     required=True,
                     help="Which module should I create release zip of?")
@@ -104,21 +104,32 @@ def get_module_info(target_name):
                 return module
     return None
 
+def get_module(module_name):
+    for type, modules in MODULES.items():
+        for k, module in modules.items():
+            if k == module_name:
+                return module
+    return None
+
 def make_release(args):
-    logger.debug(f"Creating release zip for {args.release_target}")
-    logger.info(f"Target: {args.release_target}")
+    logger.debug(f"Creating release zip for {args.module_name}")
+    logger.info(f"Target: {args.module_name}")
+    
+    logger.info(f"Building {args.module_name}")
+    module_info = get_module(args.module_name)
 
-    logger.info(f"Building {args.release_target}")
-    re = run(["cmake", "--build", args.cmake_build_dir, "--config", "Release", "--target", args.release_target], universal_newlines=True)
-    if re.returncode != 0:
-        logger.error(f"Failed to build {args.release_target}")
-        exit(re.returncode)
-    logger.info(f"Built {args.release_target} successfully")
+    if "target_name" in module_info.keys():
+        release_target = module_info["target_name"]
+        re = run(["cmake", "--build", args.cmake_build_dir, "--config", "Release", "--target", release_target], universal_newlines=True)
+        if re.returncode != 0:
+            logger.error(f"Failed to build {release_target}")
+            exit(re.returncode)
+        logger.info(f"Built {release_target} successfully")
 
-    logger.debug(f"Creating a release zip for {args.release_target}")
+    logger.debug(f"Creating a release zip for {args.module_name}")
 
     files_to_include = MODULES["files"]
-    module_info = get_module_info(args.release_target)
+    
     if module_info is not None and "files" in module_info.keys():
         files_to_include.extend(module_info["files"])
     logger.info(f"Collecting files: {files_to_include}")
