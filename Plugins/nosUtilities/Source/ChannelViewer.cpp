@@ -61,7 +61,6 @@ nosResult RegisterChannelViewer(nosNodeFunctions* out)
 	nosPassInfo pass = {
 		.Key = NSN_Channel_Viewer_Pass,
 		.Shader = NSN_Channel_Viewer_Shader,
-		.Blend = false,
 		.MultiSample = 1
 	};
 	return nosVulkan->RegisterPasses(1, &pass);

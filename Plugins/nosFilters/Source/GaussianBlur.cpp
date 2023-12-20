@@ -129,7 +129,7 @@ void RegisterGaussianBlur(nosNodeFunctions* out)
 	nosPassInfo pass = {
 		.Key = NSN_Gaussian_Blur_Pass,
 		.Shader = NSN_Gaussian_Blur_Shader,
-		.Blend = false,
+		
 		.MultiSample = 1,
 	};
 	nosVulkan->RegisterPasses(1, &pass);

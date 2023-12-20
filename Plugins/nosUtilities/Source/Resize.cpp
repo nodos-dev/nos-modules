@@ -76,7 +76,7 @@ nosResult RegisterResize(nosNodeFunctions* out)
 	nosPassInfo pass = {
 		.Key =  NSN_Resize_Pass,
 		.Shader = NSN_Resize_Shader,
-		.Blend = false,
+		
 		.MultiSample = 1,
 	};
 	return nosVulkan->RegisterPasses(1, &pass);

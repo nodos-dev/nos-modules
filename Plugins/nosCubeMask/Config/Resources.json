@@ -18,7 +18,7 @@
             "key": "CUBE_MASK_PASS",
             "shader": "CUBE_MASK_FRAG",
             "vertex_shader": "CUBE_MASK_VERT",
-            "blend": true
+            "blend": "SUB_1_1"
         }
     ]
 }
