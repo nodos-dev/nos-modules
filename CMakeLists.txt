@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.24.2)
-project("NOS Modules")
+project("NOSModules")
 
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 set(CMAKE_CXX_STANDARD 20)
@@ -30,7 +30,7 @@ macro(group_targets targets folder_name)
 endmacro()
 
 include(${CMAKE_CURRENT_SOURCE_DIR}/CMake/GenerateFlatbuffers.cmake)
-set(TOOLS_DIR ${CMAKE_CURRENT_SOURCE_DIR}/Subsystems/nosVulkanSubsystem/Binaries/tools/${CMAKE_SYSTEM_NAME})
+set(TOOLS_DIR ${CMAKE_CURRENT_SOURCE_DIR}/Subsystems/nosShaderCompiler/Binaries/tools/${CMAKE_SYSTEM_NAME})
 
 set(SUBSYSTEMS_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/Subsystems)
 add_subdirectory("Subsystems" "${CMAKE_CURRENT_BINARY_DIR}/Subsystems")
