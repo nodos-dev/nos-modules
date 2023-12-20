@@ -39,8 +39,9 @@ NOS_REGISTER_NAME(Track);
 NOS_REGISTER_NAME(Position);
 NOS_REGISTER_NAME(Rotation);
 NOS_REGISTER_NAME(Scale);
-NOS_REGISTER_NAME(MVP);
-NOS_REGISTER_NAME(Coeff);
+NOS_REGISTER_NAME(Smoothness);
+NOS_REGISTER_NAME(MV);
+NOS_REGISTER_NAME(P);
 
 struct Vertex : glm::vec3
 {
@@ -140,7 +141,7 @@ bool GetValue(std::unordered_map<Name, const nos::fb::Pin*>& pins, Name name, st
 struct CubeMask : PinMapping
 {
 
-	nosVertexData Verts = {};
+	nosVertexData Verts[2] = {};
 
 	enum
 	{
@@ -154,7 +155,7 @@ struct CubeMask : PinMapping
 	glm::vec3 Position = {};
 	glm::vec3 Rotation = {};
 
-	void GenerateVertices2(std::vector<Vertex>& vertices, std::vector<glm::uvec3>& indices)
+	void GenerateVertices(std::vector<Vertex>& vertices, std::vector<glm::uvec3>& indices)
 	{
 		vertices = std::vector{
 			Vertex(0, 0, 0),
@@ -166,6 +167,8 @@ struct CubeMask : PinMapping
 			Vertex(1, 1, 0),
 			Vertex(1, 1, 1),
 		};
+        for(auto& v : vertices)
+            v -= glm::vec3(0.5);
 
 		indices = {
 			glm::uvec3(1, 0, 3), glm::uvec3(0, 2, 3),
@@ -179,32 +182,40 @@ struct CubeMask : PinMapping
 
 	void LoadVertices()
 	{
-		if (Verts.Buffer.Memory.PID)
+		if (Verts[0].Buffer.Memory.PID)
 		{
-			vk->DestroyResource(&Verts.Buffer);
+			vk->DestroyResource(&Verts[0].Buffer);
+			vk->DestroyResource(&Verts[1].Buffer);
 		}
 
 		std::vector<Vertex> vertices;
 		std::vector<glm::uvec3> indices;
 
-		GenerateVertices2(vertices, indices);
+		GenerateVertices(vertices, indices);
 
 		u32 vsz = vertices.size() * sizeof(vertices[0]);
 		u32 isz = indices.size() * sizeof(indices[0]);
-		Verts.Buffer.Info.Type = NOS_RESOURCE_TYPE_BUFFER;
-		Verts.Buffer.Info.Buffer.Size = vsz + isz;
-		Verts.Buffer.Info.Buffer.Usage = nosBufferUsage(NOS_BUFFER_USAGE_VERTEX_BUFFER | NOS_BUFFER_USAGE_INDEX_BUFFER);
-		Verts.VertexOffset = 0;
-		Verts.IndexOffset = vsz;
-		Verts.IndexCount = indices.size() * 3;
+		Verts[0].Buffer.Info.Type = NOS_RESOURCE_TYPE_BUFFER;
+		Verts[0].Buffer.Info.Buffer.Size = vsz + isz;
+		Verts[0].Buffer.Info.Buffer.Usage = nosBufferUsage(NOS_BUFFER_USAGE_VERTEX_BUFFER | NOS_BUFFER_USAGE_INDEX_BUFFER);
+		Verts[0].VertexOffset = 0;
+		Verts[0].IndexOffset = vsz;
+		Verts[0].IndexCount = indices.size() * 3;
+		Verts[1] = Verts[0];
 		// Verts.mutate_depth_func(nos::app::DepthFunction::LESS);
 		// Verts.mutate_depth_test(true);
 		// Verts.mutate_depth_write(true);
 
-		vk->CreateResource(&Verts.Buffer);
-		u8* mapping = vk->Map(&Verts.Buffer);
-		memcpy(mapping, vertices.data(), vsz);
-		memcpy(mapping + vsz, indices.data(), isz);
+		vk->CreateResource(&Verts[0].Buffer);
+		vk->CreateResource(&Verts[1].Buffer);
+		u8* mapping0 = vk->Map(&Verts[0].Buffer);
+		u8* mapping1 = vk->Map(&Verts[1].Buffer);
+		memcpy(mapping0, vertices.data(), vsz);
+		memcpy(mapping1, vertices.data(), vsz);
+		memcpy(mapping0 + vsz, indices.data(), isz);
+		for(auto& v : indices)
+			std::swap(v.x,v.z);
+		memcpy(mapping1 + vsz, indices.data(), isz);
 	}
 
 	void Load(nos::fb::Node const& node)
@@ -223,7 +234,11 @@ struct CubeMask : PinMapping
 		}
 	}
 
-	~CubeMask() { vk->DestroyResource(&Verts.Buffer); }
+	~CubeMask() 
+	{ 
+		vk->DestroyResource(&Verts[0].Buffer); 
+		vk->DestroyResource(&Verts[1].Buffer); 
+	}
 
 	// Node graph event callbacks
 	static nosResult CanCreateNode(const nosFbNode* node) { return NOS_RESULT_SUCCESS; }
@@ -273,7 +288,7 @@ struct CubeMask : PinMapping
 
 		nosResourceShareInfo ClearColor{};
 
-		std::vector<nosDrawCall> calls(2, {.BindingCount = 1, .Vertices = c->Verts});
+		std::vector<nosDrawCall> calls(2);
 
 		nosRunPass2Params pass = {
 			.Key = NOS_NAME_STATIC("CUBE_MASK_PASS"),
@@ -282,8 +297,9 @@ struct CubeMask : PinMapping
 			.DrawCallCount = (u32)calls.size(),
 			.Wireframe = *GetPinValue<bool>(args, NSN_Wireframe),
 		};
-
+		
 		auto track = GetPinValue<fb::TTrack>(args, NSN_Track);
+		f32 smoothness = *GetPinValue<f32>(args, NSN_Smoothness);
 
 		glm::vec3 pos = reinterpret_cast<glm::vec3&>(track.location);
 		glm::vec3 rot = reinterpret_cast<glm::vec3&>(track.rotation);
@@ -303,21 +319,21 @@ struct CubeMask : PinMapping
 		c->Rotation = mrot;
 		c->Track = std::move(track);
 
-		glm::mat4 model = glm::eulerAngleZYX(mrot.z, mrot.y, mrot.x) * glm::mat4(100.f);
-		glm::mat4 MVP1 = glm::scale(model, mscale);
-		glm::mat4 MVP2 = glm::scale(model, mscale * 1.5f);
-		MVP2[3] = MVP1[3] = glm::vec4(mpos, 1.f);
-		MVP1 = prj * view * MVP1;
-		MVP2 = prj * view * MVP2;
+		glm::mat4 model = glm::scale(glm::eulerAngleZYX(mrot.z, mrot.y, mrot.x) * glm::mat4(100.f), mscale);
+		model[3] = glm::vec4(mpos, 1.f);
 		f32 one = 1.f, half = .5f;
-
+        glm::mat4 mv = view*model;
 		std::vector<std::vector<nosShaderBinding>> inputs = {
-			{nos::vkss::ShaderBinding(NSN_MVP, MVP1), nos::vkss::ShaderBinding(NSN_Coeff, one)},
-			{nos::vkss::ShaderBinding(NSN_MVP, MVP2), nos::vkss::ShaderBinding(NSN_Coeff, half)},
+			{nos::vkss::ShaderBinding(NSN_P, prj),nos::vkss::ShaderBinding(NSN_MV, mv), nos::vkss::ShaderBinding(NSN_Smoothness, smoothness)},
+			{nos::vkss::ShaderBinding(NSN_P, prj),nos::vkss::ShaderBinding(NSN_MV, mv), nos::vkss::ShaderBinding(NSN_Smoothness, smoothness)},
 		};
-
-		calls[0].Bindings = inputs[0].data();
-		calls[1].Bindings = inputs[1].data();
+        
+		calls[0].Bindings	  = inputs[0].data();
+		calls[0].BindingCount = inputs[0].size();
+		calls[0].Vertices	  = c->Verts[0];
+		calls[1].Bindings	  = inputs[1].data();
+		calls[1].BindingCount = inputs[1].size();
+		calls[1].Vertices	  = c->Verts[1];
 		vk->RunPass2(0, &pass);
 
 		return NOS_RESULT_SUCCESS;

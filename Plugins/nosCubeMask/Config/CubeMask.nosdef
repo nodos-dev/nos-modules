@@ -12,6 +12,14 @@
                     "data": false
                 },
                 {
+                    "name": "Smoothness",
+                    "type_name": "float",
+                    "show_as": "PROPERTY",
+                    "can_show_as": "INPUT_PIN_OR_PROPERTY",
+                    "data": 100,
+                    "pin_category": "Transform"
+                },
+                {
                     "name": "Scale",
                     "type_name": "nos.fb.vec3",
                     "show_as": "PROPERTY",

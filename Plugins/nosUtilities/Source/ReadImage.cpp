@@ -100,7 +100,6 @@ nosResult RegisterReadImage(nosNodeFunctions* fn)
 	nosPassInfo pass = {
 		.Key = NSN_SRGB2Linear_Pass,
 		.Shader = NSN_SRGB2Linear_Shader,
-		.Blend = 0,
 		.MultiSample = 1,
 	};
 	return nosVulkan->RegisterPasses(1, &pass);

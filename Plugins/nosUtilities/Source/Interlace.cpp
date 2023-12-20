@@ -136,7 +136,6 @@ nosResult RegisterInterlace(nosNodeFunctions* nodeFunctions)
 		return ret;
 	nosPassInfo pass = {.Key = NSN_Utilities_Interlace_Pass,
 	                    .Shader = NSN_Utilities_Interlace_Fragment_Shader,
-	                    .Blend = 0,
 	                    .MultiSample = 1,};
 	return nosVulkan->RegisterPasses(1, &pass);
 }
@@ -153,7 +152,6 @@ nosResult RegisterDeinterlace(nosNodeFunctions* nodeFunctions)
 	nosPassInfo pass = {
 		.Key = NSN_Utilities_Deinterlace_Pass,
 		.Shader = NSN_Utilities_Deinterlace_Fragment_Shader,
-		.Blend = 0,
 		.MultiSample = 1,};
 	return nosVulkan->RegisterPasses(1, &pass);
 }

@@ -161,7 +161,6 @@ nosResult RegisterWriteImage(nosNodeFunctions* fn)
 	nosPassInfo pass = {
 		.Key = NSN_Linear2SRGB_Pass,
 		.Shader = NSN_Linear2SRGB_Shader,
-		.Blend = 0,
 		.MultiSample = 1,
 	};
 	return nosVulkan->RegisterPasses(1, &pass);
