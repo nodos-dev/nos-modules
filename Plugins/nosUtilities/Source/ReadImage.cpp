@@ -47,6 +47,11 @@ static nosResult GetFunctions(size_t* count, nosName* names, nosPfnNodeFunctionE
 
 			int w, h, n;
 			u8* img = stbi_load(path.string().c_str(), &w, &h, &n, 4);
+			if (!img)
+			{
+				nosEngine.LogE("Couldn't load image from %s.", path.string().c_str());
+				return;
+			}
 			sys::vulkan::TTexture tex;
 			tex.width = w;
 			tex.height = h;
