@@ -106,6 +106,8 @@ def get_module_info(target_name):
 
 def get_module(module_name):
     for type, modules in MODULES.items():
+        if type == "files":
+            continue
         for k, module in modules.items():
             if k == module_name:
                 return module
