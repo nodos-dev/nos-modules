@@ -18,7 +18,11 @@
             "key": "CUBE_MASK_PASS",
             "shader": "CUBE_MASK_FRAG",
             "vertex_shader": "CUBE_MASK_VERT",
-            "blend": "SUB_1_1"
+            "blend_mode": {
+                "op": "SUBTRACT",
+                "src_factor": "ONE",
+                "dst_factor": "ONE"
+            }
         }
     ]
 }
