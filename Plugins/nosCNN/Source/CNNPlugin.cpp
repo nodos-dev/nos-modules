@@ -213,12 +213,13 @@ struct CNNNodeContext :  nos::NodeContext {
 		return NOS_RESULT_SUCCESS;
 	}
 
-	nosResult BeginCopyTo(nosCopyInfo* cpy) override {
-		auto* texCpy = static_cast<nosTextureCopyInfo*>(cpy->TypeCopyInfo);
-		texCpy->ShouldCopyTexture = true;
-		texCpy->CopyTextureFrom = dllLoader.Input;
-		texCpy->CopyTextureTo = Worker.InputRGBA8;
-		texCpy->ShouldSubmitAndWait = true;
+	nosResult CopyTo(nosCopyInfo* cpy) override {
+		nosCmd cmd;
+		nosVulkan->Begin("Copy To Out", &cmd);
+		nosVulkan->Copy(cmd, &dllLoader.Input, &Worker.InputRGBA8, 0);
+		nosGPUEvent event;
+		nosVulkan->End2(cmd, NOS_TRUE, &event);
+		nosVulkan->WaitGpuEvent(&event, UINT64_MAX);
 		return NOS_RESULT_SUCCESS;
 	}
 

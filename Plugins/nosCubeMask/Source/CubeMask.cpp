@@ -339,11 +339,6 @@ struct CubeMask : PinMapping
 		return NOS_RESULT_SUCCESS;
 	}
 
-	static nosResult CanCopy(void* ctx, nosCopyInfo* copyInfo) { return NOS_RESULT_SUCCESS; }
-	static nosResult BeginCopyFrom(void* ctx, nosCopyInfo* cospyInfo) { return NOS_RESULT_SUCCESS; }
-	static nosResult BeginCopyTo(void* ctx, nosCopyInfo* copyInfo) { return NOS_RESULT_SUCCESS; }
-	static void EndCopyFrom(void* ctx, nosCopyInfo* copyInfo) {}
-	static void EndCopyTo(void* ctx, nosCopyInfo* copyInfo) {}
 	// Menu & key events
 	static void OnMenuRequested(void* ctx, const nosContextMenuRequest* request) {}
 	static void OnMenuCommand(void* ctx, nosUUID itemID, uint32_t cmd) {}
@@ -374,10 +369,6 @@ NOSAPI_ATTR nosResult NOSAPI_CALL nosExportNodeFunctions(size_t* outSize, nosNod
 	funcs->OnPinShowAsChanged = CubeMask::OnPinShowAsChanged;
 	funcs->OnPathCommand = CubeMask::OnPathCommand;
 	funcs->ExecuteNode = CubeMask::ExecuteNode;
-	funcs->BeginCopyFrom = CubeMask::BeginCopyFrom;
-	funcs->BeginCopyTo = CubeMask::BeginCopyTo;
-	funcs->EndCopyFrom = CubeMask::EndCopyFrom;
-	funcs->EndCopyTo = CubeMask::EndCopyTo;
 	funcs->OnMenuRequested = CubeMask::OnMenuRequested;
 	funcs->OnMenuCommand = CubeMask::OnMenuCommand;
 	funcs->OnKeyEvent = CubeMask::OnKeyEvent;

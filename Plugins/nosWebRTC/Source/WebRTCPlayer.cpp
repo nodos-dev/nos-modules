@@ -338,7 +338,7 @@ struct WebRTCPlayerNodeContext : nos::NodeContext {
 
 	
 
-	nosResult BeginCopyFrom(nosCopyInfo* copyInfo) override{
+	nosResult CopyFrom(nosCopyInfo* copyInfo) override{
 		
 		if (!OutputRing->IsReadable()) {
 			return NOS_RESULT_FAILED;
@@ -349,20 +349,20 @@ struct WebRTCPlayerNodeContext : nos::NodeContext {
 			return NOS_RESULT_FAILED;
 		}
 		LastCopyTime = std::chrono::high_resolution_clock::now();
-		auto& texCpy = *static_cast<nosTextureCopyInfo*>(copyInfo->TypeCopyInfo);
 
 		PlayerBeginCopyToLogger.LogStats();
 		int readIndex = OutputRing->GetNextReadable();
-		texCpy.ShouldCopyTexture = true;
-		texCpy.CopyTextureFrom = ConvertedTextures[readIndex];
-		texCpy.CopyTextureTo = nos::vkss::DeserializeTextureInfo(copyInfo->SrcPinData->Data);
-		texCpy.ShouldSubmitAndWait = true;
-		return NOS_RESULT_SUCCESS;
-	}
+		auto dst = nos::vkss::DeserializeTextureInfo(copyInfo->PinData->Data);
+		nosCmd cmd;
+		nosVulkan->Begin("WebRTC Copy From", &cmd);
+		nosVulkan->Copy(cmd, &ConvertedTextures[readIndex], &dst, 0);
+		nosGPUEvent event;
+		nosVulkan->End2(cmd, NOS_TRUE, &event);
+		nosVulkan->WaitGpuEvent(&event, UINT64_MAX);
 
-	void EndCopyFrom(nosCopyInfo* cpy) override {
 		OutputRing->SetRead();
 		FrameConversionCV.notify_one();
+		return NOS_RESULT_SUCCESS;
 	}
 
 	void ConvertFrames() {

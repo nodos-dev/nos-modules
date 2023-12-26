@@ -386,7 +386,7 @@ struct WebRTCNodeContext : nos::NodeContext {
 		return NOS_RESULT_SUCCESS;
 	}
 
-	nosResult BeginCopyTo(nosCopyInfo* cpy) override {
+	nosResult CopyTo(nosCopyInfo* cpy) override {
 		copyToLogger.LogStats();
 		if (!InputRing->IsWriteable()) {
 			//nosEngine.LogW("WebRTC Streamer frame drop!");
@@ -394,21 +394,20 @@ struct WebRTCNodeContext : nos::NodeContext {
 		}
 		int writeIndex = InputRing->GetNextWritable();
 		LastFrameID = cpy->FrameNumber;
-		auto& texCpy = *static_cast<nosTextureCopyInfo*>(cpy->TypeCopyInfo);
-		texCpy.ShouldCopyTexture = true;
-		texCpy.CopyTextureFrom = DummyInput;
-		texCpy.CopyTextureTo = InputBuffers[writeIndex];
-		texCpy.ShouldSubmitAndWait = true;
-		return NOS_RESULT_SUCCESS;
-	}
+		nosCmd cmd;
+		nosVulkan->Begin("WebRTC Out Copy", &cmd);
+		nosVulkan->Copy(cmd, &DummyInput, &InputBuffers[writeIndex], 0);
+		nosGPUEvent event;
+		nosVulkan->End2(cmd, NOS_TRUE, &event);
+		nosVulkan->WaitGpuEvent(&event, UINT64_MAX);
 
-	void EndCopyTo(nosCopyInfo* cpy) override {
 		CopyCompleted = true;
 		InputRing->SetWrote();
 		SendFrameCV.notify_one();
 		StopRequested = !InputRing->IsWriteable();
 		cpy->CopyToOptions.Stop = !InputRing->IsWriteable();
 
+		return NOS_RESULT_SUCCESS;
 	}
 
 	void OnEncodeCompleted() {
