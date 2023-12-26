@@ -334,24 +334,41 @@
 				}
 			]
 		},
-		{
-			"class_name": "CopyTest",
-			"contents_type": "Job",
-			"pins": [
-				{
-					"name": "Input",
-					"type_name": "nos.sys.vulkan.Texture",
-					"show_as": "INPUT_PIN",
-					"can_show_as": "INPUT_PIN_OR_PROPERTY"
-				},
-				{
-					"name": "Output",
-					"type_name": "nos.sys.vulkan.Texture",
-					"show_as": "OUTPUT_PIN",
-					"can_show_as": "OUTPUT_PIN_OR_PROPERTY"
-				}
-			]
-		}
-
+        {
+            "class_name": "CopyTest",
+            "contents_type": "Job",
+            "pins": [
+                {
+                    "name": "Input",
+                    "type_name": "nos.sys.vulkan.Texture",
+                    "show_as": "INPUT_PIN",
+                    "can_show_as": "INPUT_PIN_OR_PROPERTY"
+                },
+                {
+                    "name": "Output",
+                    "type_name": "nos.sys.vulkan.Texture",
+                    "show_as": "OUTPUT_PIN",
+                    "can_show_as": "OUTPUT_PIN_OR_PROPERTY"
+                }
+            ]
+        },
+        {
+            "class_name": "CopyTestLicensed",
+            "contents_type": "Job",
+            "pins": [
+                {
+                    "name": "Input",
+                    "type_name": "nos.sys.vulkan.Texture",
+                    "show_as": "INPUT_PIN",
+                    "can_show_as": "INPUT_PIN_OR_PROPERTY"
+                },
+                {
+                    "name": "Output",
+                    "type_name": "nos.sys.vulkan.Texture",
+                    "show_as": "OUTPUT_PIN",
+                    "can_show_as": "OUTPUT_PIN_OR_PROPERTY"
+                }
+            ]
+        }
 	]
 }

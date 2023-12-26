@@ -48,6 +48,11 @@
             "category": "Test",
             "class_name": "CopyTest",
             "display_name": "Copy Test"
+        },
+        {
+            "category": "Test",
+            "class_name": "CopyTestLicensed",
+            "display_name": "Copy Test Licensed"
         }
     ]
 }

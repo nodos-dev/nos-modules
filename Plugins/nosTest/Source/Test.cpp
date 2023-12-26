@@ -106,7 +106,7 @@ extern "C"
 
 	NOSAPI_ATTR nosResult NOSAPI_CALL nosExportNodeFunctions(size_t* outCount, nosNodeFunctions** outFunctions)
 	{
-		*outCount = (size_t)(5);
+		*outCount = (size_t)(6);
 		if (!outFunctions)
 			return NOS_RESULT_SUCCESS;
 
@@ -121,6 +121,25 @@ extern "C"
 		outFunctions[3]->ClassName = NOS_NAME_STATIC("nos.test.NodeWithCustomTypes");
 		outFunctions[4]->ClassName = NOS_NAME_STATIC("nos.test.CopyTest");
 		outFunctions[4]->ExecuteNode = [](void* ctx, const nosNodeExecuteArgs* args)
+		{
+			nosCmd cmd;
+			nosVulkan->Begin("(nos.test.CopyTest) Copy", &cmd);
+			auto values = nos::GetPinValues(args);
+			nosResourceShareInfo input = nos::vkss::DeserializeTextureInfo(values[NOS_NAME_STATIC("Input")]);
+			nosResourceShareInfo output = nos::vkss::DeserializeTextureInfo(values[NOS_NAME_STATIC("Output")]);
+			nosVulkan->Copy(cmd, &input, &output, 0);
+			nosVulkan->End(cmd, NOS_FALSE);
+			return NOS_RESULT_SUCCESS;
+		};
+		
+		outFunctions[5]->ClassName = NOS_NAME_STATIC("nos.test.CopyTestLicensed");
+		outFunctions[5]->OnNodeCreated = [] (const nosFbNode* node, void** outCtxPtr) {
+			nosEngine.RegisterFeature(*node->id(), "Nodos.CopyTestLicensed", 1, "Nodos.CopyTestLicensed required");	
+		};
+		outFunctions[5]->OnNodeDeleted = [] (void* ctx, nosUUID nodeId) {
+			nosEngine.UnregisterFeature(nodeId, "Nodos.CopyTestLicensed");
+		};
+		outFunctions[5]->ExecuteNode = [](void* ctx, const nosNodeExecuteArgs* args)
 		{
 			nosCmd cmd;
 			nosVulkan->Begin("(nos.test.CopyTest) Copy", &cmd);
