@@ -69,6 +69,7 @@ HINSTANCE getNvVfxLib() {
   bool bSDKPathSet = false;
 
   extern char* g_nvVFXSDKPath;
+
   if (g_nvVFXSDKPath && g_nvVFXSDKPath[0]) {
 #ifndef UNICODE
     strncpy_s(fullPath, MAX_PATH, g_nvVFXSDKPath, MAX_PATH);

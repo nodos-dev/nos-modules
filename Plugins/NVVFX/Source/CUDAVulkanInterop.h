@@ -5,6 +5,7 @@
 #include "nosVulkanSubsystem/nosVulkanSubsystem.h"
 #include "nosVulkanSubsystem/Types_generated.h"
 #include "nvCVImage.h"
+#include "CUDAResourceManager.h"
 
 enum nosNVCVLayout {
 	nosNVCV_INTERLEAVED   =	0,//!< All components of pixel(x,y) are adjacent (same as chunky) (default for non-YUV).
@@ -34,7 +35,8 @@ public:
 	//User must ensure the correctness of FORMAT, width, height of the required texture. CUDA will only set GPU addresses
 	void SetCUDAMemoryToVulkan(int64_t cudaPointerAddress, int width, int height, size_t size, size_t offset, int32_t format, nos::sys::vulkan::TTexture& outNosTexture);
 
-private:
+	void InitCUDA();
+	CudaGPUResourceManager GPUResManager;
 	NvCVImage_PixelFormat GetPixelFormatFromVulkanFormat(nosFormat format);
 	NvCVImage_ComponentType GetComponentTypeFromVulkanFormat(nosFormat format);
 	nosFormat GetVulkanFormatFromNVCVImage(NvCVImage nvcvImage);
