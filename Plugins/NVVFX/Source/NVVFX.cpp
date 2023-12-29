@@ -6,6 +6,7 @@
 #include <nosUtil/Thread.h>
 #include <nosVulkanSubsystem/Helpers.hpp>
 #include "CUDAVulkanInterop.h"
+#include "NVVFXAppRunner.h"
 
 char* g_nvVFXSDKPath = NULL;
 
@@ -86,6 +87,8 @@ struct NVVFXNodeContext : nos::NodeContext {
 	uint8_t* OutData = nullptr;
 	std::atomic_bool OutReady = false;
 	CUDAVulkanInterop interop;
+	NVVFXAppRunner VFX;
+	int lastWidth, lastHeight;
 
 	NVVFXNodeContext(nos::fb::Node const* node) :NodeContext(node), logger("NVVFX") {
 		nosEngine.RequestSubsystem(NOS_NAME_STATIC(NOS_VULKAN_SUBSYSTEM_NAME), 1, 0, (void**)&nosVulkan);
@@ -108,43 +111,9 @@ struct NVVFXNodeContext : nos::NodeContext {
 	void  OnPinValueChanged(nos::Name pinName, nosUUID pinId, nosBuffer value) override {
 		if (pinName == NSN_In) {
 			nosResourceShareInfo input = nos::vkss::DeserializeTextureInfo(value.Data);
-			static int a= 0;
-			if (a++ %2 == 0)
-				return;
+			lastWidth = input.Info.Texture.Width;
+			lastHeight = input.Info.Texture.Height;
 
-			//if (res == NOS_RESULT_SUCCESS) {
-			//	auto tex = nos::vkss::ConvertTextureInfo(output);
-				OutReady = true;
-			//	nos::sys::vulkan::TTexture outputTex{};
-			//	outputTex.width = 1920;
-			//	outputTex.height = 1080;
-			//	outputTex.format = nos::sys::vulkan::Format::R8G8B8A8_UNORM;
-			//	nosEngine.SetPinValue(OutputID, nos::Buffer::From(outputTex));
-			//}
-			//if(InputFormatted.Memory.Handle == NULL || 
-			//	(InputFormatted.Info.Texture.Width != input.Info.Texture.Width || InputFormatted.Info.Texture.Height != input.Info.Texture.Height))
-			//{
-			//	if (InputFormatted.Memory.Handle != NULL) {
-			//		nosVulkan->DestroyResource(&InputFormatted);
-			//	}
-
-			//	InputFormatted.Info.Type = NOS_RESOURCE_TYPE_TEXTURE;
-			//	InputFormatted.Info.Texture.Width = input.Info.Texture.Width;
-			//	InputFormatted.Info.Texture.Height = input.Info.Texture.Height;
-			//	//TODO: Make use of tensor type before deciding to this
-			//	InputFormatted.Info.Texture.Format = NOS_FORMAT_R8G8B8A8_SRGB;
-			//	InputFormatted.Info.Texture.Usage = nosImageUsage(NOS_IMAGE_USAGE_TRANSFER_SRC | NOS_IMAGE_USAGE_TRANSFER_DST);
-			//	nosVulkan->CreateResource(&InputFormatted);
-
-			//	if (InputBuffer.Memory.Handle != NULL) {
-			//		nosVulkan->DestroyResource(&InputBuffer);
-			//	}
-
-			//	InputBuffer.Info.Type = NOS_RESOURCE_TYPE_BUFFER;
-			//	InputBuffer.Info.Buffer.Size = InputFormatted.Info.Texture.Width * InputFormatted.Info.Texture.Height * sizeof(uint8_t) * 4;
-			//	InputBuffer.Info.Buffer.Usage = nosBufferUsage(NOS_BUFFER_USAGE_TRANSFER_SRC | NOS_BUFFER_USAGE_TRANSFER_DST);
-			//	nosVulkan->CreateResource(&InputBuffer);
-			//}
 		}
 		if (pinName == NSN_UpscaleFactor) {
 			UpscaleFactor = *static_cast<int*>(value.Data);
@@ -152,6 +121,10 @@ struct NVVFXNodeContext : nos::NodeContext {
 		if (pinName == NSN_UpscaleStrength) {
 			UpscaleStrength = *static_cast<float*>(value.Data);
 		}
+	}
+
+	bool InputSizeChanged() {
+
 	}
 
 	bool NeedsToUpdateOutput(nos::NodeExecuteArgs& args)
@@ -174,24 +147,6 @@ struct NVVFXNodeContext : nos::NodeContext {
 				nosResult res = interop.NVCVImageToNosTexture(nvcvOutput, output);
 				OutReady = true;
 			}
-		}
-
-
-		{
-			interop.GPUResManager.GetGPUBuffer("Trial");
-			u64 min = interop.GPUResManager.GetSize("Trial");
-			if (min > output.Memory.ExternalMemory.AllocationSize)
-				min = output.Memory.ExternalMemory.AllocationSize;
-			std::vector<u8> hostBuffer(min);
-			cudaMemcpy(hostBuffer.data(), reinterpret_cast<void*>(interop.GPUResManager.GetGPUBuffer("Trial")), min, cudaMemcpyDeviceToHost);
-			
-			nosResourceShareInfo out = nos::vkss::DeserializeTextureInfo(args[NSN_Out].Data->Data);
-			nosCmd cmd;
-			nosVulkan->Begin("NVVFX Upload", &cmd);
-			//nosVulkan->ImageLoad(cmd, hostBuffer.data(), nosVec2u{.x=1920, .y=1080}, NOS_FORMAT_R8G8B8A8_UNORM, &out);
-			nosVulkan->Copy(cmd, &output, &out, 0);
-			nosVulkan->End(cmd, NOS_FALSE);
-			return NOS_RESULT_SUCCESS;
 		}
 
 		return NOS_RESULT_FAILED;

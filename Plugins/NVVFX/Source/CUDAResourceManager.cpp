@@ -44,10 +44,13 @@ CudaGPUResourceManager::CudaGPUResourceManager()
 
 CudaGPUResourceManager::~CudaGPUResourceManager()
 {
-	for (const auto& [_, ptr] : GPUBufferAddresses) {
-		//TODO: check the result!
-		cudaFree((void*)&ptr);
-	}
+}
+
+void CudaGPUResourceManager::DisposeResources()
+{
+    for (const auto [name, _] : CUDABuffers) {
+        FreeGPUBuffer(name);
+    }
 }
 
 nosResult CudaGPUResourceManager::InitializeCUDADevice(int device)
@@ -71,21 +74,18 @@ int CudaGPUResourceManager::QueryCudaDeviceCount()
 
 int64_t CudaGPUResourceManager::AllocateGPU(std::string name, size_t count)
 {
-	int64_t def = NULL;;
+	uint64_t def = NULL;;
 	cudaError_t res = cudaMalloc((void**)&def, count);
 	if (res != cudaError::cudaSuccess)
 		return NULL;
 
-    GPUBufferSizes.emplace(name, count);
-    GPUBufferAddresses.emplace(std::move(name), def);
+    CUDABuffers[name] = { .address = def, .size = count };
 
 	return def;
 }
 
 CUmemGenericAllocationHandle CudaGPUResourceManager::AllocateShareableGPU(std::string name, size_t size)
 {
-    
-
     CUcontext ctx;
     CUdevice dev;
     int supportsVMM = 0, supportsWin32 = 0;
@@ -143,44 +143,67 @@ CUmemGenericAllocationHandle CudaGPUResourceManager::AllocateShareableGPU(std::s
     status = cuMemSetAccess(new_ptr, aligned_size, &accessDesc, 1);
     assert(status == CUDA_SUCCESS);
 
-    int64_t shareableHandle = 0;
+    
+
+    uint64_t shareableHandle = 0;
     status = cuMemExportToShareableHandle((void *)&shareableHandle, handle, CU_MEM_HANDLE_TYPE_WIN32, 0);
     const char* errorMsg;
     cuGetErrorString(status, &errorMsg);
     assert(status == CUDA_SUCCESS);
 
-    GPUBufferAddresses[name] = new_ptr;
-    GPUBufferSizes[name] = aligned_size;
-	GPUShareableAddresses[name] = shareableHandle;
-	return shareableHandle;
+    CUDABuffers[name] = {.address = new_ptr, .shareableHandle = shareableHandle, .size = aligned_size};
+    return shareableHandle;
 }
 
-int64_t CudaGPUResourceManager::GetGPUBuffer(std::string name)
+nosResult CudaGPUResourceManager::GetGPUBuffer(std::string name, uint64_t* buffer)
 {
-	if (GPUBufferAddresses.contains(name)) {
-		return GPUBufferAddresses[name];
+	if (CUDABuffers.contains(name)) {
+        (*buffer) = CUDABuffers[name].address;
+        return NOS_RESULT_SUCCESS;
 	}
-    return NULL;
+    return NOS_RESULT_FAILED;
 }
 
-nosResult CudaGPUResourceManager::MemCopy(std::string source, std::string destination)
+nosResult CudaGPUResourceManager::GetShareableHandle(uint64_t bufferAddress, uint64_t* shareableHandle)
 {
-    if (GPUBufferSizes[source] != GPUBufferSizes[destination]) {
+    for (const auto [name, buff] : CUDABuffers) {
+        if (buff.address == bufferAddress) {
+            (*shareableHandle) = buff.shareableHandle;
+            return NOS_RESULT_SUCCESS;
+        }
+    }
+    return NOS_RESULT_FAILED;
+}
+
+nosResult CudaGPUResourceManager::GetShareableHandle(std::string name, uint64_t* shareableHandle)
+{
+    if (CUDABuffers.contains(name)) {
+        (*shareableHandle) = CUDABuffers[name].shareableHandle;
+        return NOS_RESULT_SUCCESS;
+    }
+    return NOS_RESULT_FAILED;
+}
+
+nosResult CudaGPUResourceManager::MemCopy(std::string source, std::string destination, int64_t size)
+{
+    if (CUDABuffers[source].size != CUDABuffers[destination].size) {
         nosEngine.LogE("Buffer size mismatch");
         return NOS_RESULT_FAILED;
     }
-    cudaMemcpy((void*)&GPUBufferAddresses[destination], (void*)&GPUBufferAddresses[source], GPUBufferSizes[source], cudaMemcpyDeviceToDevice);
-    return nosResult();
+    cudaError res = cudaMemcpy((void*)&CUDABuffers[destination].address, (void*)&CUDABuffers[source].address, CUDABuffers[source].size, cudaMemcpyDeviceToDevice);
+    assert(res == CUDA_SUCCESS);
+
+    return NOS_RESULT_SUCCESS;
 }
 
 nosResult CudaGPUResourceManager::MemCopy(int64_t source, std::string destination, int64_t size)
 {
-    if (!GPUBufferSizes.contains(destination)) {
+    if (!CUDABuffers.contains(destination)) {
         nosEngine.LogE("Buffer size mismatch");
         return NOS_RESULT_FAILED;
     }
 
-    cudaError_t res = cudaMemset(reinterpret_cast<void*>(GPUBufferAddresses[destination]), 255, size);
+    cudaError res = cudaMemcpy(reinterpret_cast<void*>(CUDABuffers[destination].address), reinterpret_cast<void*>(source), CUDABuffers[destination].size, cudaMemcpyDeviceToDevice);
     assert(res == CUDA_SUCCESS);
 
     return NOS_RESULT_SUCCESS;
@@ -188,12 +211,12 @@ nosResult CudaGPUResourceManager::MemCopy(int64_t source, std::string destinatio
 
 nosResult CudaGPUResourceManager::MemCopy(std::string source, int64_t destination)
 {
-    if (!GPUBufferSizes.contains(source)) {
+    if (!CUDABuffers.contains(source)) {
         nosEngine.LogE("Buffer size mismatch");
         return NOS_RESULT_FAILED;
     }
 
-    cudaMemcpy(reinterpret_cast<void*>(destination), reinterpret_cast<void*>(GPUBufferAddresses[source]), GPUBufferSizes[source], cudaMemcpyDeviceToDevice);
+    cudaError res = cudaMemcpy(reinterpret_cast<void*>(destination), reinterpret_cast<void*>(CUDABuffers[source].address), CUDABuffers[source].size, cudaMemcpyDeviceToDevice);
     return NOS_RESULT_SUCCESS;
 }
 
@@ -210,15 +233,33 @@ nosResult CudaGPUResourceManager::MemCopy(int64_t source, int64_t destination, i
 
 int64_t CudaGPUResourceManager::GetSize(std::string name)
 {
-    if (!GPUBufferSizes.contains(name))
+    if (!CUDABuffers.contains(name))
         return 0;
 
-    return GPUBufferSizes[name];
+    return CUDABuffers[name].size;
 }
 
-nosResult CudaGPUResourceManager::FreeGPUBuffer()
+nosResult CudaGPUResourceManager::FreeGPUBuffer(std::string name)
 {
-    
-    return nosResult();
+    assert(CUDABuffers.contains(name));
+    if (!CUDABuffers.contains(name))
+        return NOS_RESULT_FAILED;
+
+    CUresult res = CUDA_SUCCESS;
+    cudaError cudaRes = cudaSuccess;
+    auto buffer = CUDABuffers[name];
+    if (buffer.shareableHandle == NULL) {
+        cudaRes = cudaFree((void*)&buffer.address);
+    }
+    else {
+        res = cuMemUnmap(buffer.address, buffer.size);
+        res = cuMemAddressFree(buffer.address, buffer.size);
+        res = cuMemRelease(buffer.shareableHandle);
+    }
+
+    if (res != CUDA_SUCCESS || cudaRes != cudaSuccess)
+        return NOS_RESULT_FAILED;
+
+    return NOS_RESULT_SUCCESS;
 }
 
