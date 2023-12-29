@@ -130,7 +130,7 @@ nosResult RegisterReadImage(nosNodeFunctions* fn)
 	// 			fbb, "Failed to load image", nos::fb::NodeStatusMessageType::FAILURE)};
 	// 		HandleEvent(CreateAppEvent(
 	// 			fbb,
-	// 			nos::CreatePartialNodeUpdateDirect(fbb, &ctx->NodeId, ClearFlags::NONE, 0, 0, 0, 0, 0, 0, &messages)));
+	// 			nos::app::CreatePartialNodeUpdateDirect(fbb, &ctx->NodeId, ClearFlags::NONE, 0, 0, 0, 0, 0, 0, &messages)));
 	// 	}
 	// 	if (img)
 	// 		stbi_image_free(img);

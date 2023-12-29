@@ -59,24 +59,24 @@ struct MergeContext : NodeContext
 		if (TextureCount > 2)
 		{
 			flatbuffers::FlatBufferBuilder fbb;
-			std::vector<flatbuffers::Offset<PartialPinUpdate>> updatePins;
+			std::vector<flatbuffers::Offset<app::PartialPinUpdate>> updatePins;
 
 			for (int i = 0; i < node->pins()->size(); ++i)
 			{
 				if (node->pins()->Get(i)->orphan_state()->is_orphan())
 				{
 					updatePins.emplace_back(
-						nos::CreatePartialPinUpdate
+						nos::app::CreatePartialPinUpdate
 						(fbb, node->pins()->Get(i)->id(),
-							0, nos::fb::CreateOrphanStateDirect(fbb, false), Action::NOP));
+							0, nos::fb::CreateOrphanStateDirect(fbb, false), app::Action::NOP));
 				}
 			}
 
 			HandleEvent(
 				CreateAppEvent(fbb,
-					nos::CreatePartialNodeUpdateDirect(fbb,
+					nos::app::CreatePartialNodeUpdateDirect(fbb,
 						node->id(),
-						ClearFlags::NONE,
+						app::ClearFlags::NONE,
 						0,
 						0,
 						0,
@@ -151,7 +151,7 @@ struct MergeContext : NodeContext
 			items.push_back(nos::CreateContextMenuItemDirect(fbb, "Delete Last Texture", 2));
 
 		auto event = CreateAppEvent(fbb,
-		                            CreateContextMenuUpdate(fbb,
+		                            CreateAppContextMenuUpdate(fbb,
 		                                                    &NodeId,
 		                                                    request->pos(),
 		                                                    request->instigator(),
@@ -227,7 +227,7 @@ struct MergeContext : NodeContext
 			                                    CreatePartialNodeUpdateDirect(
 				                                    fbb,
 				                                    &NodeId,
-				                                    ClearFlags::NONE,
+				                                    app::ClearFlags::NONE,
 				                                    0,
 				                                    &pins)));
 		}
@@ -243,7 +243,7 @@ struct MergeContext : NodeContext
 				                                    CreatePartialNodeUpdateDirect(
 					                                    fbb,
 					                                    &NodeId,
-					                                    ClearFlags::NONE,
+					                                    app::ClearFlags::NONE,
 					                                    &ids)));
 				AddedPins.pop_back();
 			}

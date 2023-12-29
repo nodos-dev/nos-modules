@@ -52,7 +52,7 @@ struct WriteImage : NodeContext {
         for (auto* pin : *node->pins()) {
             auto* pinData = pin->data();
             nosBuffer value = { .Data = (void*)pinData->data(), .Size = pinData->size() };
-            OnPinValueChanged(nosEngine.GetName(pin->name()->c_str()), *pin->id(), value);
+            OnPinValueChanged(nos::Name(pin->name()->c_str()), *pin->id(), value);
         }
     }
 
