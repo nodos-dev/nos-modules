@@ -10,6 +10,7 @@ function(add_folder_as_plugin_project NAME DEPENDENCIES INCLUDE_FOLDERS)
     # TODO: Set convenient paths for debug too. Or, remove it if not used.
     string(REGEX REPLACE "\\\\" "/" NOS_WORK_FOLDER "$ENV{PROGRAMDATA}/Nodos/core")
     set(NOS_WORK_FOLDER "${NOS_WORK_FOLDER}")
+	message("NOS WORK FOLDER SET AS: ${NOS_WORK_FOLDER}")
     set(NOS_REPO_ROOT "${NOS_WORK_FOLDER}")
     add_compile_definitions(NOS_WORK_FOLDER="${NOS_WORK_FOLDER}")
     add_compile_definitions(NOS_REPO_ROOT="${NOS_REPO_ROOT}")
@@ -21,7 +22,7 @@ function(add_folder_as_plugin_project NAME DEPENDENCIES INCLUDE_FOLDERS)
         "${SOURCE_FOLDER}/*.cpp" "${SOURCE_FOLDER}/*.cu" "${SOURCE_FOLDER}/*.inl" "${SOURCE_FOLDER}/*.glsl" "${SOURCE_FOLDER}/*.hlsl"
         "${SOURCE_FOLDER}/*.comp" "${SOURCE_FOLDER}/*.frag" "${SOURCE_FOLDER}/*.vert")
 	file(GLOB_RECURSE CU_FILES CONFIGURE_DEPENDS ${SOURCE_FOLDER} "${SOURCE_FOLDER}/*.cu")
-	message("CUDA FILES: ${CU_FILES}")
+
     list(APPEND CONFIG_FILES)
     foreach(CONFIG_FOLDER ${CONFIG_FOLDERS})
         file(GLOB_RECURSE CUR_CONFIG_FILES CONFIGURE_DEPENDS ${CONFIG_FOLDER} 
@@ -40,7 +41,7 @@ function(add_folder_as_plugin_project NAME DEPENDENCIES INCLUDE_FOLDERS)
         list(APPEND SHADERS ${CUR_SHADERS})
     endforeach()
     
-    add_library(${NAME} MODULE ${SOURCES} ${SHADERS} ${HEADERS} ${RESOURCES} ${CONFIG_FILES})
+    add_library(${NAME} MODULE ${SOURCES} ${SHADERS} ${HEADERS} ${RESOURCES} ${CONFIG_FILES} ${CU_FILES})
     set_target_properties(${NAME} PROPERTIES
         CXX_STANDARD 20
         LIBRARY_OUTPUT_DIRECTORY_DEBUG "${CMAKE_CURRENT_SOURCE_DIR}/Binaries"

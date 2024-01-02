@@ -227,7 +227,37 @@ nosResult CudaGPUResourceManager::MemCopy(int64_t source, int64_t destination, i
         return NOS_RESULT_FAILED;
     }
 
-    cudaMemcpy((void*)&destination, (void*)&source, size, cudaMemcpyDeviceToDevice);
+    uint64_t internalAddres_src = NULL;
+    uint64_t internalAddres_dst = NULL;
+
+    for (const auto& [_name, _buf] : CUDABuffers) {
+        if (_buf.shareableHandle == source) {
+            internalAddres_src = _buf.address;
+        }
+        if (_buf.shareableHandle == destination) {
+            internalAddres_dst = _buf.address;
+        }
+    }
+
+    internalAddres_dst = (internalAddres_dst == NULL) ? (destination) : (internalAddres_dst);
+    internalAddres_src = (internalAddres_src == NULL) ? (source) : (internalAddres_src);
+
+    cudaError res = cudaMemcpy(reinterpret_cast<void*>(internalAddres_dst), reinterpret_cast<void*>(internalAddres_src), size, cudaMemcpyDeviceToDevice);
+    assert(res == cudaSuccess);
+
+    uint8_t* src = new uint8_t[size];
+    cudaMemcpy(src, reinterpret_cast<void*>(internalAddres_src), size, cudaMemcpyDeviceToHost);
+
+    uint8_t* dst = new uint8_t[size];
+    cudaMemcpy(dst, reinterpret_cast<void*>(internalAddres_dst), size, cudaMemcpyDeviceToHost);
+
+
+    if (res != cudaSuccess) {
+        nosEngine.LogE("CudaMemcyp failed with error code %d!", res);
+        return NOS_RESULT_FAILED;
+    }
+    delete[] src;
+    delete[] dst;
     return NOS_RESULT_SUCCESS;
 }
 

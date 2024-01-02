@@ -16,6 +16,7 @@ NOS_INIT();
 NOS_REGISTER_NAME(NVVFX)
 NOS_REGISTER_NAME(In)
 NOS_REGISTER_NAME(UpscaleFactor)
+NOS_REGISTER_NAME(Normalize)
 NOS_REGISTER_NAME(UpscaleStrength)
 NOS_REGISTER_NAME(Out)
 
@@ -139,16 +140,28 @@ struct NVVFXNodeContext : nos::NodeContext {
 	nosResult ExecuteNode(const nosNodeExecuteArgs* execArgs) {
 		static int a = 0;
 			nos::NodeExecuteArgs args(execArgs);
-		if (a++ == 0) {
-			for (int i = 0; i < 2; i++) {
-				nosResourceShareInfo in = nos::vkss::DeserializeTextureInfo(args[NSN_In].Data->Data);
-				NvCVImage nvcvOutput;
-				interop.nosTextureToNVCVImage(in, nvcvOutput);
-				nosResult res = interop.NVCVImageToNosTexture(nvcvOutput, output);
-				OutReady = true;
+		{
+			
+			nosResourceShareInfo in = nos::vkss::DeserializeTextureInfo(args[NSN_In].Data->Data);
+			NvCVImage nvcvOutput;
+			interop.nosTextureToNVCVImage(in, nvcvOutput);
+			NvCVImage nvcvAllocated;
+			interop.AllocateNVCVImage("Trial", in.Info.Texture.Width, in.Info.Texture.Height, nvcvOutput.pixelFormat, nvcvOutput.componentType, nvcvOutput.bufferBytes, &nvcvAllocated);
+			interop.CopyNVCVImage(&nvcvAllocated, &nvcvOutput);
+			//interop.NormalizeNVCVImage(&nvcvOutput);
+			if (*static_cast<bool*>(args[NSN_Normalize].Data->Data) == true) {
+				interop.NormalizeNVCVImage(&nvcvAllocated);
 			}
+			nosResult res = interop.NVCVImageToNosTexture(nvcvAllocated, output);
+			OutReady = true;
 		}
-
+			nosResourceShareInfo out = nos::vkss::DeserializeTextureInfo(args[NSN_Out].Data->Data);
+			nosCmd cmd;
+			nosVulkan->Begin("NVVFX Upload", &cmd);
+			//nosVulkan->ImageLoad(cmd, hostBuffer.data(), nosVec2u{.x=1920, .y=1080}, NOS_FORMAT_R8G8B8A8_UNORM, &out);
+			nosVulkan->Copy(cmd, &output, &out, 0);
+			nosVulkan->End(cmd, NOS_FALSE);
+			return NOS_RESULT_SUCCESS;
 		return NOS_RESULT_FAILED;
 
 	}

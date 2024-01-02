@@ -28,7 +28,7 @@ public:
 	CUDAVulkanInterop();
 	~CUDAVulkanInterop();
 
-	nosResult SetVulkanMemoryToCUDA(int64_t handle, size_t size, size_t offset, int64_t* outCudaPointerAddres);
+	nosResult SetVulkanMemoryToCUDA(int64_t handle, size_t size, size_t offset, uint64_t* outCudaPointerAddres);
 
 	nosResult nosTextureToNVCVImage(nosResourceShareInfo& vulkanTex, NvCVImage& nvcvImage, std::optional<nosNVCVLayout> layout = std::nullopt);
 	nosResult NVCVImageToNosTexture(NvCVImage& nvcvImage, nosResourceShareInfo& vulkanTex, std::optional<nosNVCVLayout> layout = std::nullopt);
@@ -41,7 +41,7 @@ public:
 	NvCVImage_ComponentType GetComponentTypeFromVulkanFormat(nosFormat format);
 	nosFormat GetVulkanFormatFromNVCVImage(NvCVImage nvcvImage);
 	void NormalizeNVCVImage(NvCVImage* nvcvImage);
-
+	nosResult CopyNVCVImage(NvCVImage* dst, NvCVImage* src);
 private:
 	void InitCUDA();
 	CudaGPUResourceManager GPUResManager;

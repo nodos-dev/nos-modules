@@ -29,6 +29,13 @@
               "data": 0.5
             },
             {
+              "name": "Normalize",
+              "type_name": "bool",
+              "show_as": "PROPERTY",
+              "can_show_as": "INPUT_PIN_OR_PROPERTY",
+              "data": 0
+            },
+            {
               "name": "UpscaleFactor",
               "type_name": "int",
               "show_as": "PROPERTY",

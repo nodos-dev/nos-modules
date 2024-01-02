@@ -21,10 +21,9 @@ typedef struct nosMemoryInfo
 	uint64_t Offset;
 } nosMemoryInfo;
 */
-nosResult CUDAVulkanInterop::SetVulkanMemoryToCUDA(int64_t handle, size_t size, size_t offset, int64_t* outCudaPointerAddres)
+nosResult CUDAVulkanInterop::SetVulkanMemoryToCUDA(int64_t handle, size_t size, size_t offset, uint64_t* outCudaPointerAddres)
 {
 
-	outCudaPointerAddres = NULL;
 	cudaExternalMemory_t externalMemory;
 	cudaExternalMemoryHandleDesc desc;
 	memset(&desc, 0, sizeof(desc));
@@ -88,6 +87,7 @@ nosResult CUDAVulkanInterop::AllocateNVCVImage(std::string name, int width, int 
 	}
 	uint64_t buffer = NULL;
 	nosResult res = GPUResManager.GetGPUBuffer(name, &buffer);
+	uint64_t realSize = GPUResManager.GetSize(name);
 	if (res != NOS_RESULT_SUCCESS) {
 		return res;
 	}
@@ -96,7 +96,7 @@ nosResult CUDAVulkanInterop::AllocateNVCVImage(std::string name, int width, int 
 	out->height = height;
 	out->gpuMem = NVCV_CUDA;
 	out->pitch = width * 4;
-	out->bufferBytes = size;
+	out->bufferBytes = realSize;
 	out->pixelFormat = pixelFormat;
 	out->componentType = compType;
 	out->planar = NVCV_PLANAR;
@@ -106,7 +106,7 @@ nosResult CUDAVulkanInterop::AllocateNVCVImage(std::string name, int width, int 
 
 nosResult CUDAVulkanInterop::nosTextureToNVCVImage(nosResourceShareInfo& vulkanTex, NvCVImage& nvcvImage, std::optional<nosNVCVLayout> layout)
 {
-	int64_t gpuPointer = NULL;
+	uint64_t gpuPointer = 0;
 	size_t textureSize2 = vulkanTex.Info.Texture.GetSize();
 	size_t textureSize;
 	nosVulkan->GetImageSize(vulkanTex.Memory.Handle, &textureSize);
@@ -137,6 +137,9 @@ nosResult CUDAVulkanInterop::NVCVImageToNosTexture(NvCVImage& nvcvImage, nosReso
 		return NOS_RESULT_FAILED;
 	}
 
+	uint64_t shareableHandle = NULL;
+	nosResult res = GPUResManager.GetShareableHandle(reinterpret_cast<uint64_t>(nvcvImage.pixels), &shareableHandle);
+
 	/*void* hostBufferNormal = malloc(std::min(size, size2));
 	
 
@@ -148,11 +151,11 @@ nosResult CUDAVulkanInterop::NVCVImageToNosTexture(NvCVImage& nvcvImage, nosReso
 
 	nos::sys::vulkan::TTexture tex;
 
-	SetCUDAMemoryToVulkan(reinterpret_cast<int64_t>(nvcvImage.pixels), nvcvImage.width, nvcvImage.height,
+	SetCUDAMemoryToVulkan(shareableHandle, nvcvImage.width, nvcvImage.height,
 		size, vulkanTex.Memory.ExternalMemory.Offset, GetVulkanFormatFromNVCVImage(nvcvImage), &tex);
 	
 	vulkanTex = nos::vkss::ConvertDef(tex);
-	nosResult res = nosVulkan->ImportResource(&vulkanTex);
+	res = nosVulkan->ImportResource(&vulkanTex);
 
 	return res;
 }
@@ -508,6 +511,21 @@ void CUDAVulkanInterop::NormalizeNVCVImage(NvCVImage* nvcvImage)
 	dim3 threadsPerBlock(256);
 	dim3 numBlocks((nvcvImage->width * nvcvImage->height + threadsPerBlock.x - 1) / threadsPerBlock.x);
 
-	NormalizeKernelWrapper(numBlocks, threadsPerBlock, reinterpret_cast<float*>(nvcvImage->pixels), 255, nvcvImage->bufferBytes);
+	//uint8_t* before = new uint8_t[nvcvImage->bufferBytes];
+	//cudaError res = cudaMemcpy(before, nvcvImage->pixels, nvcvImage->bufferBytes, cudaMemcpyDeviceToHost);
+	//assert(res == cudaSuccess);
+	NormalizeKernelWrapper(numBlocks, threadsPerBlock, reinterpret_cast<int*>(nvcvImage->pixels), 255, nvcvImage->bufferBytes);
+	
+	//uint8_t* after = new uint8_t[nvcvImage->bufferBytes];
+	//res = cudaMemcpy(after, nvcvImage->pixels, nvcvImage->bufferBytes, cudaMemcpyDeviceToHost);
+	//assert(res == cudaSuccess);
+	
+	//delete[] before;
+	//delete[] after;
 
+}
+
+nosResult CUDAVulkanInterop::CopyNVCVImage(NvCVImage* dst, NvCVImage* src)
+{
+	return GPUResManager.MemCopy(reinterpret_cast<uint64_t>(src->pixels), reinterpret_cast<uint64_t>(dst->pixels), std::min(src->bufferBytes, dst->bufferBytes));
 }
