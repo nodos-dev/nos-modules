@@ -141,10 +141,24 @@ struct NVVFXNodeContext : nos::NodeContext {
 		static int a = 0;
 			nos::NodeExecuteArgs args(execArgs);
 		{
-			
 			nosResourceShareInfo in = nos::vkss::DeserializeTextureInfo(args[NSN_In].Data->Data);
+			
+			InputFormatted.Info.Type = NOS_RESOURCE_TYPE_TEXTURE;
+			InputFormatted.Info.Texture.Width = in.Info.Texture.Width;
+			InputFormatted.Info.Texture.Height = in.Info.Texture.Height;
+			InputFormatted.Info.Texture.Usage = nosImageUsage(NOS_IMAGE_USAGE_TRANSFER_DST | NOS_IMAGE_USAGE_TRANSFER_SRC);
+			InputFormatted.Info.Texture.Format = NOS_FORMAT_R32G32B32A32_SFLOAT;
+			nosVulkan->CreateResource(&InputFormatted);
+			
+			nosCmd cmd;
+			nosGPUEvent gpuevent = {};
+			nosVulkan->Begin("Input DownloadD", &cmd);
+			nosVulkan->Copy(cmd, &in, &InputFormatted, 0);
+			nosVulkan->End2(cmd, NOS_TRUE, &gpuevent);
+			nosVulkan->WaitGpuEvent(&gpuevent);
+			
 			NvCVImage nvcvOutput;
-			interop.nosTextureToNVCVImage(in, nvcvOutput);
+			interop.nosTextureToNVCVImage(InputFormatted, nvcvOutput);
 			NvCVImage nvcvAllocated;
 			interop.AllocateNVCVImage("Trial", in.Info.Texture.Width, in.Info.Texture.Height, nvcvOutput.pixelFormat, nvcvOutput.componentType, nvcvOutput.bufferBytes, &nvcvAllocated);
 			interop.CopyNVCVImage(&nvcvAllocated, &nvcvOutput);

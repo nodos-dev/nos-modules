@@ -62,7 +62,7 @@ void CUDAVulkanInterop::SetCUDAMemoryToVulkan(int64_t cudaPointerAddress, int wi
 	outNosTexture->size = nos::sys::vulkan::SizePreset::CUSTOM;
 	outNosTexture->width = width;
 	outNosTexture->height = height;
-	outNosTexture->format = nos::sys::vulkan::Format::R8G8B8A8_UNORM;
+	outNosTexture->format = nos::sys::vulkan::Format(format);
 				 
 	outNosTexture->usage |= nos::sys::vulkan::ImageUsage::SAMPLED | nos::sys::vulkan::ImageUsage::TRANSFER_DST | nos::sys::vulkan::ImageUsage::TRANSFER_SRC;
 	outNosTexture->unmanaged = false;
@@ -511,14 +511,14 @@ void CUDAVulkanInterop::NormalizeNVCVImage(NvCVImage* nvcvImage)
 	dim3 threadsPerBlock(256);
 	dim3 numBlocks((nvcvImage->width * nvcvImage->height + threadsPerBlock.x - 1) / threadsPerBlock.x);
 
-	//uint8_t* before = new uint8_t[nvcvImage->bufferBytes];
-	//cudaError res = cudaMemcpy(before, nvcvImage->pixels, nvcvImage->bufferBytes, cudaMemcpyDeviceToHost);
-	//assert(res == cudaSuccess);
-	NormalizeKernelWrapper(numBlocks, threadsPerBlock, reinterpret_cast<int*>(nvcvImage->pixels), 255, nvcvImage->bufferBytes);
+//	float* before = new float[nvcvImage->bufferBytes];
+//	cudaError res = cudaMemcpy(before, nvcvImage->pixels, nvcvImage->bufferBytes, cudaMemcpyDeviceToHost);
+//	assert(res == cudaSuccess);
+	NormalizeKernelWrapper(numBlocks, threadsPerBlock, reinterpret_cast<float*>(nvcvImage->pixels), 255, nvcvImage->bufferBytes);
 	
-	//uint8_t* after = new uint8_t[nvcvImage->bufferBytes];
-	//res = cudaMemcpy(after, nvcvImage->pixels, nvcvImage->bufferBytes, cudaMemcpyDeviceToHost);
-	//assert(res == cudaSuccess);
+//	float* after = new float[nvcvImage->bufferBytes];
+//	res = cudaMemcpy(after, nvcvImage->pixels, nvcvImage->bufferBytes, cudaMemcpyDeviceToHost);
+//	assert(res == cudaSuccess);
 	
 	//delete[] before;
 	//delete[] after;
