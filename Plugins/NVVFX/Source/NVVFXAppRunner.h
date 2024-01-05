@@ -26,6 +26,7 @@ public:
 	NVVFXAppRunner();
 	~NVVFXAppRunner();
 
+	nosResult InitTransferBuffers(NvCVImage* source, NvCVImage* destination);
 	nosResult CreateUpscaleEffect(std::string modelsDir);
 	nosResult Run(NvCVImage* input, NvCVImage* output);
 	void SetArtifactReduction(bool isActive);

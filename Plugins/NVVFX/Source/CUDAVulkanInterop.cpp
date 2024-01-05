@@ -67,7 +67,7 @@ void CUDAVulkanInterop::SetCUDAMemoryToVulkan(int64_t cudaPointerAddress, int wi
 	outNosTexture->size = nos::sys::vulkan::SizePreset::CUSTOM;
 	outNosTexture->width = width;
 	outNosTexture->height = height;
-	outNosTexture->format = nos::sys::vulkan::Format::R32G32B32A32_SFLOAT;
+	outNosTexture->format = nos::sys::vulkan::Format(format);
 				 
 	outNosTexture->usage |= nos::sys::vulkan::ImageUsage::SAMPLED | nos::sys::vulkan::ImageUsage::TRANSFER_DST | nos::sys::vulkan::ImageUsage::TRANSFER_SRC;
 	outNosTexture->unmanaged = false;
@@ -93,15 +93,15 @@ nosResult CUDAVulkanInterop::AllocateNVCVImage(std::string name, int width, int 
 	}
 	uint64_t buffer = NULL;
 	nosResult res = GPUResManager.GetGPUBuffer(name, &buffer);
-	uint64_t realSize = GPUResManager.GetSize(name);
+ 	uint64_t realSize = GPUResManager.GetSize(name);
 
-	float a = 1.0f;
+	/*float a = 1.0f;
 
 	int b = std::bit_cast<int, float>(a);
 
 	cudaSetDevice(0);
-	cudaError cudaRes 
-		= cudaMemset(reinterpret_cast<void*>(buffer), b, realSize);
+		= cudaMemset(reinterpret_cast<void*>(buffer), b, realSize);*/
+	cudaError cudaRes = cudaSuccess;
 	
 	cudaError syncRes = cudaDeviceSynchronize();
 	if (syncRes != CUDA_SUCCESS) {
@@ -114,14 +114,24 @@ nosResult CUDAVulkanInterop::AllocateNVCVImage(std::string name, int width, int 
 	if (res != NOS_RESULT_SUCCESS) {
 		return res;
 	}
-	out->pixels = reinterpret_cast<void*>(buffer);
+
+	nosFormat temp = {};
+	temp = GetVulkanFormatFromNVCVImage(pixelFormat, compType);
+	
+	int componentNum = GetComponentNumFromVulkanFormat(temp);
+	int componentByte = GetComponentBytesFromVulkanFormat(temp);
+
 	out->width = width;
 	out->height = height;
-	out->gpuMem = NVCV_CUDA;
-	out->pitch = width * 4 * 4;
-	out->bufferBytes = realSize;
+	out->pitch = width * componentByte;
 	out->pixelFormat = pixelFormat;
 	out->componentType = compType;
+	out->pixelBytes = componentByte * componentNum;
+	out->componentBytes = componentByte;
+	out->numComponents = componentNum;
+	out->pixels = reinterpret_cast<void*>(buffer);
+	out->gpuMem = NVCV_CUDA;
+	out->bufferBytes = realSize;
 	out->planar = NVCV_INTERLEAVED;
 
 	return NOS_RESULT_SUCCESS;
@@ -139,14 +149,20 @@ nosResult CUDAVulkanInterop::nosTextureToNVCVImage(nosResourceShareInfo& vulkanT
 	if (res != NOS_RESULT_SUCCESS)
 		return res;
 
-	nvcvImage.pixels = reinterpret_cast<void*>(gpuPointer);
+	int componentNum = GetComponentNumFromVulkanFormat(vulkanTex.Info.Texture.Format);
+	int componentByte = GetComponentBytesFromVulkanFormat(vulkanTex.Info.Texture.Format);
+
 	nvcvImage.width = vulkanTex.Info.Texture.Width;
 	nvcvImage.height = vulkanTex.Info.Texture.Height;
-	nvcvImage.gpuMem = NVCV_CUDA;
-	nvcvImage.pitch = vulkanTex.Info.Texture.Width * 4 * 4;
-	nvcvImage.bufferBytes = vulkanTex.Memory.ExternalMemory.AllocationSize;
+	nvcvImage.pitch = vulkanTex.Info.Texture.Width * componentByte;
 	nvcvImage.pixelFormat = GetPixelFormatFromVulkanFormat(vulkanTex.Info.Texture.Format);
 	nvcvImage.componentType = GetComponentTypeFromVulkanFormat(vulkanTex.Info.Texture.Format);
+	nvcvImage.pixelBytes = componentByte * componentNum;
+	nvcvImage.componentBytes = componentByte;
+	nvcvImage.numComponents = componentNum;
+	nvcvImage.pixels = reinterpret_cast<void*>(gpuPointer);
+	nvcvImage.gpuMem = NVCV_CUDA;
+	nvcvImage.bufferBytes = vulkanTex.Memory.ExternalMemory.AllocationSize;
 	nvcvImage.planar = (layout == std::nullopt) ? (nvcvImage.planar) : ((int)layout.value());
 	
 	return res;
@@ -401,6 +417,180 @@ NvCVImage_ComponentType CUDAVulkanInterop::GetComponentTypeFromVulkanFormat(nosF
 	return NvCVImage_ComponentType::NVCV_TYPE_UNKNOWN;
 }
 
+int CUDAVulkanInterop::GetComponentBytesFromVulkanFormat(nosFormat format)
+{
+	switch (format) {
+	case NOS_FORMAT_R8_UNORM:
+	case NOS_FORMAT_R8G8_UNORM:
+	case NOS_FORMAT_R8G8B8_UNORM:
+	case NOS_FORMAT_B8G8R8_UNORM:
+	case NOS_FORMAT_R8G8B8A8_UNORM:
+	case NOS_FORMAT_B8G8R8A8_UNORM:
+	case NOS_FORMAT_G8B8G8R8_422_UNORM:
+	case NOS_FORMAT_B8G8R8G8_422_UNORM:
+	case NOS_FORMAT_R8_UINT:
+	case NOS_FORMAT_R8G8_UINT:
+	case NOS_FORMAT_B8G8R8_UINT:
+	case NOS_FORMAT_R8G8B8A8_UINT:
+	case NOS_FORMAT_R8_SRGB:
+	case NOS_FORMAT_R8G8_SRGB:
+	case NOS_FORMAT_R8G8B8_SRGB:
+	case NOS_FORMAT_B8G8R8_SRGB:
+	case NOS_FORMAT_R8G8B8A8_SRGB:
+	case NOS_FORMAT_B8G8R8A8_SRGB:
+		return 1;
+
+	case NOS_FORMAT_R16_UNORM:
+	case NOS_FORMAT_R16G16_UNORM:
+	case NOS_FORMAT_R16G16B16_UNORM:
+	case NOS_FORMAT_R16G16B16A16_UNORM:
+	case NOS_FORMAT_D16_UNORM:
+	case NOS_FORMAT_R16_UINT:
+	case NOS_FORMAT_R16G16B16_UINT:
+	case NOS_FORMAT_R16G16_UINT:
+	case NOS_FORMAT_R16G16B16A16_UINT:
+	case NOS_FORMAT_R32_UINT:
+	case NOS_FORMAT_R16_USCALED:
+	case NOS_FORMAT_R16G16_USCALED:
+	case NOS_FORMAT_R16G16B16_USCALED:
+	case NOS_FORMAT_R16G16B16A16_USCALED:
+		return 2;
+
+	case NOS_FORMAT_R32G32_UINT:
+	case NOS_FORMAT_R32G32B32_UINT:
+	case NOS_FORMAT_R32G32B32A32_UINT:
+	case NOS_FORMAT_A2R10G10B10_UINT_PACK32:
+	case NOS_FORMAT_A2R10G10B10_UNORM_PACK32:
+	case NOS_FORMAT_A2R10G10B10_USCALED_PACK32:
+	case NOS_FORMAT_X8_D24_UNORM_PACK32:
+		return 4;
+
+	case NOS_FORMAT_R16_SINT:
+	case NOS_FORMAT_R16G16_SINT:
+	case NOS_FORMAT_R16G16B16_SINT:
+	case NOS_FORMAT_R16G16B16A16_SINT:
+	case NOS_FORMAT_R16_SNORM:
+	case NOS_FORMAT_R16G16_SNORM:
+	case NOS_FORMAT_R16G16B16_SNORM:
+	case NOS_FORMAT_R16G16B16A16_SNORM:
+	case NOS_FORMAT_R16_SSCALED:
+	case NOS_FORMAT_R16G16_SSCALED:
+	case NOS_FORMAT_R16G16B16_SSCALED:
+	case NOS_FORMAT_R16G16B16A16_SSCALED:
+		return 4;
+
+	case NOS_FORMAT_R16_SFLOAT:
+	case NOS_FORMAT_R16G16_SFLOAT:
+	case NOS_FORMAT_R16G16B16_SFLOAT:
+	case NOS_FORMAT_R16G16B16A16_SFLOAT:
+		return 2;
+
+	case NOS_FORMAT_A2R10G10B10_SNORM_PACK32:
+	case NOS_FORMAT_A2R10G10B10_SINT_PACK32:
+	case NOS_FORMAT_A2R10G10B10_SSCALED_PACK32:
+	case NOS_FORMAT_R32_SINT:
+	case NOS_FORMAT_R32G32_SINT:
+	case NOS_FORMAT_R32G32B32_SINT:
+	case NOS_FORMAT_R32G32B32A32_SINT:
+		return 4;
+
+	case NOS_FORMAT_R32_SFLOAT:
+	case NOS_FORMAT_R32G32_SFLOAT:
+	case NOS_FORMAT_R32G32B32_SFLOAT:
+	case NOS_FORMAT_R32G32B32A32_SFLOAT:
+	case NOS_FORMAT_B10G11R11_UFLOAT_PACK32:
+	case NOS_FORMAT_D32_SFLOAT:
+		return 4;
+
+		//Cant be mapped for now
+		//return NvCVImage_ComponentType::NVCV_U64;
+		//return NvCVImage_ComponentType::NVCV_S64;
+		//return NvCVImage_ComponentType::NVCV_F64;
+
+	}
+	return 0;
+}
+int CUDAVulkanInterop::GetComponentNumFromVulkanFormat(nosFormat format)
+{
+	switch (format) {
+	case NOS_FORMAT_NONE:
+	case NOS_FORMAT_R8_UNORM:
+	case NOS_FORMAT_R8_UINT:
+	case NOS_FORMAT_R8_SRGB:
+	case NOS_FORMAT_R16_UNORM:
+	case NOS_FORMAT_R16_SNORM:
+	case NOS_FORMAT_R16_USCALED:
+	case NOS_FORMAT_R16_SSCALED:
+	case NOS_FORMAT_R16_UINT:
+	case NOS_FORMAT_R16_SINT:
+	case NOS_FORMAT_R16_SFLOAT:
+	case NOS_FORMAT_R32_UINT:
+	case NOS_FORMAT_R32_SINT:
+	case NOS_FORMAT_R32_SFLOAT:
+	case NOS_FORMAT_D16_UNORM:
+	case NOS_FORMAT_D32_SFLOAT:
+		return 1;
+	case NOS_FORMAT_R8G8_UNORM:
+	case NOS_FORMAT_R8G8_UINT:
+	case NOS_FORMAT_R8G8_SRGB:
+	case NOS_FORMAT_R16G16_UNORM:
+	case NOS_FORMAT_R16G16_SNORM:
+	case NOS_FORMAT_R16G16_USCALED:
+	case NOS_FORMAT_R16G16_SSCALED:
+	case NOS_FORMAT_R16G16_UINT:
+	case NOS_FORMAT_R16G16_SINT:
+	case NOS_FORMAT_R16G16_SFLOAT:
+	case NOS_FORMAT_R32G32_UINT:
+	case NOS_FORMAT_R32G32_SINT:
+	case NOS_FORMAT_R32G32_SFLOAT:
+		return 2;
+	case NOS_FORMAT_R8G8B8_UNORM:
+	case NOS_FORMAT_R8G8B8_SRGB:
+	case NOS_FORMAT_B8G8R8_UNORM:
+	case NOS_FORMAT_B8G8R8_UINT:
+	case NOS_FORMAT_B8G8R8_SRGB:
+	case NOS_FORMAT_R16G16B16_UNORM:
+	case NOS_FORMAT_R16G16B16_SNORM:
+	case NOS_FORMAT_R16G16B16_USCALED:
+	case NOS_FORMAT_R16G16B16_SSCALED:
+	case NOS_FORMAT_R16G16B16_UINT:
+	case NOS_FORMAT_R16G16B16_SINT:
+	case NOS_FORMAT_R16G16B16_SFLOAT:
+	case NOS_FORMAT_R32G32B32_UINT:
+	case NOS_FORMAT_R32G32B32_SINT:
+	case NOS_FORMAT_R32G32B32_SFLOAT:
+	case NOS_FORMAT_B10G11R11_UFLOAT_PACK32:
+	case NOS_FORMAT_G8B8G8R8_422_UNORM:
+	case NOS_FORMAT_B8G8R8G8_422_UNORM:
+		return 3;
+	case NOS_FORMAT_R8G8B8A8_UNORM:
+	case NOS_FORMAT_R8G8B8A8_UINT:
+	case NOS_FORMAT_R8G8B8A8_SRGB:
+	case NOS_FORMAT_B8G8R8A8_UNORM:
+	case NOS_FORMAT_B8G8R8A8_SRGB:
+	case NOS_FORMAT_R16G16B16A16_UNORM:
+	case NOS_FORMAT_R16G16B16A16_SNORM:
+	case NOS_FORMAT_R16G16B16A16_USCALED:
+	case NOS_FORMAT_R16G16B16A16_SSCALED:
+	case NOS_FORMAT_R16G16B16A16_UINT:
+	case NOS_FORMAT_R16G16B16A16_SINT:
+	case NOS_FORMAT_R16G16B16A16_SFLOAT:
+	case NOS_FORMAT_R32G32B32A32_UINT:
+	case NOS_FORMAT_R32G32B32A32_SINT:
+	case NOS_FORMAT_R32G32B32A32_SFLOAT:
+	case NOS_FORMAT_A2R10G10B10_UNORM_PACK32:
+	case NOS_FORMAT_A2R10G10B10_SNORM_PACK32:
+	case NOS_FORMAT_A2R10G10B10_USCALED_PACK32:
+	case NOS_FORMAT_A2R10G10B10_SSCALED_PACK32:
+	case NOS_FORMAT_A2R10G10B10_UINT_PACK32:
+	case NOS_FORMAT_A2R10G10B10_SINT_PACK32:
+		return 4;
+	default:
+		return 0;
+	}
+}
+
+
 //A simple trick to handle multi variable switch statement
 constexpr uint64_t SwitchPair(NvCVImage_PixelFormat pixelFormat, NvCVImage_ComponentType compType) {
 	return ((pixelFormat << 16) + compType);
@@ -408,123 +598,128 @@ constexpr uint64_t SwitchPair(NvCVImage_PixelFormat pixelFormat, NvCVImage_Compo
 
 nosFormat CUDAVulkanInterop::GetVulkanFormatFromNVCVImage(NvCVImage nvcvImage)
 {
-	switch (SwitchPair(nvcvImage.pixelFormat, nvcvImage.componentType)) {
-		case SwitchPair(NVCV_A, NVCV_U8):
-			return NOS_FORMAT_R8_UINT;
-		case SwitchPair(NVCV_RGB, NVCV_U8):
-			//return NOS_FORMAT_R8G8B8_UINT;
-		case SwitchPair(NVCV_BGR, NVCV_U8):
-			return NOS_FORMAT_B8G8R8_UINT;
-		case SwitchPair(NVCV_RGBA, NVCV_U8):
-			return NOS_FORMAT_R8G8B8A8_UINT;
-		case SwitchPair(NVCV_BGRA, NVCV_U8):
-			//return NOS_FORMAT_B8G8R8A8_UINT;
+	return GetVulkanFormatFromNVCVImage(nvcvImage.pixelFormat, nvcvImage.componentType);
+}
 
-		case SwitchPair(NVCV_A, NVCV_U16):
-			return NOS_FORMAT_R16_UINT;
-		case SwitchPair(NVCV_RGB, NVCV_U16):
-			return NOS_FORMAT_R16G16B16_UINT;
-		case SwitchPair(NVCV_BGR, NVCV_U16):
-			//return NOS_FORMAT_B16G16R16_UINT;
-		case SwitchPair(NVCV_RGBA, NVCV_U16):
-			return NOS_FORMAT_R16G16B16A16_UINT;
-		case SwitchPair(NVCV_BGRA, NVCV_U16):
-			//return NOS_FORMAT_R16G16B16A16_UINT;
+nosFormat CUDAVulkanInterop::GetVulkanFormatFromNVCVImage(NvCVImage_PixelFormat pixelFormat, NvCVImage_ComponentType componentType)
+{
+	switch (SwitchPair(pixelFormat, componentType)) {
+	case SwitchPair(NVCV_A, NVCV_U8):
+		return NOS_FORMAT_R8_UINT;
+	case SwitchPair(NVCV_RGB, NVCV_U8):
+		//return NOS_FORMAT_R8G8B8_UINT;
+	case SwitchPair(NVCV_BGR, NVCV_U8):
+		return NOS_FORMAT_B8G8R8_UINT;
+	case SwitchPair(NVCV_RGBA, NVCV_U8):
+		return NOS_FORMAT_R8G8B8A8_UINT;
+	case SwitchPair(NVCV_BGRA, NVCV_U8):
+		//return NOS_FORMAT_B8G8R8A8_UINT;
 
-		case SwitchPair(NVCV_A, NVCV_S16):
-			return NOS_FORMAT_R16_SINT;
-		case SwitchPair(NVCV_RGB, NVCV_S16):
-			return NOS_FORMAT_R16G16B16_SINT;
-		case SwitchPair(NVCV_BGR, NVCV_S16):
-			//return NOS_FORMAT_B16G16R16_SINT;
-		case SwitchPair(NVCV_RGBA, NVCV_S16):
-			return NOS_FORMAT_R16G16B16A16_SINT;
-		case SwitchPair(NVCV_BGRA, NVCV_S16):
-			//return NOS_FORMAT_R16G16B16A16_SINT;
+	case SwitchPair(NVCV_A, NVCV_U16):
+		return NOS_FORMAT_R16_UINT;
+	case SwitchPair(NVCV_RGB, NVCV_U16):
+	case SwitchPair(NVCV_BGR, NVCV_U16):
+		return NOS_FORMAT_R16G16B16_UINT;
+		//return NOS_FORMAT_B16G16R16_UINT;
+	case SwitchPair(NVCV_RGBA, NVCV_U16):
+		return NOS_FORMAT_R16G16B16A16_UINT;
+	case SwitchPair(NVCV_BGRA, NVCV_U16):
+		//return NOS_FORMAT_R16G16B16A16_UINT;
 
-		//In here we adhere to UNORM because MOSTLY deep learning models 
-		//for images uses pixel values in the range of 0..1
-		case SwitchPair(NVCV_A, NVCV_F16):
-			return NOS_FORMAT_R16_SFLOAT;
-		case SwitchPair(NVCV_RGB, NVCV_F16):
-			return NOS_FORMAT_R16G16B16_SFLOAT;
-		case SwitchPair(NVCV_BGR, NVCV_F16):
-			//return NOS_FORMAT_B16G16R16_SFLOAT;
-		case SwitchPair(NVCV_RGBA, NVCV_F16):
-			return NOS_FORMAT_R16G16B16A16_SFLOAT;
-		case SwitchPair(NVCV_BGRA, NVCV_F16):
-			//return NOS_FORMAT_B16G16R16A16_SFLOAT;
-	
+	case SwitchPair(NVCV_A, NVCV_S16):
+		return NOS_FORMAT_R16_SINT;
+	case SwitchPair(NVCV_RGB, NVCV_S16):
+		return NOS_FORMAT_R16G16B16_SINT;
+	case SwitchPair(NVCV_BGR, NVCV_S16):
+		//return NOS_FORMAT_B16G16R16_SINT;
+	case SwitchPair(NVCV_RGBA, NVCV_S16):
+		return NOS_FORMAT_R16G16B16A16_SINT;
+	case SwitchPair(NVCV_BGRA, NVCV_S16):
+		//return NOS_FORMAT_R16G16B16A16_SINT;
 
-		case SwitchPair(NVCV_A, NVCV_U32):
-			return NOS_FORMAT_R32_UINT;
-		case SwitchPair(NVCV_RGB, NVCV_U32):
-			//return NOS_FORMAT_R32G32B32_UNORM;
-		case SwitchPair(NVCV_BGR, NVCV_U32):
-			//return NOS_FORMAT_B32G32R32_UINT;
-		case SwitchPair(NVCV_RGBA, NVCV_U32):
-			return NOS_FORMAT_R32G32B32A32_UINT;
-		case SwitchPair(NVCV_BGRA, NVCV_U32):
-			//return NOS_FORMAT_B32G32R32A32_UINT;
+	//In here we adhere to UNORM because MOSTLY deep learning models 
+	//for images uses pixel values in the range of 0..1
+	case SwitchPair(NVCV_A, NVCV_F16):
+		return NOS_FORMAT_R16_SFLOAT;
+	case SwitchPair(NVCV_RGB, NVCV_F16):
+	case SwitchPair(NVCV_BGR, NVCV_F16):
+		return NOS_FORMAT_R16G16B16_SFLOAT;
+		//return NOS_FORMAT_B16G16R16_SFLOAT;
+	case SwitchPair(NVCV_RGBA, NVCV_F16):
+		return NOS_FORMAT_R16G16B16A16_SFLOAT;
+	case SwitchPair(NVCV_BGRA, NVCV_F16):
+		//return NOS_FORMAT_B16G16R16A16_SFLOAT;
 
 
-		case SwitchPair(NVCV_A, NVCV_S32):
-			return NOS_FORMAT_R32_SINT;
-		case SwitchPair(NVCV_RGB, NVCV_S32):
-			return NOS_FORMAT_R32G32B32_SINT;
-		case SwitchPair(NVCV_BGR, NVCV_S32):
-			//return NOS_FORMAT_B32G32R32_SINT;
-		case SwitchPair(NVCV_RGBA, NVCV_S32):
-			return NOS_FORMAT_R32G32B32A32_SINT;
-		case SwitchPair(NVCV_BGRA, NVCV_S32):
-			//return NOS_FORMAT_B32G32R32A32_SINT;
-	
-		case SwitchPair(NVCV_A, NVCV_F32):
-			return NOS_FORMAT_R32_SFLOAT;
-		case SwitchPair(NVCV_RGB, NVCV_F32):
-			return NOS_FORMAT_R32G32B32_SFLOAT;
-		case SwitchPair(NVCV_BGR, NVCV_F32):
-			//return NOS_FORMAT_B32G32R32_SFLOAT;
-		case SwitchPair(NVCV_RGBA, NVCV_F32):
-			return NOS_FORMAT_R32G32B32A32_SFLOAT;
-		case SwitchPair(NVCV_BGRA, NVCV_F32):
-			//return NOS_FORMAT_B32G32R32A32_SFLOAT;
-
-		case SwitchPair(NVCV_A, NVCV_U64):
-			//return NOS_FORMAT_R64_UINT;
-		case SwitchPair(NVCV_RGB, NVCV_U64):
-			//return NOS_FORMAT_R64G64B64_UINT;
-		case SwitchPair(NVCV_BGR, NVCV_U64):
-			//return NOS_FORMAT_B64G64R64_UINT;
-		case SwitchPair(NVCV_RGBA, NVCV_U64):
-			//return NOS_FORMAT_R64G64B64A64_UINT;
-		case SwitchPair(NVCV_BGRA, NVCV_U64):
-			//return NOS_FORMAT_B64G64R64A64_UINT;
+	case SwitchPair(NVCV_A, NVCV_U32):
+		return NOS_FORMAT_R32_UINT;
+	case SwitchPair(NVCV_RGB, NVCV_U32):
+	case SwitchPair(NVCV_BGR, NVCV_U32):
+		return NOS_FORMAT_R32G32B32_UINT;
+		//return NOS_FORMAT_B32G32R32_UINT;
+	case SwitchPair(NVCV_RGBA, NVCV_U32):
+		return NOS_FORMAT_R32G32B32A32_UINT;
+	case SwitchPair(NVCV_BGRA, NVCV_U32):
+		//return NOS_FORMAT_B32G32R32A32_UINT;
 
 
-		case SwitchPair(NVCV_A, NVCV_S64):
-			//return NOS_FORMAT_R64_SINT;
-		case SwitchPair(NVCV_RGB, NVCV_S64):
-			//return NOS_FORMAT_R64G64B64_SINT;
-		case SwitchPair(NVCV_BGR, NVCV_S64):
-			//return NOS_FORMAT_B64G64R64_SINT;
-		case SwitchPair(NVCV_RGBA, NVCV_S64):
-			//return NOS_FORMAT_R64G64B64A64_SINT;
-		case SwitchPair(NVCV_BGRA, NVCV_S64):
-			//return NOS_FORMAT_B64G64R64A64_SINT;
+	case SwitchPair(NVCV_A, NVCV_S32):
+		return NOS_FORMAT_R32_SINT;
+	case SwitchPair(NVCV_RGB, NVCV_S32):
+	case SwitchPair(NVCV_BGR, NVCV_S32):
+		return NOS_FORMAT_R32G32B32_SINT;
+		//return NOS_FORMAT_B32G32R32_SINT;
+	case SwitchPair(NVCV_RGBA, NVCV_S32):
+		return NOS_FORMAT_R32G32B32A32_SINT;
+	case SwitchPair(NVCV_BGRA, NVCV_S32):
+		//return NOS_FORMAT_B32G32R32A32_SINT;
+
+	case SwitchPair(NVCV_A, NVCV_F32):
+		return NOS_FORMAT_R32_SFLOAT;
+	case SwitchPair(NVCV_RGB, NVCV_F32):
+	case SwitchPair(NVCV_BGR, NVCV_F32):
+		return NOS_FORMAT_R32G32B32_SFLOAT;
+		//return NOS_FORMAT_B32G32R32_SFLOAT;
+	case SwitchPair(NVCV_RGBA, NVCV_F32):
+		return NOS_FORMAT_R32G32B32A32_SFLOAT;
+	case SwitchPair(NVCV_BGRA, NVCV_F32):
+		//return NOS_FORMAT_B32G32R32A32_SFLOAT;
+
+	case SwitchPair(NVCV_A, NVCV_U64):
+		//return NOS_FORMAT_R64_UINT;
+	case SwitchPair(NVCV_RGB, NVCV_U64):
+		//return NOS_FORMAT_R64G64B64_UINT;
+	case SwitchPair(NVCV_BGR, NVCV_U64):
+		//return NOS_FORMAT_B64G64R64_UINT;
+	case SwitchPair(NVCV_RGBA, NVCV_U64):
+		//return NOS_FORMAT_R64G64B64A64_UINT;
+	case SwitchPair(NVCV_BGRA, NVCV_U64):
+		//return NOS_FORMAT_B64G64R64A64_UINT;
 
 
-		case SwitchPair(NVCV_A, NVCV_F64):
-			//return NOS_FORMAT_R64_SFLOAT;
-		case SwitchPair(NVCV_RGB, NVCV_F64):
-			//return NOS_FORMAT_R64G64B64_SFLOAT;
-		case SwitchPair(NVCV_BGR, NVCV_F64):
-			//return NOS_FORMAT_B64G64R64_SFLOAT;
-		case SwitchPair(NVCV_RGBA, NVCV_F64):
-			//return NOS_FORMAT_R64G64B64A64_SFLOAT;
-		case SwitchPair(NVCV_BGRA, NVCV_F64):
-			//return NOS_FORMAT_B64G64R64A64_SFLOAT;
-			break;
+	case SwitchPair(NVCV_A, NVCV_S64):
+		//return NOS_FORMAT_R64_SINT;
+	case SwitchPair(NVCV_RGB, NVCV_S64):
+		//return NOS_FORMAT_R64G64B64_SINT;
+	case SwitchPair(NVCV_BGR, NVCV_S64):
+		//return NOS_FORMAT_B64G64R64_SINT;
+	case SwitchPair(NVCV_RGBA, NVCV_S64):
+		//return NOS_FORMAT_R64G64B64A64_SINT;
+	case SwitchPair(NVCV_BGRA, NVCV_S64):
+		//return NOS_FORMAT_B64G64R64A64_SINT;
+
+
+	case SwitchPair(NVCV_A, NVCV_F64):
+		//return NOS_FORMAT_R64_SFLOAT;
+	case SwitchPair(NVCV_RGB, NVCV_F64):
+		//return NOS_FORMAT_R64G64B64_SFLOAT;
+	case SwitchPair(NVCV_BGR, NVCV_F64):
+		//return NOS_FORMAT_B64G64R64_SFLOAT;
+	case SwitchPair(NVCV_RGBA, NVCV_F64):
+		//return NOS_FORMAT_R64G64B64A64_SFLOAT;
+	case SwitchPair(NVCV_BGRA, NVCV_F64):
+		//return NOS_FORMAT_B64G64R64A64_SFLOAT;
+		break;
 	}
 	return NOS_FORMAT_NONE;
 }

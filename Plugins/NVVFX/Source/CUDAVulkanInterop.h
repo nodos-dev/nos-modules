@@ -39,7 +39,10 @@ public:
 	
 	NvCVImage_PixelFormat GetPixelFormatFromVulkanFormat(nosFormat format);
 	NvCVImage_ComponentType GetComponentTypeFromVulkanFormat(nosFormat format);
+	int GetComponentBytesFromVulkanFormat(nosFormat format);
+	int GetComponentNumFromVulkanFormat(nosFormat format);
 	nosFormat GetVulkanFormatFromNVCVImage(NvCVImage nvcvImage);
+	nosFormat GetVulkanFormatFromNVCVImage(NvCVImage_PixelFormat pixelFormat, NvCVImage_ComponentType componentType);
 	void NormalizeNVCVImage(NvCVImage* nvcvImage);
 	nosResult CopyNVCVImage(NvCVImage* src, NvCVImage* dst);
 private:

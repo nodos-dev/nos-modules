@@ -177,10 +177,10 @@ struct NVVFXNodeContext : nos::NodeContext {
 
 			nosResourceShareInfo dummy = {};
 			dummy.Info.Type = NOS_RESOURCE_TYPE_TEXTURE;
-			dummy.Info.Texture.Width = 1920 ;
-			dummy.Info.Texture.Height = 1080 ;
+			dummy.Info.Texture.Width = InputFormatted.Info.Texture.Width;
+			dummy.Info.Texture.Height = InputFormatted.Info.Texture.Height;
 			dummy.Info.Texture.Usage = nosImageUsage(NOS_IMAGE_USAGE_TRANSFER_DST | NOS_IMAGE_USAGE_TRANSFER_SRC);
-			dummy.Info.Texture.Format = NOS_FORMAT_R32G32B32A32_SFLOAT;
+			dummy.Info.Texture.Format = InputFormatted.Info.Texture.Format;
 			dummy.Memory.ExternalMemory.HandleType = NOS_EXTERNAL_MEMORY_HANDLE_TYPE_WIN32;
 
 			auto texFb = nos::vkss::ConvertTextureInfo(dummy);
@@ -192,28 +192,37 @@ struct NVVFXNodeContext : nos::NodeContext {
 			OutputPre.Info.Texture.Width = dummy.Info.Texture.Width;
 			OutputPre.Info.Texture.Height = dummy.Info.Texture.Height;
 			OutputPre.Info.Texture.Usage = nosImageUsage(NOS_IMAGE_USAGE_TRANSFER_DST | NOS_IMAGE_USAGE_TRANSFER_SRC);
-			OutputPre.Info.Texture.Format = NOS_FORMAT_R32G32B32A32_SFLOAT;
+			OutputPre.Info.Texture.Format = InputFormatted.Info.Texture.Format;
 
 			//nosVulkan->CreateResource(&OutputPre);
 
-			NvCVImage_Alloc(&nvcv_NV_Input, InputFormatted.Info.Texture.Width, InputFormatted.Info.Texture.Height, NVCV_RGBA, NVCV_F32, NVCV_CHUNKY, NVCV_CUDA, 1);
+			//NvCVImage_Alloc(&nvcv_NV_Input, InputFormatted.Info.Texture.Width, InputFormatted.Info.Texture.Height, NVCV_RGBA, NVCV_F32, NVCV_CHUNKY, NVCV_CUDA, 32);
 			
 			//NvCVImage_Init(&nvcv_NV_Input, InputFormatted.Info.Texture.Width, InputFormatted.Info.Texture.Height, 4 * 4 * nvcv_NOS_Input.width, nvcv_NOS_Input.pixels, nvcv_NOS_Input.pixelFormat, nvcv_NOS_Input.componentType, NVCV_CHUNKY, NVCV_CUDA);
 
-			NvCVImage_Alloc(&nvcv_NV_Output, OutputPre.Info.Texture.Width, OutputPre.Info.Texture.Height, NVCV_RGBA, NVCV_F32, NVCV_CHUNKY, NVCV_CUDA, 1);
+			NvCVImage_Alloc(&nvcv_NV_Output, OutputPre.Info.Texture.Width , OutputPre.Info.Texture.Height , NVCV_RGBA, NVCV_F32, NVCV_CHUNKY, NVCV_CUDA, 1);
 
 			interop.AllocateNVCVImage("Trial", nvcv_NOS_Input.width, nvcv_NOS_Input.height,
-
 				nvcv_NOS_Input.pixelFormat, nvcv_NOS_Input.componentType,
-				InputFormatted.Memory.ExternalMemory.AllocationSize, &nvcv_NOS_Output);
+				nvcv_NOS_Input.bufferBytes, &nvcv_NOS_Output);
 
-			void* temp = nvcv_NOS_Output.pixels;
-			uint64_t size = nvcv_NOS_Output.bufferBytes;
 
-			nvcv_NOS_Output = nvcv_NV_Output;
-			
-			nvcv_NOS_Output.pixels = temp;
-			nvcv_NOS_Output.bufferBytes = size;
+			NvCVImage srcTemp = {}, dstTemp = {};
+			interop.AllocateNVCVImage("SrcTemp", nvcv_NOS_Input.width, nvcv_NOS_Input.height, NVCV_BGR, NVCV_F32, nvcv_NOS_Input.bufferBytes, &srcTemp);
+			interop.AllocateNVCVImage("DstTemp", nvcv_NOS_Input.width, nvcv_NOS_Input.height, NVCV_BGR, NVCV_F32, nvcv_NOS_Input.bufferBytes, &dstTemp);
+			srcTemp.planar = NVCV_PLANAR;
+			dstTemp.planar = NVCV_PLANAR;
+			VFX.InitTransferBuffers(&srcTemp, &dstTemp);
+
+			nosResult res2 = interop.NVCVImageToNosTexture(nvcv_NOS_Output, output);
+
+			//void* temp = nvcv_NOS_Output.pixels;
+			//uint64_t size = nvcv_NOS_Output.bufferBytes;
+
+			//nvcv_NOS_Output = nvcv_NV_Output;
+			//
+			//nvcv_NOS_Output.pixels = temp;
+			//nvcv_NOS_Output.bufferBytes = size;
 
 			
 			OutputSizeSet = true;
@@ -232,26 +241,25 @@ struct NVVFXNodeContext : nos::NodeContext {
 
 		
 		if (true || nvcv_NOS_Input.pixels == nullptr) {
-			void* temp = nvcv_NOS_Input.pixels;
-			uint64_t size= nvcv_NOS_Input.bufferBytes;
-			nvcv_NOS_Input = nvcv_NV_Input;
-			nvcv_NOS_Input.pixels = temp;
-			nvcv_NOS_Input.bufferBytes = size;
+			//void* temp = nvcv_NOS_Input.pixels;
+			//uint64_t size= nvcv_NOS_Input.bufferBytes;
+			//nvcv_NOS_Input = nvcv_NV_Input;
+			//nvcv_NOS_Input.pixels = temp;
+			//nvcv_NOS_Input.bufferBytes = size;
 
 		}
 
-		//res = interop.CopyNVCVImage(&nvcv_NOS_Input, &nvcv_NV_Input);
+		//res = interop.CopyNVCVImage(&nvcv_NOS_Input, &nvcv_NV_Output);
+
 
 		if (res == NOS_RESULT_SUCCESS) {
 			cudaError cudaRes;
 			
-			
 			VFX.Run(&nvcv_NOS_Input, &nvcv_NOS_Output);
+			//VFX.Run(&nvcv_NV_Input, &nvcv_NOS_Output);
 			
-			//interop.CopyNVCVImage(&nvcv_NV_Output, &nvcv_NOS_Output);
+			//res = interop.CopyNVCVImage(&nvcv_NV_Output, &nvcv_NOS_Output);
 
-			if(output.Memory.ExternalMemory.Handle == NULL)
-				nosResult res2 = interop.NVCVImageToNosTexture(nvcv_NOS_Output, output);
 			
 			OutReady = true;
 
@@ -265,6 +273,14 @@ struct NVVFXNodeContext : nos::NodeContext {
 		}
 
 		return res;
+
+
+
+		//---------------------------------------------------------------------------------------------------------
+
+
+
+
 
 		//MWE
 		static int a = 0;
