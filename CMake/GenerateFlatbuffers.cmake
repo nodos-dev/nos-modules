@@ -1,6 +1,6 @@
 # TODO: A copy also exists in nodos repo. Create a submodule or copy to Tools.
 
-function(generate_flatbuffers FLATC_PATH FBS_FOLDERS OUT_FOLDER TEMP_FOLDER)
+function(generate_flatbuffers FLATC_PATH FBS_FOLDERS OUT_FOLDER TEMP_FOLDER OUT_LANGUAGE)
     # Check if flatbuffers compiler is available
     message("Looking for flatbuffers compiler at ${FLATC_PATH}")
     find_program(FLATC "${FLATC_PATH}")
@@ -21,7 +21,7 @@ function(generate_flatbuffers FLATC_PATH FBS_FOLDERS OUT_FOLDER TEMP_FOLDER)
         execute_process(COMMAND ${FLATC}
                                     -o ${TEMP_FOLDER}
                                     ${FBS_FILE}
-                                    --cpp
+                                    --${OUT_LANGUAGE}
                                     --grpc ${FBS_FILE} 
                                     --gen-mutable
                                     --gen-name-strings

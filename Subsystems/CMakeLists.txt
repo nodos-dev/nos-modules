@@ -18,7 +18,7 @@ function(add_folder_as_subsystem_project NAME DEPENDENCIES INCLUDE_FOLDERS)
         message(STATUS "${PROJECT_NAME}: Scanning ${folder}")
         file(GLOB_RECURSE SOURCES CONFIGURE_DEPENDS ${folder} "${folder}/*.cpp" 
             "${folder}/*.cc" "${folder}/*.c" "${folder}/*.inl"
-            "${folder}/*.frag" "${folder}/*.vert" "${folder}/*.glsl" "${folder}/*.comp" "${folder}/*.dat" "${folder}/*.natvis")
+            "${folder}/*.frag" "${folder}/*.vert" "${folder}/*.glsl" "${folder}/*.comp" "${folder}/*.dat" "${folder}/*.natvis" "${folder}/*.py")
         file(GLOB_RECURSE HEADERS CONFIGURE_DEPENDS ${folder} "${folder}/*.h" "${folder}/*.hpp")
         file(GLOB_RECURSE RESOURCES CONFIGURE_DEPENDS ${folder} "${folder}/*.rc")
         list(APPEND COLLECTED_SOURCES ${SOURCES})
@@ -65,3 +65,4 @@ endif()
 
 add_subdirectory(nosVulkanSubsystem) # Subsystem prefix is only for distinguishing between nosVulkan repo and this.
 add_subdirectory(nosTestSubsystem)
+add_subdirectory(nosPython)
