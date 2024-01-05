@@ -83,7 +83,7 @@ struct WriteImage : NodeContext {
         assert(Event == nullptr);
         nosVulkan->Begin("Write Image Copy To", &cmd);
         nosVulkan->End2(cmd, NOS_TRUE, &Event);
-		copyInfo->CopyToOptions.Stop = true;
+		nosEngine.EndScheduling(copyInfo->ID);
 		if (WriteRequested)
 		{
 			WriteRequested = false;
@@ -143,7 +143,8 @@ struct WriteImage : NodeContext {
             auto writeImage = (WriteImage*)ctx;
             auto ids = GetPinIds(nodeArgs);
             writeImage->WriteRequested = true;
-            nosEngine.SchedulePin(ids[NSN_In], {0, 1});
+			nosSchedulePinParams scheduleParams{ids[NSN_In], 1, true, {0, 1}, false};
+			nosEngine.SchedulePin(&scheduleParams);
             nosEngine.LogI("WriteImage: Write requested");
         };
 

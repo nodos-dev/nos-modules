@@ -252,15 +252,9 @@ struct WebRTCNodeContext : nos::NodeContext {
 		
 		checkCallbacks = true;
 		
-		nos::fb::vec2u deltaSec(10'000u, (uint32_t)std::floor(FPS * 10'000));
+		nosVec2u deltaSec{10'000u, (uint32_t)std::floor(FPS * 10'000)};
 
 		flatbuffers::FlatBufferBuilder fbb;
-		std::vector<flatbuffers::Offset<nos::app::AppEvent>> Offsets;
-		Offsets.push_back(nos::CreateAppEventOffset(
-			fbb, nos::app::CreateScheduleRequest(
-				fbb, nos::app::ScheduleRequestKind::PIN, &InputPinUUID, false, &deltaSec, true) ) );
-		nosEvent hungerEvent = nos::CreateAppEvent(fbb, nos::app::CreateBatchAppEventDirect(fbb, &Offsets));
-		nosEngine.EnqueueEvent(&hungerEvent);
 
 		HandleEvent(
 			nos::CreateAppEvent(fbb, nos::CreatePartialNodeUpdateDirect(fbb, &DisconnectFromServerID,
@@ -405,7 +399,6 @@ struct WebRTCNodeContext : nos::NodeContext {
 		InputRing->SetWrote();
 		SendFrameCV.notify_one();
 		StopRequested = !InputRing->IsWriteable();
-		cpy->CopyToOptions.Stop = !InputRing->IsWriteable();
 
 		return NOS_RESULT_SUCCESS;
 	}
@@ -442,7 +435,8 @@ struct WebRTCNodeContext : nos::NodeContext {
 			if(!InputRing->IsReadable())
 			{
 				nosVec2u deltaSec{ 10'000u, (uint32_t)std::floor(FPS * 10'000) };
-				nosEngine.SchedulePin(InputPinUUID, deltaSec);
+				nosSchedulePinParams scheduleParams{InputPinUUID, 1, true, deltaSec, true};
+				nosEngine.SchedulePin(&scheduleParams);
 
 				if (shouldSendFrame) {
 					//nosEngine.LogW("WebRTC Streamer has no frame on the ring!");

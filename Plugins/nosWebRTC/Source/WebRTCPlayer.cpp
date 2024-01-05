@@ -222,8 +222,6 @@ struct WebRTCPlayerNodeContext : nos::NodeContext {
 		
 		checkCallbacks = true;
 
-		nosEngine.SchedulePin(OutputPinUUID, { 0,1 });
-
 		flatbuffers::FlatBufferBuilder fbb;
 
 		HandleEvent(
