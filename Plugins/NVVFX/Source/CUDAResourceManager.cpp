@@ -44,6 +44,7 @@ CudaGPUResourceManager::CudaGPUResourceManager()
 
 CudaGPUResourceManager::~CudaGPUResourceManager()
 {
+    DisposeResources();
 }
 
 void CudaGPUResourceManager::DisposeResources()
@@ -151,7 +152,7 @@ CUmemGenericAllocationHandle CudaGPUResourceManager::AllocateShareableGPU(std::s
     cuGetErrorString(status, &errorMsg);
     assert(status == CUDA_SUCCESS);
 
-    CUDABuffers[name] = {.address = new_ptr, .shareableHandle = shareableHandle, .size = aligned_size};
+    CUDABuffers[name] = {.address = new_ptr, .shareableHandle = shareableHandle, .size = aligned_size };
     return shareableHandle;
 }
 
@@ -243,21 +244,27 @@ nosResult CudaGPUResourceManager::MemCopy(int64_t source, int64_t destination, i
     internalAddres_src = (internalAddres_src == NULL) ? (source) : (internalAddres_src);
 
     cudaError res = cudaMemcpy(reinterpret_cast<void*>(internalAddres_dst), reinterpret_cast<void*>(internalAddres_src), size, cudaMemcpyDeviceToDevice);
+    cudaError syncRes = cudaDeviceSynchronize();
+    if (syncRes != CUDA_SUCCESS) {
+        nosEngine.LogE("CUDA device synchronize failed with error code %d", syncRes);
+        return NOS_RESULT_FAILED;
+    }
+
     assert(res == cudaSuccess);
 
-    uint8_t* src = new uint8_t[size];
-    cudaMemcpy(src, reinterpret_cast<void*>(internalAddres_src), size, cudaMemcpyDeviceToHost);
+    //uint8_t* src = new uint8_t[size];
+    //cudaMemcpy(src, reinterpret_cast<void*>(internalAddres_src), size, cudaMemcpyDeviceToHost);
 
-    uint8_t* dst = new uint8_t[size];
-    cudaMemcpy(dst, reinterpret_cast<void*>(internalAddres_dst), size, cudaMemcpyDeviceToHost);
+    //uint8_t* dst = new uint8_t[size];
+    //cudaMemcpy(dst, reinterpret_cast<void*>(internalAddres_dst), size, cudaMemcpyDeviceToHost);
 
 
     if (res != cudaSuccess) {
         nosEngine.LogE("CudaMemcyp failed with error code %d!", res);
         return NOS_RESULT_FAILED;
     }
-    delete[] src;
-    delete[] dst;
+    //delete[] src;
+    //delete[] dst;
     return NOS_RESULT_SUCCESS;
 }
 

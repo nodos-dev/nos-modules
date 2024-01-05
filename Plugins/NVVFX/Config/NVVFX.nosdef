@@ -16,9 +16,6 @@
               "type_name": "nos.sys.vulkan.Texture",
               "show_as": "OUTPUT_PIN",
               "can_show_as": "OUTPUT_PIN_OR_PROPERTY",
-              "data": {
-                "format": "R32G32B32A32_SFLOAT"
-              },
               "live": true
             },
             {
@@ -29,11 +26,13 @@
               "data": 0.5
             },
             {
-              "name": "Normalize",
-              "type_name": "bool",
+              "name": "ModelsPath",
+              "type_name": "string",
               "show_as": "PROPERTY",
               "can_show_as": "INPUT_PIN_OR_PROPERTY",
-              "data": 0
+              "visualizer": {
+                "type": "FILE_PICKER"
+              }
             },
             {
               "name": "UpscaleFactor",
