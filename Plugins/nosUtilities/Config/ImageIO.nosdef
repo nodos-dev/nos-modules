@@ -49,8 +49,7 @@
                         "can_show_as": "INPUT_PIN_OR_PROPERTY",
                         "data": {
                             "format": "R8G8B8A8_UNORM"
-                        },
-                        "live": true
+                        }
                     },
                     {
                         "name": "Path",
