@@ -8,15 +8,13 @@
               "name": "In",
               "type_name": "nos.sys.vulkan.Texture",
               "show_as": "INPUT_PIN",
-              "can_show_as": "INPUT_PIN_OR_PROPERTY",
-              "live": true
+              "can_show_as": "INPUT_PIN_OR_PROPERTY"
             },
             {
               "name": "Out",
               "type_name": "nos.sys.vulkan.Texture",
               "show_as": "OUTPUT_PIN",
-              "can_show_as": "OUTPUT_PIN_OR_PROPERTY",
-              "live": true
+              "can_show_as": "OUTPUT_PIN_OR_PROPERTY"
             },
             {
               "name": "UpscaleStrength",

@@ -60,7 +60,7 @@ nosResult NVVFXAppRunner::Run(NvCVImage* input, NvCVImage* output)
 
     bool needTransfer = true;
 
-    if (false) {
+    if (true) {
         /*if(InputTransferred.pixels != nullptr)
             NvCVImage_Destroy(&InputTransferred);
         
@@ -70,16 +70,24 @@ nosResult NVVFXAppRunner::Run(NvCVImage* input, NvCVImage* output)
         if(OutputToBeTransferred.pixels != nullptr)
             NvCVImage_Destroy(&OutputToBeTransferred);*/
 
-        if (needTransfer) {
+        if (true) {
             NvCVImage dummy1 = {};
             NvCVImage dummy2 = {};
-            res = NvCVImage_Alloc(&dummy1, input->width, input->height, NVCV_BGRA, NVCV_F32, NVCV_PLANAR, NVCV_CUDA, 1);
+            NvCVImage dummy3 = {};
+            NvCVImage dummy4 = {};
+            res = NvCVImage_Alloc(&dummy1, input->width, input->height, NVCV_RGBA, NVCV_F32, NVCV_PLANAR, NVCV_CUDA, 0);
+            CHECK_NVCV_ERROR(res);
+
+            res = NvCVImage_Alloc(&dummy2, input->width, input->height, NVCV_RGBA, NVCV_F32, NVCV_INTERLEAVED, NVCV_CUDA, 0);
+            CHECK_NVCV_ERROR(res);            
+            
+            res = NvCVImage_Alloc(&dummy4, input->width, input->height, NVCV_RGBA, NVCV_F32, NVCV_INTERLEAVED, NVCV_CUDA, 32);
             CHECK_NVCV_ERROR(res);
 
             //res = NvCVImage_Alloc(&Temp, input->width, input->height, NVCV_RGBA, NVCV_F32, NVCV_CHUNKY, NVCV_CUDA, 1);
             //CHECK_NVCV_ERROR(res);
 
-            res = NvCVImage_Alloc(&dummy2, output->width, output->height, NVCV_BGR, NVCV_F32, NVCV_PLANAR, NVCV_CUDA, 32);
+            res = NvCVImage_Alloc(&dummy3, output->width, output->height, NVCV_RGBA, NVCV_F32, NVCV_PLANAR, NVCV_CUDA, 32);
             CHECK_NVCV_ERROR(res);
         }
         else {

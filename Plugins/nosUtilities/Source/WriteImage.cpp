@@ -26,6 +26,7 @@ NOS_REGISTER_NAME_SPACED(Nos_Utilities_WriteImage, "nos.utilities.WriteImage")
 struct WriteImage : NodeContext {
     std::filesystem::path Path;
     nosResourceShareInfo Input;
+    nosGPUEvent Event;
     std::atomic_bool WriteRequested = false;
     std::condition_variable CV;
     std::mutex Mutex;
@@ -40,6 +41,8 @@ struct WriteImage : NodeContext {
                 CV.wait(lock, [this] { return Write || ShouldStop; });
                 if (ShouldStop)
                     break;
+                if(Event)
+                    nosVulkan->WaitGpuEvent(&Event, UINT64_MAX);
                 if (this->Write) {
 					this->Write = false;
 					this->WriteImageToFile();
@@ -74,20 +77,19 @@ struct WriteImage : NodeContext {
 			Path = std::string((const char*)value.Data, value.Size);
 	}
 
-    nosResult BeginCopyTo(nosCopyInfo* copyInfo) override
+    nosResult CopyTo(nosCopyInfo* copyInfo) override
     {
-    	auto texCopy = static_cast<nosTextureCopyInfo*>(copyInfo->TypeCopyInfo);
-        texCopy->ShouldSubmitAndWait = true;
-        copyInfo->CopyToOptions.Stop = true;
+        nosCmd cmd;
+        assert(Event == nullptr);
+        nosVulkan->Begin("Write Image Copy To", &cmd);
+        nosVulkan->End2(cmd, NOS_TRUE, &Event);
+		nosEngine.EndScheduling(copyInfo->ID);
+		if (WriteRequested)
+		{
+			WriteRequested = false;
+			SignalWrite();
+		}
         return NOS_RESULT_SUCCESS;
-    }
-
-    void EndCopyTo(nosCopyInfo* copyInfo) override
-    {
-        if (WriteRequested) {
-            WriteRequested = false;
-            SignalWrite();
-        }
     }
 
     void WriteImageToFile() {
@@ -141,7 +143,8 @@ struct WriteImage : NodeContext {
             auto writeImage = (WriteImage*)ctx;
             auto ids = GetPinIds(nodeArgs);
             writeImage->WriteRequested = true;
-            nosEngine.SchedulePin(ids[NSN_In], {0, 1});
+			nosSchedulePinParams scheduleParams{ids[NSN_In], 1, true, {0, 1}, false};
+			nosEngine.SchedulePin(&scheduleParams);
             nosEngine.LogI("WriteImage: Write requested");
         };
 

@@ -34,7 +34,7 @@ public:
 	nosResult NVCVImageToNosTexture(NvCVImage& nvcvImage, nosResourceShareInfo& vulkanTex, std::optional<nosNVCVLayout> layout = std::nullopt);
 
 	//User must ensure the correctness of FORMAT, width, height of the required texture. CUDA will only set GPU addresses
-	void SetCUDAMemoryToVulkan(int64_t cudaPointerAddress, int width, int height, size_t blockSize, size_t allocationSize, size_t offset, int32_t format, nos::sys::vulkan::TTexture* outNosTexture);
+	void SetCUDAMemoryToVulkan(int64_t cudaPointerAddress, int width, int height, size_t blockSize, size_t allocationSize, size_t offset, int32_t format, nosResourceShareInfo* outNosTexture);
 	nosResult AllocateNVCVImage(std::string name, int width, int height, NvCVImage_PixelFormat pixelFormat, NvCVImage_ComponentType compType, size_t size ,NvCVImage* out);
 	
 	NvCVImage_PixelFormat GetPixelFormatFromVulkanFormat(nosFormat format);

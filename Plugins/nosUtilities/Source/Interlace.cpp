@@ -35,10 +35,9 @@ struct InterlaceNode : NodeContext
 	{
 	}
 
-	nosResult BeginCopyFrom(nosCopyInfo* copyInfo) override
+	nosResult CopyFrom(nosCopyInfo* copyInfo) override
 	{
-		auto* texCopy = static_cast<nosTextureCopyInfo*>(copyInfo->TypeCopyInfo);
-		texCopy->CopyTextureFrom.Info.Texture.FieldType = Field;
+		vkss::SetFieldType(copyInfo->ID, *copyInfo->PinData, Field);
 		Field = vkss::FlippedField(Field);
 		return NOS_RESULT_SUCCESS;
 	}
@@ -83,10 +82,9 @@ struct DeinterlaceNode : NodeContext
 	{
 	}
 
-	nosResult BeginCopyFrom(nosCopyInfo* copyInfo) override
+	nosResult CopyFrom(nosCopyInfo* copyInfo) override
 	{
-		auto* texCopy = static_cast<nosTextureCopyInfo*>(copyInfo->TypeCopyInfo);
-		texCopy->CopyTextureFrom.Info.Texture.FieldType = NOS_TEXTURE_FIELD_TYPE_PROGRESSIVE;
+		vkss::SetFieldType(copyInfo->ID, *copyInfo->PinData, NOS_TEXTURE_FIELD_TYPE_PROGRESSIVE);
 		return NOS_RESULT_SUCCESS;
 	}
 

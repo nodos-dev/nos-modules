@@ -63,23 +63,21 @@ nosResult CUDAVulkanInterop::SetVulkanMemoryToCUDA(int64_t handle, size_t blockS
 	return NOS_RESULT_SUCCESS;
 }
 
-void CUDAVulkanInterop::SetCUDAMemoryToVulkan(int64_t cudaPointerAddress, int width, int height ,size_t blockSize, size_t allocationSize, size_t offset, int32_t format, nos::sys::vulkan::TTexture* outNosTexture) {
-	outNosTexture->size = nos::sys::vulkan::SizePreset::CUSTOM;
-	outNosTexture->width = width;
-	outNosTexture->height = height;
-	outNosTexture->format = nos::sys::vulkan::Format(format);
+void CUDAVulkanInterop::SetCUDAMemoryToVulkan(int64_t cudaPointerAddress, int width, int height ,size_t blockSize, size_t allocationSize, size_t offset, int32_t format, nosResourceShareInfo* outNosTexture) {
+	outNosTexture->Info.Type = NOS_RESOURCE_TYPE_TEXTURE;
+	outNosTexture->Info.Texture.Format = nosFormat(format);
+	outNosTexture->Info.Texture.Width = width;
+	outNosTexture->Info.Texture.Height = height;
+
 				 
-	outNosTexture->usage |= nos::sys::vulkan::ImageUsage::SAMPLED | nos::sys::vulkan::ImageUsage::TRANSFER_DST | nos::sys::vulkan::ImageUsage::TRANSFER_SRC;
-	outNosTexture->unmanaged = false;
-	outNosTexture->unscaled = true;
-	outNosTexture->handle = 0;
-				 
-	outNosTexture->external_memory.mutate_handle_type(0x00000002);
-	outNosTexture->external_memory.mutate_handle(cudaPointerAddress);
-	outNosTexture->external_memory.mutate_pid(getpid());
-	outNosTexture->external_memory.mutate_offset(offset);
-	outNosTexture->external_memory.mutate_allocation_size(allocationSize);
-	outNosTexture->external_memory.mutate_block_size(blockSize);
+	outNosTexture->Info.Texture.Usage = nosImageUsage(nosImageUsage::NOS_IMAGE_USAGE_SAMPLED | nosImageUsage::NOS_IMAGE_USAGE_TRANSFER_DST | nosImageUsage::NOS_IMAGE_USAGE_TRANSFER_SRC);
+	outNosTexture->Memory.Handle = 0;
+	outNosTexture->Memory.ExternalMemory.HandleType = NOS_EXTERNAL_MEMORY_HANDLE_TYPE_WIN32;
+	outNosTexture->Memory.ExternalMemory.Handle = cudaPointerAddress;
+	outNosTexture->Memory.ExternalMemory.PID = getpid();
+	outNosTexture->Memory.Offset = offset;
+	outNosTexture->Memory.ExternalMemory.AllocationSize = blockSize;
+	outNosTexture->Memory.Size = allocationSize;
 }
 
 nosResult CUDAVulkanInterop::AllocateNVCVImage(std::string name, int width, int height, NvCVImage_PixelFormat pixelFormat, NvCVImage_ComponentType compType, size_t size, NvCVImage* out)
@@ -140,10 +138,16 @@ nosResult CUDAVulkanInterop::AllocateNVCVImage(std::string name, int width, int 
 nosResult CUDAVulkanInterop::nosTextureToNVCVImage(nosResourceShareInfo& vulkanTex, NvCVImage& nvcvImage, std::optional<nosNVCVLayout> layout)
 {
 	uint64_t gpuPointer = 0;
-	size_t textureSize2 = vulkanTex.Info.Texture.GetSize();
+	//size_t textureSize2 = vulkanTex.Info.Texture.GetSize();
 	size_t textureSize;
-	nosVulkan->GetImageSize(vulkanTex.Memory.Handle, &textureSize);
-	nosResult res = SetVulkanMemoryToCUDA(vulkanTex.Memory.ExternalMemory.Handle, vulkanTex.Memory.ExternalMemory.BlockSize, vulkanTex.Memory.ExternalMemory.AllocationSize, vulkanTex.Memory.ExternalMemory.Offset, &gpuPointer);
+	//nosVulkan->GetImageSize(vulkanTex.Memory.Handle, &textureSize);
+	nosResult res = SetVulkanMemoryToCUDA(vulkanTex.Memory.ExternalMemory.Handle, vulkanTex.Memory.ExternalMemory.AllocationSize, vulkanTex.Memory.ExternalMemory.AllocationSize, vulkanTex.Memory.Offset, &gpuPointer);
+	cudaTextureObject_t trial = {};
+	cudaResourceDesc resDesc = {};
+	float* trial2 = NULL;
+	size_t pitch = 0;
+	
+	cudaError cudaRes = cudaMallocPitch((void**)&trial2, &pitch, 2048*4*4, 1080);
 
 
 	if (res != NOS_RESULT_SUCCESS)
@@ -188,12 +192,9 @@ nosResult CUDAVulkanInterop::NVCVImageToNosTexture(NvCVImage& nvcvImage, nosReso
 
 	/*status = cuMemExportToShareableHandle(&shareableHandle, handle, CU_MEM_HANDLE_TYPE_WIN32, 0);*/
 
-	nos::sys::vulkan::TTexture tex;
-
 	SetCUDAMemoryToVulkan(shareableHandle, nvcvImage.width, nvcvImage.height,
-		size, size, 0, GetVulkanFormatFromNVCVImage(nvcvImage), &tex);
+		size, size, 0, GetVulkanFormatFromNVCVImage(nvcvImage), &vulkanTex);
 	
-	vulkanTex = nos::vkss::ConvertDef(tex);
 	res = nosVulkan->ImportResource(&vulkanTex);
 
 	return res;

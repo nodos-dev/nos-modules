@@ -27,7 +27,7 @@ function(add_folder_as_subsystem_project NAME DEPENDENCIES INCLUDE_FOLDERS)
     endforeach()
     foreach(CONFIG_FOLDER ${CONFIG_FOLDERS})
         file(GLOB_RECURSE CUR_CONFIG_FILES CONFIGURE_DEPENDS ${CONFIG_FOLDER} 
-            "${CONFIG_FOLDER}/*.nossys" "${CONFIG_FOLDER}/*.fbs")
+            "${CONFIG_FOLDER}/*.nossys" "${CONFIG_FOLDER}/*.fbs" "${CONFIG_FOLDER}/Defaults.json")
         list(APPEND CONFIG_FILES ${CUR_CONFIG_FILES})
     endforeach()
 

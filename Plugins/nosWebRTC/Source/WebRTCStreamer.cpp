@@ -252,15 +252,9 @@ struct WebRTCNodeContext : nos::NodeContext {
 		
 		checkCallbacks = true;
 		
-		nos::fb::vec2u deltaSec(10'000u, (uint32_t)std::floor(FPS * 10'000));
+		nosVec2u deltaSec{10'000u, (uint32_t)std::floor(FPS * 10'000)};
 
 		flatbuffers::FlatBufferBuilder fbb;
-		std::vector<flatbuffers::Offset<nos::app::AppEvent>> Offsets;
-		Offsets.push_back(nos::CreateAppEventOffset(
-			fbb, nos::app::CreateScheduleRequest(
-				fbb, nos::app::ScheduleRequestKind::PIN, &InputPinUUID, false, &deltaSec, true) ) );
-		nosEvent hungerEvent = nos::CreateAppEvent(fbb, nos::app::CreateBatchAppEventDirect(fbb, &Offsets));
-		nosEngine.EnqueueEvent(&hungerEvent);
 
 		HandleEvent(
 			nos::CreateAppEvent(fbb, nos::CreatePartialNodeUpdateDirect(fbb, &DisconnectFromServerID,
@@ -386,7 +380,7 @@ struct WebRTCNodeContext : nos::NodeContext {
 		return NOS_RESULT_SUCCESS;
 	}
 
-	nosResult BeginCopyTo(nosCopyInfo* cpy) override {
+	nosResult CopyTo(nosCopyInfo* cpy) override {
 		copyToLogger.LogStats();
 		if (!InputRing->IsWriteable()) {
 			//nosEngine.LogW("WebRTC Streamer frame drop!");
@@ -394,21 +388,19 @@ struct WebRTCNodeContext : nos::NodeContext {
 		}
 		int writeIndex = InputRing->GetNextWritable();
 		LastFrameID = cpy->FrameNumber;
-		auto& texCpy = *static_cast<nosTextureCopyInfo*>(cpy->TypeCopyInfo);
-		texCpy.ShouldCopyTexture = true;
-		texCpy.CopyTextureFrom = DummyInput;
-		texCpy.CopyTextureTo = InputBuffers[writeIndex];
-		texCpy.ShouldSubmitAndWait = true;
-		return NOS_RESULT_SUCCESS;
-	}
+		nosCmd cmd;
+		nosVulkan->Begin("WebRTC Out Copy", &cmd);
+		nosVulkan->Copy(cmd, &DummyInput, &InputBuffers[writeIndex], 0);
+		nosGPUEvent event;
+		nosVulkan->End2(cmd, NOS_TRUE, &event);
+		nosVulkan->WaitGpuEvent(&event, UINT64_MAX);
 
-	void EndCopyTo(nosCopyInfo* cpy) override {
 		CopyCompleted = true;
 		InputRing->SetWrote();
 		SendFrameCV.notify_one();
 		StopRequested = !InputRing->IsWriteable();
-		cpy->CopyToOptions.Stop = !InputRing->IsWriteable();
 
+		return NOS_RESULT_SUCCESS;
 	}
 
 	void OnEncodeCompleted() {
@@ -443,7 +435,8 @@ struct WebRTCNodeContext : nos::NodeContext {
 			if(!InputRing->IsReadable())
 			{
 				nosVec2u deltaSec{ 10'000u, (uint32_t)std::floor(FPS * 10'000) };
-				nosEngine.SchedulePin(InputPinUUID, deltaSec);
+				nosSchedulePinParams scheduleParams{InputPinUUID, 1, true, deltaSec, true};
+				nosEngine.SchedulePin(&scheduleParams);
 
 				if (shouldSendFrame) {
 					//nosEngine.LogW("WebRTC Streamer has no frame on the ring!");

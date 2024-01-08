@@ -167,7 +167,7 @@ struct NVVFXNodeContext : nos::NodeContext {
 		if (!OutputSizeSet) {
 			
 			InputFormatted.Info.Type = NOS_RESOURCE_TYPE_TEXTURE;
-			InputFormatted.Info.Texture.Width = 1920;
+			InputFormatted.Info.Texture.Width = 2048;
 			InputFormatted.Info.Texture.Height = 1080;
 			InputFormatted.Info.Texture.Usage = nosImageUsage(NOS_IMAGE_USAGE_TRANSFER_DST | NOS_IMAGE_USAGE_TRANSFER_SRC);
 			InputFormatted.Info.Texture.Format = NOS_FORMAT_R32G32B32A32_SFLOAT;
@@ -236,7 +236,7 @@ struct NVVFXNodeContext : nos::NodeContext {
 		nosVulkan->Begin("Input DownloadD", &cmd);
 		nosVulkan->Copy(cmd, &in, &InputFormatted, 0);
 		nosVulkan->End2(cmd, NOS_TRUE, &gpuevent);
-		nosVulkan->WaitGpuEvent(&gpuevent);
+		nosVulkan->WaitGpuEvent(&gpuevent, UINT64_MAX);
 
 
 		
@@ -327,12 +327,6 @@ struct NVVFXNodeContext : nos::NodeContext {
 
 	}
 
-	nosResult BeginCopyTo(nosCopyInfo* cpy) override {
-		return NOS_RESULT_SUCCESS;
-	}
-
-	void EndCopyTo(nosCopyInfo* cpy) override {
-	}
 };
 
 extern "C"
