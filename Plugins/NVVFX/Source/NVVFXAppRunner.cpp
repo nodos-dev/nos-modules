@@ -60,7 +60,7 @@ nosResult NVVFXAppRunner::Run(NvCVImage* input, NvCVImage* output)
 
     bool needTransfer = true;
 
-    if (true) {
+    if (false) {
         /*if(InputTransferred.pixels != nullptr)
             NvCVImage_Destroy(&InputTransferred);
         
@@ -114,19 +114,14 @@ nosResult NVVFXAppRunner::Run(NvCVImage* input, NvCVImage* output)
         //res = NvVFX_SetCudaStream(AR_EffectHandle, NVVFX_CUDA_STREAM, stream);
         CHECK_NVCV_ERROR(res);
 
-        int temp = input->height;
-        input->height = temp + 72;
-        output->height = temp + 72;
-
-        InputTransferred.height = temp + 72;
-        OutputToBeTransferred.height = temp + 72;
 
         res = NvCVImage_Transfer(input, &InputTransferred, 1.0f, stream, &Temp);
         cudaStreamSynchronize(stream);
         CHECK_NVCV_ERROR(res);
 
-        InputTransferred.height = temp ;
-        OutputToBeTransferred.height = temp ;
+        //res = NvCVImage_Transfer(&InputTransferred, &OutputToBeTransferred, 1.0f, stream, &Temp);
+        //cudaStreamSynchronize(stream);
+        //CHECK_NVCV_ERROR(res);
         //
         //res = NvCVImage_Transfer(&InputTransferred, &OutputToBeTransferred, 1.0f, stream, &Temp);
         //cudaStreamSynchronize(stream);
@@ -154,18 +149,10 @@ nosResult NVVFXAppRunner::Run(NvCVImage* input, NvCVImage* output)
         res = NvVFX_Run(AR_EffectHandle, 0);
         CHECK_NVCV_ERROR(res);
 
-        InputTransferred.height = temp + 72;
-        OutputToBeTransferred.height = temp + 72;
-
         res = NvCVImage_Transfer(&OutputToBeTransferred, output, 1.0f, stream, &Temp);
         cudaStreamSynchronize(stream);
         CHECK_NVCV_ERROR(res);
 
-        input->height = temp;
-        output->height = temp;
-
-        InputTransferred.height = temp;
-        OutputToBeTransferred.height = temp;
         //float* data3 = new float[OutputToBeTransferred.bufferBytes/4];
         //cudaMemcpy(data3, OutputToBeTransferred.pixels, OutputToBeTransferred.bufferBytes, cudaMemcpyDeviceToHost);
 

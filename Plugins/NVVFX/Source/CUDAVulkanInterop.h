@@ -35,7 +35,7 @@ public:
 
 	//User must ensure the correctness of FORMAT, width, height of the required texture. CUDA will only set GPU addresses
 	void SetCUDAMemoryToVulkan(int64_t cudaPointerAddress, int width, int height, size_t blockSize, size_t allocationSize, size_t offset, int32_t format, nosResourceShareInfo* outNosTexture);
-	nosResult AllocateNVCVImage(std::string name, int width, int height, NvCVImage_PixelFormat pixelFormat, NvCVImage_ComponentType compType, size_t size ,NvCVImage* out);
+	nosResult AllocateNVCVImage(std::string name, int width, int height, NvCVImage_PixelFormat pixelFormat, NvCVImage_ComponentType compType, size_t size, int planar ,NvCVImage* out);
 	
 	NvCVImage_PixelFormat GetPixelFormatFromVulkanFormat(nosFormat format);
 	NvCVImage_ComponentType GetComponentTypeFromVulkanFormat(nosFormat format);
@@ -48,4 +48,7 @@ public:
 private:
 	void InitCUDA();
 	CudaGPUResourceManager GPUResManager;
+	nosResourceShareInfo vulkanTexBuf = {};
+	uint64_t theGPUPointer = NULL;
+
 };

@@ -64,15 +64,13 @@ nosResult CUDAVulkanInterop::SetVulkanMemoryToCUDA(int64_t handle, size_t blockS
 }
 
 void CUDAVulkanInterop::SetCUDAMemoryToVulkan(int64_t cudaPointerAddress, int width, int height ,size_t blockSize, size_t allocationSize, size_t offset, int32_t format, nosResourceShareInfo* outNosTexture) {
-	outNosTexture->Info.Type = NOS_RESOURCE_TYPE_TEXTURE;
-	outNosTexture->Info.Texture.Format = nosFormat(format);
-	outNosTexture->Info.Texture.Width = width;
-	outNosTexture->Info.Texture.Height = height;
+	outNosTexture->Info.Type = NOS_RESOURCE_TYPE_BUFFER;
+	outNosTexture->Info.Buffer.Size = allocationSize;
+	outNosTexture->Info.Buffer.Usage = nosBufferUsage(nosBufferUsage::NOS_BUFFER_USAGE_TRANSFER_SRC | nosBufferUsage::NOS_BUFFER_USAGE_TRANSFER_DST);
 
 				 
-	outNosTexture->Info.Texture.Usage = nosImageUsage(nosImageUsage::NOS_IMAGE_USAGE_SAMPLED | nosImageUsage::NOS_IMAGE_USAGE_TRANSFER_DST | nosImageUsage::NOS_IMAGE_USAGE_TRANSFER_SRC);
 	outNosTexture->Memory.Handle = 0;
-	outNosTexture->Memory.ExternalMemory.HandleType = NOS_EXTERNAL_MEMORY_HANDLE_TYPE_WIN32;
+	outNosTexture->Memory.ExternalMemory.HandleType = NOS_EXTERNAL_MEMORY_HANDLE_TYPE_D3D12_RESOURCE;
 	outNosTexture->Memory.ExternalMemory.Handle = cudaPointerAddress;
 	outNosTexture->Memory.ExternalMemory.PID = getpid();
 	outNosTexture->Memory.Offset = offset;
@@ -80,7 +78,7 @@ void CUDAVulkanInterop::SetCUDAMemoryToVulkan(int64_t cudaPointerAddress, int wi
 	outNosTexture->Memory.Size = allocationSize;
 }
 
-nosResult CUDAVulkanInterop::AllocateNVCVImage(std::string name, int width, int height, NvCVImage_PixelFormat pixelFormat, NvCVImage_ComponentType compType, size_t size, NvCVImage* out)
+nosResult CUDAVulkanInterop::AllocateNVCVImage(std::string name, int width, int height, NvCVImage_PixelFormat pixelFormat, NvCVImage_ComponentType compType, size_t size, int planar, NvCVImage* out)
 {
 	int64_t handle = 0;
 	handle = GPUResManager.AllocateShareableGPU(name, size);
@@ -121,7 +119,7 @@ nosResult CUDAVulkanInterop::AllocateNVCVImage(std::string name, int width, int 
 
 	out->width = width;
 	out->height = height;
-	out->pitch = width * componentByte;
+	out->pitch = (planar == NVCV_PLANAR) ? (width * componentByte) : (width*componentByte*componentNum);
 	out->pixelFormat = pixelFormat;
 	out->componentType = compType;
 	out->pixelBytes = componentByte * componentNum;
@@ -130,35 +128,69 @@ nosResult CUDAVulkanInterop::AllocateNVCVImage(std::string name, int width, int 
 	out->pixels = reinterpret_cast<void*>(buffer);
 	out->gpuMem = NVCV_CUDA;
 	out->bufferBytes = realSize;
-	out->planar = NVCV_INTERLEAVED;
+	out->planar = planar;
 
 	return NOS_RESULT_SUCCESS;
 }
 
 nosResult CUDAVulkanInterop::nosTextureToNVCVImage(nosResourceShareInfo& vulkanTex, NvCVImage& nvcvImage, std::optional<nosNVCVLayout> layout)
 {
+	int componentNum = GetComponentNumFromVulkanFormat(vulkanTex.Info.Texture.Format);
+	int componentByte = GetComponentBytesFromVulkanFormat(vulkanTex.Info.Texture.Format);
+	if (vulkanTexBuf.Memory.ExternalMemory.Handle != NULL) {
+		nosCmd texToBuf = {};
+		nosGPUEvent waitTexToBuf = {};
+		nosVulkan->Begin("TexToBuf", &texToBuf);
+		nosVulkan->Copy(texToBuf, &vulkanTex, &vulkanTexBuf, 0);
+		nosVulkan->End2(texToBuf, NOS_TRUE, &waitTexToBuf);
+		nosVulkan->WaitGpuEvent(&waitTexToBuf, UINT64_MAX);
+
+		//void* vulkanData = nosVulkan->Map(&vulkanTexBuf);
+
+		//float* data = new float[vulkanTex.Info.Texture.Width * vulkanTex.Info.Texture.Height * componentNum];
+		//cudaError cudaRes = cudaMemcpy(data, reinterpret_cast<void*>(theGPUPointer), 8, cudaMemcpyDeviceToHost);
+
+
+		return NOS_RESULT_SUCCESS;
+	}
 	uint64_t gpuPointer = 0;
 	//size_t textureSize2 = vulkanTex.Info.Texture.GetSize();
 	size_t textureSize;
-	//nosVulkan->GetImageSize(vulkanTex.Memory.Handle, &textureSize);
-	nosResult res = SetVulkanMemoryToCUDA(vulkanTex.Memory.ExternalMemory.Handle, vulkanTex.Memory.ExternalMemory.AllocationSize, vulkanTex.Memory.ExternalMemory.AllocationSize, vulkanTex.Memory.Offset, &gpuPointer);
-	cudaTextureObject_t trial = {};
-	cudaResourceDesc resDesc = {};
-	float* trial2 = NULL;
-	size_t pitch = 0;
-	
-	cudaError cudaRes = cudaMallocPitch((void**)&trial2, &pitch, 2048*4*4, 1080);
 
+	vulkanTexBuf.Info.Type = NOS_RESOURCE_TYPE_BUFFER;
+	vulkanTexBuf.Info.Buffer.Size = vulkanTex.Info.Texture.Width * vulkanTex.Info.Texture.Height * componentByte * componentNum;
+	vulkanTexBuf.Info.Buffer.Usage = nosBufferUsage(NOS_BUFFER_USAGE_TRANSFER_SRC | NOS_BUFFER_USAGE_TRANSFER_DST);
+	nosVulkan->CreateResource(&vulkanTexBuf);
+
+	nosCmd texToBuf = {};
+	nosGPUEvent waitTexToBuf = {};
+	nosVulkan->Begin("TexToBuf", &texToBuf);
+	nosVulkan->Copy(texToBuf, &vulkanTex, &vulkanTexBuf, 0);
+	nosVulkan->End2(texToBuf, NOS_TRUE, &waitTexToBuf);
+	nosVulkan->WaitGpuEvent(&waitTexToBuf, UINT64_MAX);
+	void* vulkanData = nosVulkan->Map(&vulkanTexBuf);
+
+	//nosVulkan->GetImageSize(vulkanTex.Memory.Handle, &textureSize);
+	nosResult res = SetVulkanMemoryToCUDA(vulkanTexBuf.Memory.ExternalMemory.Handle, vulkanTexBuf.Memory.ExternalMemory.AllocationSize, vulkanTexBuf.Memory.Size, vulkanTexBuf.Memory.Offset, &gpuPointer);
+	theGPUPointer = gpuPointer;
+	//float* data = new float[vulkanTex.Info.Texture.Width * vulkanTex.Info.Texture.Height * componentNum];
+
+	//cudaError cudaRes = cudaMemcpy(data, reinterpret_cast<void*>(gpuPointer), vulkanTexBuf.Memory.Size, cudaMemcpyDeviceToHost);
+
+	//cudaTextureObject_t trial = {};
+	//cudaResourceDesc resDesc = {};
+	//float* trial2 = NULL;
+	//size_t pitch = 0;
+	//
+	//cudaError cudaRes = cudaMallocPitch((void**)&trial2, &pitch, 2048*4*4, 1080);
 
 	if (res != NOS_RESULT_SUCCESS)
 		return res;
 
-	int componentNum = GetComponentNumFromVulkanFormat(vulkanTex.Info.Texture.Format);
-	int componentByte = GetComponentBytesFromVulkanFormat(vulkanTex.Info.Texture.Format);
 
 	nvcvImage.width = vulkanTex.Info.Texture.Width;
 	nvcvImage.height = vulkanTex.Info.Texture.Height;
-	nvcvImage.pitch = vulkanTex.Info.Texture.Width * componentByte;
+	nvcvImage.pitch = vulkanTex.Info.Texture.Width * componentByte * componentNum; //There is no planar vulkan texture at the moment?
 	nvcvImage.pixelFormat = GetPixelFormatFromVulkanFormat(vulkanTex.Info.Texture.Format);
 	nvcvImage.componentType = GetComponentTypeFromVulkanFormat(vulkanTex.Info.Texture.Format);
 	nvcvImage.pixelBytes = componentByte * componentNum;
@@ -166,7 +198,7 @@ nosResult CUDAVulkanInterop::nosTextureToNVCVImage(nosResourceShareInfo& vulkanT
 	nvcvImage.numComponents = componentNum;
 	nvcvImage.pixels = reinterpret_cast<void*>(gpuPointer);
 	nvcvImage.gpuMem = NVCV_CUDA;
-	nvcvImage.bufferBytes = vulkanTex.Memory.ExternalMemory.AllocationSize;
+	nvcvImage.bufferBytes = vulkanTexBuf.Memory.Size;
 	nvcvImage.planar = (layout == std::nullopt) ? (nvcvImage.planar) : ((int)layout.value());
 	
 	return res;
