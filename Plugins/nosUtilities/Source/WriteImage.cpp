@@ -26,7 +26,7 @@ NOS_REGISTER_NAME_SPACED(Nos_Utilities_WriteImage, "nos.utilities.WriteImage")
 struct WriteImage : NodeContext {
     std::filesystem::path Path;
     nosResourceShareInfo Input;
-    nosGPUEvent Event;
+    nosGPUEvent Event = 0;
     std::atomic_bool WriteRequested = false;
     std::condition_variable CV;
     std::mutex Mutex;
