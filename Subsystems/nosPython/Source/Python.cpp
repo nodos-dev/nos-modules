@@ -2,7 +2,7 @@
 #include <Nodos/SubsystemAPI.h>
 #include <Nodos/Helpers.hpp>
 
-#include <nosPython/Types_generated.h>
+#include <nosPython/Python_generated.h>
 
 // External
 #define PYBIND11_SIMPLE_GIL_MANAGEMENT
