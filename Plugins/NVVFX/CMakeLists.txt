@@ -6,6 +6,7 @@ find_package(CUDAToolkit REQUIRED)
 message("CUDA INCLUDE DIRECTORIES: ${CUDAToolkit_INCLUDE_DIRS}")
 
 set_target_properties(NVVFX PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
+set_target_properties(NVVFX PROPERTIES CUDA_ARCHITECTURES native)
 target_link_libraries(NVVFX PRIVATE cuda)
 target_link_libraries(NVVFX PRIVATE cudart)
 target_link_directories(NVVFX PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/BinariesUse")
