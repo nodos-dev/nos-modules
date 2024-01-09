@@ -48,7 +48,7 @@ private:
 	int LastWidth = 0, LastHeight = 0;
 	NvCVImage_ComponentType LastComponentType = NvCVImage_ComponentType::NVCV_TYPE_UNKNOWN;
 	NvCVImage_PixelFormat LastPixelFormat = NvCVImage_PixelFormat::NVCV_FORMAT_UNKNOWN;
-
+	bool NeedToSet = false;
 };
 
 

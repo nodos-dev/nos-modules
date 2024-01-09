@@ -80,32 +80,30 @@ void CUDAVulkanInterop::SetCUDAMemoryToVulkan(int64_t cudaPointerAddress, int wi
 
 nosResult CUDAVulkanInterop::AllocateNVCVImage(std::string name, int width, int height, NvCVImage_PixelFormat pixelFormat, NvCVImage_ComponentType compType, size_t size, int planar, NvCVImage* out)
 {
-	int64_t handle = 0;
-	handle = GPUResManager.AllocateShareableGPU(name, size);
+	bool shouldAllocate = true;
+	if (GPUResManager.IsResourceExist(name)) {
+		uint64_t existingSize = GPUResManager.GetSize(name);
+		if (existingSize == size) {
+			shouldAllocate = false;
+		}
+		else {
+			GPUResManager.FreeGPUBuffer(name);
+			shouldAllocate = true;
+		}
+	}
 
-	if (handle == NULL) {
-		nosEngine.LogE("cuMemExportToShareableHandle failed!");
-		return NOS_RESULT_FAILED;
+	if (shouldAllocate) {
+		int64_t handle = 0;
+		handle = GPUResManager.AllocateShareableGPU(name, size);
+
+		if (handle == NULL) {
+			nosEngine.LogE("cuMemExportToShareableHandle failed!");
+			return NOS_RESULT_FAILED;
+		}
 	}
 	uint64_t buffer = NULL;
 	nosResult res = GPUResManager.GetGPUBuffer(name, &buffer);
  	uint64_t realSize = GPUResManager.GetSize(name);
-
-	/*float a = 1.0f;
-
-	int b = std::bit_cast<int, float>(a);
-
-	cudaSetDevice(0);
-		= cudaMemset(reinterpret_cast<void*>(buffer), b, realSize);*/
-	cudaError cudaRes = cudaSuccess;
-	
-	cudaError syncRes = cudaDeviceSynchronize();
-	if (syncRes != CUDA_SUCCESS) {
-		nosEngine.LogE("CUDA device synchronize failed with error code %d", syncRes);
-		return NOS_RESULT_FAILED;
-	}
-
-	assert(cudaRes == cudaSuccess);
 	
 	if (res != NOS_RESULT_SUCCESS) {
 		return res;
@@ -138,15 +136,22 @@ nosResult CUDAVulkanInterop::nosTextureToNVCVImage(nosResourceShareInfo& vulkanT
 	int componentNum = GetComponentNumFromVulkanFormat(vulkanTex.Info.Texture.Format);
 	int componentByte = GetComponentBytesFromVulkanFormat(vulkanTex.Info.Texture.Format);
 	//TODO: this is SO UGLY, we need to use an unordered map for gpuPointer and vulkanTexBuf
-	if (vulkanTexBuf.Memory.ExternalMemory.Handle != NULL) {
-		nosCmd texToBuf = {};
-		nosGPUEvent waitTexToBuf = {};
-		nosVulkan->Begin("TexToBuf", &texToBuf);
-		nosVulkan->Copy(texToBuf, &vulkanTex, &vulkanTexBuf, 0);
-		nosVulkan->End2(texToBuf, NOS_TRUE, &waitTexToBuf);
-		nosVulkan->WaitGpuEvent(&waitTexToBuf, UINT64_MAX);
 
-		return NOS_RESULT_SUCCESS;
+	if ((vulkanTex.Info.Texture.Width * vulkanTex.Info.Texture.Height * componentByte * componentNum) == vulkanTexBuf.Info.Buffer.Size) {
+		if (vulkanTexBuf.Memory.ExternalMemory.Handle != NULL) {
+			nosCmd texToBuf = {};
+			nosGPUEvent waitTexToBuf = {};
+			nosVulkan->Begin("TexToBuf", &texToBuf);
+			nosVulkan->Copy(texToBuf, &vulkanTex, &vulkanTexBuf, 0);
+			nosVulkan->End2(texToBuf, NOS_TRUE, &waitTexToBuf);
+			nosVulkan->WaitGpuEvent(&waitTexToBuf, UINT64_MAX);
+
+			return NOS_RESULT_SUCCESS;
+		}
+	}
+
+	if (vulkanTexBuf.Memory.Handle != NULL) {
+		nosVulkan->DestroyResource(&vulkanTexBuf);
 	}
 
 	uint64_t gpuPointer = 0;

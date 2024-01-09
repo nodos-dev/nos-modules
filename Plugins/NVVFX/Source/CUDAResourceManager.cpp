@@ -44,10 +44,10 @@ CudaGPUResourceManager::CudaGPUResourceManager()
 
 CudaGPUResourceManager::~CudaGPUResourceManager()
 {
-    DisposeResources();
+    DisposeAllResources();
 }
 
-void CudaGPUResourceManager::DisposeResources()
+void CudaGPUResourceManager::DisposeAllResources()
 {
     for (const auto [name, _] : CUDABuffers) {
         FreeGPUBuffer(name);
@@ -152,7 +152,7 @@ CUmemGenericAllocationHandle CudaGPUResourceManager::AllocateShareableGPU(std::s
     cuGetErrorString(status, &errorMsg);
     assert(status == CUDA_SUCCESS);
 
-    CUDABuffers[name] = {.address = new_ptr, .shareableHandle = shareableHandle, .size = aligned_size };
+    CUDABuffers[name] = {.address = new_ptr, .shareableHandle = shareableHandle, .size = aligned_size, .createHandle = handle };
     return shareableHandle;
 }
 
@@ -276,6 +276,11 @@ int64_t CudaGPUResourceManager::GetSize(std::string name)
     return CUDABuffers[name].size;
 }
 
+bool CudaGPUResourceManager::IsResourceExist(std::string name)
+{
+    return CUDABuffers.contains(name);
+}
+
 nosResult CudaGPUResourceManager::FreeGPUBuffer(std::string name)
 {
     assert(CUDABuffers.contains(name));
@@ -291,7 +296,7 @@ nosResult CudaGPUResourceManager::FreeGPUBuffer(std::string name)
     else {
         res = cuMemUnmap(buffer.address, buffer.size);
         res = cuMemAddressFree(buffer.address, buffer.size);
-        res = cuMemRelease(buffer.shareableHandle);
+        res = cuMemRelease(buffer.createHandle);
     }
 
     if (res != CUDA_SUCCESS || cudaRes != cudaSuccess)

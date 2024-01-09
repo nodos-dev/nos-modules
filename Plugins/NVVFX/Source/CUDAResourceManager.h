@@ -11,13 +11,15 @@ struct CUDABuffer {
 	uint64_t address = NULL;
 	uint64_t shareableHandle = NULL;
 	uint64_t size = 0;
+	CUmemGenericAllocationHandle createHandle = NULL;
 };
 
 class CudaGPUResourceManager {
 public:
 	CudaGPUResourceManager();
 	~CudaGPUResourceManager();
-	void DisposeResources();
+	nosResult FreeGPUBuffer(std::string name);
+	void DisposeAllResources();
 
 	nosResult InitializeCUDADevice(int device = 0);
 	int QueryCudaDeviceCount();
@@ -37,10 +39,10 @@ public:
 
 	int64_t GetSize(std::string name);
 
-private:
-	nosResult FreeGPUBuffer(std::string name);
-	
+	bool IsResourceExist(std::string name);
 
+private:
+	
 	NvCVImage NVVFX_Image;
 	std::unordered_map<std::string, CUDABuffer> CUDABuffers;
 

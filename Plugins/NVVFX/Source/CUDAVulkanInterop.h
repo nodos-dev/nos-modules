@@ -45,6 +45,7 @@ public:
 	nosFormat GetVulkanFormatFromNVCVImage(NvCVImage_PixelFormat pixelFormat, NvCVImage_ComponentType componentType);
 	void NormalizeNVCVImage(NvCVImage* nvcvImage);
 	nosResult CopyNVCVImage(NvCVImage* src, NvCVImage* dst);
+
 private:
 	void InitCUDA();
 	CudaGPUResourceManager GPUResManager;

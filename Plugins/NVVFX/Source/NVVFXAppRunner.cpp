@@ -27,7 +27,9 @@ nosResult NVVFXAppRunner::InitTransferBuffers(NvCVImage* source, NvCVImage* dest
     res = NvCVImage_Init(&OutputToBeTransferred, destination->width, destination->height, destination->pitch, destination->pixels, destination->pixelFormat, destination->componentType, destination->planar, destination->gpuMem);
     OutputToBeTransferred.bufferBytes = destination->bufferBytes;
     CHECK_NVCV_ERROR(res);
-    return nosResult();
+
+    NeedToSet = true;
+    return NOS_RESULT_SUCCESS;
 }
 
 nosResult NVVFXAppRunner::CreateArtifactReductionEffect(std::string modelsDir)
@@ -98,9 +100,7 @@ nosResult NVVFXAppRunner::RunArtifactReduction(NvCVImage* input, NvCVImage* outp
     cudaStreamSynchronize(stream);
     CHECK_NVCV_ERROR(res);
 
-    static bool setOnce = false;
-
-    if(!setOnce){
+    if(NeedToSet){
         res = NvVFX_SetImage(AR_EffectHandle, NVVFX_INPUT_IMAGE, &InputTransferred);
         CHECK_NVCV_ERROR(res);
 
@@ -115,7 +115,7 @@ nosResult NVVFXAppRunner::RunArtifactReduction(NvCVImage* input, NvCVImage* outp
 
         res = NvVFX_Load(AR_EffectHandle);
         CHECK_NVCV_ERROR(res);
-        setOnce = true;
+        NeedToSet = false;
     }
 
     res = NvVFX_Run(AR_EffectHandle, 0);
@@ -145,9 +145,8 @@ nosResult NVVFXAppRunner::RunSuperResolution(NvCVImage* input, NvCVImage* output
     cudaStreamSynchronize(stream);
     CHECK_NVCV_ERROR(res);
 
-    static bool setOnce = false;
 
-    if (!setOnce) {
+    if (NeedToSet) {
         res = NvVFX_SetImage(SuperRes_EffectHandle, NVVFX_INPUT_IMAGE, &InputTransferred);
         CHECK_NVCV_ERROR(res);
 
@@ -162,7 +161,7 @@ nosResult NVVFXAppRunner::RunSuperResolution(NvCVImage* input, NvCVImage* output
 
         res = NvVFX_Load(SuperRes_EffectHandle);
         CHECK_NVCV_ERROR(res);
-        setOnce = true;
+        NeedToSet = false;
     }
 
     res = NvVFX_Run(SuperRes_EffectHandle, 0);
@@ -197,8 +196,7 @@ nosResult NVVFXAppRunner::RunAIGreenScreenEffect(NvCVImage* input, NvCVImage* ou
     cudaStreamSynchronize(stream);
     CHECK_NVCV_ERROR(res);
 
-    static bool setOnce = false;
-    if (!setOnce) {
+    if (NeedToSet) {
         res = NvVFX_AllocateState(AIGreenScreen_EffectHandle, &AIGS_StateObjectHandle);
         res = NvVFX_SetObject(AIGreenScreen_EffectHandle, NVVFX_STATE, &AIGS_StateObjectHandle);
 
@@ -216,7 +214,7 @@ nosResult NVVFXAppRunner::RunAIGreenScreenEffect(NvCVImage* input, NvCVImage* ou
                                                                        //0 selects the best quality.                  
         res = NvVFX_Load(AIGreenScreen_EffectHandle);                  //1 selects the fastest performance.
         CHECK_NVCV_ERROR(res);
-        setOnce = true;
+        NeedToSet = false;
     }
 
     res = NvVFX_Run(AIGreenScreen_EffectHandle, 0);

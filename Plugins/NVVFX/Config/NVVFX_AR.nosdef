@@ -31,13 +31,6 @@
               "visualizer": {
                 "type": "FILE_PICKER"
               }
-            },
-            {
-              "name": "UpscaleFactor",
-              "type_name": "int",
-              "show_as": "PROPERTY",
-              "can_show_as": "INPUT_PIN_OR_PROPERTY",
-              "data": 2
             }
           ],
             "functions": []
