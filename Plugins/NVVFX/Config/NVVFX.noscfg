@@ -8,15 +8,27 @@
     "display_name": "NVVFX"
   },
   "node_definitions": [
-    "NVVFX.nosdef"
+    "NVVFX_AR.nosdef",
+    "NVVFX_SuperRes.nosdef",
+    "NVVFX_AIGreenScreen.nosdef"
   ],
-    "custom_types": [],
-    "binary_path": "../Binaries/NVVFX",
-    "associated_nodes": [
-      {
-        "category": "NVVFX",
-        "class_name": "NVVFX",
-        "display_name": "NVVFX"
-      }
-    ]
+  "custom_types": [],
+  "binary_path": "../Binaries/NVVFX",
+  "associated_nodes": [
+    {
+      "category": "NVVFX",
+      "class_name": "NVVFX_AR",
+      "display_name": "NVVFX Artifact Reduction"
+    },
+    {
+      "category": "NVVFX",
+      "class_name": "NVVFX_SuperRes",
+      "display_name": "NVVFX Super Resolution"
+    },
+    {
+      "category": "NVVFX",
+      "class_name": "NVVFX_AIGreenScreen",
+      "display_name": "NVVFX AI Green Screen"
+    }
+  ]
 }

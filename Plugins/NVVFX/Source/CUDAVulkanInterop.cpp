@@ -137,6 +137,7 @@ nosResult CUDAVulkanInterop::nosTextureToNVCVImage(nosResourceShareInfo& vulkanT
 {
 	int componentNum = GetComponentNumFromVulkanFormat(vulkanTex.Info.Texture.Format);
 	int componentByte = GetComponentBytesFromVulkanFormat(vulkanTex.Info.Texture.Format);
+	//TODO: this is SO UGLY, we need to use an unordered map for gpuPointer and vulkanTexBuf
 	if (vulkanTexBuf.Memory.ExternalMemory.Handle != NULL) {
 		nosCmd texToBuf = {};
 		nosGPUEvent waitTexToBuf = {};
@@ -145,17 +146,10 @@ nosResult CUDAVulkanInterop::nosTextureToNVCVImage(nosResourceShareInfo& vulkanT
 		nosVulkan->End2(texToBuf, NOS_TRUE, &waitTexToBuf);
 		nosVulkan->WaitGpuEvent(&waitTexToBuf, UINT64_MAX);
 
-		//void* vulkanData = nosVulkan->Map(&vulkanTexBuf);
-
-		//float* data = new float[vulkanTex.Info.Texture.Width * vulkanTex.Info.Texture.Height * componentNum];
-		//cudaError cudaRes = cudaMemcpy(data, reinterpret_cast<void*>(theGPUPointer), 8, cudaMemcpyDeviceToHost);
-
-
 		return NOS_RESULT_SUCCESS;
 	}
+
 	uint64_t gpuPointer = 0;
-	//size_t textureSize2 = vulkanTex.Info.Texture.GetSize();
-	size_t textureSize;
 
 	vulkanTexBuf.Info.Type = NOS_RESOURCE_TYPE_BUFFER;
 	vulkanTexBuf.Info.Buffer.Size = vulkanTex.Info.Texture.Width * vulkanTex.Info.Texture.Height * componentByte * componentNum;
@@ -170,23 +164,11 @@ nosResult CUDAVulkanInterop::nosTextureToNVCVImage(nosResourceShareInfo& vulkanT
 	nosVulkan->WaitGpuEvent(&waitTexToBuf, UINT64_MAX);
 	void* vulkanData = nosVulkan->Map(&vulkanTexBuf);
 
-	//nosVulkan->GetImageSize(vulkanTex.Memory.Handle, &textureSize);
 	nosResult res = SetVulkanMemoryToCUDA(vulkanTexBuf.Memory.ExternalMemory.Handle, vulkanTexBuf.Memory.ExternalMemory.AllocationSize, vulkanTexBuf.Memory.Size, vulkanTexBuf.Memory.Offset, &gpuPointer);
 	theGPUPointer = gpuPointer;
-	//float* data = new float[vulkanTex.Info.Texture.Width * vulkanTex.Info.Texture.Height * componentNum];
-
-	//cudaError cudaRes = cudaMemcpy(data, reinterpret_cast<void*>(gpuPointer), vulkanTexBuf.Memory.Size, cudaMemcpyDeviceToHost);
-
-	//cudaTextureObject_t trial = {};
-	//cudaResourceDesc resDesc = {};
-	//float* trial2 = NULL;
-	//size_t pitch = 0;
-	//
-	//cudaError cudaRes = cudaMallocPitch((void**)&trial2, &pitch, 2048*4*4, 1080);
 
 	if (res != NOS_RESULT_SUCCESS)
 		return res;
-
 
 	nvcvImage.width = vulkanTex.Info.Texture.Width;
 	nvcvImage.height = vulkanTex.Info.Texture.Height;
@@ -646,7 +628,7 @@ nosFormat CUDAVulkanInterop::GetVulkanFormatFromNVCVImage(NvCVImage_PixelFormat 
 	case SwitchPair(NVCV_RGBA, NVCV_U8):
 		return NOS_FORMAT_R8G8B8A8_UINT;
 	case SwitchPair(NVCV_BGRA, NVCV_U8):
-		//return NOS_FORMAT_B8G8R8A8_UINT;
+		return NOS_FORMAT_B8G8R8A8_UNORM;
 
 	case SwitchPair(NVCV_A, NVCV_U16):
 		return NOS_FORMAT_R16_UINT;

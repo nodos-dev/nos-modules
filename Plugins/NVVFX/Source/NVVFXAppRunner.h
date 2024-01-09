@@ -16,7 +16,7 @@
 #define CHECK_NVCV_ERROR(nvcv_res)	\
 	do{							\
 		if (nvcv_res != NVCV_SUCCESS) {	\
-			nosEngine.LogE("NVVFX failed with error %s", NvCV_GetErrorStringFromCode(nvcv_res));	\
+			nosEngine.LogE("NVVFX failed with error: %s", NvCV_GetErrorStringFromCode(nvcv_res));	\
 			return NOS_RESULT_FAILED; \
 		}						\
 	}while(0)					\
@@ -27,19 +27,20 @@ public:
 	~NVVFXAppRunner();
 
 	nosResult InitTransferBuffers(NvCVImage* source, NvCVImage* destination);
-	nosResult CreateUpscaleEffect(std::string modelsDir);
-	nosResult Run(NvCVImage* input, NvCVImage* output);
-	void SetArtifactReduction(bool isActive);
-	void SetStrength(float strength);
+	nosResult CreateArtifactReductionEffect(std::string modelsDir);
+	nosResult CreateSuperResolutionEffect(std::string modelsDir);
+	nosResult CreateAIGreenScreenEffect(std::string modelsDir);
+	nosResult RunArtifactReduction(NvCVImage* input, NvCVImage* output);
+	nosResult RunSuperResolution(NvCVImage* input, NvCVImage* output);
+	nosResult RunAIGreenScreenEffect(NvCVImage* input, NvCVImage* output);
 	
 private:
-	bool ShouldAllocateBuffer(NvCVImage* in);
-	NvVFX_Handle  AR_EffectHandle;
-	NvVFX_Handle  UpScale_EffectHandle;
-	int ArtifactReduction = 0;
-	float Strength = 0.1f;
-	int TargetResolution = 2160;
-
+	
+	NvVFX_Handle AR_EffectHandle;
+	NvVFX_Handle UpScale_EffectHandle;
+	NvVFX_Handle SuperRes_EffectHandle;
+	NvVFX_Handle AIGreenScreen_EffectHandle; //AIGS
+	NvVFX_StateObjectHandle AIGS_StateObjectHandle;
 
 	NvCVImage InputTransferred = {};
 	NvCVImage OutputToBeTransferred = {};

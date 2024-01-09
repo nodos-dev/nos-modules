@@ -1,7 +1,7 @@
     {
     "nodes": [
         {
-            "class_name": "NVVFX",
+            "class_name": "NVVFX_AIGreenScreen",
             "contents_type": "Job",
           "pins": [
             {

@@ -21,8 +21,8 @@
                         "y": 90
                     },
                     "min": {
-                        "x": 2,
-                        "y": 2
+                        "x": 1,
+                        "y": 1
                     },
                     "description": "Sets the count of horizontal and vertical squares"
                 },
