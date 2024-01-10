@@ -29,7 +29,7 @@
               "show_as": "PROPERTY",
               "can_show_as": "INPUT_PIN_OR_PROPERTY",
               "visualizer": {
-                "type": "FILE_PICKER"
+                "type": "FOLDER_PICKER"
               }
             }
           ],

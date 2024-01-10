@@ -52,8 +52,11 @@ struct NVVFX_SuperRes_NodeContext : nos::NodeContext {
 		nosEngine.RequestSubsystem(NOS_NAME_STATIC(NOS_VULKAN_SUBSYSTEM_NAME), 1, 0, (void**)&nosVulkan);
 		NodeID = *node->id();
 		for (const auto& pin : *node->pins()) {
+			if (NSN_In.Compare(pin->name()->c_str()) == 0) {
+				InputID = *pin->id();
+			}
 			if (NSN_UpscaleFactor.Compare(pin->name()->c_str()) == 0) {
-				//UpscaleFactor = std::stof((const char*)(pin->data()->data()));
+				UpscaleFactor = *(int*)pin->data()->data();
 			}
 			if (NSN_UpscaleStrength.Compare(pin->name()->c_str()) == 0) {
 				UpscaleStrength = *(float*)pin->data()->data();
@@ -62,8 +65,7 @@ struct NVVFX_SuperRes_NodeContext : nos::NodeContext {
 				OutputID = *pin->id();
 			}
 		}
-		ModelsPath = std::filesystem::path("C:/WorkInParallel/MAXINE-VFX-SDK/models");
-		VFX.CreateSuperResolutionEffect("C:/WorkInParallel/MAXINE-VFX-SDK/models");
+		SetPinOrphanState(InputID, true);
 		CreateUpscaleFactorList({ "4/3x", "1.5x", "2x", "3x", "4x" });
 	}
 
@@ -82,6 +84,10 @@ struct NVVFX_SuperRes_NodeContext : nos::NodeContext {
 		}
 		if (pinName == NSN_ModelsPath) {
 			ModelsPath = static_cast<const char*>(value.Data);
+			nosResult res = VFX.CreateSuperResolutionEffect(ModelsPath.string());
+			if (res == NOS_RESULT_SUCCESS) {
+				SetPinOrphanState(InputID, false);
+			}
 		}
 	}
 
@@ -202,7 +208,15 @@ struct NVVFX_SuperRes_NodeContext : nos::NodeContext {
 			fbb2, nos::app::CreateUpdateStringList(fbb2, nos::fb::CreateStringList(fbb2, fbb2.CreateString(NSN_UpscaleFactor.AsString()), fbb2.CreateVectorOfStrings(list)))));
 		UpscaleFactor = 4.0f / 3.0f;
 	}
+	void SetPinOrphanState(nos::fb::UUID uuid, bool isOrphan) {
+		flatbuffers::FlatBufferBuilder fbb;
+		std::vector<::flatbuffers::Offset<nos::PartialPinUpdate>> toUpdate;
+		toUpdate.push_back(nos::CreatePartialPinUpdateDirect(fbb, &uuid, 0, nos::fb::CreateOrphanStateDirect(fbb, isOrphan)));
 
+		flatbuffers::FlatBufferBuilder fbb2;
+		HandleEvent(
+			CreateAppEvent(fbb, nos::CreatePartialNodeUpdateDirect(fbb, &NodeID, nos::ClearFlags::NONE, 0, 0, 0, 0, 0, 0, 0, &toUpdate)));
+	}
 };
 
 

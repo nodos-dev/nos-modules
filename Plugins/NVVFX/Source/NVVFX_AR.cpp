@@ -87,46 +87,36 @@ struct NVVFX_AR_NodeContext : nos::NodeContext {
 	NvCVImage nvcv_NOS_Input;
 	NvCVImage nvcv_NOS_Output;
 
-	int UpscaleFactor;
-	float UpscaleStrength;
 	std::filesystem::path ModelsPath;
 	bool OutputSizeSet = false;
 
 	NVVFX_AR_NodeContext(nos::fb::Node const* node) :NodeContext(node), logger("NVVFX") {
+		NodeID = *node->id();
 		for (const auto& pin : *node->pins()) {
-			if (NSN_UpscaleFactor.Compare(pin->name()->c_str()) == 0) {
-				UpscaleFactor = *(int*)pin->data()->data();
-			}
-			if (NSN_UpscaleStrength.Compare(pin->name()->c_str()) == 0) {
-				UpscaleStrength = *(float*)pin->data()->data();
+			if (NSN_In.Compare(pin->name()->c_str()) == 0) {
+				InputID = *pin->id();
 			}
 			if (NSN_Out.Compare(pin->name()->c_str()) == 0) {
 				OutputID = *pin->id();
 			}
 		}
-
-		
-
-		ModelsPath = std::filesystem::path("C:/WorkInParallel/MAXINE-VFX-SDK/models");
-		VFX.CreateArtifactReductionEffect("C:/WorkInParallel/MAXINE-VFX-SDK/models");
+		SetPinOrphanState(InputID, true);
 	}
 
 
-	void  OnPinValueChanged(nos::Name pinName, nosUUID pinId, nosBuffer value) override {
+	void OnPinValueChanged(nos::Name pinName, nosUUID pinId, nosBuffer value) override {
 		if (pinName == NSN_In) {
 			nosResourceShareInfo input = nos::vkss::DeserializeTextureInfo(value.Data);
 			lastWidth = input.Info.Texture.Width;
 			lastHeight = input.Info.Texture.Height;
 
 		}
-		if (pinName == NSN_UpscaleFactor) {
-			UpscaleFactor = *static_cast<int*>(value.Data);
-		}
-		if (pinName == NSN_UpscaleStrength) {
-			UpscaleStrength = *static_cast<float*>(value.Data);
-		}
 		if (pinName == NSN_ModelsPath) {
 			ModelsPath = static_cast<const char*>(value.Data);
+			nosResult res = VFX.CreateArtifactReductionEffect(ModelsPath.string());
+			if (res == NOS_RESULT_SUCCESS) {
+				SetPinOrphanState(InputID, false);
+			}
 		}
 	}
 
@@ -148,92 +138,110 @@ struct NVVFX_AR_NodeContext : nos::NodeContext {
 	nosResult ExecuteNode(const nosNodeExecuteArgs* execArgs) {
 		nos::NodeExecuteArgs args(execArgs);
 		nosResult res = NOS_RESULT_SUCCESS;
-		//	
 		nosResourceShareInfo in = nos::vkss::DeserializeTextureInfo(args[NSN_In].Data->Data);
 
-		if (!OutputSizeSet) {
-			
-			InputFormatted.Info.Type = NOS_RESOURCE_TYPE_TEXTURE;
-			InputFormatted.Info.Texture.Width = in.Info.Texture.Width;
-			InputFormatted.Info.Texture.Height = in.Info.Texture.Height;
-			InputFormatted.Info.Texture.Usage = nosImageUsage(NOS_IMAGE_USAGE_TRANSFER_DST | NOS_IMAGE_USAGE_TRANSFER_SRC);
-			InputFormatted.Info.Texture.Format = NOS_FORMAT_R32G32B32A32_SFLOAT;
-			nosVulkan->CreateResource(&InputFormatted);
-
-			res = interop.nosTextureToNVCVImage(InputFormatted, nvcv_NOS_Input);
-
-			nosResourceShareInfo dummy = {};
-			dummy.Info.Type = NOS_RESOURCE_TYPE_TEXTURE;
-			dummy.Info.Texture.Width = InputFormatted.Info.Texture.Width;
-			dummy.Info.Texture.Height = InputFormatted.Info.Texture.Height;
-			dummy.Info.Texture.Usage = nosImageUsage(NOS_IMAGE_USAGE_TRANSFER_DST | NOS_IMAGE_USAGE_TRANSFER_SRC);
-			dummy.Info.Texture.Format = InputFormatted.Info.Texture.Format;
-			dummy.Memory.ExternalMemory.HandleType = NOS_EXTERNAL_MEMORY_HANDLE_TYPE_WIN32;
-
-			auto texFb = nos::vkss::ConvertTextureInfo(dummy);
-			texFb.unscaled = true;
-			auto texFbBuf = nos::Buffer::From(texFb);
-			nosEngine.SetPinValue(OutputID, { .Data = texFbBuf.Data(), .Size = texFbBuf.Size() });
-
-			OutputPre.Info.Type = NOS_RESOURCE_TYPE_TEXTURE;
-			OutputPre.Info.Texture.Width = dummy.Info.Texture.Width;
-			OutputPre.Info.Texture.Height = dummy.Info.Texture.Height;
-			OutputPre.Info.Texture.Usage = nosImageUsage(NOS_IMAGE_USAGE_TRANSFER_DST | NOS_IMAGE_USAGE_TRANSFER_SRC);
-			OutputPre.Info.Texture.Format = InputFormatted.Info.Texture.Format;
-
-
-			interop.AllocateNVCVImage("Trial", nvcv_NOS_Input.width, nvcv_NOS_Input.height,
-				nvcv_NOS_Input.pixelFormat, nvcv_NOS_Input.componentType,
-				nvcv_NOS_Input.bufferBytes, NVCV_INTERLEAVED, &nvcv_NOS_Output);
-
-
-			nosResult res2 = interop.NVCVImageToNosTexture(nvcv_NOS_Output, output);
-			
-			
-			NvCVImage srcTemp = {}, dstTemp = {};
-
-			//NvCVImage_Alloc(&srcTemp, nvcv_NOS_Input.width, nvcv_NOS_Input.height, NVCV_BGR, NVCV_F32, NVCV_PLANAR, NVCV_CUDA, 0);
-			//NvCVImage_Alloc(&dstTemp, nvcv_NOS_Input.width, nvcv_NOS_Input.height, NVCV_BGR, NVCV_F32, NVCV_PLANAR, NVCV_CUDA, 0);
-
-			interop.AllocateNVCVImage("SrcTemp", nvcv_NOS_Input.width, nvcv_NOS_Input.height, NVCV_BGR, NVCV_F32, nvcv_NOS_Input.bufferBytes, NVCV_PLANAR, &srcTemp);
-			interop.AllocateNVCVImage("DstTemp", nvcv_NOS_Input.width, nvcv_NOS_Input.height, NVCV_BGR, NVCV_F32, nvcv_NOS_Input.bufferBytes, NVCV_PLANAR, &dstTemp);
-
-			VFX.InitTransferBuffers(&srcTemp, &dstTemp);
-
-			OutputSizeSet = true;
-			return NOS_RESULT_FAILED;
-		}
-
-
-		nosCmd cmd = {};
-		nosGPUEvent gpuevent = {};
-		nosVulkan->Begin("Input DownloadD", &cmd);
-		nosVulkan->Copy(cmd, &in, &InputFormatted, 0);
-		nosVulkan->End2(cmd, NOS_TRUE, &gpuevent);
-		nosVulkan->WaitGpuEvent(&gpuevent, 0);
-
+		PrepareResources(in);
 
 		if (res == NOS_RESULT_SUCCESS) {
-			cudaError cudaRes;
-			res = interop.nosTextureToNVCVImage(InputFormatted, nvcv_NOS_Input);
-			VFX.RunArtifactReduction(&nvcv_NOS_Input, &nvcv_NOS_Output);
+			nosCmd cmd = {};
+			nosGPUEvent gpuevent = {};
+			nosVulkan->Begin("Input DownloadD", &cmd);
+			nosVulkan->Copy(cmd, &in, &InputFormatted, 0);
+			nosVulkan->End2(cmd, NOS_TRUE, &gpuevent);
+			nosVulkan->WaitGpuEvent(&gpuevent, 0);
 
-			OutReady = true;
+			res = interop.nosTextureToNVCVImage(InputFormatted, nvcv_NOS_Input);
+			if (res != NOS_RESULT_SUCCESS)
+				return res;
+
+			res = VFX.RunArtifactReduction(&nvcv_NOS_Input, &nvcv_NOS_Output);
+			if (res != NOS_RESULT_SUCCESS)
+				return res;
 
 			nosResourceShareInfo out = nos::vkss::DeserializeTextureInfo(args[NSN_Out].Data->Data);
 			nosCmd cmd2;
 			nosGPUEvent gpuevent2 = {};
 			nosVulkan->Begin("NVVFX Upload", &cmd2);
-			//nosVulkan->ImageLoad(cmd, hostBuffer.data(), nosVec2u{.x=1920, .y=1080}, NOS_FORMAT_R8G8B8A8_UNORM, &out);
 			nosVulkan->Copy(cmd2, &output, &out, 0);
 			nosVulkan->End(cmd2, NOS_FALSE);
 		}
 
 		return res;
 	}
+
+	nosResult PrepareResources(nosResourceShareInfo& in) {
+		if (in.Info.Texture.Width == InputFormatted.Info.Texture.Width &&
+			in.Info.Texture.Height == InputFormatted.Info.Texture.Height &&
+			nvcv_NOS_Output.width == in.Info.Texture.Width) {
+			//No change
+			return NOS_RESULT_SUCCESS;
+		}
+
+		nosResult res = NOS_RESULT_SUCCESS;
+
+		if (InputFormatted.Memory.Handle != NULL) {
+			nosVulkan->DestroyResource(&InputFormatted);
+		}
+		//if (output.Memory.Handle != NULL) {
+		//	nosVulkan->DestroyResource(&output);
+		//}
+
+		InputFormatted.Info.Type = NOS_RESOURCE_TYPE_TEXTURE;
+		InputFormatted.Info.Texture.Width = in.Info.Texture.Width;
+		InputFormatted.Info.Texture.Height = in.Info.Texture.Height;
+		InputFormatted.Info.Texture.Usage = nosImageUsage(NOS_IMAGE_USAGE_TRANSFER_DST | NOS_IMAGE_USAGE_TRANSFER_SRC);
+		InputFormatted.Info.Texture.Format = NOS_FORMAT_R32G32B32A32_SFLOAT;
+		nosVulkan->CreateResource(&InputFormatted);
+
+		res = interop.nosTextureToNVCVImage(InputFormatted, nvcv_NOS_Input);
+
+		nosResourceShareInfo dummy = {};
+		dummy.Info.Type = NOS_RESOURCE_TYPE_TEXTURE;
+		dummy.Info.Texture.Width = InputFormatted.Info.Texture.Width;
+		dummy.Info.Texture.Height = InputFormatted.Info.Texture.Height;
+		dummy.Info.Texture.Usage = nosImageUsage(NOS_IMAGE_USAGE_TRANSFER_DST | NOS_IMAGE_USAGE_TRANSFER_SRC);
+		dummy.Info.Texture.Format = InputFormatted.Info.Texture.Format;
+		dummy.Memory.ExternalMemory.HandleType = NOS_EXTERNAL_MEMORY_HANDLE_TYPE_WIN32;
+
+		auto texFb = nos::vkss::ConvertTextureInfo(dummy);
+		texFb.unscaled = true;
+		auto texFbBuf = nos::Buffer::From(texFb);
+		nosEngine.SetPinValue(OutputID, { .Data = texFbBuf.Data(), .Size = texFbBuf.Size() });
+
+		res = interop.AllocateNVCVImage("Trial", nvcv_NOS_Input.width, nvcv_NOS_Input.height,
+			nvcv_NOS_Input.pixelFormat, nvcv_NOS_Input.componentType,
+			nvcv_NOS_Input.bufferBytes,
+			NVCV_INTERLEAVED, &nvcv_NOS_Output);
+
+		res = interop.NVCVImageToNosTexture(nvcv_NOS_Output, output);
+
+		NvCVImage srcTemp = {}, dstTemp = {};
+		res = interop.AllocateNVCVImage("SrcTemp", nvcv_NOS_Input.width, nvcv_NOS_Input.height, NVCV_BGR, NVCV_F32, nvcv_NOS_Input.bufferBytes, NVCV_PLANAR, &srcTemp);
+		res = interop.AllocateNVCVImage("DstTemp", nvcv_NOS_Input.width, nvcv_NOS_Input.height, NVCV_BGR, NVCV_F32,
+			nvcv_NOS_Input.bufferBytes, NVCV_PLANAR, &dstTemp);
+
+		res = VFX.InitTransferBuffers(&srcTemp, &dstTemp);
+
+		OutputSizeSet = true;
+		return res;
+	}
+
+	void SetPinOrphanState(nos::fb::UUID uuid, bool isOrphan) {
+		flatbuffers::FlatBufferBuilder fbb;
+		std::vector<::flatbuffers::Offset<nos::PartialPinUpdate>> toUpdate;
+		toUpdate.push_back(nos::CreatePartialPinUpdateDirect(fbb, &uuid, 0, nos::fb::CreateOrphanStateDirect(fbb, isOrphan)));
+
+		flatbuffers::FlatBufferBuilder fbb2;
+		HandleEvent(
+			CreateAppEvent(fbb, nos::CreatePartialNodeUpdateDirect(fbb, &NodeID, nos::ClearFlags::NONE, 0, 0, 0, 0, 0, 0, 0, &toUpdate)));
+	}
 };
 
 
 void RegisterNVVFX_AR(nosNodeFunctions* outFunctions) {
-	NOS_BIND_NODE_CLASS(NSN_NVVFX_AR, NVVFX_AR_NodeContext, outFunctions);
+	outFunctions->ClassName = NSN_NVVFX_AR; outFunctions->OnNodeCreated = [](const nosFbNode* node, void** ctx) { *ctx = new NVVFX_AR_NodeContext(node); }; outFunctions->OnNodeDeleted = [](void* ctx, nosUUID nodeId) { delete static_cast<NVVFX_AR_NodeContext*>(ctx); }; outFunctions->OnNodeUpdated = [](void* ctx, const nosFbNode* updatedNode) { static_cast<NVVFX_AR_NodeContext*>(ctx)->DoOnNodeUpdated(updatedNode); }; 
+	outFunctions->OnPinValueChanged = [](void* ctx, nosName pinName, nosUUID pinId, nosBuffer value) { 
+		static_cast<NVVFX_AR_NodeContext*>(ctx)->OnPinValueChanged(pinName, pinId, value); 
+		}; 
+	outFunctions->OnPinConnected = [](void* ctx, nosName pinName, nosUUID connectedPin, nosUUID) { static_cast<NVVFX_AR_NodeContext*>(ctx)->OnPinConnected(pinName, connectedPin); }; outFunctions->OnPinDisconnected = [](void* ctx, nosName pinName) { static_cast<NVVFX_AR_NodeContext*>(ctx)->OnPinDisconnected(pinName); }; outFunctions->OnPinShowAsChanged = [](void* ctx, nosName pinName, nosFbShowAs showAs) { static_cast<NVVFX_AR_NodeContext*>(ctx)->OnPinShowAsChanged(pinName, showAs); }; outFunctions->OnPathCommand = [](void* ctx, const nosPathCommand* command) { static_cast<NVVFX_AR_NodeContext*>(ctx)->OnPathCommand(command); }; outFunctions->ExecuteNode = [](void* ctx, const nosNodeExecuteArgs* args) { return static_cast<NVVFX_AR_NodeContext*>(ctx)->ExecuteNode(args); }; outFunctions->CopyFrom = [](void* ctx, nosCopyInfo* copyInfo) { return static_cast<NVVFX_AR_NodeContext*>(ctx)->CopyFrom(copyInfo); }; outFunctions->CopyTo = [](void* ctx, nosCopyInfo* copyInfo) { return static_cast<NVVFX_AR_NodeContext*>(ctx)->CopyTo(copyInfo); }; outFunctions->OnMenuRequested = [](void* ctx, const nosContextMenuRequest* request) { static_cast<NVVFX_AR_NodeContext*>(ctx)->OnMenuRequested(request); }; outFunctions->OnMenuCommand = [](void* ctx, nosUUID itemID, uint32_t cmd) { static_cast<NVVFX_AR_NodeContext*>(ctx)->OnMenuCommand(itemID, cmd); }; outFunctions->OnKeyEvent = [](void* ctx, const nosKeyEvent* keyEvent) { static_cast<NVVFX_AR_NodeContext*>(ctx)->OnKeyEvent(keyEvent); }; outFunctions->OnPinDirtied = [](void* ctx, nosUUID pinID, uint64_t frameCount) { static_cast<NVVFX_AR_NodeContext*>(ctx)->OnPinDirtied(pinID, frameCount); }; outFunctions->OnPathStateChanged = [](void* ctx, nosPathState pathState) { static_cast<NVVFX_AR_NodeContext*>(ctx)->OnPathStateChanged(pathState); }; outFunctions->CanRemoveOrphanPin = [](void* ctx, nosName pinName, nosUUID pinId) { return static_cast<NVVFX_AR_NodeContext*>(ctx)->CanRemoveOrphanPin(pinName, pinId); }; outFunctions->OnOrphanPinRemoved = [](void* ctx, nosName pinName, nosUUID pinId) { return static_cast<NVVFX_AR_NodeContext*>(ctx)->OnOrphanPinRemoved(pinName, pinId); }; outFunctions->CanCreateNode = NVVFX_AR_NodeContext::CanCreateNode; outFunctions->GetFunctions = NVVFX_AR_NodeContext::GetFunctions;;
 }

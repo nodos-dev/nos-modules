@@ -7,14 +7,7 @@ NVVFXAppRunner::NVVFXAppRunner() : AR_EffectHandle(NULL), UpScale_EffectHandle(N
 
 NVVFXAppRunner::~NVVFXAppRunner()
 {
-    if (InputTransferred.pixels != nullptr)
-        NvCVImage_Destroy(&InputTransferred);
 
-    if (Temp.pixels != nullptr)
-        NvCVImage_Destroy(&Temp);
-
-    if (OutputToBeTransferred.pixels != nullptr)
-        NvCVImage_Destroy(&OutputToBeTransferred);
 }
 
 nosResult NVVFXAppRunner::InitTransferBuffers(NvCVImage* source, NvCVImage* destination)
@@ -78,6 +71,9 @@ nosResult NVVFXAppRunner::CreateAIGreenScreenEffect(std::string modelsDir)
     CHECK_NVCV_ERROR(res);
 
     res = NvVFX_SetString(AIGreenScreen_EffectHandle, NVVFX_MODEL_DIRECTORY, modelsDir.c_str());
+    CHECK_NVCV_ERROR(res);
+
+    res = NvVFX_Load(AIGreenScreen_EffectHandle);
     CHECK_NVCV_ERROR(res);
 
     return NOS_RESULT_SUCCESS;
