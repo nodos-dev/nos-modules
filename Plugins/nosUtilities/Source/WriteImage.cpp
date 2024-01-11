@@ -82,10 +82,10 @@ struct WriteImage : NodeContext {
         nosCmd cmd;
         assert(Event == nullptr);
         nosVulkan->Begin("Write Image Copy To", &cmd);
-        nosVulkan->End2(cmd, NOS_TRUE, &Event);
-		nosEngine.EndScheduling(copyInfo->ID);
+        nosVulkan->End2(cmd, NOS_TRUE, WriteRequested ? &Event : nullptr);
 		if (WriteRequested)
 		{
+		    nosEngine.EndScheduling(copyInfo->ID);
 			WriteRequested = false;
 			SignalWrite();
 		}
