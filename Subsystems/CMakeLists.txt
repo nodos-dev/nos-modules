@@ -45,6 +45,27 @@ function(add_folder_as_subsystem_project NAME DEPENDENCIES INCLUDE_FOLDERS)
         LIBRARY_OUTPUT_DIRECTORY_MINSIZEREL "${CMAKE_CURRENT_SOURCE_DIR}/Binaries"
     )
 
+	foreach(source IN LISTS COLLECTED_SOURCES)
+        get_filename_component(source_path "${source}" PATH)
+        string(REPLACE "${CMAKE_CURRENT_SOURCE_DIR}" "" source_path_compact "${source_path}")
+        string(REPLACE "/" "\\" source_path_msvc "${source_path_compact}")
+        source_group("${source_path_msvc}" FILES "${source}")
+    endforeach()
+
+    foreach(header IN LISTS COLLECTED_HEADERS)
+        get_filename_component(header_path "${header}" PATH)
+        string(REPLACE "${CMAKE_CURRENT_SOURCE_DIR}" "" header_path_compact "${header_path}")
+        string(REPLACE "/" "\\" header_path_msvc "${header_path_compact}")
+        source_group("${header_path_msvc}" FILES "${header}")
+    endforeach()
+
+	foreach(resource IN LISTS COLLECTED_RESOURCES)
+        get_filename_component(resource_path "${resource}" PATH)
+        string(REPLACE "${CMAKE_CURRENT_SOURCE_DIR}" "" resource_path_compact "${resource_path}")
+        string(REPLACE "/" "\\" header_path_msvc "${resource_path_compact}")
+        source_group("${resource_path_msvc}" FILES "${resource}")
+    endforeach()
+
     target_include_directories(${NAME} PRIVATE ${INCLUDE_FOLDERS} ${SOURCE_FOLDERS})
 
     target_link_libraries(${NAME} PRIVATE ${DEPENDENCIES})
