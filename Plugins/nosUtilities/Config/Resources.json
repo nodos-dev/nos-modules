@@ -1,0 +1,16 @@
+{
+    "shaders": [
+        {
+            "key": "RESIZE_FRAG",
+            "path": "../Shaders/Resize.frag",
+            "stage": "FRAGMENT",
+            "lang": "GLSL"
+        }
+    ],
+    "passes": [
+        {
+            "key": "RESIZE_PASS",
+            "shader": "RESIZE_FRAG"
+        }
+    ]
+}

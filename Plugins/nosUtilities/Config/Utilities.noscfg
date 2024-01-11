@@ -6,12 +6,12 @@
         },
         "description": "Various utility nodes.",
         "display_name": "Utilities",
-       "dependencies": [
-           {
-               "name": "nos.sys.vulkan",
-               "version": "1.0.0"
-           }
-       ]
+        "dependencies": [
+            {
+                "name": "nos.sys.vulkan",
+                "version": "1.0.0"
+            }
+        ]
     },
     "node_definitions": [
         "Checkerboard.nosdef",
@@ -110,14 +110,21 @@
             "display_name": "Texture Switcher"
         },
         {
-          "category": "Channels",
-          "class_name": "ChannelViewer",
-          "display_name": "Channel Viewer"
+            "category": "Channels",
+            "class_name": "ChannelViewer",
+            "display_name": "Channel Viewer"
         },
         {
             "category": "Utilities",
             "class_name": "Time",
             "display_name": "Time"
+        }
+    ],
+    "subsystem_options": [
+        {
+            "subsystem": "nos.sys.vulkan",
+            "type": "nos.sys.vulkan.Resources",
+            "path": "Resources.json"
         }
     ]
 }
