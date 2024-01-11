@@ -19,7 +19,8 @@ function(add_folder_as_plugin_project NAME DEPENDENCIES INCLUDE_FOLDERS)
 
     file(GLOB_RECURSE SOURCES CONFIGURE_DEPENDS ${SOURCE_FOLDER}
         "${SOURCE_FOLDER}/*.cpp" "${SOURCE_FOLDER}/*.inl" "${SOURCE_FOLDER}/*.glsl" "${SOURCE_FOLDER}/*.hlsl"
-        "${SOURCE_FOLDER}/*.comp" "${SOURCE_FOLDER}/*.frag" "${SOURCE_FOLDER}/*.vert" "${SOURCE_FOLDER}/*.py")
+        "${SOURCE_FOLDER}/*.comp" "${SOURCE_FOLDER}/*.frag" "${SOURCE_FOLDER}/*.vert" "${SOURCE_FOLDER}/*.cu"
+        "${SOURCE_FOLDER}/*.py")
     list(APPEND CONFIG_FILES)
     foreach(CONFIG_FOLDER ${CONFIG_FOLDERS})
         file(GLOB_RECURSE CUR_CONFIG_FILES CONFIGURE_DEPENDS ${CONFIG_FOLDER} 
