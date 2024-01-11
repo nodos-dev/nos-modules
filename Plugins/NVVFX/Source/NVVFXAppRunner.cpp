@@ -41,6 +41,9 @@ nosResult NVVFXAppRunner::CreateArtifactReductionEffect(std::string modelsDir)
     res = NvVFX_CreateEffect(NVVFX_FX_SR_UPSCALE, &UpScale_EffectHandle);
     CHECK_NVCV_ERROR(res);
 
+    //res = NvVFX_Load(UpScale_EffectHandle);
+    //CHECK_NVCV_ERROR(res);
+
     return NOS_RESULT_SUCCESS;
 }
 
@@ -56,6 +59,9 @@ nosResult NVVFXAppRunner::CreateSuperResolutionEffect(std::string modelsDir)
 
     res = NvVFX_SetString(SuperRes_EffectHandle, NVVFX_MODEL_DIRECTORY, modelsDir.c_str());
     CHECK_NVCV_ERROR(res);
+    
+    //res = NvVFX_Load(SuperRes_EffectHandle);
+    //CHECK_NVCV_ERROR(res);
 
     return NOS_RESULT_SUCCESS;
 }
@@ -73,8 +79,8 @@ nosResult NVVFXAppRunner::CreateAIGreenScreenEffect(std::string modelsDir)
     res = NvVFX_SetString(AIGreenScreen_EffectHandle, NVVFX_MODEL_DIRECTORY, modelsDir.c_str());
     CHECK_NVCV_ERROR(res);
 
-    res = NvVFX_Load(AIGreenScreen_EffectHandle);
-    CHECK_NVCV_ERROR(res);
+    //res = NvVFX_Load(AIGreenScreen_EffectHandle);
+    //CHECK_NVCV_ERROR(res);
 
     return NOS_RESULT_SUCCESS;
 }

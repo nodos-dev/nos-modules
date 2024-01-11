@@ -20,6 +20,8 @@ NOS_REGISTER_NAME(Out);
 void RegisterNVVFX_AR(nosNodeFunctions* outFunctions);
 void RegisterNVVFX_SuperRes(nosNodeFunctions* outFunctions);
 void RegisterNVVFX_AIGreenScreen(nosNodeFunctions* outFunctions);
+char* g_nvVFXSDKPath = NULL;
+char* g_nvCVImagePath = NULL;
 
 extern nosVulkanSubsystem* nosVulkan = nullptr;
 
@@ -34,6 +36,21 @@ extern "C"
 		if (returnRes != NOS_RESULT_SUCCESS)
 			return NOS_RESULT_FAILED;
 
+		nosSubsystemContext deps = {};
+		returnRes = nosEngine.RequestSubsystem2(NOS_NAME_STATIC("nos.NVVFX.Dependencies"), 1, 0, &deps);
+		if (returnRes != NOS_RESULT_SUCCESS)
+			return NOS_RESULT_FAILED;
+
+		char* sdkPathDyn = new char[260];
+		memset(sdkPathDyn, 0, 260);
+		std::string sdkPathStr = std::string(deps.Context.RootFolderPath) + "\\NVVFX_SDK";
+		const char* sdkPath = sdkPathStr.c_str();
+		memcpy(sdkPathDyn, sdkPath, strlen(sdkPath));
+		g_nvVFXSDKPath = sdkPathDyn;
+		g_nvCVImagePath = sdkPathDyn;
+		
+		NSN_ModelsPath = nos::Name(std::string(std::string(deps.Context.RootFolderPath) + "\\NVVFX_SDK\\models").c_str());
+		
 		RegisterNVVFX_AR(outFunctions[0]);
 		RegisterNVVFX_SuperRes(outFunctions[1]);
 		RegisterNVVFX_AIGreenScreen(outFunctions[2]);

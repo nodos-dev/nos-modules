@@ -67,33 +67,15 @@ inline int nvFreeLibrary(HINSTANCE handle) {
 HINSTANCE getNvCVImageLib() {
   TCHAR path[MAX_PATH], tmpPath[MAX_PATH], fullPath[MAX_PATH];
   static HINSTANCE nvCVImageLib = NULL;
-  static bool bSDKPathSet = false;
-  if (!bSDKPathSet) {
-    nvCVImageLib = nvLoadLibrary("NVCVImage");
-    if (nvCVImageLib)  bSDKPathSet = true;
-  }
-  if (!bSDKPathSet) {
-    // There can be multiple apps on the system,
-    // some might include the SDK in the app package and
-    // others might expect the SDK to be installed in Program Files
-    GetEnvironmentVariable(TEXT("NV_VIDEO_EFFECTS_PATH"), path, MAX_PATH);
-    GetEnvironmentVariable(TEXT("NV_AR_SDK_PATH"), tmpPath, MAX_PATH);
-    if (_tcscmp(path, TEXT("USE_APP_PATH")) && _tcscmp(tmpPath, TEXT("USE_APP_PATH"))) {
-      // App has not set environment variable to "USE_APP_PATH"
-      // So pick up the SDK dll and dependencies from Program Files
-      GetEnvironmentVariable(TEXT("ProgramFiles"), path, MAX_PATH);
-      size_t max_len = sizeof(fullPath) / sizeof(TCHAR);
-      _stprintf_s(fullPath, max_len, TEXT("%s\\NVIDIA Corporation\\NVIDIA Video Effects\\"), path);
+
+  extern char* g_nvCVImagePath;
+
+  if (g_nvCVImagePath && g_nvCVImagePath[0]) {
+      strncpy_s(fullPath, MAX_PATH, g_nvCVImagePath, MAX_PATH);
       SetDllDirectory(fullPath);
       nvCVImageLib = nvLoadLibrary("NVCVImage");
-      if (!nvCVImageLib) {
-        _stprintf_s(fullPath, max_len, TEXT("%s\\NVIDIA Corporation\\NVIDIA AR SDK\\"), path);
-        SetDllDirectory(fullPath);
-        nvCVImageLib = nvLoadLibrary("NVCVImage");
-      }
-    }
-    bSDKPathSet = true;
   }
+
   return nvCVImageLib;
 }
  

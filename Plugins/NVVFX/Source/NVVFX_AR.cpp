@@ -9,7 +9,6 @@
 #include "NVVFXAppRunner.h"
 #include "NVVFX_Names.h"
 
-char* g_nvVFXSDKPath = NULL;
 
 // nosNodes
 
@@ -100,7 +99,12 @@ struct NVVFX_AR_NodeContext : nos::NodeContext {
 				OutputID = *pin->id();
 			}
 		}
+		ModelsPath = NSN_ModelsPath.AsString();
 		SetPinOrphanState(InputID, true);
+		nosResult res = VFX.CreateArtifactReductionEffect(ModelsPath.string());
+		if (res == NOS_RESULT_SUCCESS) {
+			SetPinOrphanState(InputID, false);
+		}
 	}
 
 
@@ -110,13 +114,6 @@ struct NVVFX_AR_NodeContext : nos::NodeContext {
 			lastWidth = input.Info.Texture.Width;
 			lastHeight = input.Info.Texture.Height;
 
-		}
-		if (pinName == NSN_ModelsPath) {
-			ModelsPath = static_cast<const char*>(value.Data);
-			nosResult res = VFX.CreateArtifactReductionEffect(ModelsPath.string());
-			if (res == NOS_RESULT_SUCCESS) {
-				SetPinOrphanState(InputID, false);
-			}
 		}
 	}
 

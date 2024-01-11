@@ -1,4 +1,4 @@
-add_folder_as_plugin_project("NVVFX" "VideoEffectsApp" "${CMAKE_CURRENT_SOURCE_DIR};${CMAKE_CURRENT_SOURCE_DIR}/External/nvvfx/src;${SUBSYSTEMS_SOURCE_DIR}/nosVulkanSubsystem/Include")
+add_folder_as_plugin_project("NVVFX" "" "${CMAKE_CURRENT_SOURCE_DIR};${CMAKE_CURRENT_SOURCE_DIR}/External/nvvfx/src;${SUBSYSTEMS_SOURCE_DIR}/nosVulkanSubsystem/Include")
 enable_language(CUDA CXX)
 
 find_package(CUDAToolkit REQUIRED)

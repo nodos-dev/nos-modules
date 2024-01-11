@@ -65,7 +65,12 @@ struct NVVFX_SuperRes_NodeContext : nos::NodeContext {
 				OutputID = *pin->id();
 			}
 		}
+		ModelsPath = NSN_ModelsPath.AsString();
 		SetPinOrphanState(InputID, true);
+		nosResult res = VFX.CreateSuperResolutionEffect(ModelsPath.string());
+		if (res == NOS_RESULT_SUCCESS) {
+			SetPinOrphanState(InputID, false);
+		}
 		CreateUpscaleFactorList({ "4/3x", "1.5x", "2x", "3x", "4x" });
 	}
 
@@ -81,13 +86,6 @@ struct NVVFX_SuperRes_NodeContext : nos::NodeContext {
 		}
 		if (pinName == NSN_UpscaleFactor) {
 			UpscaleFactor = std::stof(static_cast<const char*>(value.Data));
-		}
-		if (pinName == NSN_ModelsPath) {
-			ModelsPath = static_cast<const char*>(value.Data);
-			nosResult res = VFX.CreateSuperResolutionEffect(ModelsPath.string());
-			if (res == NOS_RESULT_SUCCESS) {
-				SetPinOrphanState(InputID, false);
-			}
 		}
 	}
 

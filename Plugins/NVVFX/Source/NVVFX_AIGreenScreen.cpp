@@ -42,7 +42,12 @@ struct NVVFX_AIGS_NodeContext : nos::NodeContext {
 				OutputID = *pin->id();
 			}
 		}
+		ModelsPath = NSN_ModelsPath.AsString();
 		SetPinOrphanState(InputID, true);
+		nosResult res = VFX.CreateAIGreenScreenEffect(ModelsPath.string());
+		if (res == NOS_RESULT_SUCCESS) {
+			SetPinOrphanState(InputID, false);
+		}
 	}
 
 
@@ -51,13 +56,6 @@ struct NVVFX_AIGS_NodeContext : nos::NodeContext {
 			nosResourceShareInfo input = nos::vkss::DeserializeTextureInfo(value.Data);
 			lastWidth = input.Info.Texture.Width;
 			lastHeight = input.Info.Texture.Height;
-		}
-		if (pinName == NSN_ModelsPath) {
-			ModelsPath = static_cast<const char*>(value.Data);
-			nosResult res = VFX.CreateAIGreenScreenEffect(ModelsPath.string());
-			if (res == NOS_RESULT_SUCCESS) {
-				SetPinOrphanState(InputID, false);
-			}
 		}
 	}
 
