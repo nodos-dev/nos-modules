@@ -1,6 +1,0 @@
-namespace nos.py;
-
-table PythonNode {
-    source: string;
-    // TODO: Third party Python packages, like numpy?
-}

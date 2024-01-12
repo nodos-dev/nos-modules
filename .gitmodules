@@ -18,3 +18,6 @@
 [submodule "Subsystems/nosShaderCompiler/Binaries/tools"]
 	path = Subsystems/nosShaderCompiler/Binaries/tools
 	url = https://github.com/mediaz/tools.git
+[submodule "Subsystems/nosNVVFXDeps"]
+	path = Subsystems/nosNVVFXDeps
+	url = https://github.com/mediaz/nvvfx_sdk

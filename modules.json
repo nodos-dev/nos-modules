@@ -59,7 +59,8 @@
             "deps": [
                 "nosWebRTC/*"
             ]
-        }
+        },
+        "nos.nvvfx":
     },
     "subsystems": {
         "nos.sys.vulkan": {
@@ -79,6 +80,15 @@
             ],
             "files": [
                 "Binaries/**"
+            ]
+        },
+        "nos.NVVFX.Dependencies": {
+            "path": "nosNVVFXDeps",
+            "deps": [
+                "nosNVVFXDeps/*"
+            ],
+            "files": [
+                "NVVFX_SDK/**"
             ]
         }
     }
