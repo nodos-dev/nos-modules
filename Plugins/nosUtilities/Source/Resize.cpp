@@ -15,20 +15,20 @@ NOS_REGISTER_NAME_SPACED(Nos_Utilities_Resize, "nos.utilities.Resize")
 
 static nosResult ExecuteNode(void* ctx, const nosNodeExecuteArgs* args)
 {
-	auto pins = GetPinValues(args);
-	auto inputTex = vkss::DeserializeTextureInfo(pins[NSN_Input]);
-	auto method = GetPinValue<uint32_t>(pins, NSN_Method);
+	nos::NodeExecuteArgs nodeArgs(args);
+	auto inputTex = vkss::DeserializeTextureInfo(nodeArgs[NSN_Input].Data->Data);
+	auto method = *reinterpret_cast<uint32_t*>(nodeArgs[NSN_Method].Data->Data);
 		
-	auto tex = vkss::DeserializeTextureInfo(pins[NSN_Output]);
-	auto size = GetPinValue<nosVec2u>(pins, NSN_Size);
+	auto tex = vkss::DeserializeTextureInfo(nodeArgs[NSN_Output].Data->Data);
+	auto& size = *reinterpret_cast<nosVec2u*>(nodeArgs[NSN_Size].Data->Data);
 		
-	if(size->x != tex.Info.Texture.Width ||
-		size->y != tex.Info.Texture.Height)
+	if(size.x != tex.Info.Texture.Width ||
+		size.y != tex.Info.Texture.Height)
 	{
 		auto prevTex = tex;
 		prevTex.Memory = {};
-		prevTex.Info.Texture.Width = size->x;
-		prevTex.Info.Texture.Height = size->y;
+		prevTex.Info.Texture.Width = size.x;
+		prevTex.Info.Texture.Height = size.y;
 		auto texFb = vkss::ConvertTextureInfo(prevTex);
 		texFb.unscaled = true;
 		auto texFbBuf = nos::Buffer::From(texFb);
@@ -36,7 +36,9 @@ static nosResult ExecuteNode(void* ctx, const nosNodeExecuteArgs* args)
 	}
     
 	std::vector bindings = {vkss::ShaderBinding(NSN_Input, inputTex), vkss::ShaderBinding(NSN_Method, method)};
-		
+	
+	tex = vkss::DeserializeTextureInfo(nodeArgs[NSN_Output].Data->Data);
+	
 	nosRunPassParams resizeParam {
 		.Key = NSN_RESIZE_PASS,
 		.Bindings = bindings.data(),
