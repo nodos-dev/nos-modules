@@ -5,7 +5,13 @@
             "version": "1.0.0"
         },
         "description": "WebRTC Nodes",
-        "display_name": "WebRTC"
+        "display_name": "WebRTC",
+        "dependencies": [
+            {
+                "name": "nos.sys.vulkan",
+                "version": "1.0.0"
+            }
+        ]
     },
     "node_definitions": [
         "WebRTCStreamer.nosdef",
