@@ -9,10 +9,12 @@
 #include <nosVulkanSubsystem/nosVulkanSubsystem.h>
 #include <nosVulkanSubsystem/Helpers.hpp>
 
-NOS_INIT();
+NOS_INIT_WITH_MIN_REQUIRED_MINOR(1) // Do not forget to remove this minimum required minor version on major version changes, or we might not be loaded.
 NOS_REGISTER_NAME(in1)
 NOS_REGISTER_NAME(in2)
 NOS_REGISTER_NAME(out)
+namespace nos::test
+{
 
 class TestNode : public nos::NodeContext
 {
@@ -98,19 +100,20 @@ public:
 	}
 };
 
+nosResult RegisterFrameInterpolator(nosNodeFunctions* nodeFunctions);
 
-
+nosVulkanSubsystem* nosVulkan = nullptr;
 
 extern "C"
 {
 
+
 	NOSAPI_ATTR nosResult NOSAPI_CALL nosExportNodeFunctions(size_t* outCount, nosNodeFunctions** outFunctions)
 	{
-		*outCount = (size_t)(6);
+		*outCount = (size_t)(7);
 		if (!outFunctions)
 			return NOS_RESULT_SUCCESS;
 
-		static nosVulkanSubsystem* nosVulkan = nullptr;
 		auto ret = nosEngine.RequestSubsystem(NOS_NAME_STATIC("nos.sys.vulkan"), 1, 0, (void**)&nosVulkan);
 		if (ret != NOS_RESULT_SUCCESS)
 			return ret;
@@ -150,7 +153,9 @@ extern "C"
 			nosVulkan->End(cmd, NOS_FALSE);
 			return NOS_RESULT_SUCCESS;
 		};
+		RegisterFrameInterpolator(outFunctions[6]);
 		return NOS_RESULT_SUCCESS;
 	}
 
 }
+} // namespace nos::test
