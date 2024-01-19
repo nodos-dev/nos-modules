@@ -80,6 +80,20 @@ namespace nos::cudass
 		CHECK_CUDA_RT_ERROR(res);
 		return NOS_RESULT_SUCCESS;
 	}
+	nosResult CreateEvent(nosCUDAEvent* cudaEvent)
+	{
+		cudaEvent_t event;
+		cudaError res = cudaEventCreate(&event);
+		CHECK_CUDA_RT_ERROR(res);
+		(*cudaEvent) = event;
+		return NOS_RESULT_SUCCESS;
+	}
+	nosResult DestroyEvent(nosCUDAEvent cudaEvent)
+	{
+		cudaError res = cudaEventDestroy(reinterpret_cast<cudaEvent_t>(cudaEvent));
+		CHECK_CUDA_RT_ERROR(res);
+		return NOS_RESULT_SUCCESS;
+	}
 	nosResult LoadKernelModulePTX(const char* ptxPath, nosCUDAModule* outModule)
 	{
 		CUmodule cuModule;
@@ -96,25 +110,54 @@ namespace nos::cudass
 		(*outFunction) = cuFunction;
 		return NOS_RESULT_SUCCESS;
 	}
-	nosResult LaunchModuleKernelFunction(nosCUDAStream* stream, nosCUDAKernelFunction* outFunction, nosCUDACallbackFunction callback)
+	nosResult LaunchModuleKernelFunction(nosCUDAStream* stream, nosCUDAKernelFunction* outFunction, nosCUDAKernelLaunchConfig config, void** arguments, nosCUDACallbackFunction callback, void* callbackData)
 	{
-		return nosResult();
+		CUresult res = cuLaunchKernel(reinterpret_cast<CUfunction>(outFunction),
+			config.GridDimensions.x, config.GridDimensions.y, config.GridDimensions.z,
+			config.BlockDimensions.x, config.BlockDimensions.y, config.BlockDimensions.z, 
+			config.DynamicMemorySize, reinterpret_cast<CUstream>(stream), arguments, 0);
+		CHECK_CUDA_DRIVER_ERROR(res);
+		return AddCallback(stream, callback, callbackData);
 	}
 	nosResult WaitStream(nosCUDAStream* stream)
 	{
-		return nosResult();
+		cudaError res = cudaStreamSynchronize(reinterpret_cast<cudaStream_t>(stream));
+		CHECK_CUDA_RT_ERROR(res);
+		return NOS_RESULT_SUCCESS;
 	}
-	nosResult BeginStreamTimeMeasure(nosCUDAStream* stream)
+	nosResult BeginStreamTimeMeasure(nosCUDAStream* stream, nosCUDAEvent* measureEvent)
 	{
-		return nosResult();
+		cudaError res = cudaEventRecord(reinterpret_cast<cudaEvent_t>(measureEvent), reinterpret_cast<cudaStream_t>(stream));
+		CHECK_CUDA_RT_ERROR(res);
+		return NOS_RESULT_SUCCESS;
 	}
-	nosResult EndStreamTimeMeasure(nosCUDAStream* stream, float* elapsedTime)
+	nosResult EndStreamTimeMeasure(nosCUDAStream* stream, float* elapsedTime, nosCUDAEvent* measureEvent)
 	{
-		return nosResult();
+		cudaEvent_t endEvent;
+		
+		cudaError res = cudaEventCreate(&endEvent);
+		CHECK_CUDA_RT_ERROR(res);
+		
+		res = cudaEventRecord(reinterpret_cast<cudaEvent_t>(endEvent), reinterpret_cast<cudaStream_t>(stream));
+		CHECK_CUDA_RT_ERROR(res);
+		
+		res = cudaEventSynchronize(endEvent);
+		CHECK_CUDA_RT_ERROR(res);
+		
+		res = cudaEventElapsedTime(elapsedTime, reinterpret_cast<cudaEvent_t>(measureEvent), endEvent);
+		CHECK_CUDA_RT_ERROR(res);
+		
+		return NOS_RESULT_SUCCESS;
 	}
 	nosResult CopyMemory(nosCUDAStream* stream, nosCUDABufferInfo* sourceBuffer, nosCUDABufferInfo* destinationBuffer, nosCUDACopyKind copyKind)
 	{
 		return nosResult();
+	}
+	nosResult AddCallback(nosCUDAStream* stream, nosCUDACallbackFunction callback, void* callbackData)
+	{
+		CUresult res = cuLaunchHostFunc(reinterpret_cast<CUstream>(stream), callback, callbackData);
+		CHECK_CUDA_DRIVER_ERROR(res);
+		return NOS_RESULT_SUCCESS;
 	}
 	nosResult CreateOnGPU(nosCUDABufferInfo* cudaBuffer)
 	{

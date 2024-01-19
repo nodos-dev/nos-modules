@@ -1,10 +1,10 @@
 #pragma once
 #include "nosCUDASubsystem.h"
 
-#define CHECK_CUDA_RT_ERROR(cudaRes)	\
+#define CHECK_CUDA_RT_ERROR(cudaErr)	\
 	do{							\
-		if (cudaRes != cudaSuccess) {	\
-			nosEngine.LogE("CUDA RT failed with error: %s", cudaGetErrorString(cudaRes));	\
+		if (cudaErr != cudaSuccess) {	\
+			nosEngine.LogE("CUDA RT failed with error: %s", cudaGetErrorString(cudaErr));	\
 			return NOS_RESULT_FAILED; \
 		}						\
 	}while(0)					\
@@ -37,15 +37,23 @@ namespace nos::cudass
 	nosResult GetCudaVersion(CUDAVersion* versionInfo); //CUDA version
 	nosResult GetDeviceCount(int* deviceCount); //Number of GPUs
 	nosResult GetDeviceProperties(int device, nosCUDADeviceProperties* deviceProperties); //device cant exceed deviceCount
+	
 	nosResult CreateStream(nosCUDAStream* stream);
 	nosResult DestroyStream(nosCUDAStream stream);
+
+	nosResult CreateEvent(nosCUDAEvent* cudaEvent);
+	nosResult DestroyEvent(nosCUDAEvent cudaEvent);
+	
 	nosResult LoadKernelModulePTX(const char* ptxPath, nosCUDAModule* outModule); //Loads .ptx files only. //TODO: This should be extended to char arrays and .cu files.
 	nosResult GetModuleKernelFunction(const char* functionName, nosCUDAModule* cudaModule, nosCUDAKernelFunction* outFunction);
-	nosResult LaunchModuleKernelFunction(nosCUDAStream* stream, nosCUDAKernelFunction* outFunction,/*int ShouldRecordTime, */ nosCUDACallbackFunction callback);
+	
+	nosResult LaunchModuleKernelFunction(nosCUDAStream* stream, nosCUDAKernelFunction* outFunction, nosCUDAKernelLaunchConfig config, void** arguments, nosCUDACallbackFunction callback, void* callbackData);
 	nosResult WaitStream(nosCUDAStream* stream); //Waits all commands in the stream to be completed
-	nosResult BeginStreamTimeMeasure(nosCUDAStream* stream);
-	nosResult EndStreamTimeMeasure(nosCUDAStream* stream, float* elapsedTime); //
+	nosResult BeginStreamTimeMeasure(nosCUDAStream* stream, nosCUDAEvent* measureEvent);
+	nosResult EndStreamTimeMeasure(nosCUDAStream* stream, nosCUDAEvent* measureEvent, float* elapsedTime); //
 	nosResult CopyMemory(nosCUDAStream* stream, nosCUDABufferInfo* sourceBuffer, nosCUDABufferInfo* destinationBuffer, nosCUDACopyKind copyKind);
+	nosResult AddCallback(nosCUDAStream* stream, nosCUDACallbackFunction callback, void* callbackData);
+
 	nosResult CreateOnGPU(nosCUDABufferInfo* cudaBuffer);
 	nosResult CreateShareableOnGPU(nosCUDABufferInfo* cudaBuffer); //Exportable
 	nosResult CreateManaged(nosCUDABufferInfo* cudaBuffer); //Allocates in Unified Memory Space 

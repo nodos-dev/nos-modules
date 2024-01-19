@@ -11,18 +11,22 @@ typedef void* nosCUDAModule;
 
 typedef void* nosCUDAKernelFunction;
 
+typedef void* nosCUDAEvent;
+
 #ifdef _WIN32
 #define NOS_CUDA_CALLBACK __stdcall
 #else
 #define NOS_CUDA_CALLBACK
 #endif
 
+//Host(CPU) function must NOT make any CUDA API calls
 typedef void (NOS_CUDA_CALLBACK* nosCUDACallbackFunction)(void* data);
 
 #define NOS_CUDA_SUBSYSTEM_NAME "nos.sys.cuda"
 #define UUID_SIZE 16
 #define DEVICE_NAME_SIZE 256
 #define WARP_SIZE 32 //Number of threads should be choosen as a multiple of Warp Size, whenever possible
+#define MAX_THREAD_PER_BLOCK 1024
 
 #pragma endregion
 
@@ -34,11 +38,11 @@ typedef struct CUDAVersion {
 } CUDAVersion;
 
 typedef struct nosCUDABufferInfo {
-	uint64_t Address = NULL;
-	uint64_t ShareableHandle = NULL;
-	uint64_t Size = 0;
-	uint64_t CreateHandle = NULL;
-	nosCUDAMemoryType memoryType = MEMORY_TYPE_UNREGISTERED;
+	uint64_t Address;
+	uint64_t ShareableHandle;
+	uint64_t Size;
+	uint64_t CreateHandle;
+	nosCUDAMemoryType memoryType;
 }nosCUDAResourceInfo;
 
 typedef struct nosCUDAArrayInfo {
@@ -52,21 +56,22 @@ typedef struct nosCUDADeviceProperties {
 	uint32_t ComputeCapabilityMinor;
 } nosCudaDeviceProperties;
 
-typedef struct nosCUDALaunchConfig {
+typedef struct nosCUDAKernelLaunchConfig {
 	nosDim3 GridDimensions;
-	nosDim3 BlockDimensions;  
-
-} nosCUDALaunchConfig;
+	nosDim3 BlockDimensions;
+	size_t DynamicMemorySize; //Default by zero, will be used for `extern __shared__ float shared[]` type dynamically allocated arrays.
+} nosCUDAKernelLaunchConfig;
 
 typedef struct nosDim3 {
-	int x;
-	int y;
-	int z;
+	unsigned int x;
+	unsigned int y;
+	unsigned int z;
 } nosDim3;
 #pragma endregion
 
 #pragma region Enums
-typedef enum nosCUDACopyKind {
+typedef enum nosCUDACopyKind 
+{
 	HOST_TO_HOST		= 0,			
 	HOST_TO_DEVICE		= 1,			
 	DEVICE_TO_HOST		= 2,			
@@ -95,14 +100,18 @@ typedef struct nosCUDASubsystem
 	nosResult(NOSAPI_CALL* CreateStream)(nosCUDAStream* stream);
 	nosResult(NOSAPI_CALL* DestroyStream)(nosCUDAStream stream);
 
+	nosResult(NOSAPI_CALL* CreateEvent)(nosCUDAEvent* cudaEvent);
+	nosResult(NOSAPI_CALL* DestroyEvent)(nosCUDAEvent cudaEvent);
+
 	nosResult(NOSAPI_CALL* LoadKernelModulePTX)(const char* ptxPath, nosCUDAModule* outModule); //Loads .ptx files only. //TODO: This should be extended to char arrays and .cu files.
 	nosResult(NOSAPI_CALL* GetModuleKernelFunction)(const char* functionName, nosCUDAModule* cudaModule, nosCUDAKernelFunction* outFunction);
 
-	nosResult(NOSAPI_CALL* LaunchModuleKernelFunction)(nosCUDAStream* stream, nosCUDAKernelFunction* outFunction,/*int ShouldRecordTime, */ nosCUDACallbackFunction callback);
+	nosResult(NOSAPI_CALL* LaunchModuleKernelFunction)(nosCUDAStream* stream, nosCUDAKernelFunction* outFunction,nosCUDAKernelLaunchConfig config, void** arguments, nosCUDACallbackFunction callback, void* callbackData);
 	nosResult(NOSAPI_CALL* WaitStream)(nosCUDAStream* stream); //Waits all commands in the stream to be completed
-	nosResult(NOSAPI_CALL* BeginStreamTimeMeasure)(nosCUDAStream* stream);
-	nosResult(NOSAPI_CALL* EndStreamTimeMeasure)(nosCUDAStream* stream, float* elapsedTime); //
+	nosResult(NOSAPI_CALL* BeginStreamTimeMeasure)(nosCUDAStream* stream, nosCUDAEvent* measureEvent); //Must be called before enqueueing the operation to stream
+	nosResult(NOSAPI_CALL* EndStreamTimeMeasure)(nosCUDAStream* stream, nosCUDAEvent* measureEvent, float* elapsedTime); //
 	nosResult(NOSAPI_CALL* CopyMemory)(nosCUDAStream* stream, nosCUDABufferInfo* sourceBuffer, nosCUDABufferInfo* destinationBuffer, nosCUDACopyKind copyKind);
+	nosResult(NOSAPI_CALL* AddCallback)(nosCUDAStream* stream, nosCUDACallbackFunction callback, void* callbackData);
 
 	nosResult(NOSAPI_CALL* CreateOnGPU)(nosCUDABufferInfo* cudaBuffer);
 	nosResult(NOSAPI_CALL* CreateShareableOnGPU)(nosCUDABufferInfo* cudaBuffer); //Exportable
