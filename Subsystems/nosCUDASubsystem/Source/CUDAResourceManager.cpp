@@ -59,7 +59,7 @@ nosResult CudaGPUResourceManager::InitializeCUDADevice(int device)
     cudaError_t res = cudaSuccess;
     int runtimeVersion = 0;
     res = cudaRuntimeGetVersion(&runtimeVersion);
-    CHECK_CUDA_ERROR(res);
+    CHECK_CUDA_RT_ERROR(res);
     if (runtimeVersion / 1000 >= 12) {
 
     }

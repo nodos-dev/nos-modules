@@ -1,22 +1,45 @@
 #include "Services.h"
 
 // SDK
-#include <Nodos/Name.hpp>
-#include <nosFlatBuffersCommon.h>
 #include <Nodos/SubsystemAPI.h>
-#include <glm/glm.hpp>
-#include <glm/ext/scalar_constants.hpp>
-
-// std
-#include <future>
-#include <chrono>
 
 #include <cuda_runtime.h>
 #include <cuda.h>
 
 namespace nos::cudass 
 {
-	nosResult Initialize(int device)
+	void Bind(nosCUDASubsystem* subsys) {
+		subsys->Initialize = Initialize;
+		subsys->GetCudaVersion = GetCudaVersion;
+		subsys->GetDeviceCount = GetDeviceCount;
+		subsys->GetDeviceProperties = GetDeviceProperties;
+
+		subsys->CreateStream = CreateStream;
+		subsys->DestroyStream = DestroyStream;
+		subsys->CreateEvent = CreateEvent;
+		subsys->DestroyEvent = DestroyEvent;
+		
+		subsys->LoadKernelModulePTX = LoadKernelModulePTX;
+		subsys->GetModuleKernelFunction = GetModuleKernelFunction;
+		subsys->LaunchModuleKernelFunction = LaunchModuleKernelFunction;
+		
+		subsys->WaitStream = WaitStream;
+		subsys->AddEventToStream = AddEventToStream;
+		subsys->WaitEvent = WaitEvent;
+		subsys->QueryEvent = QueryEvent;
+		subsys->GetEventElapsedTime = GetEventElapsedTime; 
+		
+		subsys->CopyMemory = CopyMemory;
+		subsys->AddCallback = AddCallback;
+		
+		subsys->CreateOnGPU = CreateOnGPU;
+		subsys->CreateShareableOnGPU = CreateShareableOnGPU;
+		subsys->CreateManaged = CreateManaged;
+		subsys->CreatePinned = CreatePinned;
+		subsys->Destroy = Destroy;
+	}
+
+	nosResult NOSAPI_CALL Initialize(int device)
 	{
 		//We will initialize CUDA Runtime explicitly, Driver API will also be initialized implicitly
 		int cudaVersion = 0;
@@ -38,7 +61,7 @@ namespace nos::cudass
 		CHECK_CUDA_RT_ERROR(res);
 		return NOS_RESULT_SUCCESS;
 	}
-	nosResult GetCudaVersion(CUDAVersion* versionInfo)
+	nosResult NOSAPI_CALL GetCudaVersion(CUDAVersion* versionInfo)
 	{
 		int cudaVersion = 0;
 		cudaError res = cudaDriverGetVersion(&cudaVersion);
@@ -48,13 +71,13 @@ namespace nos::cudass
 		versionInfo->Minor = (cudaVersion - (cudaVersion / 1000)*1000)/10;
 		return NOS_RESULT_SUCCESS;
 	}
-	nosResult GetDeviceCount(int* deviceCount)
+	nosResult NOSAPI_CALL GetDeviceCount(int* deviceCount)
 	{
 		cudaError res = cudaSuccess;
 		res = cudaGetDeviceCount(deviceCount);
 		CHECK_CUDA_RT_ERROR(res);
 	}
-	nosResult GetDeviceProperties(int device, nosCUDADeviceProperties* deviceProperties)
+	nosResult NOSAPI_CALL GetDeviceProperties(int device, nosCUDADeviceProperties* deviceProperties)
 	{
 		CHECK_VALID_ARGUMENT(deviceProperties);
 		cudaDeviceProp deviceProp = {};
@@ -66,7 +89,7 @@ namespace nos::cudass
 		memcpy(deviceProp.name, deviceProperties->Name, DEVICE_NAME_SIZE);
 		return NOS_RESULT_SUCCESS;
 	}
-	nosResult CreateStream(nosCUDAStream* stream)
+	nosResult NOSAPI_CALL CreateStream(nosCUDAStream* stream)
 	{
 		cudaStream_t cudaStream;
 		cudaError res = cudaStreamCreate(&cudaStream);
@@ -74,27 +97,27 @@ namespace nos::cudass
 		(*stream) = cudaStream;
 		return NOS_RESULT_SUCCESS;
 	}
-	nosResult DestroyStream(nosCUDAStream stream)
+	nosResult NOSAPI_CALL DestroyStream(nosCUDAStream stream)
 	{
 		cudaError res = cudaStreamDestroy(reinterpret_cast<cudaStream_t>(stream));
 		CHECK_CUDA_RT_ERROR(res);
 		return NOS_RESULT_SUCCESS;
 	}
-	nosResult CreateEvent(nosCUDAEvent* cudaEvent)
+	nosResult NOSAPI_CALL CreateEvent(nosCUDAEvent* cudaEvent, nosCUDAEventFlags flags)
 	{
 		cudaEvent_t event;
-		cudaError res = cudaEventCreate(&event);
+		cudaError res = cudaEventCreate(&event, flags);
 		CHECK_CUDA_RT_ERROR(res);
 		(*cudaEvent) = event;
 		return NOS_RESULT_SUCCESS;
 	}
-	nosResult DestroyEvent(nosCUDAEvent cudaEvent)
+	nosResult NOSAPI_CALL DestroyEvent(nosCUDAEvent cudaEvent)
 	{
 		cudaError res = cudaEventDestroy(reinterpret_cast<cudaEvent_t>(cudaEvent));
 		CHECK_CUDA_RT_ERROR(res);
 		return NOS_RESULT_SUCCESS;
 	}
-	nosResult LoadKernelModulePTX(const char* ptxPath, nosCUDAModule* outModule)
+	nosResult NOSAPI_CALL LoadKernelModulePTX(const char* ptxPath, nosCUDAModule* outModule)
 	{
 		CUmodule cuModule;
 		CUresult res = cuModuleLoad(&cuModule, ptxPath);
@@ -102,15 +125,15 @@ namespace nos::cudass
 		(*outModule) = cuModule;
 		return NOS_RESULT_SUCCESS;
 	}
-	nosResult GetModuleKernelFunction(const char* functionName, nosCUDAModule* cudaModule, nosCUDAKernelFunction* outFunction)
+	nosResult NOSAPI_CALL GetModuleKernelFunction(const char* functionName, nosCUDAModule cudaModule, nosCUDAKernelFunction* outFunction)
 	{
-		CUfunction cuFunction;
+		CUfunction cuFunction = NULL;;
 		CUresult res = cuModuleGetFunction(&cuFunction, reinterpret_cast<CUmodule>(cudaModule), functionName);
 		CHECK_CUDA_DRIVER_ERROR(res);
 		(*outFunction) = cuFunction;
 		return NOS_RESULT_SUCCESS;
 	}
-	nosResult LaunchModuleKernelFunction(nosCUDAStream* stream, nosCUDAKernelFunction* outFunction, nosCUDAKernelLaunchConfig config, void** arguments, nosCUDACallbackFunction callback, void* callbackData)
+	nosResult NOSAPI_CALL LaunchModuleKernelFunction(nosCUDAStream stream, nosCUDAKernelFunction outFunction, nosCUDAKernelLaunchConfig config, void** arguments, nosCUDACallbackFunction callback, void* callbackData)
 	{
 		CUresult res = cuLaunchKernel(reinterpret_cast<CUfunction>(outFunction),
 			config.GridDimensions.x, config.GridDimensions.y, config.GridDimensions.z,
@@ -119,19 +142,41 @@ namespace nos::cudass
 		CHECK_CUDA_DRIVER_ERROR(res);
 		return AddCallback(stream, callback, callbackData);
 	}
-	nosResult WaitStream(nosCUDAStream* stream)
+	nosResult NOSAPI_CALL WaitStream(nosCUDAStream stream)
 	{
 		cudaError res = cudaStreamSynchronize(reinterpret_cast<cudaStream_t>(stream));
 		CHECK_CUDA_RT_ERROR(res);
 		return NOS_RESULT_SUCCESS;
 	}
-	nosResult BeginStreamTimeMeasure(nosCUDAStream* stream, nosCUDAEvent* measureEvent)
+	nosResult NOSAPI_CALL AddEventToStream(nosCUDAStream stream, nosCUDAEvent measureEvent)
 	{
 		cudaError res = cudaEventRecord(reinterpret_cast<cudaEvent_t>(measureEvent), reinterpret_cast<cudaStream_t>(stream));
 		CHECK_CUDA_RT_ERROR(res);
 		return NOS_RESULT_SUCCESS;
 	}
-	nosResult EndStreamTimeMeasure(nosCUDAStream* stream, float* elapsedTime, nosCUDAEvent* measureEvent)
+	nosResult NOSAPI_CALL WaitEvent(nosCUDAEvent waitEvent)
+	{
+		cudaError res = cudaEventSynchronize(reinterpret_cast<cudaEvent_t>(waitEvent));
+		CHECK_CUDA_RT_ERROR(res);
+		return NOS_RESULT_SUCCESS;
+	}
+	nosResult NOSAPI_CALL QueryEvent(nosCUDAEvent waitEvent, nosCUDAEventStatus* eventStatus)
+	{
+		cudaError res = cudaEventQuery(reinterpret_cast<cudaEvent_t>(waitEvent));
+
+		if (res == cudaErrorNotReady) {
+			(*eventStatus) = EVENT_STATUS_NOT_READY;
+			return NOS_RESULT_SUCCESS;
+		}
+		else if (res == cudaSuccess) {
+			(*eventStatus) = EVENT_STATUS_READY;
+			return NOS_RESULT_SUCCESS;
+		}
+		
+		CHECK_CUDA_RT_ERROR(res);
+		return NOS_RESULT_SUCCESS;
+	}
+	nosResult NOSAPI_CALL GetEventElapsedTime(nosCUDAStream stream, nosCUDAEvent theEvent, float* elapsedTime)
 	{
 		cudaEvent_t endEvent;
 		
@@ -144,38 +189,117 @@ namespace nos::cudass
 		res = cudaEventSynchronize(endEvent);
 		CHECK_CUDA_RT_ERROR(res);
 		
-		res = cudaEventElapsedTime(elapsedTime, reinterpret_cast<cudaEvent_t>(measureEvent), endEvent);
+		res = cudaEventElapsedTime(elapsedTime, reinterpret_cast<cudaEvent_t>(theEvent), endEvent);
 		CHECK_CUDA_RT_ERROR(res);
 		
 		return NOS_RESULT_SUCCESS;
 	}
-	nosResult CopyMemory(nosCUDAStream* stream, nosCUDABufferInfo* sourceBuffer, nosCUDABufferInfo* destinationBuffer, nosCUDACopyKind copyKind)
+	nosResult NOSAPI_CALL CopyMemory(nosCUDAStream stream, nosCUDABufferInfo* sourceBuffer, nosCUDABufferInfo* destinationBuffer, nosCUDACopyKind copyKind)
 	{
 		return nosResult();
 	}
-	nosResult AddCallback(nosCUDAStream* stream, nosCUDACallbackFunction callback, void* callbackData)
+	nosResult NOSAPI_CALL AddCallback(nosCUDAStream stream, nosCUDACallbackFunction callback, void* callbackData)
 	{
 		CUresult res = cuLaunchHostFunc(reinterpret_cast<CUstream>(stream), callback, callbackData);
 		CHECK_CUDA_DRIVER_ERROR(res);
 		return NOS_RESULT_SUCCESS;
 	}
-	nosResult CreateOnGPU(nosCUDABufferInfo* cudaBuffer)
+	nosResult NOSAPI_CALL CreateOnGPU(nosCUDABufferInfo* cudaBuffer)
+	{
+		uint64_t addr = NULL;
+		cudaError_t res = cudaMalloc((void**)&addr, cudaBuffer->Size);
+		CHECK_CUDA_RT_ERROR(res);
+		cudaBuffer->Address = addr;
+		cudaBuffer->ShareableHandle = NULL;
+		cudaBuffer->CreateHandle = NULL;
+		cudaBuffer->MemoryType = MEMORY_TYPE_DEVICE;
+		return NOS_RESULT_SUCCESS;
+	}
+	nosResult NOSAPI_CALL CreateShareableOnGPU(nosCUDABufferInfo* cudaBuffer)
+	{
+		return NOS_RESULT_SUCCESS;
+		//CUcontext ctx;
+		//CUdevice dev;
+		//int supportsVMM = 0, supportsWin32 = 0;
+
+		//cuDevicePrimaryCtxRetain(&ctx, 0);
+		//cuCtxSetCurrent(ctx);
+		//cuCtxGetDevice(&dev);
+
+		//cuDeviceGetAttribute(&supportsVMM, CU_DEVICE_ATTRIBUTE_VIRTUAL_ADDRESS_MANAGEMENT_SUPPORTED, dev);
+		//assert(supportsVMM == 1);
+
+		//cuDeviceGetAttribute(&supportsWin32,
+		//	CU_DEVICE_ATTRIBUTE_HANDLE_TYPE_WIN32_HANDLE_SUPPORTED, dev);
+		//assert(supportsWin32 == 1);
+
+		//CUresult status = CUDA_SUCCESS;
+		//CUmemAllocationProp prop;
+
+		//memset(&prop, 0, sizeof(prop));
+		//SECURITY_ATTRIBUTES lps = {};
+		//lps.nLength = sizeof(SECURITY_ATTRIBUTES);
+		//lps.lpSecurityDescriptor = NULL;  // Use a NULL security descriptor for default security settings.
+		//lps.bInheritHandle = TRUE;       // Set to TRUE if you want the handle to be inheritable.
+
+
+		//prop.type = CU_MEM_ALLOCATION_TYPE_PINNED;
+		//prop.location.type = CU_MEM_LOCATION_TYPE_DEVICE;
+		//prop.location.id = (int)dev;
+		//prop.win32HandleMetaData = &lps;
+		//prop.requestedHandleTypes = CU_MEM_HANDLE_TYPE_WIN32;
+		//security::getDefaultSecurityDescriptor(&prop);
+
+		//size_t chunk_sz;
+		//status = cuMemGetAllocationGranularity(&chunk_sz, &prop, CU_MEM_ALLOC_GRANULARITY_MINIMUM);
+		//assert(status == CUDA_SUCCESS);
+		//const size_t aligned_size = ((size + chunk_sz - 1) / chunk_sz) * chunk_sz;
+
+		//CUmemGenericAllocationHandle handle;
+
+		//status = cuMemCreate(&handle, aligned_size, &prop, 0);
+		//assert(status == CUDA_SUCCESS);
+
+		//CUdeviceptr new_ptr = 0ULL;
+		//status = cuMemAddressReserve(&new_ptr, (aligned_size), 0ULL, 0ULL, 0ULL);
+		//assert(status == CUDA_SUCCESS);
+
+		//status = cuMemMap(new_ptr, aligned_size, 0, handle, 0);
+		//assert(status == CUDA_SUCCESS);
+
+		//CUmemAccessDesc accessDesc = {};
+		//accessDesc.location.type = CU_MEM_LOCATION_TYPE_DEVICE;
+		//accessDesc.location.id = dev;
+		//accessDesc.flags = CU_MEM_ACCESS_FLAGS_PROT_READWRITE;
+		//// Make the address accessible
+		//status = cuMemSetAccess(new_ptr, aligned_size, &accessDesc, 1);
+		//assert(status == CUDA_SUCCESS);
+
+
+
+		//uint64_t shareableHandle = 0;
+		//status = cuMemExportToShareableHandle((void*)&shareableHandle, handle, CU_MEM_HANDLE_TYPE_WIN32, 0);
+		//const char* errorMsg;
+		//cuGetErrorString(status, &errorMsg);
+		//assert(status == CUDA_SUCCESS);
+	}
+	nosResult NOSAPI_CALL CreateManaged(nosCUDABufferInfo* cudaBuffer)
+	{
+		uint64_t addr = NULL;
+		cudaError res = cudaMallocManaged((void**)&addr, cudaBuffer->Size);
+		CHECK_CUDA_RT_ERROR(res);
+		cudaBuffer->Address = addr;
+		cudaBuffer->ShareableHandle = NULL;
+		cudaBuffer->CreateHandle = NULL;
+		cudaBuffer->MemoryType = MEMORY_TYPE_MANAGED;
+
+		return NOS_RESULT_SUCCESS;
+	}
+	nosResult NOSAPI_CALL CreatePinned(nosCUDABufferInfo* cudaBuffer)
 	{
 		return nosResult();
 	}
-	nosResult CreateShareableOnGPU(nosCUDABufferInfo* cudaBuffer)
-	{
-		return nosResult();
-	}
-	nosResult CreateManaged(nosCUDABufferInfo* cudaBuffer)
-	{
-		return nosResult();
-	}
-	nosResult CreatePinned(nosCUDABufferInfo* cudaBuffer)
-	{
-		return nosResult();
-	}
-	nosResult Destroy(nosCUDABufferInfo* cudaBuffer)
+	nosResult NOSAPI_CALL Destroy(nosCUDABufferInfo* cudaBuffer)
 	{
 		return nosResult();
 	}

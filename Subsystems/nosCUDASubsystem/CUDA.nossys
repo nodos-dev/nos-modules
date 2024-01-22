@@ -1,12 +1,12 @@
 {
-    "info": {
-        "id": {
-            "name": "nos.sys.cuda",
-            "version": "1.0.0"
-        },
-        "display_name": "CUDA Subsystem",
-        "description": "CUDA Subsystem for Nodos.",
-        "dependencies": []
+  "info": {
+    "id": {
+      "name": "nos.sys.cuda",
+      "version": "1.0.0"
     },
-    "binary_path": "./Binaries/nosCUDASubsystem"
+    "display_name": "CUDA Subsystem",
+    "description": "CUDA Subsystem for Nodos.",
+    "dependencies": []
+  },
+  "binary_path": "./Binaries/nosCUDASubsystem"
 }

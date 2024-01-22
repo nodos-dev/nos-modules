@@ -8,7 +8,7 @@
 
 #include <Windows.h>
 
-#define CHECK_CUDA_ERROR(cudaRes)	\
+#define CHECK_CUDA_RT_ERROR(cudaRes)	\
 	do{							\
 		if (cudaRes != cudaSuccess) {	\
 			nosEngine.LogE("CUDA RT failed with error: %s", cudaGetErrorString(cudaRes));	\

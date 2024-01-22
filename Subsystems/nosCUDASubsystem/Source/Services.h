@@ -33,6 +33,8 @@
 
 namespace nos::cudass
 {
+	void Bind(nosCUDASubsystem* subsys);
+
 	nosResult Initialize(int device); //Initialize CUDA Runtime
 	nosResult GetCudaVersion(CUDAVersion* versionInfo); //CUDA version
 	nosResult GetDeviceCount(int* deviceCount); //Number of GPUs
@@ -41,18 +43,21 @@ namespace nos::cudass
 	nosResult CreateStream(nosCUDAStream* stream);
 	nosResult DestroyStream(nosCUDAStream stream);
 
-	nosResult CreateEvent(nosCUDAEvent* cudaEvent);
+	nosResult CreateEvent(nosCUDAEvent* cudaEvent, nosCUDAEventFlags flags);
 	nosResult DestroyEvent(nosCUDAEvent cudaEvent);
 	
 	nosResult LoadKernelModulePTX(const char* ptxPath, nosCUDAModule* outModule); //Loads .ptx files only. //TODO: This should be extended to char arrays and .cu files.
-	nosResult GetModuleKernelFunction(const char* functionName, nosCUDAModule* cudaModule, nosCUDAKernelFunction* outFunction);
+	nosResult GetModuleKernelFunction(const char* functionName, nosCUDAModule cudaModule, nosCUDAKernelFunction* outFunction);
 	
-	nosResult LaunchModuleKernelFunction(nosCUDAStream* stream, nosCUDAKernelFunction* outFunction, nosCUDAKernelLaunchConfig config, void** arguments, nosCUDACallbackFunction callback, void* callbackData);
-	nosResult WaitStream(nosCUDAStream* stream); //Waits all commands in the stream to be completed
-	nosResult BeginStreamTimeMeasure(nosCUDAStream* stream, nosCUDAEvent* measureEvent);
-	nosResult EndStreamTimeMeasure(nosCUDAStream* stream, nosCUDAEvent* measureEvent, float* elapsedTime); //
-	nosResult CopyMemory(nosCUDAStream* stream, nosCUDABufferInfo* sourceBuffer, nosCUDABufferInfo* destinationBuffer, nosCUDACopyKind copyKind);
-	nosResult AddCallback(nosCUDAStream* stream, nosCUDACallbackFunction callback, void* callbackData);
+	nosResult LaunchModuleKernelFunction(nosCUDAStream stream, nosCUDAKernelFunction outFunction, nosCUDAKernelLaunchConfig config, void** arguments, nosCUDACallbackFunction callback, void* callbackData);
+	nosResult WaitStream(nosCUDAStream stream); //Waits all commands in the stream to be completed
+	nosResult AddEventToStream(nosCUDAStream stream, nosCUDAEvent measureEvent);
+	nosResult WaitEvent(nosCUDAEvent waitEvent);
+	nosResult QueryEvent(nosCUDAEvent waitEvent, nosCUDAEventStatus* eventStatus); //Must be called before enqueueing the operation to stream
+	nosResult GetEventElapsedTime(nosCUDAStream stream, nosCUDAEvent theEvent, float* elapsedTime); //Get elapsed time between now and the measureEvent
+
+	nosResult CopyMemory(nosCUDAStream stream, nosCUDABufferInfo* sourceBuffer, nosCUDABufferInfo* destinationBuffer, nosCUDACopyKind copyKind);
+	nosResult AddCallback(nosCUDAStream stream, nosCUDACallbackFunction callback, void* callbackData);
 
 	nosResult CreateOnGPU(nosCUDABufferInfo* cudaBuffer);
 	nosResult CreateShareableOnGPU(nosCUDABufferInfo* cudaBuffer); //Exportable
