@@ -69,13 +69,17 @@ typedef struct CUDAVersion {
 	unsigned short Minor;
 } CUDAVersion;
 
+typedef struct nosCUDABufferCreateInfo {
+	uint64_t Size;
+}nosCUDABufferCreateInfo;
+
 typedef struct nosCUDABufferInfo {
+	nosCUDABufferCreateInfo CreateInfo;
 	uint64_t Address;
 	uint64_t ShareableHandle;
-	uint64_t Size;
 	uint64_t CreateHandle;
 	nosCUDAMemoryType MemoryType;
-}nosCUDAResourceInfo;
+}nosCUDABufferInfo;
 
 typedef struct nosCUDAArrayInfo {
 
@@ -117,24 +121,40 @@ typedef struct nosCUDASubsystem
 
 	nosResult(NOSAPI_CALL* CreateEvent)(nosCUDAEvent* cudaEvent, nosCUDAEventFlags flags);
 	nosResult(NOSAPI_CALL* DestroyEvent)(nosCUDAEvent cudaEvent);
-
+	/// <summary>
+	/// 
+	/// </summary>
+	/// <param name="LoadKernelModulePTX"></param>
+	/// <returns></returns>
 	nosResult(NOSAPI_CALL* LoadKernelModulePTX)(const char* ptxPath, nosCUDAModule* outModule); //Loads .ptx files only. //TODO: This should be extended to char arrays and .cu files.
 	nosResult(NOSAPI_CALL* GetModuleKernelFunction)(const char* functionName, nosCUDAModule cudaModule, nosCUDAKernelFunction* outFunction);
 	
+	/**
+	 * @brief Runs CUDA Kernels.
+	 *
+	 * @param config Specificies Block and Grid dimensions, hence the number of threads.
+	 * @param arguments Kernel function arguments. Can be set as void* args[] = {&param1, &param2, .., &paramN} .
+	 *
+	 * @return
+	 */
 	nosResult(NOSAPI_CALL* LaunchModuleKernelFunction)(nosCUDAStream stream, nosCUDAKernelFunction outFunction,nosCUDAKernelLaunchConfig config, void** arguments, nosCUDACallbackFunction callback, void* callbackData);
+	
 	nosResult(NOSAPI_CALL* WaitStream)(nosCUDAStream stream); //Waits all commands in the stream to be completed
 	nosResult(NOSAPI_CALL* AddEventToStream)(nosCUDAStream stream, nosCUDAEvent event); //Must be called before enqueueing the operation to stream
 	nosResult(NOSAPI_CALL* WaitEvent)(nosCUDAEvent waitEvent); //Must be called before enqueueing the operation to stream
 	nosResult(NOSAPI_CALL* QueryEvent)(nosCUDAEvent waitEvent, nosCUDAEventStatus* eventStatus); //Must be called before enqueueing the operation to stream
 	nosResult(NOSAPI_CALL* GetEventElapsedTime)(nosCUDAStream stream, nosCUDAEvent theEvent, float* elapsedTime); //
-	nosResult(NOSAPI_CALL* CopyMemory)(nosCUDAStream stream, nosCUDABufferInfo* sourceBuffer, nosCUDABufferInfo* destinationBuffer, nosCUDACopyKind copyKind);
 	nosResult(NOSAPI_CALL* AddCallback)(nosCUDAStream stream, nosCUDACallbackFunction callback, void* callbackData);
 
-	nosResult(NOSAPI_CALL* CreateOnGPU)(nosCUDABufferInfo* cudaBuffer);
-	nosResult(NOSAPI_CALL* CreateShareableOnGPU)(nosCUDABufferInfo* cudaBuffer); //Exportable
+	nosResult(NOSAPI_CALL* CreateOnCUDA)(nosCUDABufferInfo* cudaBuffer); //CUDA Memory, can be used in kernels etc.
+	nosResult(NOSAPI_CALL* CreateShareableOnCUDA)(nosCUDABufferInfo* cudaBuffer); //Exportable CUDA memory
 	nosResult(NOSAPI_CALL* CreateManaged)(nosCUDABufferInfo* cudaBuffer); //Allocates in Unified Memory Space 
-	nosResult(NOSAPI_CALL* CreatePinned)(nosCUDABufferInfo* cudaBuffer); //Pinned(page-locked) memory in RAM 
-	nosResult(NOSAPI_CALL* Destroy)(nosCUDABufferInfo* cudaBuffer); //Allocates in Unified Memory Space
+	nosResult(NOSAPI_CALL* CreatePinned)(nosCUDABufferInfo* cudaBuffer); //Allocates Pinned(page-locked) memory in RAM
+	nosResult(NOSAPI_CALL* Create)(nosCUDABufferInfo* cudaBuffer); //Allocates memory in RAM
+	nosResult(NOSAPI_CALL* InitBuffer)(void* source, uint64_t size, nosCUDAMemoryType type ,nosCUDABufferInfo* destination); //Wraps buffer to an externally created memory
+	nosResult(NOSAPI_CALL* CopyBuffers)(nosCUDABufferInfo* source, nosCUDABufferInfo* destination);
+
+	nosResult(NOSAPI_CALL* Destroy)(nosCUDABufferInfo* cudaBuffer); //Free the memory
 
 	//TODO: Add semaphore stuff
 	//TODO: Add texture & surface memory

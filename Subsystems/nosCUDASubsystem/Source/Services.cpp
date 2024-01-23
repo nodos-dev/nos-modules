@@ -29,13 +29,14 @@ namespace nos::cudass
 		subsys->QueryEvent = QueryEvent;
 		subsys->GetEventElapsedTime = GetEventElapsedTime; 
 		
-		subsys->CopyMemory = CopyMemory;
+		subsys->CopyBuffers = CopyBuffers;
 		subsys->AddCallback = AddCallback;
 		
-		subsys->CreateOnGPU = CreateOnGPU;
-		subsys->CreateShareableOnGPU = CreateShareableOnGPU;
+		subsys->CreateOnCUDA = CreateOnCUDA;
+		subsys->CreateShareableOnCUDA = CreateShareableOnCUDA;
 		subsys->CreateManaged = CreateManaged;
 		subsys->CreatePinned = CreatePinned;
+		subsys->Create = Create;
 		subsys->Destroy = Destroy;
 	}
 
@@ -194,9 +195,51 @@ namespace nos::cudass
 		
 		return NOS_RESULT_SUCCESS;
 	}
-	nosResult NOSAPI_CALL CopyMemory(nosCUDAStream stream, nosCUDABufferInfo* sourceBuffer, nosCUDABufferInfo* destinationBuffer, nosCUDACopyKind copyKind)
+	nosResult NOSAPI_CALL CopyBuffers(nosCUDABufferInfo* source, nosCUDABufferInfo* destination)
 	{
-		return nosResult();
+		CHECK_VALID_ARGUMENT(source);
+		CHECK_VALID_ARGUMENT(destination);
+
+		if (source->MemoryType == MEMORY_TYPE_UNREGISTERED || destination->MemoryType == MEMORY_TYPE_UNREGISTERED) {
+			nosEngine.LogE("Invalid memory type for CUDA memcopy operation.");
+			return NOS_RESULT_FAILED;
+		}
+		if (source->CreateInfo.Size != destination->CreateInfo.Size) {
+			nosEngine.LogW("nosCUDABuffers have size mismatch, trimming will be performed for copying.");
+		}
+
+		cudaError res = cudaSuccess;
+		size_t properSize = std::min(source->CreateInfo.Size, destination->CreateInfo.Size);
+		switch (source->MemoryType) {
+			case MEMORY_TYPE_HOST:
+				if (destination->MemoryType == MEMORY_TYPE_DEVICE) {
+					res = cudaMemcpy(reinterpret_cast<void*>(destination->Address), reinterpret_cast<void*>(source->Address), properSize, cudaMemcpyHostToDevice);
+				}
+				else{
+					res = cudaMemcpy(reinterpret_cast<void*>(destination->Address), reinterpret_cast<void*>(source->Address), properSize, cudaMemcpyHostToHost);
+				}
+				break;
+			case MEMORY_TYPE_DEVICE:
+				if (destination->MemoryType == MEMORY_TYPE_DEVICE) {
+					res = cudaMemcpy(reinterpret_cast<void*>(destination->Address), reinterpret_cast<void*>(source->Address), properSize, cudaMemcpyDeviceToDevice);
+				}
+				else{
+					res = cudaMemcpy(reinterpret_cast<void*>(destination->Address), reinterpret_cast<void*>(source->Address), properSize, cudaMemcpyDeviceToHost);
+				}
+				break;
+			case MEMORY_TYPE_MANAGED:
+				if (destination->MemoryType == MEMORY_TYPE_DEVICE) {
+					res = cudaMemcpy(reinterpret_cast<void*>(destination->Address), reinterpret_cast<void*>(source->Address), properSize, cudaMemcpyHostToDevice);
+				}
+				else {
+					res = cudaMemcpy(reinterpret_cast<void*>(destination->Address), reinterpret_cast<void*>(source->Address), properSize, cudaMemcpyHostToHost);
+				}
+				break;
+			default:
+				break;
+		}
+		CHECK_CUDA_RT_ERROR(res);
+		return NOS_RESULT_SUCCESS;
 	}
 	nosResult NOSAPI_CALL AddCallback(nosCUDAStream stream, nosCUDACallbackFunction callback, void* callbackData)
 	{
@@ -204,10 +247,10 @@ namespace nos::cudass
 		CHECK_CUDA_DRIVER_ERROR(res);
 		return NOS_RESULT_SUCCESS;
 	}
-	nosResult NOSAPI_CALL CreateOnGPU(nosCUDABufferInfo* cudaBuffer)
+	nosResult NOSAPI_CALL CreateOnCUDA(nosCUDABufferInfo* cudaBuffer)
 	{
 		uint64_t addr = NULL;
-		cudaError_t res = cudaMalloc((void**)&addr, cudaBuffer->Size);
+		cudaError_t res = cudaMalloc((void**)&addr, cudaBuffer->CreateInfo.Size);
 		CHECK_CUDA_RT_ERROR(res);
 		cudaBuffer->Address = addr;
 		cudaBuffer->ShareableHandle = NULL;
@@ -215,7 +258,7 @@ namespace nos::cudass
 		cudaBuffer->MemoryType = MEMORY_TYPE_DEVICE;
 		return NOS_RESULT_SUCCESS;
 	}
-	nosResult NOSAPI_CALL CreateShareableOnGPU(nosCUDABufferInfo* cudaBuffer)
+	nosResult NOSAPI_CALL CreateShareableOnCUDA(nosCUDABufferInfo* cudaBuffer)
 	{
 		return NOS_RESULT_SUCCESS;
 		//CUcontext ctx;
@@ -286,7 +329,7 @@ namespace nos::cudass
 	nosResult NOSAPI_CALL CreateManaged(nosCUDABufferInfo* cudaBuffer)
 	{
 		uint64_t addr = NULL;
-		cudaError res = cudaMallocManaged((void**)&addr, cudaBuffer->Size);
+		cudaError res = cudaMallocManaged((void**)&addr, cudaBuffer->CreateInfo.Size);
 		CHECK_CUDA_RT_ERROR(res);
 		cudaBuffer->Address = addr;
 		cudaBuffer->ShareableHandle = NULL;
@@ -298,6 +341,27 @@ namespace nos::cudass
 	nosResult NOSAPI_CALL CreatePinned(nosCUDABufferInfo* cudaBuffer)
 	{
 		return nosResult();
+	}
+	nosResult InitBuffer(void* source, uint64_t size, nosCUDAMemoryType type, nosCUDABufferInfo* destination)
+	{
+		destination->Address = reinterpret_cast<uint64_t>(source);
+		destination->CreateInfo.Size = size;
+		destination->CreateHandle = NULL;
+		destination->ShareableHandle = NULL;
+		destination->MemoryType = type;
+
+		return NOS_RESULT_SUCCESS;
+	}
+	nosResult Create(nosCUDABufferInfo* cudaBuffer)
+	{
+		void* data = malloc(cudaBuffer->CreateInfo.Size);
+
+		cudaBuffer->Address = reinterpret_cast<uint64_t>(data);
+		cudaBuffer->ShareableHandle = NULL;
+		cudaBuffer->CreateHandle = NULL;
+		cudaBuffer->MemoryType = MEMORY_TYPE_HOST;
+
+		return NOS_RESULT_SUCCESS;
 	}
 	nosResult NOSAPI_CALL Destroy(nosCUDABufferInfo* cudaBuffer)
 	{

@@ -56,12 +56,14 @@ namespace nos::cudass
 	nosResult QueryEvent(nosCUDAEvent waitEvent, nosCUDAEventStatus* eventStatus); //Must be called before enqueueing the operation to stream
 	nosResult GetEventElapsedTime(nosCUDAStream stream, nosCUDAEvent theEvent, float* elapsedTime); //Get elapsed time between now and the measureEvent
 
-	nosResult CopyMemory(nosCUDAStream stream, nosCUDABufferInfo* sourceBuffer, nosCUDABufferInfo* destinationBuffer, nosCUDACopyKind copyKind);
+	nosResult CopyBuffers(nosCUDABufferInfo* source, nosCUDABufferInfo* destination);
 	nosResult AddCallback(nosCUDAStream stream, nosCUDACallbackFunction callback, void* callbackData);
 
-	nosResult CreateOnGPU(nosCUDABufferInfo* cudaBuffer);
-	nosResult CreateShareableOnGPU(nosCUDABufferInfo* cudaBuffer); //Exportable
+	nosResult CreateOnCUDA(nosCUDABufferInfo* cudaBuffer);
+	nosResult CreateShareableOnCUDA(nosCUDABufferInfo* cudaBuffer); //Exportable
 	nosResult CreateManaged(nosCUDABufferInfo* cudaBuffer); //Allocates in Unified Memory Space 
 	nosResult CreatePinned(nosCUDABufferInfo* cudaBuffer); //Pinned memory in RAM 
+	nosResult InitBuffer(void* source, uint64_t size, nosCUDAMemoryType type, nosCUDABufferInfo* destination);
+	nosResult Create(nosCUDABufferInfo* cudaBuffer); //Pinned memory in RAM 
 	nosResult Destroy(nosCUDABufferInfo* cudaBuffer); //Allocates in Unified Memory Space
 }
