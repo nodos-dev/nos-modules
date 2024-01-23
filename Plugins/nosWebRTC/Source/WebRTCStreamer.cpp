@@ -398,7 +398,8 @@ struct WebRTCNodeContext : nos::NodeContext {
 		auto& toCopy = InputBuffers[writeIndex];
 		nosVulkan->Copy(cmd, &DummyInput, &toCopy.second, 0);
 		assert(toCopy.first == 0);
-		nosVulkan->End2(cmd, NOS_TRUE, &toCopy.first);
+		nosCmdEndParams endParams{.ForceSubmit = true, .OutGPUEventHandle = &toCopy.first};
+		nosVulkan->End(cmd, &endParams);
 		{
 			std::unique_lock lock(SendFrameMutex);
 			InputRing->SetWrote();

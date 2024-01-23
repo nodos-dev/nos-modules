@@ -19,9 +19,11 @@
             "shader": "CUBE_MASK_FRAG",
             "vertex_shader": "CUBE_MASK_VERT",
             "blend_mode": {
-                "op": "SUBTRACT",
-                "src_factor": "ONE",
-                "dst_factor": "ONE"
+				"enabled": true,
+                "color_op": "SUBTRACT",
+                "src_color_factor": "ONE",
+                "dst_color_factor": "ONE"
+
             }
         }
     ]

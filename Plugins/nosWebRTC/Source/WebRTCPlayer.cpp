@@ -355,7 +355,8 @@ struct WebRTCPlayerNodeContext : nos::NodeContext {
 		nosVulkan->Begin("WebRTC Copy From", &cmd);
 		nosVulkan->Copy(cmd, &ConvertedTextures[readIndex], &dst, 0);
 		nosGPUEvent event;
-		nosVulkan->End2(cmd, NOS_TRUE, &event);
+		nosCmdEndParams endParams{.ForceSubmit = true, .OutGPUEventHandle = &event};
+		nosVulkan->End(cmd, &endParams);
 		nosVulkan->WaitGpuEvent(&event, UINT64_MAX);
 
 		OutputRing->SetRead();

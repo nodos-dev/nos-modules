@@ -373,7 +373,7 @@ NOSAPI_ATTR nosResult NOSAPI_CALL nosExportNodeFunctions(size_t* outSize, nosNod
 	funcs->OnMenuCommand = CubeMask::OnMenuCommand;
 	funcs->OnKeyEvent = CubeMask::OnKeyEvent;
 
-	nosEngine.RequestSubsystem(NOS_NAME_STATIC(NOS_VULKAN_SUBSYSTEM_NAME), 1, 0, (void**)&vk);
+	nosEngine.RequestSubsystem(NOS_NAME_STATIC(NOS_VULKAN_SUBSYSTEM_NAME), NOS_VULKAN_SUBSYSTEM_VERSION_MAJOR, 0, (void**)&vk);
 
 	// std::string root = nosEngine.Context->RootFolderPath;
 	// {

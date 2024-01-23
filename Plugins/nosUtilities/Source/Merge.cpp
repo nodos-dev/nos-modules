@@ -267,7 +267,7 @@ nosResult RegisterMerge(nosNodeFunctions* out)
 		.Key = NSN_Merge_Pass,
 		.Shader = NSN_Merge_Shader,
 		.MultiSample = 1,
-        .Blend = NOS_BLEND_MODE_DEFAULT,
+        .Blend = NOS_BLEND_MODE_ALPHA_BLENDING,
 	};
     
 	ret = nosVulkan->RegisterPasses(1, &pass);
