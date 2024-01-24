@@ -104,6 +104,11 @@ typedef struct nosCUDAKernelLaunchConfig {
 	size_t DynamicMemorySize; //Default by zero, will be used for `extern __shared__ float shared[]` type dynamically allocated arrays.
 } nosCUDAKernelLaunchConfig;
 
+
+typedef struct nosCUDACallbackContext {
+	void* Context;
+	void* Data; 
+} nosCUDACallbackContext;
 #pragma endregion
 
 
@@ -121,12 +126,10 @@ typedef struct nosCUDASubsystem
 
 	nosResult(NOSAPI_CALL* CreateEvent)(nosCUDAEvent* cudaEvent, nosCUDAEventFlags flags);
 	nosResult(NOSAPI_CALL* DestroyEvent)(nosCUDAEvent cudaEvent);
-	/// <summary>
-	/// 
-	/// </summary>
-	/// <param name="LoadKernelModulePTX"></param>
-	/// <returns></returns>
-	nosResult(NOSAPI_CALL* LoadKernelModulePTX)(const char* ptxPath, nosCUDAModule* outModule); //Loads .ptx files only. //TODO: This should be extended to char arrays and .cu files.
+
+	nosResult(NOSAPI_CALL* LoadKernelModuleFromPTX)(const char* ptxPath, nosCUDAModule* outModule); //Loads .ptx files only
+	//nosResult(NOSAPI_CALL* LoadKernelModuleFromSource)(const char* cuFilePath, nosCUDAModule* outModule); //Loads .ptx files only
+	//nosResult(NOSAPI_CALL* LoadKernelModuleFromCString)(const char* cuFilePath, nosCUDAModule* outModule); //Loads .ptx files only
 	nosResult(NOSAPI_CALL* GetModuleKernelFunction)(const char* functionName, nosCUDAModule cudaModule, nosCUDAKernelFunction* outFunction);
 	
 	/**
@@ -151,13 +154,15 @@ typedef struct nosCUDASubsystem
 	nosResult(NOSAPI_CALL* CreateManaged)(nosCUDABufferInfo* cudaBuffer); //Allocates in Unified Memory Space 
 	nosResult(NOSAPI_CALL* CreatePinned)(nosCUDABufferInfo* cudaBuffer); //Allocates Pinned(page-locked) memory in RAM
 	nosResult(NOSAPI_CALL* Create)(nosCUDABufferInfo* cudaBuffer); //Allocates memory in RAM
-	nosResult(NOSAPI_CALL* InitBuffer)(void* source, uint64_t size, nosCUDAMemoryType type ,nosCUDABufferInfo* destination); //Wraps buffer to an externally created memory
+	nosResult(NOSAPI_CALL* InitBuffer)(void* source, uint64_t size, nosCUDAMemoryType type ,nosCUDABufferInfo* destination); //               Wraps buffer to an externally created memory
 	nosResult(NOSAPI_CALL* CopyBuffers)(nosCUDABufferInfo* source, nosCUDABufferInfo* destination);
 
 	nosResult(NOSAPI_CALL* Destroy)(nosCUDABufferInfo* cudaBuffer); //Free the memory
 
 	//TODO: Add semaphore stuff
 	//TODO: Add texture & surface memory
+	// Texture and Surface memory may not be necessary at all because Pytorch seems like using linear cuda memory:
+	// https://pytorch.org/docs/stable/notes/cuda.html
 
 } nosCUDASubsystem;
 

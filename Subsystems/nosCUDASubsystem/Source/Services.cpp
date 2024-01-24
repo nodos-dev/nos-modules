@@ -1,5 +1,5 @@
 #include "Services.h"
-
+#include "CUDASubsysCommon.h"
 // SDK
 #include <Nodos/SubsystemAPI.h>
 
@@ -19,7 +19,7 @@ namespace nos::cudass
 		subsys->CreateEvent = CreateEvent;
 		subsys->DestroyEvent = DestroyEvent;
 		
-		subsys->LoadKernelModulePTX = LoadKernelModulePTX;
+		subsys->LoadKernelModuleFromPTX = LoadKernelModuleFromPTX;
 		subsys->GetModuleKernelFunction = GetModuleKernelFunction;
 		subsys->LaunchModuleKernelFunction = LaunchModuleKernelFunction;
 		
@@ -118,7 +118,7 @@ namespace nos::cudass
 		CHECK_CUDA_RT_ERROR(res);
 		return NOS_RESULT_SUCCESS;
 	}
-	nosResult NOSAPI_CALL LoadKernelModulePTX(const char* ptxPath, nosCUDAModule* outModule)
+	nosResult NOSAPI_CALL LoadKernelModuleFromPTX(const char* ptxPath, nosCUDAModule* outModule)
 	{
 		CUmodule cuModule;
 		CUresult res = cuModuleLoad(&cuModule, ptxPath);
@@ -260,71 +260,60 @@ namespace nos::cudass
 	}
 	nosResult NOSAPI_CALL CreateShareableOnCUDA(nosCUDABufferInfo* cudaBuffer)
 	{
-		return NOS_RESULT_SUCCESS;
-		//CUcontext ctx;
-		//CUdevice dev;
-		//int supportsVMM = 0, supportsWin32 = 0;
+		CUcontext ctx;
+		CUdevice dev;
+		int supportsVMM = 0, supportsWin32 = 0;
 
-		//cuDevicePrimaryCtxRetain(&ctx, 0);
-		//cuCtxSetCurrent(ctx);
-		//cuCtxGetDevice(&dev);
+		cuDevicePrimaryCtxRetain(&ctx, 0);
+		cuCtxSetCurrent(ctx);
+		cuCtxGetDevice(&dev);
 
-		//cuDeviceGetAttribute(&supportsVMM, CU_DEVICE_ATTRIBUTE_VIRTUAL_ADDRESS_MANAGEMENT_SUPPORTED, dev);
-		//assert(supportsVMM == 1);
+		cuDeviceGetAttribute(&supportsVMM, CU_DEVICE_ATTRIBUTE_VIRTUAL_MEMORY_MANAGEMENT_SUPPORTED, dev);
+		CHECK_IS_SUPPORTED(supportsVMM, VIRTUAL_MEMORY_MANAGEMENT);
 
-		//cuDeviceGetAttribute(&supportsWin32,
-		//	CU_DEVICE_ATTRIBUTE_HANDLE_TYPE_WIN32_HANDLE_SUPPORTED, dev);
-		//assert(supportsWin32 == 1);
+		cuDeviceGetAttribute(&supportsWin32,
+			CU_DEVICE_ATTRIBUTE_HANDLE_TYPE_WIN32_HANDLE_SUPPORTED, dev);
+		CHECK_IS_SUPPORTED(supportsVMM, HANDLE_TYPE_WIN32_HANDLE);
 
-		//CUresult status = CUDA_SUCCESS;
-		//CUmemAllocationProp prop;
+		CUresult status = CUDA_SUCCESS;
+		CUmemAllocationProp prop;
 
-		//memset(&prop, 0, sizeof(prop));
-		//SECURITY_ATTRIBUTES lps = {};
-		//lps.nLength = sizeof(SECURITY_ATTRIBUTES);
-		//lps.lpSecurityDescriptor = NULL;  // Use a NULL security descriptor for default security settings.
-		//lps.bInheritHandle = TRUE;       // Set to TRUE if you want the handle to be inheritable.
+		prop.type = CU_MEM_ALLOCATION_TYPE_PINNED;
+		prop.location.type = CU_MEM_LOCATION_TYPE_DEVICE;
+		prop.location.id = (int)dev;
+		prop.win32HandleMetaData = Descriptor::SecurityDescriptor::GetDefaultSecurityDescriptor();
+		prop.requestedHandleTypes = CU_MEM_HANDLE_TYPE_WIN32;
 
+		size_t chunk_sz;
+		status = cuMemGetAllocationGranularity(&chunk_sz, &prop, CU_MEM_ALLOC_GRANULARITY_MINIMUM);
+		assert(status == CUDA_SUCCESS);
+		size_t size = cudaBuffer->CreateInfo.Size;
+		const size_t aligned_size = ((size + chunk_sz - 1) / chunk_sz) * chunk_sz;
 
-		//prop.type = CU_MEM_ALLOCATION_TYPE_PINNED;
-		//prop.location.type = CU_MEM_LOCATION_TYPE_DEVICE;
-		//prop.location.id = (int)dev;
-		//prop.win32HandleMetaData = &lps;
-		//prop.requestedHandleTypes = CU_MEM_HANDLE_TYPE_WIN32;
-		//security::getDefaultSecurityDescriptor(&prop);
+		CUmemGenericAllocationHandle handle;
 
-		//size_t chunk_sz;
-		//status = cuMemGetAllocationGranularity(&chunk_sz, &prop, CU_MEM_ALLOC_GRANULARITY_MINIMUM);
-		//assert(status == CUDA_SUCCESS);
-		//const size_t aligned_size = ((size + chunk_sz - 1) / chunk_sz) * chunk_sz;
+		status = cuMemCreate(&handle, aligned_size, &prop, 0);
+		assert(status == CUDA_SUCCESS);
 
-		//CUmemGenericAllocationHandle handle;
+		CUdeviceptr new_ptr = 0ULL;
+		status = cuMemAddressReserve(&new_ptr, (aligned_size), 0ULL, 0ULL, 0ULL);
+		assert(status == CUDA_SUCCESS);
 
-		//status = cuMemCreate(&handle, aligned_size, &prop, 0);
-		//assert(status == CUDA_SUCCESS);
+		status = cuMemMap(new_ptr, aligned_size, 0, handle, 0);
+		assert(status == CUDA_SUCCESS);
 
-		//CUdeviceptr new_ptr = 0ULL;
-		//status = cuMemAddressReserve(&new_ptr, (aligned_size), 0ULL, 0ULL, 0ULL);
-		//assert(status == CUDA_SUCCESS);
+		CUmemAccessDesc accessDesc = {};
+		accessDesc.location.type = CU_MEM_LOCATION_TYPE_DEVICE;
+		accessDesc.location.id = dev;
+		accessDesc.flags = CU_MEM_ACCESS_FLAGS_PROT_READWRITE;
+		// Make the address accessible
+		status = cuMemSetAccess(new_ptr, aligned_size, &accessDesc, 1);
+		CHECK_CUDA_DRIVER_ERROR(status);
 
-		//status = cuMemMap(new_ptr, aligned_size, 0, handle, 0);
-		//assert(status == CUDA_SUCCESS);
+		uint64_t shareableHandle = 0;
+		status = cuMemExportToShareableHandle((void*)&shareableHandle, handle, CU_MEM_HANDLE_TYPE_WIN32, 0);
+		CHECK_CUDA_DRIVER_ERROR(status);
 
-		//CUmemAccessDesc accessDesc = {};
-		//accessDesc.location.type = CU_MEM_LOCATION_TYPE_DEVICE;
-		//accessDesc.location.id = dev;
-		//accessDesc.flags = CU_MEM_ACCESS_FLAGS_PROT_READWRITE;
-		//// Make the address accessible
-		//status = cuMemSetAccess(new_ptr, aligned_size, &accessDesc, 1);
-		//assert(status == CUDA_SUCCESS);
-
-
-
-		//uint64_t shareableHandle = 0;
-		//status = cuMemExportToShareableHandle((void*)&shareableHandle, handle, CU_MEM_HANDLE_TYPE_WIN32, 0);
-		//const char* errorMsg;
-		//cuGetErrorString(status, &errorMsg);
-		//assert(status == CUDA_SUCCESS);
 	}
 	nosResult NOSAPI_CALL CreateManaged(nosCUDABufferInfo* cudaBuffer)
 	{

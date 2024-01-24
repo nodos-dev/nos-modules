@@ -31,6 +31,16 @@
 		}						\
 	}while(0)					\
 
+#define CHECK_IS_SUPPORTED(result, propertyName)	\
+	do{ \
+		if (result != 1) {\
+			nosEngine.LogE("Property %s is not suported by current CUDA version.",#propertyName); \
+			return NOS_RESULT_FAILED; \
+		} \
+	} while (0); \
+
+
+
 namespace nos::cudass
 {
 	void Bind(nosCUDASubsystem* subsys);
@@ -46,7 +56,7 @@ namespace nos::cudass
 	nosResult CreateEvent(nosCUDAEvent* cudaEvent, nosCUDAEventFlags flags);
 	nosResult DestroyEvent(nosCUDAEvent cudaEvent);
 	
-	nosResult LoadKernelModulePTX(const char* ptxPath, nosCUDAModule* outModule); //Loads .ptx files only. //TODO: This should be extended to char arrays and .cu files.
+	nosResult LoadKernelModuleFromPTX(const char* ptxPath, nosCUDAModule* outModule); //Loads .ptx files only. //TODO: This should be extended to char arrays and .cu files.
 	nosResult GetModuleKernelFunction(const char* functionName, nosCUDAModule cudaModule, nosCUDAKernelFunction* outFunction);
 	
 	nosResult LaunchModuleKernelFunction(nosCUDAStream stream, nosCUDAKernelFunction outFunction, nosCUDAKernelLaunchConfig config, void** arguments, nosCUDACallbackFunction callback, void* callbackData);
