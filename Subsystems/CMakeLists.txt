@@ -59,7 +59,8 @@ endfunction()
 
 # Nodos Subsystem SDK
 if (NOT WITH_NODOS)
-    list(APPEND CMAKE_MODULE_PATH $ENV{NODOS_SDK_DIR}/cmake)
+	cmake_path(SET NODOS_SDK_DIR_PATH $ENV{NODOS_SDK_DIR})
+	list(APPEND CMAKE_MODULE_PATH ${NODOS_SDK_DIR_PATH}/cmake)
     find_package(nosSubsystemSDK)
 endif()
 
