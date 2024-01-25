@@ -1,5 +1,5 @@
 #pragma once
-#include "nosCUDASubsystem.h"
+#include "nosCUDASubsystem/nosCUDASubsystem.h"
 
 #define CHECK_CUDA_RT_ERROR(cudaErr)	\
 	do{							\
@@ -53,8 +53,8 @@ namespace nos::cudass
 	nosResult CreateStream(nosCUDAStream* stream);
 	nosResult DestroyStream(nosCUDAStream stream);
 
-	nosResult CreateEvent(nosCUDAEvent* cudaEvent, nosCUDAEventFlags flags);
-	nosResult DestroyEvent(nosCUDAEvent cudaEvent);
+	nosResult CreateCUDAEvent(nosCUDAEvent* cudaEvent, nosCUDAEventFlags flags);
+	nosResult DestroyCUDAEvent(nosCUDAEvent cudaEvent);
 	
 	nosResult LoadKernelModuleFromPTX(const char* ptxPath, nosCUDAModule* outModule); //Loads .ptx files only. //TODO: This should be extended to char arrays and .cu files.
 	nosResult GetModuleKernelFunction(const char* functionName, nosCUDAModule cudaModule, nosCUDAKernelFunction* outFunction);
@@ -62,18 +62,26 @@ namespace nos::cudass
 	nosResult LaunchModuleKernelFunction(nosCUDAStream stream, nosCUDAKernelFunction outFunction, nosCUDAKernelLaunchConfig config, void** arguments, nosCUDACallbackFunction callback, void* callbackData);
 	nosResult WaitStream(nosCUDAStream stream); //Waits all commands in the stream to be completed
 	nosResult AddEventToStream(nosCUDAStream stream, nosCUDAEvent measureEvent);
-	nosResult WaitEvent(nosCUDAEvent waitEvent);
-	nosResult QueryEvent(nosCUDAEvent waitEvent, nosCUDAEventStatus* eventStatus); //Must be called before enqueueing the operation to stream
-	nosResult GetEventElapsedTime(nosCUDAStream stream, nosCUDAEvent theEvent, float* elapsedTime); //Get elapsed time between now and the measureEvent
+	nosResult WaitCUDAEvent(nosCUDAEvent waitEvent);
+	nosResult QueryCUDAEvent(nosCUDAEvent waitEvent, nosCUDAEventStatus* eventStatus); //Must be called before enqueueing the operation to stream
+	nosResult GetCUDAEventElapsedTime(nosCUDAStream stream, nosCUDAEvent theEvent, float* elapsedTime); //Get elapsed time between now and the measureEvent
 
 	nosResult CopyBuffers(nosCUDABufferInfo* source, nosCUDABufferInfo* destination);
 	nosResult AddCallback(nosCUDAStream stream, nosCUDACallbackFunction callback, void* callbackData);
+	nosResult WaitExternalSemaphore(nosCUDAStream stream, nosCUDAExtSemaphore extSem);
+	nosResult SignalExternalSemaphore(nosCUDAStream stream, nosCUDAExtSemaphore extSem);
 
-	nosResult CreateOnCUDA(nosCUDABufferInfo* cudaBuffer);
-	nosResult CreateShareableOnCUDA(nosCUDABufferInfo* cudaBuffer); //Exportable
-	nosResult CreateManaged(nosCUDABufferInfo* cudaBuffer); //Allocates in Unified Memory Space 
-	nosResult CreatePinned(nosCUDABufferInfo* cudaBuffer); //Pinned memory in RAM 
+	nosResult CreateBufferOnCUDA(nosCUDABufferInfo* cudaBuffer, uint64_t size);
+	nosResult CreateShareableBufferOnCUDA(nosCUDABufferInfo* cudaBuffer, uint64_t size); //Exportable
+	nosResult CreateBufferOnManagedMemory(nosCUDABufferInfo* cudaBuffer, uint64_t size); //Allocates in Unified Memory Space 
+	nosResult CreateBufferPinned(nosCUDABufferInfo* cudaBuffer, uint64_t size); //Pinned memory in RAM 
 	nosResult InitBuffer(void* source, uint64_t size, nosCUDAMemoryType type, nosCUDABufferInfo* destination);
-	nosResult Create(nosCUDABufferInfo* cudaBuffer); //Pinned memory in RAM 
-	nosResult Destroy(nosCUDABufferInfo* cudaBuffer); //Allocates in Unified Memory Space
+	nosResult CreateBuffer(nosCUDABufferInfo* cudaBuffer, uint64_t size); //Pinned memory in RAM 
+	nosResult GetCUDABufferFromAddress(uint64_t address, nosCUDABufferInfo* outBuffer); //In case you lost the cuda buffer (hope not)
+
+	nosResult DestroyBuffer(nosCUDABufferInfo* cudaBuffer); //Allocates in Unified Memory Space
+
+	nosResult ImportExternalMemoryAsCUDABuffer(uint64_t Handle, size_t BlockSize, size_t AllocationSize, size_t Offset, nosCUDAExternalMemoryHandleType handleType, nosCUDABufferInfo* outBuffer);
+	nosResult ImportExternalSemaphore(uint64_t handle, nosCUDAExternalSemaphoreHandleType handleType, nosCUDAExtSemaphore* extSem);
+
 }

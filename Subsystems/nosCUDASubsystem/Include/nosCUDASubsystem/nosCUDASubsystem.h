@@ -1,3 +1,4 @@
+#pragma once
 #ifndef NOS_CUDA_SUBSYSTEM_H_INCLUDED
 #define NOS_CUDA_SUBSYSTEM_H_INCLUDED
 
@@ -12,6 +13,8 @@ typedef void* nosCUDAModule;
 typedef void* nosCUDAKernelFunction;
 
 typedef void* nosCUDAEvent;
+
+typedef void* nosCUDAExtSemaphore;
 
 #ifdef _WIN32
 #define NOS_CUDA_CALLBACK __stdcall
@@ -60,6 +63,29 @@ typedef enum nosCUDAEventStatus {
 	EVENT_STATUS_NOT_READY = 1,
 } nosCUDAEventStatus;
 
+typedef enum nosCUDAExternalMemoryHandleType{
+	EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUEFD = 1,
+	EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUEWIN32 = 2,
+	EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUEWIN32KMT = 3,
+	EXTERNAL_MEMORY_HANDLE_TYPE_D3D12HEAP = 4,
+	EXTERNAL_MEMORY_HANDLE_TYPE_D3D12RESOURCE = 5,
+	EXTERNAL_MEMORY_HANDLE_TYPE_D3D11RESOURCE = 6,
+	EXTERNAL_MEMORY_HANDLE_TYPE_D3D11RESOURCEKMT = 7,
+	EXTERNAL_MEMORY_HANDLE_TYPE_NVSCIBUF = 8
+} nosCUDAExternalMemoryHandleType;
+
+typedef enum nosCUDAExternalSemaphoreHandleType {
+	EXTERNAL_SEMAPHORE_HANDLE_TYPE_OPAQUEFD = 1,
+	EXTERNAL_SEMAPHORE_HANDLE_TYPE_OPAQUEWIN32 = 2,
+	EXTERNAL_SEMAPHORE_HANDLE_TYPE_OPAQUEWIN32KMT = 3,
+	EXTERNAL_SEMAPHORE_HANDLE_TYPE_D3D12FENCE = 4,
+	EXTERNAL_SEMAPHORE_HANDLE_TYPE_D3D11FENCE = 5,
+	EXTERNAL_SEMAPHORE_HANDLE_TYPE_NVSCISYNC = 6,
+	EXTERNAL_SEMAPHORE_HANDLE_TYPE_KEYEDMUTEX = 7,
+	EXTERNAL_SEMAPHORE_HANDLE_TYPE_KEYEDMUTEXKMT = 8,
+	EXTERNAL_SEMAPHORE_HANDLE_TYPE_TIMELINESEMAPHOREFD = 9,
+	EXTERNAL_SEMAPHORE_HANDLE_TYPE_TIMELINESEMAPHOREWIN32 = 10
+} nosCUDAExternalSemaphoreHandleType;
 #pragma endregion
 
 #pragma region Structs
@@ -70,15 +96,20 @@ typedef struct CUDAVersion {
 } CUDAVersion;
 
 typedef struct nosCUDABufferCreateInfo {
-	uint64_t Size;
+	uint64_t RequestedSize;
+	uint64_t AllocatedSize;
+	bool IsImported;
 }nosCUDABufferCreateInfo;
 
-typedef struct nosCUDABufferInfo {
-	nosCUDABufferCreateInfo CreateInfo;
-	uint64_t Address;
+typedef struct nosCUDABufferShareInfo {
 	uint64_t ShareableHandle;
-	uint64_t CreateHandle;
+	uint64_t CreateHandle; //Only should be used in cuMemRelease(CreateHandle) 
+};
+typedef struct nosCUDABufferInfo {
+	uint64_t Address;
 	nosCUDAMemoryType MemoryType;
+	nosCUDABufferShareInfo ShareInfo;
+	nosCUDABufferCreateInfo CreateInfo;
 }nosCUDABufferInfo;
 
 typedef struct nosCUDAArrayInfo {
@@ -115,7 +146,7 @@ typedef struct nosCUDACallbackContext {
 
 typedef struct nosCUDASubsystem
 {
-
+	
 	nosResult(NOSAPI_CALL* Initialize)(int device); //Initialize CUDA Runtime
 	nosResult(NOSAPI_CALL* GetCudaVersion)(CUDAVersion* versionInfo); //CUDA version
 	nosResult(NOSAPI_CALL* GetDeviceCount)(int* deviceCount); //Number of GPUs
@@ -124,8 +155,8 @@ typedef struct nosCUDASubsystem
 	nosResult(NOSAPI_CALL* CreateStream)(nosCUDAStream* stream);
 	nosResult(NOSAPI_CALL* DestroyStream)(nosCUDAStream stream);
 
-	nosResult(NOSAPI_CALL* CreateEvent)(nosCUDAEvent* cudaEvent, nosCUDAEventFlags flags);
-	nosResult(NOSAPI_CALL* DestroyEvent)(nosCUDAEvent cudaEvent);
+	nosResult(NOSAPI_CALL* CreateCUDAEvent)(nosCUDAEvent* cudaEvent, nosCUDAEventFlags flags);
+	nosResult(NOSAPI_CALL* DestroyCUDAEvent)(nosCUDAEvent cudaEvent);
 
 	nosResult(NOSAPI_CALL* LoadKernelModuleFromPTX)(const char* ptxPath, nosCUDAModule* outModule); //Loads .ptx files only
 	//nosResult(NOSAPI_CALL* LoadKernelModuleFromSource)(const char* cuFilePath, nosCUDAModule* outModule); //Loads .ptx files only
@@ -144,20 +175,27 @@ typedef struct nosCUDASubsystem
 	
 	nosResult(NOSAPI_CALL* WaitStream)(nosCUDAStream stream); //Waits all commands in the stream to be completed
 	nosResult(NOSAPI_CALL* AddEventToStream)(nosCUDAStream stream, nosCUDAEvent event); //Must be called before enqueueing the operation to stream
-	nosResult(NOSAPI_CALL* WaitEvent)(nosCUDAEvent waitEvent); //Must be called before enqueueing the operation to stream
-	nosResult(NOSAPI_CALL* QueryEvent)(nosCUDAEvent waitEvent, nosCUDAEventStatus* eventStatus); //Must be called before enqueueing the operation to stream
-	nosResult(NOSAPI_CALL* GetEventElapsedTime)(nosCUDAStream stream, nosCUDAEvent theEvent, float* elapsedTime); //
+	nosResult(NOSAPI_CALL* WaitCUDAEvent)(nosCUDAEvent waitEvent); //Must be called before enqueueing the operation to stream 
+	nosResult(NOSAPI_CALL* QueryCUDAEvent)(nosCUDAEvent waitEvent, nosCUDAEventStatus* eventStatus); //Must be called before enqueueing the operation to stream
+	nosResult(NOSAPI_CALL* GetCUDAEventElapsedTime)(nosCUDAStream stream, nosCUDAEvent theEvent, float* elapsedTime); //
 	nosResult(NOSAPI_CALL* AddCallback)(nosCUDAStream stream, nosCUDACallbackFunction callback, void* callbackData);
+	nosResult(NOSAPI_CALL* WaitExternalSemaphore)(nosCUDAStream stream, nosCUDAExtSemaphore extSem);
+	nosResult(NOSAPI_CALL* SignalExternalSemaphore)(nosCUDAStream stream, nosCUDAExtSemaphore extSem);
 
-	nosResult(NOSAPI_CALL* CreateOnCUDA)(nosCUDABufferInfo* cudaBuffer); //CUDA Memory, can be used in kernels etc.
-	nosResult(NOSAPI_CALL* CreateShareableOnCUDA)(nosCUDABufferInfo* cudaBuffer); //Exportable CUDA memory
-	nosResult(NOSAPI_CALL* CreateManaged)(nosCUDABufferInfo* cudaBuffer); //Allocates in Unified Memory Space 
-	nosResult(NOSAPI_CALL* CreatePinned)(nosCUDABufferInfo* cudaBuffer); //Allocates Pinned(page-locked) memory in RAM
-	nosResult(NOSAPI_CALL* Create)(nosCUDABufferInfo* cudaBuffer); //Allocates memory in RAM
+	nosResult(NOSAPI_CALL* CreateBufferOnCUDA)(nosCUDABufferInfo* cudaBuffer, uint64_t size); //CUDA Memory, can be used in kernels etc.
+	nosResult(NOSAPI_CALL* CreateShareableBufferOnCUDA)(nosCUDABufferInfo* cudaBuffer, uint64_t size); //Exportable CUDA memory
+	nosResult(NOSAPI_CALL* CreateBufferOnManagedMemory)(nosCUDABufferInfo* cudaBuffer, uint64_t size); //Allocates in Unified Memory Space 
+	nosResult(NOSAPI_CALL* CreateBufferPinned)(nosCUDABufferInfo* cudaBuffer, uint64_t size); //Allocates Pinned(page-locked) memory in RAM
+	nosResult(NOSAPI_CALL* CreateBuffer)(nosCUDABufferInfo* cudaBuffer, uint64_t size); //Allocates memory in RAM
 	nosResult(NOSAPI_CALL* InitBuffer)(void* source, uint64_t size, nosCUDAMemoryType type ,nosCUDABufferInfo* destination); //               Wraps buffer to an externally created memory
 	nosResult(NOSAPI_CALL* CopyBuffers)(nosCUDABufferInfo* source, nosCUDABufferInfo* destination);
+	nosResult(NOSAPI_CALL* GetCUDABufferFromAddress)(uint64_t address, nosCUDABufferInfo* outBuffer); //In case you lost the cuda buffer (hope not)
 
-	nosResult(NOSAPI_CALL* Destroy)(nosCUDABufferInfo* cudaBuffer); //Free the memory
+	nosResult(NOSAPI_CALL* DestroyBuffer)(nosCUDABufferInfo* cudaBuffer); //Free the memory
+	
+	//Interop
+	nosResult(NOSAPI_CALL* ImportExternalMemoryAsCUDABuffer)(uint64_t Handle, size_t BlockSize, size_t AllocationSize, size_t Offset, nosCUDAExternalMemoryHandleType handleType, nosCUDABufferInfo* outBuffer);
+	nosResult(NOSAPI_CALL* ImportExternalSemaphore)(uint64_t handle, nosCUDAExternalSemaphoreHandleType handleType, nosCUDAExtSemaphore* extSem);
 
 	//TODO: Add semaphore stuff
 	//TODO: Add texture & surface memory

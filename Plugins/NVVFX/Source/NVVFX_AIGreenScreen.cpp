@@ -8,13 +8,12 @@
 #include "CUDAVulkanInterop.h"
 #include "NVVFXAppRunner.h"
 #include "NVVFX_Names.h"
-
+#include "nosCUDASubsystem/nosCUDASubsystem.h"
 // nosNodes
 
 struct NVVFX_AIGS_NodeContext : nos::NodeContext {
 
 	NVVFXAppRunner VFX;
-
 	nos::fb::UUID NodeID, InputID, OutputID;
 	nosResourceShareInfo InputFormatted = {}, InputBuffer = {}, output = {};
 	nosResourceShareInfo OutputPre = {};
@@ -30,8 +29,10 @@ struct NVVFX_AIGS_NodeContext : nos::NodeContext {
 
 	std::filesystem::path ModelsPath;
 	bool OutputSizeSet = false;
+	nosCUDACallbackContext context = {};
 
 	NVVFX_AIGS_NodeContext(nos::fb::Node const* node) :NodeContext(node) {
+		
 		nosEngine.RequestSubsystem(NOS_NAME_STATIC(NOS_VULKAN_SUBSYSTEM_NAME), 1, 0, (void**)&nosVulkan);
 		NodeID = *node->id();
 		for (const auto& pin : *node->pins()) {
@@ -50,6 +51,11 @@ struct NVVFX_AIGS_NodeContext : nos::NodeContext {
 		}
 	}
 
+	static void NOS_CUDA_CALLBACK cbFunc(void* data) {
+		nosCUDACallbackContext* ctx = reinterpret_cast<nosCUDACallbackContext*>(data);
+		int a = *reinterpret_cast<int*>(ctx->Data);
+
+	}
 
 	void  OnPinValueChanged(nos::Name pinName, nosUUID pinId, nosBuffer value) override {
 		if (pinName == NSN_In) {

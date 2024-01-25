@@ -1,4 +1,4 @@
-#include "CUDAVulkanInterop.h"
+﻿#include "CUDAVulkanInterop.h"
 #include "Nodos/Helpers.hpp"
 #include "nosVulkanSubsystem/Helpers.hpp"
 #include <Windows.h>
@@ -6,7 +6,11 @@
 
 CUDAVulkanInterop::CUDAVulkanInterop()
 {
-	InitCUDA();
+	int deviceCount = 0;
+	nosCUDA->GetDeviceCount(&deviceCount);
+	if (deviceCount != 0) {
+		nosCUDA->Initialize(0);
+	}
 }
 CUDAVulkanInterop::~CUDAVulkanInterop()
 {
@@ -21,54 +25,12 @@ typedef struct nosMemoryInfo
 	uint64_t Offset;
 } nosMemoryInfo;
 */
-nosResult CUDAVulkanInterop::SetVulkanMemoryToCUDA(int64_t handle, size_t blockSize, size_t allocationSize, size_t offset, uint64_t* outCudaPointerAddres)
-{
-
-	cudaExternalMemory_t externalMemory;
-	cudaExternalMemoryHandleDesc desc;
-	memset(&desc, 0, sizeof(desc));
-
-	desc.type = cudaExternalMemoryHandleTypeOpaqueWin32;
-	desc.handle.win32.handle = reinterpret_cast<void*>(handle);
-	desc.handle.win32.name = NULL;
-	desc.size = blockSize;
-	
-	cudaError res = cudaImportExternalMemory(&externalMemory, &desc);
-	
-	if (res != CUDA_SUCCESS) {
-		nosEngine.LogE("Import attempt from Vulkan to CUDA failed for handle %d with Error Code %d", handle, res);
-		return NOS_RESULT_FAILED;
-	}
-
-	void* pointer = nullptr;
-
-	cudaExternalMemoryBufferDesc bufferDesc;
-	bufferDesc.flags = 0; // must be zero
-	bufferDesc.offset = offset; //not working for non zero offsets
-	bufferDesc.size = allocationSize;
-
-	res = cudaExternalMemoryGetMappedBuffer(&pointer, externalMemory, &bufferDesc);
-	cudaError syncRes = cudaDeviceSynchronize();
-	if (syncRes != CUDA_SUCCESS) {
-		nosEngine.LogE("CUDA device synchronize failed with error code %d", syncRes);
-		return NOS_RESULT_FAILED;
-	}
-
-	if (res != CUDA_SUCCESS || pointer == NULL) {
-		nosEngine.LogE("Get mapped buffer attempt from Vulkan to CUDA failed for handle %d with Error Code %d", handle, res);
-		return NOS_RESULT_FAILED;
-	}
-	
-	(*outCudaPointerAddres) = reinterpret_cast<uint64_t>(pointer);
-	return NOS_RESULT_SUCCESS;
-}
 
 void CUDAVulkanInterop::SetCUDAMemoryToVulkan(int64_t cudaPointerAddress, int width, int height ,size_t blockSize, size_t allocationSize, size_t offset, int32_t format, nosResourceShareInfo* outNosTexture) {
 	outNosTexture->Info.Type = NOS_RESOURCE_TYPE_BUFFER;
 	outNosTexture->Info.Buffer.Size = allocationSize;
 	outNosTexture->Info.Buffer.Usage = nosBufferUsage(nosBufferUsage::NOS_BUFFER_USAGE_TRANSFER_SRC | nosBufferUsage::NOS_BUFFER_USAGE_TRANSFER_DST);
 
-				 
 	outNosTexture->Memory.Handle = 0;
 	outNosTexture->Memory.ExternalMemory.HandleType = NOS_EXTERNAL_MEMORY_HANDLE_TYPE_D3D12_RESOURCE;
 	outNosTexture->Memory.ExternalMemory.Handle = cudaPointerAddress;
@@ -80,31 +42,8 @@ void CUDAVulkanInterop::SetCUDAMemoryToVulkan(int64_t cudaPointerAddress, int wi
 
 nosResult CUDAVulkanInterop::AllocateNVCVImage(std::string name, int width, int height, NvCVImage_PixelFormat pixelFormat, NvCVImage_ComponentType compType, size_t size, int planar, NvCVImage* out)
 {
-	bool shouldAllocate = true;
-	if (GPUResManager.IsResourceExist(name)) {
-		uint64_t existingSize = GPUResManager.GetSize(name);
-		if (existingSize == size) {
-			shouldAllocate = false;
-		}
-		else {
-			GPUResManager.FreeGPUBuffer(name);
-			shouldAllocate = true;
-		}
-	}
-
-	if (shouldAllocate) {
-		int64_t handle = 0;
-		handle = GPUResManager.AllocateShareableGPU(name, size);
-
-		if (handle == NULL) {
-			nosEngine.LogE("cuMemExportToShareableHandle failed!");
-			return NOS_RESULT_FAILED;
-		}
-	}
-	uint64_t buffer = NULL;
-	nosResult res = GPUResManager.GetGPUBuffer(name, &buffer);
- 	uint64_t realSize = GPUResManager.GetSize(name);
-	
+	nosCUDABufferInfo shareableBuf = {};
+	nosResult res = nosCUDA->CreateShareableBufferOnCUDA(&shareableBuf, size);
 	if (res != NOS_RESULT_SUCCESS) {
 		return res;
 	}
@@ -123,9 +62,9 @@ nosResult CUDAVulkanInterop::AllocateNVCVImage(std::string name, int width, int 
 	out->pixelBytes = componentByte * componentNum;
 	out->componentBytes = componentByte;
 	out->numComponents = componentNum;
-	out->pixels = reinterpret_cast<void*>(buffer);
+	out->pixels = reinterpret_cast<void*>(shareableBuf.Address);
 	out->gpuMem = NVCV_CUDA;
-	out->bufferBytes = realSize;
+	out->bufferBytes = shareableBuf.CreateInfo.AllocatedSize;
 	out->planar = planar;
 
 	return NOS_RESULT_SUCCESS;
@@ -168,9 +107,12 @@ nosResult CUDAVulkanInterop::nosTextureToNVCVImage(nosResourceShareInfo& vulkanT
 	nosVulkan->End2(texToBuf, NOS_TRUE, &waitTexToBuf);
 	nosVulkan->WaitGpuEvent(&waitTexToBuf, UINT64_MAX);
 	void* vulkanData = nosVulkan->Map(&vulkanTexBuf);
+	nosCUDABufferInfo cudaBuf = {};
+	nosResult res = nosCUDA->ImportExternalMemoryAsCUDABuffer(vulkanTexBuf.Memory.ExternalMemory.Handle, vulkanTexBuf.Memory.ExternalMemory.AllocationSize, 
+		vulkanTexBuf.Memory.Size, vulkanTexBuf.Memory.Offset, EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUEWIN32, &cudaBuf);
 
-	nosResult res = SetVulkanMemoryToCUDA(vulkanTexBuf.Memory.ExternalMemory.Handle, vulkanTexBuf.Memory.ExternalMemory.AllocationSize, vulkanTexBuf.Memory.Size, vulkanTexBuf.Memory.Offset, &gpuPointer);
-	theGPUPointer = gpuPointer;
+
+	theGPUPointer = cudaBuf.Address;
 
 	if (res != NOS_RESULT_SUCCESS)
 		return res;
@@ -198,58 +140,19 @@ nosResult CUDAVulkanInterop::NVCVImageToNosTexture(NvCVImage& nvcvImage, nosReso
 		nosEngine.LogE("NVCV Image size %d can not be converted to nosTexture!", size);
 		return NOS_RESULT_FAILED;
 	}
-
 	uint64_t shareableHandle = NULL;
-	nosResult res = GPUResManager.GetShareableHandle(reinterpret_cast<uint64_t>(nvcvImage.pixels), &shareableHandle);
+	nosCUDABufferInfo buff = {};
+	nosResult res = nosCUDA->GetCUDABufferFromAddress(reinterpret_cast<uint64_t>(nvcvImage.pixels), &buff);
 
-	/*void* hostBufferNormal = malloc(std::min(size, size2));
+	if (res != NOS_RESULT_SUCCESS)
+		return res;
 	
-
-	//cudaMemset(nvcvImage.pixels, 255, std::min(size, size2))
-	
-	//GPUResManager.MemCopy(reinterpret_cast<int64_t>(nvcvImage.pixels), "Trial", std::min(size,size2));
-
-	/*status = cuMemExportToShareableHandle(&shareableHandle, handle, CU_MEM_HANDLE_TYPE_WIN32, 0);*/
-
-	SetCUDAMemoryToVulkan(shareableHandle, nvcvImage.width, nvcvImage.height,
+	SetCUDAMemoryToVulkan(buff.ShareInfo.ShareableHandle, nvcvImage.width, nvcvImage.height,
 		size, size, 0, GetVulkanFormatFromNVCVImage(nvcvImage), &vulkanTex);
 	
 	res = nosVulkan->ImportResource(&vulkanTex);
 
 	return res;
-}
-
-void CUDAVulkanInterop::InitCUDA()
-{
-	CUcontext ctx;
-	CUdevice dev;
-	int supportsVMM = 0;
-	CUresult status = cuInit(0);
-	if (status != CUDA_SUCCESS) {
-		nosEngine.LogE("cuInit failed!");
-	}
-
-	// Get the first CUDA device and create a context
-
-	status = cuDevicePrimaryCtxRetain(&ctx, 0);
-	if (status != CUDA_SUCCESS) {
-		nosEngine.LogE("cuDevicePrimaryCtxRetain failed!");
-	}
-
-	status = cuCtxSetCurrent(ctx);
-	if (status != CUDA_SUCCESS) {
-		nosEngine.LogE("cuCtxSetCurrent failed!");
-	}
-
-	cuCtxGetDevice(&dev);
-	if (status != CUDA_SUCCESS) {
-		nosEngine.LogE("cuDeviceGet failed!");
-	}
-	// Check if the device supports Virtual Memory Management
-	status = cuDeviceGetAttribute(&supportsVMM, CU_DEVICE_ATTRIBUTE_VIRTUAL_ADDRESS_MANAGEMENT_SUPPORTED, dev);
-	if (status != CUDA_SUCCESS || !supportsVMM) {
-		nosEngine.LogE("Device does not support Virtual Memory Management!");
-	}
 }
 
 NvCVImage_PixelFormat CUDAVulkanInterop::GetPixelFormatFromVulkanFormat(nosFormat format)
@@ -752,7 +655,7 @@ void CUDAVulkanInterop::NormalizeNVCVImage(NvCVImage* nvcvImage)
 //	float* before = new float[nvcvImage->bufferBytes];
 //	cudaError res = cudaMemcpy(before, nvcvImage->pixels, nvcvImage->bufferBytes, cudaMemcpyDeviceToHost);
 //	assert(res == cudaSuccess);
-	NormalizeKernelWrapper(numBlocks, threadsPerBlock, reinterpret_cast<float*>(nvcvImage->pixels), 255, nvcvImage->bufferBytes);
+	//NormalizeKernelWrapper(numBlocks, threadsPerBlock, reinterpret_cast<float*>(nvcvImage->pixels), 255, nvcvImage->bufferBytes);
 	
 //	float* after = new float[nvcvImage->bufferBytes];
 //	res = cudaMemcpy(after, nvcvImage->pixels, nvcvImage->bufferBytes, cudaMemcpyDeviceToHost);
@@ -763,7 +666,103 @@ void CUDAVulkanInterop::NormalizeNVCVImage(NvCVImage* nvcvImage)
 
 }
 
-nosResult CUDAVulkanInterop::CopyNVCVImage(NvCVImage* src, NvCVImage* dst)
+//TODO: USE THESE!!!
+/*
+cudaChannelFormatDesc getCudaChannelFormatDescForVulkanFormat(VkFormat format)
 {
-	return GPUResManager.MemCopy(reinterpret_cast<uint64_t>(src->pixels), reinterpret_cast<uint64_t>(dst->pixels), std::min(src->bufferBytes, dst->bufferBytes));
+cudaChannelFormatDesc d;
+memset(&d, 0, sizeof(d));
+switch (format) {
+case VK_FORMAT_R8_UINT: d.x = 8; d.y = 0; d.z = 0; d.w = 0; d.f = cudaChannelFormatKindUnsigned; break;
+case VK_FORMAT_R8_SINT: d.x = 8; d.y = 0; d.z = 0; d.w = 0; d.f = cudaChannelFormatKindSigned; break;
+case VK_FORMAT_R8G8_UINT: d.x = 8; d.y = 8; d.z = 0; d.w = 0; d.f = cudaChannelFormatKindUnsigned; break;
+case VK_FORMAT_R8G8_SINT: d.x = 8; d.y = 8; d.z = 0; d.w = 0; d.f = cudaChannelFormatKindSigned; break;
+case VK_FORMAT_R8G8B8A8_UINT: d.x = 8; d.y = 8; d.z = 8; d.w = 8; d.f = cudaChannelFormatKindUnsigned; break;
+case VK_FORMAT_R8G8B8A8_SINT: d.x = 8; d.y = 8; d.z = 8; d.w = 8; d.f = cudaChannelFormatKindSigned; break;
+case VK_FORMAT_R16_UINT: d.x = 16; d.y = 0; d.z = 0; d.w = 0; d.f = cudaChannelFormatKindUnsigned; break;
+case VK_FORMAT_R16_SINT: d.x = 16; d.y = 0; d.z = 0; d.w = 0; d.f = cudaChannelFormatKindSigned; break;
+case VK_FORMAT_R16G16_UINT: d.x = 16; d.y = 16; d.z = 0; d.w = 0; d.f =
+cudaChannelFormatKindUnsigned; break;
+case VK_FORMAT_R16G16_SINT: d.x = 16; d.y = 16; d.z = 0; d.w = 0; d.f =
+cudaChannelFormatKindSigned; break;
+(continues on next page)
+106 Chapter 6. Programming Interface
+CUDA C++ Programming Guide, Release 12.3
+(continued from previous page)
+case VK_FORMAT_R16G16B16A16_UINT: d.x = 16; d.y = 16; d.z = 16; d.w = 16; d.f =
+cudaChannelFormatKindUnsigned; break;
+case VK_FORMAT_R16G16B16A16_SINT: d.x = 16; d.y = 16; d.z = 16; d.w = 16; d.f =
+cudaChannelFormatKindSigned; break;
+case VK_FORMAT_R32_UINT: d.x = 32; d.y = 0; d.z = 0; d.w = 0; d.f =
+cudaChannelFormatKindUnsigned; break;
+case VK_FORMAT_R32_SINT: d.x = 32; d.y = 0; d.z = 0; d.w = 0; d.f =
+cudaChannelFormatKindSigned; break;
+case VK_FORMAT_R32_SFLOAT: d.x = 32; d.y = 0; d.z = 0; d.w = 0; d.f =
+cudaChannelFormatKindFloat; break;
+case VK_FORMAT_R32G32_UINT: d.x = 32; d.y = 32; d.z = 0; d.w = 0; d.f =
+cudaChannelFormatKindUnsigned; break;
+case VK_FORMAT_R32G32_SINT: d.x = 32; d.y = 32; d.z = 0; d.w = 0; d.f =
+cudaChannelFormatKindSigned; break;
+case VK_FORMAT_R32G32_SFLOAT: d.x = 32; d.y = 32; d.z = 0; d.w = 0; d.f =
+cudaChannelFormatKindFloat; break;
+case VK_FORMAT_R32G32B32A32_UINT: d.x = 32; d.y = 32; d.z = 32; d.w = 32; d.f =
+cudaChannelFormatKindUnsigned; break;
+case VK_FORMAT_R32G32B32A32_SINT: d.x = 32; d.y = 32; d.z = 32; d.w = 32; d.f =
+cudaChannelFormatKindSigned; break;
+case VK_FORMAT_R32G32B32A32_SFLOAT: d.x = 32; d.y = 32; d.z = 32; d.w = 32; d.f =
+cudaChannelFormatKindFloat; break;
+default: assert(0);
 }
+return d;
+}
+cudaExtent getCudaExtentForVulkanExtent(VkExtent3D vkExt, uint32_t arrayLayers,
+,→VkImageViewType vkImageViewType) {
+cudaExtent e = { 0, 0, 0 };
+switch (vkImageViewType) {
+case VK_IMAGE_VIEW_TYPE_1D: e.width = vkExt.width; e.height = 0;
+,→ e.depth = 0; break;
+case VK_IMAGE_VIEW_TYPE_2D: e.width = vkExt.width; e.height = vkExt.
+,→height; e.depth = 0; break;
+case VK_IMAGE_VIEW_TYPE_3D: e.width = vkExt.width; e.height = vkExt.
+,→height; e.depth = vkExt.depth; break;
+case VK_IMAGE_VIEW_TYPE_CUBE: e.width = vkExt.width; e.height = vkExt.
+,→height; e.depth = arrayLayers; break;
+case VK_IMAGE_VIEW_TYPE_1D_ARRAY: e.width = vkExt.width; e.height = 0;
+,→ e.depth = arrayLayers; break;
+case VK_IMAGE_VIEW_TYPE_2D_ARRAY: e.width = vkExt.width; e.height = vkExt.
+,→height; e.depth = arrayLayers; break;
+case VK_IMAGE_VIEW_TYPE_CUBE_ARRAY: e.width = vkExt.width; e.height = vkExt.
+,→height; e.depth = arrayLayers; break;
+default: assert(0);
+}
+return e;
+}
+unsigned int getCudaMipmappedArrayFlagsForVulkanImage(VkImageViewType vkImageViewType,
+,→ VkImageUsageFlags vkImageUsageFlags, bool allowSurfaceLoadStore) {
+unsigned int flags = 0;
+(continues on next page)
+6.2. CUDA Runtime 107
+CUDA C++ Programming Guide, Release 12.3
+(continued from previous page)
+switch (vkImageViewType) {
+case VK_IMAGE_VIEW_TYPE_CUBE: flags |= cudaArrayCubemap;
+,→break;
+case VK_IMAGE_VIEW_TYPE_CUBE_ARRAY: flags |= cudaArrayCubemap | cudaArrayLayered;
+,→break;
+case VK_IMAGE_VIEW_TYPE_1D_ARRAY: flags |= cudaArrayLayered;
+,→break;
+case VK_IMAGE_VIEW_TYPE_2D_ARRAY: flags |= cudaArrayLayered;
+,→break;
+default: break;
+}
+if (vkImageUsageFlags & VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT) {
+flags |= cudaArrayColorAttachment;
+}
+if (allowSurfaceLoadStore) {
+flags |= cudaArraySurfaceLoadStore;
+}
+return flags;
+}
+
+
+*/

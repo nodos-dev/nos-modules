@@ -1,4 +1,6 @@
-#include "CommonCUDAKernels.h"
+#include "cuda_runtime.h"
+#include <cuda.h>
+#include "device_launch_parameters.h"
 
 __global__ void NormalizeKernel(float* data, float max, int dataSize) {
     int idx = blockIdx.x * blockDim.x + threadIdx.x;
@@ -6,7 +8,3 @@ __global__ void NormalizeKernel(float* data, float max, int dataSize) {
         data[idx] = (data[idx])/max;
     }
 }
-    void NormalizeKernelWrapper(dim3 blocks, dim3 thread, float* data, float max, int dataSize)
-    {
-        NormalizeKernel<<<blocks, thread >>> (data, max, dataSize);
-    }

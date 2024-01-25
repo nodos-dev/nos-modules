@@ -1,13 +1,12 @@
+#pragma once
 #ifndef CUDA_SUBSYS_COMMON_H_INCLUDED
 #define CUDA_SUBSYS_COMMON_H_INCLUDED
-
-namespace Descriptor {
-
 
 #include <Windows.h>
 #include <sddl.h>
 #include <ntdef.h>
 
+namespace Descriptor {
 struct SecurityDescriptor {
         static void* GetDefaultSecurityDescriptor()
         {
@@ -35,6 +34,32 @@ struct SecurityDescriptor {
             return &objAttributes;
             #endif
         }
+};
+}
+
+#include <memory>
+#include <unordered_map>
+namespace UtilsProxy 
+{
+template <typename T>
+struct ResourceManagerProxy {
+    std::unordered_map<uint64_t, T*> Resources;
+    void Add(uint64_t ID, T* res) {
+        Resources[ID] = res;
+    }
+
+    void Remove(uint64_t ID) {
+        if (Resources.contains(ID)) {
+            Resources.erase(Resources.find(ID));
+        }
+    }
+
+    T* Get(uint64_t ID) {
+        if (Resources.contains(ID)) {
+            return Resources[ID];
+        }
+        return nullptr;
+    }
 };
 }
 

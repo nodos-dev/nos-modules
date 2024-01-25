@@ -4,6 +4,7 @@
 #include <AppService_generated.h>
 #include <AppEvents_generated.h>
 #include <nosVulkanSubsystem/nosVulkanSubsystem.h>
+#include "nosCUDASubsystem/nosCUDASubsystem.h"
 #include "NVVFX_Names.h"
 
 NOS_INIT();
@@ -24,6 +25,7 @@ char* g_nvVFXSDKPath = NULL;
 char* g_nvCVImagePath = NULL;
 
 extern nosVulkanSubsystem* nosVulkan = nullptr;
+extern nosCUDASubsystem* nosCUDA = nullptr;
 
 extern "C"
 {
@@ -33,6 +35,10 @@ extern "C"
 			return NOS_RESULT_SUCCESS;
 
 		nosResult returnRes = nosEngine.RequestSubsystem(NOS_NAME_STATIC(NOS_VULKAN_SUBSYSTEM_NAME), 1, 0, (void**)&nosVulkan);
+		if (returnRes != NOS_RESULT_SUCCESS)
+			return NOS_RESULT_FAILED;
+
+		returnRes = nosEngine.RequestSubsystem(NOS_NAME_STATIC(NOS_CUDA_SUBSYSTEM_NAME), 1, 0, (void**)&nosCUDA);
 		if (returnRes != NOS_RESULT_SUCCESS)
 			return NOS_RESULT_FAILED;
 

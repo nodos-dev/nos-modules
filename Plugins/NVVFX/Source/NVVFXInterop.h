@@ -6,6 +6,7 @@
 #include "nosVulkanSubsystem/Types_generated.h"
 #include "nvCVImage.h"
 #include "CUDAResourceManager.h"
+#include "nosCUDASubsystem/nosCUDASubsystem.h"
 
 enum nosNVCVLayout {
 	nosNVCV_INTERLEAVED   =	0,//!< All components of pixel(x,y) are adjacent (same as chunky) (default for non-YUV).
@@ -44,11 +45,8 @@ public:
 	nosFormat GetVulkanFormatFromNVCVImage(NvCVImage nvcvImage);
 	nosFormat GetVulkanFormatFromNVCVImage(NvCVImage_PixelFormat pixelFormat, NvCVImage_ComponentType componentType);
 	void NormalizeNVCVImage(NvCVImage* nvcvImage);
-	nosResult CopyNVCVImage(NvCVImage* src, NvCVImage* dst);
 
 private:
-	void InitCUDA();
-	CudaGPUResourceManager GPUResManager;
 	nosResourceShareInfo vulkanTexBuf = {};
 	uint64_t theGPUPointer = NULL;
 
