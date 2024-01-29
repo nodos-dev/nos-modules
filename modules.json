@@ -71,7 +71,7 @@
             ],
             "files": [
                 "Include/**",
-                "*.png"
+                "Assets/**"
             ]
         },
         "nos.sys.shaderc": {
