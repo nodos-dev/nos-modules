@@ -70,7 +70,8 @@
                 "nosVulkanSubsystem/*"
             ],
             "files": [
-                "Include/**"
+                "Include/**",
+                "*.png"
             ]
         },
         "nos.sys.shaderc": {
