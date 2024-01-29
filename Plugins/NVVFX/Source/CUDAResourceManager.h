@@ -1,20 +1,11 @@
 #pragma once
-#include "nosCommon.h"
-#include "nosDefines.h"
-#include <Nodos/SubsystemAPI.h>
 #include <cuda_runtime.h>
 #include "device_launch_parameters.h"
+#include "nvCVImage.h"
+#include <Nodos/PluginHelpers.hpp>
 #include "cuda.h"
 
 #include <Windows.h>
-
-#define CHECK_CUDA_RT_ERROR(cudaRes)	\
-	do{							\
-		if (cudaRes != cudaSuccess) {	\
-			nosEngine.LogE("CUDA RT failed with error: %s", cudaGetErrorString(cudaRes));	\
-			return NOS_RESULT_FAILED; \
-		}						\
-	}while(0)					\
 
 struct CUDABuffer {
 	uint64_t address = NULL;
@@ -52,6 +43,7 @@ public:
 
 private:
 	
+	NvCVImage NVVFX_Image;
 	std::unordered_map<std::string, CUDABuffer> CUDABuffers;
 
 };

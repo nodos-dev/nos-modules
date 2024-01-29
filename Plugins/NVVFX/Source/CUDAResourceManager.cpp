@@ -56,15 +56,7 @@ void CudaGPUResourceManager::DisposeAllResources()
 
 nosResult CudaGPUResourceManager::InitializeCUDADevice(int device)
 {
-    cudaError_t res = cudaSuccess;
-    int runtimeVersion = 0;
-    res = cudaRuntimeGetVersion(&runtimeVersion);
-    CHECK_CUDA_RT_ERROR(res);
-    if (runtimeVersion / 1000 >= 12) {
-
-    }
-
-    res = cudaSetDevice(device);
+	cudaError_t res = cudaSetDevice(device);
 
 	if (res == cudaError::cudaSuccess)
 		return NOS_RESULT_SUCCESS;

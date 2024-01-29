@@ -2,9 +2,10 @@
 #ifndef CUDA_SUBSYS_COMMON_H_INCLUDED
 #define CUDA_SUBSYS_COMMON_H_INCLUDED
 
+#define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
+#include <winternl.h>
 #include <sddl.h>
-#include <ntdef.h>
 
 namespace Descriptor {
 struct SecurityDescriptor {
@@ -43,8 +44,8 @@ namespace UtilsProxy
 {
 template <typename T>
 struct ResourceManagerProxy {
-    std::unordered_map<uint64_t, T*> Resources;
-    void Add(uint64_t ID, T* res) {
+    std::unordered_map<uint64_t, T> Resources;
+    void Add(uint64_t ID, T res) {
         Resources[ID] = res;
     }
 
@@ -56,7 +57,7 @@ struct ResourceManagerProxy {
 
     T* Get(uint64_t ID) {
         if (Resources.contains(ID)) {
-            return Resources[ID];
+            return &Resources[ID];
         }
         return nullptr;
     }

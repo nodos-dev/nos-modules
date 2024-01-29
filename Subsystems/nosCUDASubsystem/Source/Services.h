@@ -1,10 +1,12 @@
+// Copyright MediaZ AS. All Rights Reserved.
+
 #pragma once
 #include "nosCUDASubsystem/nosCUDASubsystem.h"
 
 #define CHECK_CUDA_RT_ERROR(cudaErr)	\
 	do{							\
 		if (cudaErr != cudaSuccess) {	\
-			nosEngine.LogE("CUDA RT failed with error: %s", cudaGetErrorString(cudaErr));	\
+			nosEngine.LogE("CUDA RT failed with error: %s from line: %d", cudaGetErrorString(cudaErr), __LINE__);	\
 			return NOS_RESULT_FAILED; \
 		}						\
 	}while(0)					\
@@ -45,7 +47,12 @@ namespace nos::cudass
 {
 	void Bind(nosCUDASubsystem* subsys);
 
+
+	nosResult CreateCUDAContext(nosCUDAContext* cudaContext, int device, nosCUDAContextFlags flags);
+	nosResult DestroyCUDAContext(nosCUDAContext cudaContext); // Use with caution! Destroys the context
+
 	nosResult Initialize(int device); //Initialize CUDA Runtime
+	nosResult GetCurrentContext(nosCUDAContext* cudaContext); //Retrieve the primary CUDA Context of CUDA Subsystem
 	nosResult GetCudaVersion(CUDAVersion* versionInfo); //CUDA version
 	nosResult GetDeviceCount(int* deviceCount); //Number of GPUs
 	nosResult GetDeviceProperties(int device, nosCUDADeviceProperties* deviceProperties); //device cant exceed deviceCount
@@ -60,7 +67,11 @@ namespace nos::cudass
 	nosResult GetModuleKernelFunction(const char* functionName, nosCUDAModule cudaModule, nosCUDAKernelFunction* outFunction);
 	
 	nosResult LaunchModuleKernelFunction(nosCUDAStream stream, nosCUDAKernelFunction outFunction, nosCUDAKernelLaunchConfig config, void** arguments, nosCUDACallbackFunction callback, void* callbackData);
+	
 	nosResult WaitStream(nosCUDAStream stream); //Waits all commands in the stream to be completed
+
+	nosCUDAError GetLastError(); //Waits all commands in the stream to be completed
+
 	nosResult AddEventToStream(nosCUDAStream stream, nosCUDAEvent measureEvent);
 	nosResult WaitCUDAEvent(nosCUDAEvent waitEvent);
 	nosResult QueryCUDAEvent(nosCUDAEvent waitEvent, nosCUDAEventStatus* eventStatus); //Must be called before enqueueing the operation to stream

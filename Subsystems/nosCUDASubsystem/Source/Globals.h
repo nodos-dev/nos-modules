@@ -4,4 +4,5 @@
 namespace nos::cudass 
 {
 	extern UtilsProxy::ResourceManagerProxy<nosCUDABufferInfo> ResManager;
+	extern void* PrimaryContext;
 }

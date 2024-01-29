@@ -1,3 +1,5 @@
+// Copyright MediaZ AS. All Rights Reserved.
+
 #include "Services.h"
 #include <cstring>
 #include "CUDASubsysCommon.h"
@@ -11,7 +13,12 @@
 namespace nos::cudass 
 {
 	void Bind(nosCUDASubsystem* subsys) {
+
+		subsys->CreateCUDAContext = CreateCUDAContext;
+		subsys->DestroyCUDAContext = DestroyCUDAContext;
+
 		subsys->Initialize = Initialize;
+		subsys->GetCurrentContext = GetCurrentContext;
 		subsys->GetCudaVersion = GetCudaVersion;
 		subsys->GetDeviceCount = GetDeviceCount;
 		subsys->GetDeviceProperties = GetDeviceProperties;
@@ -26,6 +33,9 @@ namespace nos::cudass
 		subsys->LaunchModuleKernelFunction = LaunchModuleKernelFunction;
 
 		subsys->WaitStream = WaitStream;
+		
+		subsys->GetLastError = GetLastError;
+
 		subsys->AddEventToStream = AddEventToStream;
 		subsys->WaitCUDAEvent = WaitCUDAEvent;
 		subsys->QueryCUDAEvent = QueryCUDAEvent;
@@ -33,7 +43,6 @@ namespace nos::cudass
 		subsys->WaitExternalSemaphore = WaitExternalSemaphore;
 		subsys->SignalExternalSemaphore = SignalExternalSemaphore;
 
-		subsys->CopyBuffers = CopyBuffers;
 		subsys->AddCallback = AddCallback;
 
 		subsys->CreateBufferOnCUDA = CreateBufferOnCUDA;
@@ -41,32 +50,50 @@ namespace nos::cudass
 		subsys->CreateBufferOnManagedMemory = CreateBufferOnManagedMemory;
 		subsys->CreateBufferPinned = CreateBufferPinned;
 		subsys->CreateBuffer = CreateBuffer;
-		subsys->DestroyBuffer = DestroyBuffer;
+		subsys->CopyBuffers = CopyBuffers;
+		subsys->GetCUDABufferFromAddress = GetCUDABufferFromAddress;
 
+		subsys->DestroyBuffer = DestroyBuffer;
+		
 		subsys->ImportExternalSemaphore = ImportExternalSemaphore;
 		subsys->ImportExternalMemoryAsCUDABuffer = ImportExternalMemoryAsCUDABuffer;
-	}	
+	}
+	nosResult CreateCUDAContext(nosCUDAContext* cudaContext, int device, nosCUDAContextFlags flags)
+	{
+		CUresult cuRes= cuCtxCreate(reinterpret_cast<CUcontext*>(&cudaContext), flags, device);
+		CHECK_CUDA_DRIVER_ERROR(cuRes);
+		return NOS_RESULT_SUCCESS;
+	}
+
+	nosResult DestroyCUDAContext(nosCUDAContext cudaContext)
+	{
+		CUresult cuRes = cuCtxDestroy(reinterpret_cast<CUcontext>(cudaContext));
+		CHECK_CUDA_DRIVER_ERROR(cuRes);
+		return NOS_RESULT_SUCCESS;
+	}
+
 
 	nosResult NOSAPI_CALL Initialize(int device)
 	{
-		//We will initialize CUDA Runtime explicitly, Driver API will also be initialized implicitly
-		int cudaVersion = 0;
-		cudaError res = cudaSuccess;
+		//We will initialize CUDA Runtime explicitly, Driver API will also be initialized 
+		CUresult cuRes = cuInit(0);
+		CHECK_CUDA_DRIVER_ERROR(cuRes);
+		CUdevice cuDevice;
+		cuRes = cuDeviceGet(&cuDevice, device);
+		CHECK_CUDA_DRIVER_ERROR(cuRes);
+		cuRes = cuCtxCreate(reinterpret_cast<CUcontext*>(&PrimaryContext), CU_CTX_COREDUMP_ENABLE, cuDevice);
+		CHECK_CUDA_DRIVER_ERROR(cuRes);
 		
-		res = cudaDriverGetVersion(&cudaVersion);
-		if (cudaVersion == 0) {
-			return NOS_RESULT_FAILED;
-		}
-		CHECK_CUDA_RT_ERROR(res);
+		std::string CoreDumpFile = std::string(nosEngine.Context->RootFolderPath) + "/CoreDump.txt";
+		size_t Size = CoreDumpFile.size();
 
-		if (cudaVersion / 1000 >= 12) { //major version
-			res = cudaSetDevice(device);
-			CHECK_CUDA_RT_ERROR(res);
-		}
-		else {
-			res = cudaFree(0); //explicit initialization pre CUDA 12.0
-		}
-		CHECK_CUDA_RT_ERROR(res);
+		cuRes = cuCoredumpSetAttribute(CU_COREDUMP_FILE, &CoreDumpFile, &Size);
+		CHECK_CUDA_DRIVER_ERROR(cuRes);
+		return NOS_RESULT_SUCCESS;
+	}
+	nosResult GetCurrentContext(nosCUDAContext* cudaContext)
+	{
+		(*cudaContext) = reinterpret_cast<nosCUDAContext>(PrimaryContext);  
 		return NOS_RESULT_SUCCESS;
 	}
 	nosResult NOSAPI_CALL GetCudaVersion(CUDAVersion* versionInfo)
@@ -156,6 +183,10 @@ namespace nos::cudass
 		CHECK_CUDA_RT_ERROR(res);
 		return NOS_RESULT_SUCCESS;
 	}
+	nosCUDAError GetLastError()
+	{
+		return static_cast<nosCUDAError>(cudaGetLastError());
+	}
 	nosResult NOSAPI_CALL AddEventToStream(nosCUDAStream stream, nosCUDAEvent measureEvent)
 	{
 		cudaError res = cudaEventRecord(reinterpret_cast<cudaEvent_t>(measureEvent), reinterpret_cast<cudaStream_t>(stream));
@@ -211,35 +242,35 @@ namespace nos::cudass
 			nosEngine.LogE("Invalid memory type for CUDA memcopy operation.");
 			return NOS_RESULT_FAILED;
 		}
-		if (source->CreateInfo.RequestedSize != destination->CreateInfo.RequestedSize) {
+		if (source->CreateInfo.BlockSize != destination->CreateInfo.BlockSize) {
 			nosEngine.LogW("nosCUDABuffers have size mismatch, trimming will be performed for copying.");
 		}
 
 		cudaError res = cudaSuccess;
-		size_t properSize = std::min(source->CreateInfo.RequestedSize, destination->CreateInfo.RequestedSize);
+		size_t safeCopySize = std::min(source->CreateInfo.BlockSize, destination->CreateInfo.BlockSize);
 		switch (source->MemoryType) {
 			case MEMORY_TYPE_HOST:
 				if (destination->MemoryType == MEMORY_TYPE_DEVICE) {
-					res = cudaMemcpy(reinterpret_cast<void*>(destination->Address), reinterpret_cast<void*>(source->Address), properSize, cudaMemcpyHostToDevice);
+					res = cudaMemcpy(reinterpret_cast<void*>(destination->Address), reinterpret_cast<void*>(source->Address), safeCopySize, cudaMemcpyHostToDevice);
 				}
 				else{
-					res = cudaMemcpy(reinterpret_cast<void*>(destination->Address), reinterpret_cast<void*>(source->Address), properSize, cudaMemcpyHostToHost);
+					res = cudaMemcpy(reinterpret_cast<void*>(destination->Address), reinterpret_cast<void*>(source->Address), safeCopySize, cudaMemcpyHostToHost);
 				}
 				break;
 			case MEMORY_TYPE_DEVICE:
 				if (destination->MemoryType == MEMORY_TYPE_DEVICE) {
-					res = cudaMemcpy(reinterpret_cast<void*>(destination->Address), reinterpret_cast<void*>(source->Address), properSize, cudaMemcpyDeviceToDevice);
+					res = cudaMemcpy(reinterpret_cast<void*>(destination->Address), reinterpret_cast<void*>(source->Address), safeCopySize, cudaMemcpyDeviceToDevice);
 				}
 				else{
-					res = cudaMemcpy(reinterpret_cast<void*>(destination->Address), reinterpret_cast<void*>(source->Address), properSize, cudaMemcpyDeviceToHost);
+					res = cudaMemcpy(reinterpret_cast<void*>(destination->Address), reinterpret_cast<void*>(source->Address), safeCopySize, cudaMemcpyDeviceToHost);
 				}
 				break;
 			case MEMORY_TYPE_MANAGED:
 				if (destination->MemoryType == MEMORY_TYPE_DEVICE) {
-					res = cudaMemcpy(reinterpret_cast<void*>(destination->Address), reinterpret_cast<void*>(source->Address), properSize, cudaMemcpyHostToDevice);
+					res = cudaMemcpy(reinterpret_cast<void*>(destination->Address), reinterpret_cast<void*>(source->Address), safeCopySize, cudaMemcpyHostToDevice);
 				}
 				else {
-					res = cudaMemcpy(reinterpret_cast<void*>(destination->Address), reinterpret_cast<void*>(source->Address), properSize, cudaMemcpyHostToHost);
+					res = cudaMemcpy(reinterpret_cast<void*>(destination->Address), reinterpret_cast<void*>(source->Address), safeCopySize, cudaMemcpyHostToHost);
 				}
 				break;
 			default:
@@ -279,17 +310,18 @@ namespace nos::cudass
 		cudaBuffer->ShareInfo.ShareableHandle = NULL;
 		cudaBuffer->ShareInfo.CreateHandle = NULL;
 		cudaBuffer->MemoryType = MEMORY_TYPE_DEVICE;
-		ResManager.Add(addr, cudaBuffer);
+		cudaBuffer->CreateInfo.BlockSize = size;
+		cudaBuffer->CreateInfo.AllocationSize = size;
+		cudaBuffer->CreateInfo.IsImported = false;
+		ResManager.Add(addr, *cudaBuffer);
 		return NOS_RESULT_SUCCESS;
 	}
 	nosResult NOSAPI_CALL CreateShareableBufferOnCUDA(nosCUDABufferInfo* cudaBuffer, uint64_t size)
 	{
-		CUcontext ctx;
 		CUdevice dev;
 		int supportsVMM = 0, supportsWin32 = 0;
-
-		cuDevicePrimaryCtxRetain(&ctx, 0);
-		cuCtxSetCurrent(ctx);
+		
+		cuCtxSetCurrent(reinterpret_cast<CUcontext>(PrimaryContext));
 		cuCtxGetDevice(&dev);
 
 		cuDeviceGetAttribute(&supportsVMM, CU_DEVICE_ATTRIBUTE_VIRTUAL_MEMORY_MANAGEMENT_SUPPORTED, dev);
@@ -340,13 +372,13 @@ namespace nos::cudass
 		status = cuMemExportToShareableHandle((void*)&shareableHandle, allocHandle, CU_MEM_HANDLE_TYPE_WIN32, 0);
 		CHECK_CUDA_DRIVER_ERROR(status);
 
-		cudaBuffer->CreateInfo.AllocatedSize = aligned_size;
-		cudaBuffer->CreateInfo.RequestedSize = size;
+		cudaBuffer->CreateInfo.BlockSize = aligned_size;
+		cudaBuffer->CreateInfo.AllocationSize = size;
 		cudaBuffer->ShareInfo.CreateHandle = allocHandle;
 		cudaBuffer->ShareInfo.ShareableHandle = shareableHandle;
 		cudaBuffer->Address = address;
 		cudaBuffer->MemoryType = MEMORY_TYPE_DEVICE;
-		ResManager.Add(address, cudaBuffer);
+		ResManager.Add(address, *cudaBuffer);
 		return NOS_RESULT_SUCCESS;
 
 	}
@@ -359,7 +391,7 @@ namespace nos::cudass
 		cudaBuffer->ShareInfo.ShareableHandle = NULL;
 		cudaBuffer->ShareInfo.CreateHandle = NULL;
 		cudaBuffer->MemoryType = MEMORY_TYPE_MANAGED;
-		ResManager.Add(addr, cudaBuffer);
+		ResManager.Add(addr, *cudaBuffer);
 
 		return NOS_RESULT_SUCCESS;
 	}
@@ -372,18 +404,18 @@ namespace nos::cudass
 		cudaBuffer->ShareInfo.ShareableHandle = NULL;
 		cudaBuffer->ShareInfo.CreateHandle = NULL;
 		cudaBuffer->MemoryType = MEMORY_TYPE_HOST;
-		ResManager.Add(addr, cudaBuffer);
+		ResManager.Add(addr, *cudaBuffer);
 
 		return nosResult();
 	}
 	nosResult InitBuffer(void* source, uint64_t size, nosCUDAMemoryType type, nosCUDABufferInfo* destination)
 	{
 		destination->Address = reinterpret_cast<uint64_t>(source);
-		destination->CreateInfo.RequestedSize = size;
+		destination->CreateInfo.AllocationSize = size;
 		destination->ShareInfo.CreateHandle = NULL;
 		destination->ShareInfo.ShareableHandle = NULL;
 		destination->MemoryType = type;
-		ResManager.Add(destination->Address, destination);
+		ResManager.Add(destination->Address, *destination);
 
 		return NOS_RESULT_SUCCESS;
 	}
@@ -395,7 +427,11 @@ namespace nos::cudass
 		cudaBuffer->ShareInfo.ShareableHandle = NULL;
 		cudaBuffer->ShareInfo.CreateHandle = NULL;
 		cudaBuffer->MemoryType = MEMORY_TYPE_HOST;
-		ResManager.Add(cudaBuffer->Address, cudaBuffer);
+		cudaBuffer->CreateInfo.AllocationSize = size;
+		cudaBuffer->CreateInfo.BlockSize = size;
+		cudaBuffer->CreateInfo.IsImported = false;
+
+		ResManager.Add(cudaBuffer->Address, *cudaBuffer);
 
 		return NOS_RESULT_SUCCESS;
 	}
@@ -410,6 +446,7 @@ namespace nos::cudass
 	}
 	nosResult ImportExternalMemoryAsCUDABuffer(uint64_t Handle, size_t BlockSize, size_t AllocationSize, size_t Offset, nosCUDAExternalMemoryHandleType handleType, nosCUDABufferInfo* outBuffer)
 	{
+		cuCtxSetCurrent(reinterpret_cast<CUcontext>(PrimaryContext));
 		cudaExternalMemory_t externalMemory;
 		cudaExternalMemoryHandleDesc desc;
 		memset(&desc, 0, sizeof(desc));
@@ -439,6 +476,7 @@ namespace nos::cudass
 				desc.type = cudaExternalMemoryHandleTypeNvSciBuf;
 				break;
 		}
+		//TODO: do it in switch case
 		desc.handle.win32.handle = reinterpret_cast<void*>(Handle);
 		desc.handle.win32.name = NULL;
 		desc.size = BlockSize;
@@ -450,7 +488,7 @@ namespace nos::cudass
 
 		cudaExternalMemoryBufferDesc bufferDesc;
 		bufferDesc.flags = 0; // must be zero
-		bufferDesc.offset = Offset; //not working for non zero offsets
+		bufferDesc.offset = Offset;
 		bufferDesc.size = AllocationSize;
 
 		res = cudaExternalMemoryGetMappedBuffer(&pointer, externalMemory, &bufferDesc);
@@ -458,7 +496,13 @@ namespace nos::cudass
 
 		uint64_t outCudaPointerAddres = NULL;
 		outBuffer->Address = reinterpret_cast<uint64_t>(pointer);
+		outBuffer->CreateInfo.BlockSize = BlockSize;
+		outBuffer->CreateInfo.AllocationSize = AllocationSize;
+		outBuffer->CreateInfo.Offset = Offset;
 		outBuffer->CreateInfo.IsImported = true;
+		outBuffer->ShareInfo.CreateHandle = NULL;
+		outBuffer->ShareInfo.ShareableHandle = NULL;
+
 		return NOS_RESULT_SUCCESS;
 	}
 	nosResult ImportExternalSemaphore(uint64_t handle, nosCUDAExternalSemaphoreHandleType handleType, nosCUDAExtSemaphore* extSem)
@@ -524,9 +568,9 @@ namespace nos::cudass
 		if(cudaBuffer->Address != NULL){
 			if (!cudaBuffer->CreateInfo.IsImported) {
 				if (cudaBuffer->ShareInfo.CreateHandle != NULL) {
-					driverRes = cuMemUnmap(cudaBuffer->Address, cudaBuffer->CreateInfo.RequestedSize);
+					driverRes = cuMemUnmap(cudaBuffer->Address, cudaBuffer->CreateInfo.AllocationSize);
 					CHECK_CUDA_DRIVER_ERROR(driverRes);
-					driverRes = cuMemAddressFree(cudaBuffer->Address, cudaBuffer->CreateInfo.RequestedSize);
+					driverRes = cuMemAddressFree(cudaBuffer->Address, cudaBuffer->CreateInfo.AllocationSize);
 					CHECK_CUDA_DRIVER_ERROR(driverRes);
 					driverRes = cuMemRelease(cudaBuffer->ShareInfo.CreateHandle);
 					CHECK_CUDA_DRIVER_ERROR(driverRes);
