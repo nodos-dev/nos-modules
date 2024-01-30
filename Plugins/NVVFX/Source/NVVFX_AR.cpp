@@ -5,7 +5,7 @@
 #include <Windows.h>
 #include <nosUtil/Thread.h>
 #include <nosVulkanSubsystem/Helpers.hpp>
-#include "CUDAVulkanInterop.h"
+#include "NVVFXInterop.h"
 #include "NVVFXAppRunner.h"
 #include "NVVFX_Names.h"
 
@@ -85,6 +85,7 @@ struct NVVFX_AR_NodeContext : nos::NodeContext {
 	NvCVImage nvcv_NV_Output;
 	NvCVImage nvcv_NOS_Input;
 	NvCVImage nvcv_NOS_Output;
+	NvCVImage nvcv_NOS_Output_Shareable;
 
 	std::filesystem::path ModelsPath;
 	bool OutputSizeSet = false;
@@ -147,13 +148,14 @@ struct NVVFX_AR_NodeContext : nos::NodeContext {
 			nosVulkan->End2(cmd, NOS_TRUE, &gpuevent);
 			nosVulkan->WaitGpuEvent(&gpuevent, 0);
 
-			res = interop.nosTextureToNVCVImage(InputFormatted, nvcv_NOS_Input);
+			res = interop.nosTextureToNVCVImage(InputFormatted, nvcv_NOS_Input); //This normally imports but if it already imported then just performs copy operation
 			if (res != NOS_RESULT_SUCCESS)
 				return res;
 
 			res = VFX.RunArtifactReduction(&nvcv_NOS_Input, &nvcv_NOS_Output);
 			if (res != NOS_RESULT_SUCCESS)
 				return res;
+			//res = interop.NVCVImageToNosTexture(nvcv_NOS_Output_Shareable, output);
 
 			nosResourceShareInfo out = nos::vkss::DeserializeTextureInfo(args[NSN_Out].Data->Data);
 			nosCmd cmd2;
@@ -205,10 +207,15 @@ struct NVVFX_AR_NodeContext : nos::NodeContext {
 		auto texFbBuf = nos::Buffer::From(texFb);
 		nosEngine.SetPinValue(OutputID, { .Data = texFbBuf.Data(), .Size = texFbBuf.Size() });
 
-		res = interop.AllocateNVCVImage("Trial", nvcv_NOS_Input.width, nvcv_NOS_Input.height,
+		res = interop.AllocateNVCVImage("Output", nvcv_NOS_Input.width, nvcv_NOS_Input.height,
 			nvcv_NOS_Input.pixelFormat, nvcv_NOS_Input.componentType,
 			nvcv_NOS_Input.bufferBytes,
-			NVCV_INTERLEAVED, &nvcv_NOS_Output);
+			NVCV_INTERLEAVED, &nvcv_NOS_Output);/*
+
+		res = interop.AllocateShareableNVCVImage("OutputShareable", nvcv_NOS_Input.width, nvcv_NOS_Input.height,
+			nvcv_NOS_Input.pixelFormat, nvcv_NOS_Input.componentType,
+			nvcv_NOS_Input.bufferBytes,
+			NVCV_INTERLEAVED, &nvcv_NOS_Output_Shareable);*/
 
 		res = interop.NVCVImageToNosTexture(nvcv_NOS_Output, output);
 

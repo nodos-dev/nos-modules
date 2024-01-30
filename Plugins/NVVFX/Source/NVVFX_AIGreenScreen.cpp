@@ -5,7 +5,7 @@
 #include <Windows.h>
 #include <nosUtil/Thread.h>
 #include <nosVulkanSubsystem/Helpers.hpp>
-#include "CUDAVulkanInterop.h"
+#include "NVVFXInterop.h"
 #include "NVVFXAppRunner.h"
 #include "NVVFX_Names.h"
 #include "nosCUDASubsystem/nosCUDASubsystem.h"
@@ -49,8 +49,49 @@ struct NVVFX_AIGS_NodeContext : nos::NodeContext {
 		if (res == NOS_RESULT_SUCCESS) {
 			SetPinOrphanState(InputID, false);
 		}
-	}
+		
+		nosCUDAModule normalizeModule = {};
+		nosCUDAKernelFunction func = {};
+		nosCUDA->LoadKernelModuleFromPTX("D:/CmdCompilation/CommonCUDAKernels.ptx", &normalizeModule);
+		nosCUDA->GetModuleKernelFunction("NormalizeKernel", normalizeModule, &func);
+		nosCUDAKernelLaunchConfig config = {};
+		config.GridDimensions = { 1,1,1 };
+		config.BlockDimensions = { 256, 1, 1 };
+		config.DynamicMemorySize = 0;
+		nosCUDAStream stream = {};
+		nosCUDA->CreateStream(&stream);
+		int SIZE = 256;
+		size_t allocSize = 256 * sizeof(float);
+		float MAX = RAND_MAX;
+		nosCUDABufferInfo buf = {};
+		nosCUDABufferInfo cpuBuf = {};
+		nosCUDA->CreateShareableBufferOnCUDA(&buf, allocSize);
+		nosCUDA->CreateBuffer(&cpuBuf, allocSize);
+		float* dataBuf = reinterpret_cast<float*>(cpuBuf.Address);
+		
+		for (int i = 0; i < SIZE; i++) {
+			dataBuf[i] = std::rand();
+		}
 
+		nosCUDA->CopyBuffers(&cpuBuf, &buf);
+		float* gpuDataPointer = reinterpret_cast<float*>(buf.Address);
+		void* args[] = { &gpuDataPointer, &MAX, &SIZE};
+		nosCUDACallbackContext contx = {};
+		contx.Data = dataBuf;
+		nosCUDA->LaunchModuleKernelFunction(stream, func, config, args, cbFunc, &contx);
+		nosCUDA->WaitStream(stream);
+
+		nosCUDABufferInfo resBuf = {};
+		nosCUDA->CreateBuffer(&resBuf, allocSize);
+
+		void* devPtr = NULL;
+
+
+		float* resData = new float[SIZE];
+
+		int a = 5;
+	}
+	
 	static void NOS_CUDA_CALLBACK cbFunc(void* data) {
 		nosCUDACallbackContext* ctx = reinterpret_cast<nosCUDACallbackContext*>(data);
 		int a = *reinterpret_cast<int*>(ctx->Data);
@@ -87,7 +128,7 @@ struct NVVFX_AIGS_NodeContext : nos::NodeContext {
 
 			nosCmd cmd = {};
 			nosGPUEvent gpuevent = {};
-			nosVulkan->Begin("Input DownloadD", &cmd);
+			nosVulkan->Begin("Input Download", &cmd);
 			nosVulkan->Copy(cmd, &in, &InputFormatted, 0);
 			nosVulkan->End2(cmd, NOS_TRUE, &gpuevent);
 			nosVulkan->WaitGpuEvent(&gpuevent, 0);

@@ -5,7 +5,7 @@
 #include <Windows.h>
 #include <nosUtil/Thread.h>
 #include <nosVulkanSubsystem/Helpers.hpp>
-#include "CUDAVulkanInterop.h"
+#include "NVVFXInterop.h"
 #include "NVVFXAppRunner.h"
 #include "NVVFX_Names.h"
 

@@ -11,7 +11,7 @@
 #include <Windows.h>
 #include "Nodos/PluginAPI.h"
 #include "Nodos/PluginHelpers.hpp"
-#include "CUDAResourceManager.h"
+#include "nosCUDASubsystem/nosCUDASubsystem.h"
 
 #define CHECK_NVCV_ERROR(nvcv_res)	\
 	do{							\
@@ -36,12 +36,12 @@ public:
 	
 private:
 	
+	nosCUDAStream stream;
 	NvVFX_Handle AR_EffectHandle;
 	NvVFX_Handle UpScale_EffectHandle;
 	NvVFX_Handle SuperRes_EffectHandle;
 	NvVFX_Handle AIGreenScreen_EffectHandle; //AIGS
 	NvVFX_StateObjectHandle AIGS_StateObjectHandle;
-
 	NvCVImage InputTransferred = {};
 	NvCVImage OutputToBeTransferred = {};
 	NvCVImage Temp = {};

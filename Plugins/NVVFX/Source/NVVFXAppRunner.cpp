@@ -1,13 +1,18 @@
 #include "NVVFXAppRunner.h"
+#include "cuda.h"
 
 NVVFXAppRunner::NVVFXAppRunner() : AR_EffectHandle(NULL), UpScale_EffectHandle(NULL), SuperRes_EffectHandle(NULL), 
                                    AIGreenScreen_EffectHandle(NULL), AIGS_StateObjectHandle(NULL)
 {
+    nosCUDA->CreateStream(&stream);
+    //nosCUDAContext currentCtx = {};
+    //nosCUDA->GetCurrentContext(&currentCtx);
+    //cuCtxSetCurrent(reinterpret_cast<CUcontext>(currentCtx));
 }
 
 NVVFXAppRunner::~NVVFXAppRunner()
 {
-
+    nosCUDA->DestroyStream(stream);
 }
 
 nosResult NVVFXAppRunner::InitTransferBuffers(NvCVImage* source, NvCVImage* destination)
@@ -91,25 +96,23 @@ nosResult NVVFXAppRunner::RunArtifactReduction(NvCVImage* input, NvCVImage* outp
         return NOS_RESULT_FAILED;
 
     NvCV_Status res = NVCV_SUCCESS;
-    CUstream stream = 0;
-    res = NvVFX_CudaStreamCreate(&stream);
+    CHECK_NVCV_ERROR(res);
+    
+    res = NvVFX_SetCudaStream(AR_EffectHandle, NVVFX_CUDA_STREAM, reinterpret_cast<CUstream>(stream));
     CHECK_NVCV_ERROR(res);
 
-    res = NvVFX_SetCudaStream(AR_EffectHandle, NVVFX_CUDA_STREAM, stream);
-    CHECK_NVCV_ERROR(res);
-
-    res = NvCVImage_Transfer(input, &InputTransferred, 1.0f, stream, &Temp);
-    cudaStreamSynchronize(stream);
+    nosCUDAError nosres = nosCUDA->QueryStream(stream);
+    res = NvCVImage_Transfer(input, &InputTransferred, 1.0f, reinterpret_cast<CUstream>(stream), &Temp);
+    nosres = nosCUDA->QueryStream(stream);
+    nosCUDA->WaitStream(stream);
     CHECK_NVCV_ERROR(res);
 
     if(NeedToSet){
+
         res = NvVFX_SetImage(AR_EffectHandle, NVVFX_INPUT_IMAGE, &InputTransferred);
         CHECK_NVCV_ERROR(res);
 
         res = NvVFX_SetImage(AR_EffectHandle, NVVFX_OUTPUT_IMAGE, &OutputToBeTransferred);
-        CHECK_NVCV_ERROR(res);
-
-        res = NvVFX_SetCudaStream(AR_EffectHandle, NVVFX_CUDA_STREAM, stream);
         CHECK_NVCV_ERROR(res);
 
         res = NvVFX_SetU32(AR_EffectHandle, NVVFX_MODE, 1);
@@ -121,11 +124,11 @@ nosResult NVVFXAppRunner::RunArtifactReduction(NvCVImage* input, NvCVImage* outp
     }
 
     res = NvVFX_Run(AR_EffectHandle, 0);
-    CHECK_NVCV_ERROR(res);
 
-    res = NvCVImage_Transfer(&OutputToBeTransferred, output, 1.0f, stream, &Temp);
-    cudaStreamSynchronize(stream);
+    res = NvCVImage_Transfer(&OutputToBeTransferred, output, 1.0f, reinterpret_cast<CUstream>(stream), &Temp);
+    nosCUDA->WaitStream(stream);
     CHECK_NVCV_ERROR(res);
+    //nosCUDA->WaitStream(reinterpret_cast<nosCUDAStream>(stream));
 
     return NOS_RESULT_SUCCESS;
 }
@@ -136,15 +139,14 @@ nosResult NVVFXAppRunner::RunSuperResolution(NvCVImage* input, NvCVImage* output
         return NOS_RESULT_FAILED;
 
     NvCV_Status res = NVCV_SUCCESS;
-    CUstream stream = 0;
     //res = NvVFX_CudaStreamCreate(&stream);
     //CHECK_NVCV_ERROR(res);
 
-    res = NvVFX_SetCudaStream(SuperRes_EffectHandle, NVVFX_CUDA_STREAM, stream);
+    res = NvVFX_SetCudaStream(SuperRes_EffectHandle, NVVFX_CUDA_STREAM, reinterpret_cast<CUstream>(stream));
     CHECK_NVCV_ERROR(res);
 
-    res = NvCVImage_Transfer(input, &InputTransferred, 1.0f, stream, &Temp);
-    cudaStreamSynchronize(stream);
+    res = NvCVImage_Transfer(input, &InputTransferred, 1.0f, reinterpret_cast<CUstream>(stream), &Temp);
+    //nosCUDA->WaitStream(reinterpret_cast<nosCUDAStream>(stream));
     CHECK_NVCV_ERROR(res);
 
 
@@ -155,7 +157,7 @@ nosResult NVVFXAppRunner::RunSuperResolution(NvCVImage* input, NvCVImage* output
         res = NvVFX_SetImage(SuperRes_EffectHandle, NVVFX_OUTPUT_IMAGE, &OutputToBeTransferred);
         CHECK_NVCV_ERROR(res);
 
-        res = NvVFX_SetCudaStream(SuperRes_EffectHandle, NVVFX_CUDA_STREAM, stream);
+        res = NvVFX_SetCudaStream(SuperRes_EffectHandle, NVVFX_CUDA_STREAM, reinterpret_cast<CUstream>(stream));
         CHECK_NVCV_ERROR(res);
 
         res = NvVFX_SetU32(SuperRes_EffectHandle, NVVFX_MODE, 0);
@@ -169,8 +171,8 @@ nosResult NVVFXAppRunner::RunSuperResolution(NvCVImage* input, NvCVImage* output
     res = NvVFX_Run(SuperRes_EffectHandle, 0);
     CHECK_NVCV_ERROR(res);
 
-    res = NvCVImage_Transfer(&OutputToBeTransferred, output, 1.0f, stream, &Temp);
-    cudaStreamSynchronize(stream);
+    res = NvCVImage_Transfer(&OutputToBeTransferred, output, 1.0f, reinterpret_cast<CUstream>(stream), &Temp);
+    nosCUDA->WaitStream(stream);
     CHECK_NVCV_ERROR(res);
 
     return NOS_RESULT_SUCCESS;
@@ -183,20 +185,17 @@ nosResult NVVFXAppRunner::RunAIGreenScreenEffect(NvCVImage* input, NvCVImage* ou
         return NOS_RESULT_FAILED;
 
     NvCV_Status res = NVCV_SUCCESS;
-    CUstream stream = 0;
-    //res = NvVFX_CudaStreamCreate(&stream);
-    //CHECK_NVCV_ERROR(res);
 
     if (AIGS_StateObjectHandle != NULL) {
         res = NvVFX_ResetState(AIGreenScreen_EffectHandle, AIGS_StateObjectHandle);
     }
 
-    res = NvVFX_SetCudaStream(AIGreenScreen_EffectHandle, NVVFX_CUDA_STREAM, stream);
+    res = NvVFX_SetCudaStream(AIGreenScreen_EffectHandle, NVVFX_CUDA_STREAM, reinterpret_cast<CUstream>(stream));
     CHECK_NVCV_ERROR(res);
 
-    res = NvCVImage_Transfer(input, &InputTransferred, 1.0f, stream, &Temp);
-    cudaStreamSynchronize(stream);
+    res = NvCVImage_Transfer(input, &InputTransferred, 1.0f, reinterpret_cast<CUstream>(stream), &Temp);
     CHECK_NVCV_ERROR(res);
+    nosCUDA->WaitStream(stream);
 
     if (NeedToSet) {
         res = NvVFX_AllocateState(AIGreenScreen_EffectHandle, &AIGS_StateObjectHandle);
@@ -208,7 +207,7 @@ nosResult NVVFXAppRunner::RunAIGreenScreenEffect(NvCVImage* input, NvCVImage* ou
         res = NvVFX_SetImage(AIGreenScreen_EffectHandle, NVVFX_OUTPUT_IMAGE, &OutputToBeTransferred);
         CHECK_NVCV_ERROR(res);
 
-        res = NvVFX_SetCudaStream(AIGreenScreen_EffectHandle, NVVFX_CUDA_STREAM, stream);
+        res = NvVFX_SetCudaStream(AIGreenScreen_EffectHandle, NVVFX_CUDA_STREAM, reinterpret_cast<CUstream>(stream));
         CHECK_NVCV_ERROR(res);
 
         res = NvVFX_SetU32(AIGreenScreen_EffectHandle, NVVFX_MODE, 0); //--mode=(0|1)
@@ -222,9 +221,8 @@ nosResult NVVFXAppRunner::RunAIGreenScreenEffect(NvCVImage* input, NvCVImage* ou
     res = NvVFX_Run(AIGreenScreen_EffectHandle, 0);
     CHECK_NVCV_ERROR(res);
 
-    res = NvCVImage_Transfer(&OutputToBeTransferred, output, 1.0f, stream, &Temp);
-    cudaStreamSynchronize(stream);
+    res = NvCVImage_Transfer(&OutputToBeTransferred, output, 1.0f, reinterpret_cast<CUstream>(stream), &Temp);
     CHECK_NVCV_ERROR(res);
-
+    nosCUDA->WaitStream(stream);
     return NOS_RESULT_SUCCESS;
 }
