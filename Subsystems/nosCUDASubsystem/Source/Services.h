@@ -69,6 +69,7 @@ namespace nos::cudass
 	nosResult LaunchModuleKernelFunction(nosCUDAStream stream, nosCUDAKernelFunction outFunction, nosCUDAKernelLaunchConfig config, void** arguments, nosCUDACallbackFunction callback, void* callbackData);
 	
 	nosResult WaitStream(nosCUDAStream stream); //Waits all commands in the stream to be completed
+	nosCUDAError QueryStream(nosCUDAStream stream); //
 
 	nosCUDAError GetLastError(); //Waits all commands in the stream to be completed
 

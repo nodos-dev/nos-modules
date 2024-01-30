@@ -33,6 +33,7 @@ namespace nos::cudass
 		subsys->LaunchModuleKernelFunction = LaunchModuleKernelFunction;
 
 		subsys->WaitStream = WaitStream;
+		subsys->QueryStream = QueryStream;
 		
 		subsys->GetLastError = GetLastError;
 
@@ -62,6 +63,7 @@ namespace nos::cudass
 	{
 		CUresult cuRes= cuCtxCreate(reinterpret_cast<CUcontext*>(&cudaContext), flags, device);
 		CHECK_CUDA_DRIVER_ERROR(cuRes);
+		//TODO: Retrieve context id with cuCtxGetId and store them in a map for future context switches
 		return NOS_RESULT_SUCCESS;
 	}
 
@@ -72,18 +74,31 @@ namespace nos::cudass
 		return NOS_RESULT_SUCCESS;
 	}
 
-
 	nosResult NOSAPI_CALL Initialize(int device)
 	{
-		//We will initialize CUDA Runtime explicitly, Driver API will also be initialized 
-		CUresult cuRes = cuInit(0);
-		CHECK_CUDA_DRIVER_ERROR(cuRes);
-		CUdevice cuDevice;
-		cuRes = cuDeviceGet(&cuDevice, device);
-		CHECK_CUDA_DRIVER_ERROR(cuRes);
-		cuRes = cuCtxCreate(reinterpret_cast<CUcontext*>(&PrimaryContext), CU_CTX_COREDUMP_ENABLE, cuDevice);
-		CHECK_CUDA_DRIVER_ERROR(cuRes);
+
+		//We will initialize CUDA Runtime explicitly, Driver API will also be initialized implicitly
+		int cudaVersion = 0;
+		cudaError res = cudaSuccess;
+
+		res = cudaDriverGetVersion(&cudaVersion);
+		if (cudaVersion == 0) {
+			return NOS_RESULT_FAILED;
+		}
+		CHECK_CUDA_RT_ERROR(res);
+
+		if (cudaVersion / 1000 >= 12) { //major version
+			res = cudaSetDevice(device);
+			CHECK_CUDA_RT_ERROR(res);
+		}
+		else {
+			res = cudaFree(0); //explicit initialization pre CUDA 12.0
+		}
+		CHECK_CUDA_RT_ERROR(res);
 		
+		CUresult cuRes = cuCtxSetFlags(CU_CTX_COREDUMP_ENABLE);
+		CHECK_CUDA_DRIVER_ERROR(cuRes);
+		cuRes = cuCtxGetCurrent(reinterpret_cast<CUcontext*>(&PrimaryContext));
 		std::string CoreDumpFile = std::string(nosEngine.Context->RootFolderPath) + "/CoreDump.txt";
 		size_t Size = CoreDumpFile.size();
 
@@ -182,6 +197,10 @@ namespace nos::cudass
 		cudaError res = cudaStreamSynchronize(reinterpret_cast<cudaStream_t>(stream));
 		CHECK_CUDA_RT_ERROR(res);
 		return NOS_RESULT_SUCCESS;
+	}
+	nosCUDAError QueryStream(nosCUDAStream stream)
+	{
+		return static_cast<nosCUDAError>(cudaStreamQuery(reinterpret_cast<CUstream>(stream)));
 	}
 	nosCUDAError GetLastError()
 	{
@@ -321,7 +340,7 @@ namespace nos::cudass
 		CUdevice dev;
 		int supportsVMM = 0, supportsWin32 = 0;
 		
-		cuCtxSetCurrent(reinterpret_cast<CUcontext>(PrimaryContext));
+		//cuCtxSetCurrent(reinterpret_cast<CUcontext>(PrimaryContext));
 		cuCtxGetDevice(&dev);
 
 		cuDeviceGetAttribute(&supportsVMM, CU_DEVICE_ATTRIBUTE_VIRTUAL_MEMORY_MANAGEMENT_SUPPORTED, dev);
@@ -446,7 +465,7 @@ namespace nos::cudass
 	}
 	nosResult ImportExternalMemoryAsCUDABuffer(uint64_t Handle, size_t BlockSize, size_t AllocationSize, size_t Offset, nosCUDAExternalMemoryHandleType handleType, nosCUDABufferInfo* outBuffer)
 	{
-		cuCtxSetCurrent(reinterpret_cast<CUcontext>(PrimaryContext));
+		//cuCtxSetCurrent(reinterpret_cast<CUcontext>(PrimaryContext));
 		cudaExternalMemory_t externalMemory;
 		cudaExternalMemoryHandleDesc desc;
 		memset(&desc, 0, sizeof(desc));
