@@ -182,7 +182,7 @@ struct CubeMask : PinMapping
 
 	void LoadVertices()
 	{
-		if (Verts[0].Buffer.Memory.ExternalMemory.PID)
+		if (Verts[0].Buffer.Memory.Handle)
 		{
 			vk->DestroyResource(&Verts[0].Buffer);
 			vk->DestroyResource(&Verts[1].Buffer);

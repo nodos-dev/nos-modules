@@ -14,8 +14,6 @@ NOS_REGISTER_NAME_SPACED(ClassName_FrameInterpolator, "nos.test.FrameInterpolato
 NOS_REGISTER_NAME(FrameInterpolator_BasicInterpolationShader)
 NOS_REGISTER_NAME(FrameInterpolator_BasicInterpolationPass)
 
-extern nosVulkanSubsystem* nosVulkan;
-
 struct FrameInterpolatorNode : NodeContext
 {
 	FrameInterpolatorNode(nosFbNode const* node)

@@ -18,9 +18,12 @@
 [submodule "Subsystems/nosShaderCompiler/Binaries/tools"]
 	path = Subsystems/nosShaderCompiler/Binaries/tools
 	url = https://github.com/mediaz/tools.git
-[submodule "Subsystems/nosPython/External/pybind11"]
-	path = Subsystems/nosPython/External/pybind11
-	url = https://github.com/pybind/pybind11.git
+[submodule "Plugins/nosTest/External/glfw"]
+	path = Plugins/nosTest/External/glfw
+	url = https://github.com/glfw/glfw.git
 [submodule "Subsystems/nosVulkanSubsystem/External/subprocess"]
 	path = Subsystems/nosVulkanSubsystem/External/subprocess
 	url = https://github.com/benman64/subprocess.git
+[submodule "Subsystems/nosPython/External/pybind11"]
+	path = Subsystems/nosPython/External/pybind11
+	url = https://github.com/pybind/pybind11.git

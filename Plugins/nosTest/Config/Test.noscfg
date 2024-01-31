@@ -20,7 +20,8 @@
     "custom_types": [ "Test.fbs", "FrameInterpolator.fbs" ],
     "node_definitions": [
         "Test.nosdef",
-        "FrameInterpolator.nosdef"
+        "FrameInterpolator.nosdef",
+		"Window.nosdef"
     ],
     "binary_path": "../Binaries/nosTest",
     "associated_nodes": [
@@ -63,6 +64,11 @@
             "category": "Test",
             "class_name": "FrameInterpolator",
             "display_name": "Frame Interpolator"
+        },
+        {
+          "category": "Test|Window",
+          "class_name": "Window",
+          "display_name": "Window"
         },
         {
             "category": "Test",

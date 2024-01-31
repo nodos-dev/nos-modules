@@ -1,0 +1,16 @@
+{
+	"nodes": [
+		{
+			"class_name": "Window",
+			"contents_type": "Job",
+			"description": "Test window node",
+			"pins": [
+				{
+					"name": "Input",
+					"type_name": "nos.sys.vulkan.Texture",
+					"show_as": "INPUT_PIN"
+				}
+			]
+		}
+	]
+}

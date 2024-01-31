@@ -9,12 +9,18 @@
 #include <nosVulkanSubsystem/nosVulkanSubsystem.h>
 #include <nosVulkanSubsystem/Helpers.hpp>
 
+#include "Window/WindowNode.h"
+
 NOS_INIT_WITH_MIN_REQUIRED_MINOR(1) // Do not forget to remove this minimum required minor version on major version changes, or we might not be loaded.
 NOS_REGISTER_NAME(in1)
 NOS_REGISTER_NAME(in2)
 NOS_REGISTER_NAME(out)
+
+nosVulkanSubsystem* nosVulkan = nullptr;
+
 namespace nos::test
 {
+
 
 class TestNode : public nos::NodeContext
 {
@@ -102,15 +108,13 @@ public:
 
 nosResult RegisterFrameInterpolator(nosNodeFunctions* nodeFunctions);
 
-nosVulkanSubsystem* nosVulkan = nullptr;
-
 extern "C"
 {
 
 
 	NOSAPI_ATTR nosResult NOSAPI_CALL nosExportNodeFunctions(size_t* outCount, nosNodeFunctions** outFunctions)
 	{
-		*outCount = (size_t)(7);
+		*outCount = (size_t)(8);
 		if (!outFunctions)
 			return NOS_RESULT_SUCCESS;
 
@@ -154,7 +158,9 @@ extern "C"
 			return NOS_RESULT_SUCCESS;
 		};
 		RegisterFrameInterpolator(outFunctions[6]);
+		nos::test::RegisterWindowNode(outFunctions[7]);
 		return NOS_RESULT_SUCCESS;
+
 	}
 
 }
