@@ -4,7 +4,13 @@
             "name": "nos.CubeMask",
             "version": "1.0.0"
         },
-        "display_name": "CubeMask"
+        "display_name": "CubeMask",
+        "dependencies": [
+            {
+                "name": "nos.sys.vulkan",
+                "version": "2.0.0"
+            }
+        ]
     },
     "node_definitions": [
         "Config/CubeMask.nosdef"

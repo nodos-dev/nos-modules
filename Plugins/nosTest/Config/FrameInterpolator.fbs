@@ -1,0 +1,7 @@
+namespace nos.test;
+
+enum FrameInterpolationMethod: uint
+{
+    REPEAT = 0,
+    LINEAR = 1, // Basic interpolation, with one frame delay
+}

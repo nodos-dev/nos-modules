@@ -5,14 +5,8 @@ struct Input
 };
 
 
-SamplerState StaticSampler {
-    Filter = MIN_MAG_MIP_LINEAR;
-    AddressU = Wrap;
-    AddressV = Wrap;
-};
-
-[[vk::binding(0, 0)]] Texture2D<float4> Source;
-
+[[vk::combinedImageSampler]][[vk::binding(0, 0)]] Texture2D<float4> Source;
+[[vk::combinedImageSampler]][[vk::binding(0, 0)]] SamplerState SourceSampler;
 
 [[vk::binding(1, 0)]] 
 cbuffer ubo { 
@@ -37,6 +31,6 @@ float3 Correct(float3 WorkingColor, float4 Saturation, float4 Contrast, float4 G
 
 float4 main(Input input) : SV_TARGET0
 {
-    float4 src = Source.Sample(StaticSampler, input.uv);
+    float4 src = Source.Sample(SourceSampler, input.uv);
     return float4(Correct(src.rgb, Saturation, Contrast, Gamma, Gain, Offset, ContrastCenter), src.a);
 }

@@ -1,0 +1,33 @@
+{
+    "nodes": [
+        {
+            "class_name": "FrameInterpolator",
+            "contents_type": "Job",
+            "description": "Produces intermediate frames to match the output requests",
+            "pins": [
+                {
+                    "name": "Input",
+                    "type_name": "nos.sys.vulkan.Texture",
+                    "show_as": "INPUT_PIN",
+                    "can_show_as": "INPUT_PIN_ONLY",
+                    "data": {
+                        "filtering": "LINEAR"
+                    }
+                },
+                {
+                    "name": "Method",
+                    "type_name": "nos.test.FrameInterpolationMethod",
+                    "show_as": "PROPERTY",
+                    "can_show_as": "INPUT_PIN_OR_PROPERTY",
+                    "data": "REPEAT"
+                },
+                {
+                    "name": "Output",
+                    "type_name": "nos.sys.vulkan.Texture",
+                    "show_as": "OUTPUT_PIN",
+                    "can_show_as": "OUTPUT_PIN_ONLY"
+                }
+            ]
+        }
+    ]
+}

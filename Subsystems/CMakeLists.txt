@@ -65,3 +65,5 @@ endif()
 
 add_subdirectory(nosVulkanSubsystem) # Subsystem prefix is only for distinguishing between nosVulkan repo and this.
 add_subdirectory(nosTestSubsystem)
+add_subdirectory(nosCUDASubsystem)
+#add_subdirectory(nosCUDAVulkanInteropSubsystem)

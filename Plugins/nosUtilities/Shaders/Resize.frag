@@ -73,7 +73,7 @@ vec4 BiCubicSample(vec2 texPos1, vec2 f)
     result += texelFetch(Input, ivec2(round(vec2(texPos12.x, texPos3.y) - .5)), 0) * w12.x * w3.y;
     result += texelFetch(Input, ivec2(round(vec2(texPos3.x,  texPos3.y) - .5)), 0) * w3.x * w3.y;
 
-    return result;
+    return clamp(result, vec4(0), vec4(1));
 }
 
 

@@ -218,7 +218,8 @@ struct CNNNodeContext :  nos::NodeContext {
 		nosVulkan->Begin("Copy To Out", &cmd);
 		nosVulkan->Copy(cmd, &dllLoader.Input, &Worker.InputRGBA8, 0);
 		nosGPUEvent event;
-		nosVulkan->End2(cmd, NOS_TRUE, &event);
+		nosCmdEndParams endParams = {.ForceSubmit = true, .OutGPUEventHandle = &event};
+		nosVulkan->End(cmd, &endParams);
 		nosVulkan->WaitGpuEvent(&event, UINT64_MAX);
 		return NOS_RESULT_SUCCESS;
 	}
@@ -253,7 +254,7 @@ extern "C"
 		if (!outFunctions)
 			return NOS_RESULT_SUCCESS;
 
-		auto ret = nosEngine.RequestSubsystem(NOS_NAME_STATIC("nos.sys.vulkan"), 1, 0, (void**)&nosVulkan);
+		auto ret = nosEngine.RequestSubsystem(NOS_NAME_STATIC("nos.sys.vulkan"), NOS_VULKAN_SUBSYSTEM_VERSION_MAJOR, 0, (void**)&nosVulkan);
 		if (NOS_RESULT_SUCCESS != ret)
 			return ret;
 

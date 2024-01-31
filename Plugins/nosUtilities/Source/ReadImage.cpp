@@ -70,7 +70,8 @@ static nosResult GetFunctions(size_t* count, nosName* names, nosPfnNodeFunctionE
 			nosCmd cmd{};
 			nosVulkan->Begin("ReadImage: Load", &cmd);
 			nosVulkan->ImageLoad(cmd, img, nosVec2u(w, h), NOS_FORMAT_R8G8B8A8_SRGB, &outRes);
-			nosVulkan->End(cmd, NOS_TRUE);
+			nosCmdEndParams endParams {.ForceSubmit = true};
+			nosVulkan->End(cmd, &endParams);
 			
 			free(img);
 			

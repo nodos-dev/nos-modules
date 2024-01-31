@@ -26,7 +26,7 @@ NOS_REGISTER_NAME_SPACED(Nos_Utilities_WriteImage, "nos.utilities.WriteImage")
 struct WriteImage : NodeContext {
     std::filesystem::path Path;
     nosResourceShareInfo Input;
-    nosGPUEvent Event;
+    nosGPUEvent Event = 0;
     std::atomic_bool WriteRequested = false;
     std::condition_variable CV;
     std::mutex Mutex;
@@ -82,10 +82,11 @@ struct WriteImage : NodeContext {
         nosCmd cmd;
         assert(Event == nullptr);
         nosVulkan->Begin("Write Image Copy To", &cmd);
-        nosVulkan->End2(cmd, NOS_TRUE, &Event);
-		nosEngine.EndScheduling(copyInfo->ID);
+		nosCmdEndParams endParams{.ForceSubmit = true, .OutGPUEventHandle = WriteRequested ? &Event : nullptr};
+        nosVulkan->End(cmd, &endParams);
 		if (WriteRequested)
 		{
+		    nosEngine.EndScheduling(copyInfo->ID);
 			WriteRequested = false;
 			SignalWrite();
 		}
