@@ -5,5 +5,6 @@ namespace nos::cudass
 {
 	extern UtilsProxy::ResourceManagerProxy<nosCUDABufferInfo> ResManager;
 	extern void* PrimaryContext;
-	extern std::unordered_map<int32_t, void*> IDContextMap;
+	extern void* ActiveContext;
+	extern std::unordered_map<uint64_t, void*> IDContextMap;
 }

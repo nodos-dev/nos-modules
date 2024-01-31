@@ -61,14 +61,25 @@ namespace nos::cudass
 	}
 	nosResult CreateCUDAContext(nosCUDAContext* cudaContext, int device, nosCUDAContextFlags flags)
 	{
-		CUresult cuRes= cuCtxCreate(reinterpret_cast<CUcontext*>(&cudaContext), flags, device);
+		uint64_t ID = NULL;
+		nosResult nosRes = GetCallingModuleID(&ID);
+		if (nosRes != NOS_RESULT_SUCCESS)
+			return nosRes;
+		
+		CUresult cuRes = cuCtxCreate(reinterpret_cast<CUcontext*>(cudaContext), flags, device);
 		CHECK_CUDA_DRIVER_ERROR(cuRes);
-		//TODO: Retrieve context id with cuCtxGetId and store them in a map for future context switches
+		cuRes = cuCtxPopCurrent(reinterpret_cast<CUcontext*>(&ActiveContext));
+		CHECK_CUDA_DRIVER_ERROR(cuRes);
+
+		IDContextMap[ID] = (*cudaContext);
 		return NOS_RESULT_SUCCESS;
 	}
 
 	nosResult DestroyCUDAContext(nosCUDAContext cudaContext)
 	{
+		if (cudaContext == PrimaryContext)
+			return NOS_RESULT_SUCCESS;
+
 		CUresult cuRes = cuCtxDestroy(reinterpret_cast<CUcontext>(cudaContext));
 		CHECK_CUDA_DRIVER_ERROR(cuRes);
 		return NOS_RESULT_SUCCESS;
@@ -76,7 +87,6 @@ namespace nos::cudass
 
 	nosResult NOSAPI_CALL Initialize(int device)
 	{
-
 		//We will initialize CUDA Runtime explicitly, Driver API will also be initialized implicitly
 		int cudaVersion = 0;
 		cudaError res = cudaSuccess;
@@ -99,11 +109,27 @@ namespace nos::cudass
 		CUresult cuRes = cuCtxSetFlags(CU_CTX_COREDUMP_ENABLE);
 		CHECK_CUDA_DRIVER_ERROR(cuRes);
 		cuRes = cuCtxGetCurrent(reinterpret_cast<CUcontext*>(&PrimaryContext));
+		CHECK_CUDA_DRIVER_ERROR(cuRes);
+		ActiveContext = PrimaryContext;
+
 		std::string CoreDumpFile = std::string(nosEngine.Context->RootFolderPath) + "/CoreDump.txt";
 		size_t Size = CoreDumpFile.size();
 
 		cuRes = cuCoredumpSetAttribute(CU_COREDUMP_FILE, &CoreDumpFile, &Size);
+		return NOS_RESULT_SUCCESS;
+	}
+	nosResult SetContext(nosCUDAContext cudaContext)
+	{
+		CUresult cuRes = cuCtxSetCurrent(reinterpret_cast<CUcontext>(cudaContext));
 		CHECK_CUDA_DRIVER_ERROR(cuRes);
+		ActiveContext = cudaContext;
+		return NOS_RESULT_SUCCESS;
+	}
+	nosResult SetCurrentContextToPrimary()
+	{
+		CUresult cuRes = cuCtxSetCurrent(reinterpret_cast<CUcontext>(PrimaryContext));
+		CHECK_CUDA_DRIVER_ERROR(cuRes);
+		ActiveContext = PrimaryContext;
 		return NOS_RESULT_SUCCESS;
 	}
 	nosResult GetCurrentContext(nosCUDAContext* cudaContext)
@@ -141,6 +167,7 @@ namespace nos::cudass
 	}
 	nosResult NOSAPI_CALL CreateStream(nosCUDAStream* stream)
 	{
+		CHECK_CONTEXT_SWITCH();
 		cudaStream_t cudaStream;
 		cudaError res = cudaStreamCreate(&cudaStream);
 		CHECK_CUDA_RT_ERROR(res);
@@ -149,12 +176,14 @@ namespace nos::cudass
 	}
 	nosResult NOSAPI_CALL DestroyStream(nosCUDAStream stream)
 	{
+		CHECK_CONTEXT_SWITCH();
 		cudaError res = cudaStreamDestroy(reinterpret_cast<cudaStream_t>(stream));
 		CHECK_CUDA_RT_ERROR(res);
 		return NOS_RESULT_SUCCESS;
 	}
 	nosResult NOSAPI_CALL CreateCUDAEvent(nosCUDAEvent* cudaEvent, nosCUDAEventFlags flags)
 	{
+		CHECK_CONTEXT_SWITCH();
 		cudaEvent_t event;
 		cudaError res = cudaEventCreate(&event, flags);
 		CHECK_CUDA_RT_ERROR(res);
@@ -163,12 +192,14 @@ namespace nos::cudass
 	}
 	nosResult NOSAPI_CALL DestroyCUDAEvent(nosCUDAEvent cudaEvent)
 	{
+		CHECK_CONTEXT_SWITCH();
 		cudaError res = cudaEventDestroy(reinterpret_cast<cudaEvent_t>(cudaEvent));
 		CHECK_CUDA_RT_ERROR(res);
 		return NOS_RESULT_SUCCESS;
 	}
 	nosResult NOSAPI_CALL LoadKernelModuleFromPTX(const char* ptxPath, nosCUDAModule* outModule)
 	{
+		CHECK_CONTEXT_SWITCH();
 		CUmodule cuModule;
 		CUresult res = cuModuleLoad(&cuModule, ptxPath);
 		CHECK_CUDA_DRIVER_ERROR(res);
@@ -177,6 +208,7 @@ namespace nos::cudass
 	}
 	nosResult NOSAPI_CALL GetModuleKernelFunction(const char* functionName, nosCUDAModule cudaModule, nosCUDAKernelFunction* outFunction)
 	{
+		CHECK_CONTEXT_SWITCH();
 		CUfunction cuFunction = NULL;;
 		CUresult res = cuModuleGetFunction(&cuFunction, reinterpret_cast<CUmodule>(cudaModule), functionName);
 		CHECK_CUDA_DRIVER_ERROR(res);
@@ -185,6 +217,7 @@ namespace nos::cudass
 	}
 	nosResult NOSAPI_CALL LaunchModuleKernelFunction(nosCUDAStream stream, nosCUDAKernelFunction outFunction, nosCUDAKernelLaunchConfig config, void** arguments, nosCUDACallbackFunction callback, void* callbackData)
 	{
+		CHECK_CONTEXT_SWITCH();
 		CUresult res = cuLaunchKernel(reinterpret_cast<CUfunction>(outFunction),
 			config.GridDimensions.x, config.GridDimensions.y, config.GridDimensions.z,
 			config.BlockDimensions.x, config.BlockDimensions.y, config.BlockDimensions.z, 
@@ -194,32 +227,38 @@ namespace nos::cudass
 	}
 	nosResult NOSAPI_CALL WaitStream(nosCUDAStream stream)
 	{
+		CHECK_CONTEXT_SWITCH();
 		cudaError res = cudaStreamSynchronize(reinterpret_cast<cudaStream_t>(stream));
 		CHECK_CUDA_RT_ERROR(res);
 		return NOS_RESULT_SUCCESS;
 	}
 	nosCUDAError QueryStream(nosCUDAStream stream)
 	{
+		CHECK_CONTEXT_SWITCH();
 		return static_cast<nosCUDAError>(cudaStreamQuery(reinterpret_cast<CUstream>(stream)));
 	}
 	nosCUDAError GetLastError()
 	{
+		CHECK_CONTEXT_SWITCH();
 		return static_cast<nosCUDAError>(cudaGetLastError());
 	}
 	nosResult NOSAPI_CALL AddEventToStream(nosCUDAStream stream, nosCUDAEvent measureEvent)
 	{
+		CHECK_CONTEXT_SWITCH();
 		cudaError res = cudaEventRecord(reinterpret_cast<cudaEvent_t>(measureEvent), reinterpret_cast<cudaStream_t>(stream));
 		CHECK_CUDA_RT_ERROR(res);
 		return NOS_RESULT_SUCCESS;
 	}
 	nosResult NOSAPI_CALL WaitCUDAEvent(nosCUDAEvent waitEvent)
 	{
+		CHECK_CONTEXT_SWITCH();
 		cudaError res = cudaEventSynchronize(reinterpret_cast<cudaEvent_t>(waitEvent));
 		CHECK_CUDA_RT_ERROR(res);
 		return NOS_RESULT_SUCCESS;
 	}
 	nosResult NOSAPI_CALL QueryCUDAEvent(nosCUDAEvent waitEvent, nosCUDAEventStatus* eventStatus)
 	{
+		CHECK_CONTEXT_SWITCH();
 		cudaError res = cudaEventQuery(reinterpret_cast<cudaEvent_t>(waitEvent));
 
 		if (res == cudaErrorNotReady) {
@@ -236,6 +275,7 @@ namespace nos::cudass
 	}
 	nosResult NOSAPI_CALL GetCUDAEventElapsedTime(nosCUDAStream stream, nosCUDAEvent theEvent, float* elapsedTime)
 	{
+		CHECK_CONTEXT_SWITCH();
 		cudaEvent_t endEvent;
 		
 		cudaError res = cudaEventCreate(&endEvent);
@@ -254,6 +294,7 @@ namespace nos::cudass
 	}
 	nosResult NOSAPI_CALL CopyBuffers(nosCUDABufferInfo* source, nosCUDABufferInfo* destination)
 	{
+		CHECK_CONTEXT_SWITCH();
 		CHECK_VALID_ARGUMENT(source);
 		CHECK_VALID_ARGUMENT(destination);
 
@@ -300,12 +341,14 @@ namespace nos::cudass
 	}
 	nosResult NOSAPI_CALL AddCallback(nosCUDAStream stream, nosCUDACallbackFunction callback, void* callbackData)
 	{
+		CHECK_CONTEXT_SWITCH();
 		CUresult res = cuLaunchHostFunc(reinterpret_cast<CUstream>(stream), callback, callbackData);
 		CHECK_CUDA_DRIVER_ERROR(res);
 		return NOS_RESULT_SUCCESS;
 	}
 	nosResult WaitExternalSemaphore(nosCUDAStream stream, nosCUDAExtSemaphore extSem)
 	{
+		CHECK_CONTEXT_SWITCH();
 		cudaExternalSemaphoreWaitParams params = {};
 		memset(&params, 0, sizeof(params));
 		cudaError res = cudaWaitExternalSemaphoresAsync(reinterpret_cast<cudaExternalSemaphore_t*>(&extSem), &params, 1, reinterpret_cast<cudaStream_t>(stream));
@@ -314,6 +357,7 @@ namespace nos::cudass
 	}
 	nosResult SignalExternalSemaphore(nosCUDAStream stream, nosCUDAExtSemaphore extSem)
 	{
+		CHECK_CONTEXT_SWITCH();
 		cudaExternalSemaphoreSignalParams params = {};
 		memset(&params, 0, sizeof(params));
 		cudaError res = cudaSignalExternalSemaphoresAsync(reinterpret_cast<cudaExternalSemaphore_t*>(&extSem), &params, 1, reinterpret_cast<cudaStream_t>(stream));
@@ -322,6 +366,7 @@ namespace nos::cudass
 	}
 	nosResult NOSAPI_CALL CreateBufferOnCUDA(nosCUDABufferInfo* cudaBuffer, uint64_t size)
 	{
+		CHECK_CONTEXT_SWITCH();
 		uint64_t addr = NULL;
 		cudaError_t res = cudaMalloc((void**)&addr, size);
 		CHECK_CUDA_RT_ERROR(res);
@@ -337,6 +382,7 @@ namespace nos::cudass
 	}
 	nosResult NOSAPI_CALL CreateShareableBufferOnCUDA(nosCUDABufferInfo* cudaBuffer, uint64_t size)
 	{
+		CHECK_CONTEXT_SWITCH();
 		CUdevice dev;
 		int supportsVMM = 0, supportsWin32 = 0;
 		
@@ -403,6 +449,7 @@ namespace nos::cudass
 	}
 	nosResult NOSAPI_CALL CreateBufferOnManagedMemory(nosCUDABufferInfo* cudaBuffer, uint64_t size)
 	{
+		CHECK_CONTEXT_SWITCH();
 		uint64_t addr = NULL;
 		cudaError res = cudaMallocManaged((void**)&addr, size);
 		CHECK_CUDA_RT_ERROR(res);
@@ -416,6 +463,7 @@ namespace nos::cudass
 	}
 	nosResult NOSAPI_CALL CreateBufferPinned(nosCUDABufferInfo* cudaBuffer, uint64_t size)
 	{
+		CHECK_CONTEXT_SWITCH();
 		uint64_t addr = NULL;
 		cudaError res = cudaMallocHost((void**)&addr, size);
 		CHECK_CUDA_RT_ERROR(res);
@@ -465,6 +513,7 @@ namespace nos::cudass
 	}
 	nosResult ImportExternalMemoryAsCUDABuffer(uint64_t Handle, size_t BlockSize, size_t AllocationSize, size_t Offset, nosCUDAExternalMemoryHandleType handleType, nosCUDABufferInfo* outBuffer)
 	{
+		CHECK_CONTEXT_SWITCH();
 		//cuCtxSetCurrent(reinterpret_cast<CUcontext>(PrimaryContext));
 		cudaExternalMemory_t externalMemory;
 		cudaExternalMemoryHandleDesc desc;
@@ -526,6 +575,8 @@ namespace nos::cudass
 	}
 	nosResult ImportExternalSemaphore(uint64_t handle, nosCUDAExternalSemaphoreHandleType handleType, nosCUDAExtSemaphore* extSem)
 	{
+		CHECK_CONTEXT_SWITCH();
+
 		cudaExternalSemaphore_t extSemCuda = NULL;
 		cudaExternalSemaphoreHandleDesc desc = {};
 		memset(&desc, 0, sizeof(desc));
@@ -579,8 +630,11 @@ namespace nos::cudass
 		(*extSem) = extSemCuda;
 		return NOS_RESULT_SUCCESS;
 	}
+
 	nosResult NOSAPI_CALL DestroyBuffer(nosCUDABufferInfo* cudaBuffer)
 	{
+		CHECK_CONTEXT_SWITCH();
+
 		CHECK_VALID_ARGUMENT(cudaBuffer);
 		CUresult driverRes = CUDA_SUCCESS;
 		cudaError rtRes = cudaSuccess;
@@ -600,6 +654,39 @@ namespace nos::cudass
 				}
 			}
 		}
+		return NOS_RESULT_SUCCESS;
+	}
+
+	FORCEINLINE nosResult ContextSwitch()
+	{
+		uint64_t ID = NULL;
+		nosResult nosRes = GetCallingModuleID(&ID);
+		if (nosRes != NOS_RESULT_SUCCESS)
+			return nosRes;
+
+		CUresult cuRes = CUDA_SUCCESS;
+		if (IDContextMap.contains(ID))
+		{
+			ActiveContext = IDContextMap[ID];
+			cuRes = cuCtxSetCurrent(reinterpret_cast<CUcontext>(ActiveContext));
+			CHECK_CUDA_DRIVER_ERROR(cuRes);
+		}
+		else if(ActiveContext != PrimaryContext)
+		{
+			ActiveContext = PrimaryContext;
+			cuRes = cuCtxSetCurrent(reinterpret_cast<CUcontext>(ActiveContext));
+			CHECK_CUDA_DRIVER_ERROR(cuRes);
+		}
+		return NOS_RESULT_SUCCESS;
+	}
+
+	FORCEINLINE nosResult GetCallingModuleID(uint64_t* ID)
+	{
+		nosModuleContext moduleContext = {};
+		nosResult nosRes = nosEngine.GetCallingModule(&moduleContext);
+		if (nosRes != NOS_RESULT_SUCCESS)
+			return nosRes;
+		(*ID) = moduleContext.Id.Name;
 		return NOS_RESULT_SUCCESS;
 	}
 }

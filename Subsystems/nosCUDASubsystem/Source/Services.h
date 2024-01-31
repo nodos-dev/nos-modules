@@ -41,7 +41,10 @@
 		} \
 	} while (0); \
 
-
+#define CHECK_CONTEXT_SWITCH() \
+	do{\
+	   ContextSwitch();\
+	} while (0); \
 
 namespace nos::cudass
 {
@@ -52,6 +55,10 @@ namespace nos::cudass
 	nosResult DestroyCUDAContext(nosCUDAContext cudaContext); // Use with caution! Destroys the context
 
 	nosResult Initialize(int device); //Initialize CUDA Runtime
+
+	nosResult SetContext(nosCUDAContext cudaContext); //Sets and initializes the given CUDA Context for the calling module as current for any subsequent calls from that module
+	nosResult SetCurrentContextToPrimary(); //Sets the current context as the primary context of CUDA Subsystem
+	
 	nosResult GetCurrentContext(nosCUDAContext* cudaContext); //Retrieve the primary CUDA Context of CUDA Subsystem
 	nosResult GetCudaVersion(CUDAVersion* versionInfo); //CUDA version
 	nosResult GetDeviceCount(int* deviceCount); //Number of GPUs
@@ -96,4 +103,6 @@ namespace nos::cudass
 	nosResult ImportExternalMemoryAsCUDABuffer(uint64_t Handle, size_t BlockSize, size_t AllocationSize, size_t Offset, nosCUDAExternalMemoryHandleType handleType, nosCUDABufferInfo* outBuffer);
 	nosResult ImportExternalSemaphore(uint64_t handle, nosCUDAExternalSemaphoreHandleType handleType, nosCUDAExtSemaphore* extSem);
 
+	nosResult ContextSwitch();
+	nosResult GetCallingModuleID(uint64_t* ID);
 }

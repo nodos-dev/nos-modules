@@ -312,6 +312,9 @@ typedef struct nosCUDASubsystem
 	nosResult(NOSAPI_CALL* DestroyCUDAContext)(nosCUDAContext cudaContext); // Use with caution! Destroys the context
 
 	nosResult(NOSAPI_CALL* Initialize)(int device); //Initialize CUDA Runtime
+
+	nosResult(NOSAPI_CALL* SetContext)(nosCUDAContext cudaContext); //Sets and initializes the given CUDA Context for the calling module as current for any subsequent calls from that module
+	nosResult(NOSAPI_CALL* SetCurrentContextToPrimary)(); //Sets the current context as the primary context of CUDA Subsystem
 	nosResult(NOSAPI_CALL* GetCurrentContext)(nosCUDAContext* cudaContext); //Retrieve the primary CUDA Context of CUDA Subsystem
 
 	nosResult(NOSAPI_CALL* GetCudaVersion)(CUDAVersion* versionInfo); //CUDA version
