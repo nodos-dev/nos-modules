@@ -142,11 +142,12 @@ struct NVVFX_AR_NodeContext : nos::NodeContext {
 
 		if (res == NOS_RESULT_SUCCESS) {
 			nosCmd cmd = {};
-			nosGPUEvent gpuevent = {};
-			nosVulkan->Begin("Input DownloadD", &cmd);
+			nosGPUEvent gpuEvent = {};
+			nosCmdEndParams endParams = { .ForceSubmit = true, .OutGPUEventHandle = &gpuEvent };
+			nosVulkan->Begin("Input Download", &cmd);
 			nosVulkan->Copy(cmd, &in, &InputFormatted, 0);
-			nosVulkan->End2(cmd, NOS_TRUE, &gpuevent);
-			nosVulkan->WaitGpuEvent(&gpuevent, 0);
+			nosVulkan->End(cmd, &endParams);
+			nosVulkan->WaitGpuEvent(&gpuEvent, UINT64_MAX);
 
 			res = interop.nosTextureToNVCVImage(InputFormatted, nvcv_NOS_Input); //This normally imports but if it already imported then just performs copy operation
 			if (res != NOS_RESULT_SUCCESS)

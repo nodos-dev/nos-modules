@@ -34,7 +34,7 @@ extern "C"
 		if (!outFunctions)
 			return NOS_RESULT_SUCCESS;
 
-		nosResult returnRes = nosEngine.RequestSubsystem(NOS_NAME_STATIC(NOS_VULKAN_SUBSYSTEM_NAME), 1, 0, (void**)&nosVulkan);
+		nosResult returnRes = nosEngine.RequestSubsystem(NOS_NAME_STATIC(NOS_VULKAN_SUBSYSTEM_NAME), 2, 0, (void**)&nosVulkan);
 		if (returnRes != NOS_RESULT_SUCCESS)
 			return NOS_RESULT_FAILED;
 

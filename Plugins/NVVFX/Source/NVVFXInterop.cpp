@@ -2,7 +2,6 @@
 #include "Nodos/Helpers.hpp"
 #include "nosVulkanSubsystem/Helpers.hpp"
 #include <Windows.h>
-#include "CommonCUDAKernels.h"
 
 
 CUDAVulkanInterop::CUDAVulkanInterop()
@@ -110,11 +109,11 @@ nosResult CUDAVulkanInterop::nosTextureToNVCVImage(nosResourceShareInfo& vulkanT
 		if (vulkanTexBuf.Memory.ExternalMemory.Handle != NULL) {
 			nosCmd texToBuf = {};
 			nosGPUEvent waitTexToBuf = {};
+			nosCmdEndParams endParams = { .ForceSubmit = true, .OutGPUEventHandle = &waitTexToBuf };
 			nosVulkan->Begin("TexToBuf", &texToBuf);
 			nosVulkan->Copy(texToBuf, &vulkanTex, &vulkanTexBuf, 0);
-			nosVulkan->End2(texToBuf, NOS_TRUE, &waitTexToBuf);
+			nosVulkan->End(texToBuf, &endParams);
 			nosVulkan->WaitGpuEvent(&waitTexToBuf, UINT64_MAX);
-
 			return NOS_RESULT_SUCCESS;
 		}
 	}
@@ -132,10 +131,12 @@ nosResult CUDAVulkanInterop::nosTextureToNVCVImage(nosResourceShareInfo& vulkanT
 
 	nosCmd texToBuf = {};
 	nosGPUEvent waitTexToBuf = {};
+	nosCmdEndParams endParams = { .ForceSubmit = true, .OutGPUEventHandle = &waitTexToBuf };
 	nosVulkan->Begin("TexToBuf", &texToBuf);
 	nosVulkan->Copy(texToBuf, &vulkanTex, &vulkanTexBuf, 0);
-	nosVulkan->End2(texToBuf, NOS_TRUE, &waitTexToBuf);
+	nosVulkan->End(texToBuf, &endParams);
 	nosVulkan->WaitGpuEvent(&waitTexToBuf, UINT64_MAX);
+
 	void* vulkanData = nosVulkan->Map(&vulkanTexBuf);
 	nosCUDABufferInfo cudaBuf = {};
 	nosResult res = nosCUDA->ImportExternalMemoryAsCUDABuffer(vulkanTexBuf.Memory.ExternalMemory.Handle, vulkanTexBuf.Memory.ExternalMemory.AllocationSize, 

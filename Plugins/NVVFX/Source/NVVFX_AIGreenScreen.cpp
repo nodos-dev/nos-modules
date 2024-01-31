@@ -125,13 +125,13 @@ struct NVVFX_AIGS_NodeContext : nos::NodeContext {
 		res = PrepareResources(in);
 
 		if (res == NOS_RESULT_SUCCESS) {
-
 			nosCmd cmd = {};
-			nosGPUEvent gpuevent = {};
+			nosGPUEvent gpuEvent = {};
+			nosCmdEndParams endParams = { .ForceSubmit = true, .OutGPUEventHandle = &gpuEvent };
 			nosVulkan->Begin("Input Download", &cmd);
 			nosVulkan->Copy(cmd, &in, &InputFormatted, 0);
-			nosVulkan->End2(cmd, NOS_TRUE, &gpuevent);
-			nosVulkan->WaitGpuEvent(&gpuevent, 0);
+			nosVulkan->End(cmd, &endParams);
+			nosVulkan->WaitGpuEvent(&gpuEvent, UINT64_MAX);
 
 			res = interop.nosTextureToNVCVImage(InputFormatted, nvcv_NOS_Input);
 			if (res != NOS_RESULT_SUCCESS)
