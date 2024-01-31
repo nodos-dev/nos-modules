@@ -50,7 +50,8 @@ struct NVVFX_AIGS_NodeContext : nos::NodeContext {
 			SetPinOrphanState(InputID, false);
 		}
 		
-		nosCUDAModule normalizeModule = {};
+		//Dummy CUDA Subsys Test
+		/*nosCUDAModule normalizeModule = {};
 		nosCUDAKernelFunction func = {};
 		nosCUDA->LoadKernelModuleFromPTX("D:/CmdCompilation/CommonCUDAKernels.ptx", &normalizeModule);
 		nosCUDA->GetModuleKernelFunction("NormalizeKernel", normalizeModule, &func);
@@ -58,15 +59,19 @@ struct NVVFX_AIGS_NodeContext : nos::NodeContext {
 		config.GridDimensions = { 1,1,1 };
 		config.BlockDimensions = { 256, 1, 1 };
 		config.DynamicMemorySize = 0;
+
 		nosCUDAStream stream = {};
 		nosCUDA->CreateStream(&stream);
+		
 		int SIZE = 256;
 		size_t allocSize = 256 * sizeof(float);
 		float MAX = RAND_MAX;
 		nosCUDABufferInfo buf = {};
 		nosCUDABufferInfo cpuBuf = {};
+		
 		nosCUDA->CreateShareableBufferOnCUDA(&buf, allocSize);
 		nosCUDA->CreateBuffer(&cpuBuf, allocSize);
+
 		float* dataBuf = reinterpret_cast<float*>(cpuBuf.Address);
 		
 		for (int i = 0; i < SIZE; i++) {
@@ -78,8 +83,8 @@ struct NVVFX_AIGS_NodeContext : nos::NodeContext {
 		void* args[] = { &gpuDataPointer, &MAX, &SIZE};
 		nosCUDACallbackContext contx = {};
 		contx.Data = dataBuf;
+
 		nosCUDA->LaunchModuleKernelFunction(stream, func, config, args, cbFunc, &contx);
-		nosCUDA->WaitStream(stream);
 
 		nosCUDABufferInfo resBuf = {};
 		nosCUDA->CreateBuffer(&resBuf, allocSize);
@@ -89,7 +94,7 @@ struct NVVFX_AIGS_NodeContext : nos::NodeContext {
 
 		float* resData = new float[SIZE];
 
-		int a = 5;
+		int a = 5;*/
 	}
 	
 	static void NOS_CUDA_CALLBACK cbFunc(void* data) {

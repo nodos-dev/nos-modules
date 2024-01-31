@@ -65,12 +65,12 @@ namespace nos::cudass
 		nosResult nosRes = GetCallingModuleID(&ID);
 		if (nosRes != NOS_RESULT_SUCCESS)
 			return nosRes;
-		
-		CUresult cuRes = cuCtxCreate(reinterpret_cast<CUcontext*>(cudaContext), flags, device);
+		CUcontext theContext = {};
+		CUresult cuRes = cuCtxCreate(&theContext, flags, device);
 		CHECK_CUDA_DRIVER_ERROR(cuRes);
 		cuRes = cuCtxPopCurrent(reinterpret_cast<CUcontext*>(&ActiveContext));
 		CHECK_CUDA_DRIVER_ERROR(cuRes);
-
+		(*cudaContext) = reinterpret_cast<nosCUDAContext>(theContext);
 		IDContextMap[ID] = (*cudaContext);
 		return NOS_RESULT_SUCCESS;
 	}

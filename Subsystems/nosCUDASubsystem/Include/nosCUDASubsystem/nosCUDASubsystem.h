@@ -352,6 +352,7 @@ typedef struct nosCUDASubsystem
 	nosResult(NOSAPI_CALL* QueryCUDAEvent)(nosCUDAEvent waitEvent, nosCUDAEventStatus* eventStatus); //Must be called before enqueueing the operation to stream
 	nosResult(NOSAPI_CALL* GetCUDAEventElapsedTime)(nosCUDAStream stream, nosCUDAEvent theEvent, float* elapsedTime); //
 	nosResult(NOSAPI_CALL* AddCallback)(nosCUDAStream stream, nosCUDACallbackFunction callback, void* callbackData);
+
 	nosResult(NOSAPI_CALL* WaitExternalSemaphore)(nosCUDAStream stream, nosCUDAExtSemaphore extSem);
 	nosResult(NOSAPI_CALL* SignalExternalSemaphore)(nosCUDAStream stream, nosCUDAExtSemaphore extSem);
 
@@ -370,7 +371,6 @@ typedef struct nosCUDASubsystem
 	nosResult(NOSAPI_CALL* ImportExternalMemoryAsCUDABuffer)(uint64_t Handle, size_t BlockSize, size_t AllocationSize, size_t Offset, nosCUDAExternalMemoryHandleType handleType, nosCUDABufferInfo* outBuffer);
 	nosResult(NOSAPI_CALL* ImportExternalSemaphore)(uint64_t handle, nosCUDAExternalSemaphoreHandleType handleType, nosCUDAExtSemaphore* extSem);
 
-	//TODO: Add semaphore stuff
 	//TODO: Add texture & surface memory
 	// Texture and Surface memory may not be necessary at all because Pytorch seems like using linear cuda memory:
 	// https://pytorch.org/docs/stable/notes/cuda.html
