@@ -11,7 +11,7 @@
 
 #include "Window/WindowNode.h"
 
-NOS_INIT_WITH_MIN_REQUIRED_MINOR(1) // Do not forget to remove this minimum required minor version on major version changes, or we might not be loaded.
+NOS_INIT_WITH_MIN_REQUIRED_MINOR(0) // Do not forget to remove this minimum required minor version on major version changes, or we might not be loaded.
 NOS_REGISTER_NAME(in1)
 NOS_REGISTER_NAME(in2)
 NOS_REGISTER_NAME(out)
