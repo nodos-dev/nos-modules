@@ -367,3 +367,8 @@ private:
 	std::function<void(void*)> DataCleaner;
 };
 
+template<typename T, T first, T... rest>
+struct Dimension<T, first, rest...> {
+
+};
+

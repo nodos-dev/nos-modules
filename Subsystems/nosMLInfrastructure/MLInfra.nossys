@@ -1,0 +1,15 @@
+{
+  "info": {
+    "id": {
+      "name": "nos.ml.infra",
+      "version": "1.0.0"
+    },
+    "display_name": "ML Infrastructure",
+    "description": "ML Infrastructure for Nodos.",
+    "dependencies": []
+  },
+  "binary_path": "./Binaries/nosMLInfraStructure",
+   "custom_types": [
+        "./Config/MLInfraTypes.fbs"
+    ]
+}

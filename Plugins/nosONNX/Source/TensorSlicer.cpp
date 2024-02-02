@@ -175,6 +175,8 @@ struct TensorSlicerNodeContext : nos::NodeContext {
 
 		UUIDGenerator generator;
 		flatbuffers::FlatBufferBuilder fbb;
+		nos::fb::TPin thePin = {};
+		
 		std::vector<flatbuffers::Offset<nos::fb::Pin>> CreatedOutputPins;
 		for (int i = 0; i < OutputTensorProxies.size(); i++) {
 			auto buf = nos::Buffer::From(OutputTensorProxies[i]);
