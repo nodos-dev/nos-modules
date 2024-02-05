@@ -1,10 +1,13 @@
 // Copyright MediaZ AS. All Rights Reserved.
-
 #include <Nodos/SubsystemAPI.h>
 #include "MLInfraServices.h"
 #include "nosCUDASubsystem/nosCUDASubsystem.h"
 #include "nosVulkanSubsystem/nosVulkanSubsystem.h"
 #include <cstring>
+#include "CUDAKernels/TensorSlicer.ptx.h"
+
+extern nosVulkanSubsystem* nosVulkan = nullptr;
+extern nosCUDASubsystem* nosCUDA = nullptr;
 
 namespace nos::ml::infra
 {
