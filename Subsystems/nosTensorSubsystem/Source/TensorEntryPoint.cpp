@@ -1,6 +1,6 @@
 // Copyright Nodos AS. All Rights Reserved.
 #include <Nodos/SubsystemAPI.h>
-#include "MLInfraServices.h"
+#include "TensorServices.h"
 
 NOS_INIT();
 

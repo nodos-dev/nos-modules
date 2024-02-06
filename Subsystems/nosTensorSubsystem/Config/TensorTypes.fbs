@@ -1,0 +1,28 @@
+namespace nos.ml;
+
+enum TensorElementDataType: uint
+{
+    ELEMENT_TYPE_UNDEFINED = 0,
+    ELEMENT_TYPE_FLOAT,   
+    ELEMENT_TYPE_UINT8,   
+    ELEMENT_TYPE_INT8,    
+    ELEMENT_TYPE_UINT16,  
+    ELEMENT_TYPE_INT16,   
+    ELEMENT_TYPE_INT32,   
+    ELEMENT_TYPE_INT64,   
+    ELEMENT_TYPE_STRING,
+    ELEMENT_TYPE_BOOL,
+    ELEMENT_TYPE_FLOAT16,
+    ELEMENT_TYPE_DOUBLE,
+    ELEMENT_TYPE_UINT32,
+    ELEMENT_TYPE_UINT64,
+}
+
+table Tensor
+{
+    shape:[int64];
+    // if `shape` is [4, 3, 2], then index
+    // [i, j, k] maps to data_buffer[i*3*2 + j*2 + k].
+    buffer:uint64;
+    type:TensorElementDataType;
+}

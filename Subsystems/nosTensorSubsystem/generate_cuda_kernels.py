@@ -14,7 +14,9 @@ ap.add_argument("-folder", required=True, help="Folder to search cuda kernels")
 
 def generate_cuda_kernel_as_char_array(input_folder):
 
-    print("Processing directory:", Path(input_folder))
+    print("Processing directory:", Path(input_folder)) 
+    #for ptx_file_path in Path(input_folder).rglob('*.cu'): Add .cu compilation too "nvcc -keep *.cu"
+
     for ptx_file_path in Path(input_folder).rglob('*.ptx'):
         print("PTX File found:", ptx_file_path)
         output_dir_embedded = str(ptx_file_path) + ".h"

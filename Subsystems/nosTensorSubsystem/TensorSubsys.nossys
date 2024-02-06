@@ -1,0 +1,15 @@
+{
+  "info": {
+    "id": {
+      "name": "nos.sys.tensor",
+      "version": "1.0.0"
+    },
+    "display_name": "TensorSubsystem",
+    "description": "Tensor operations and interop.",
+    "dependencies": []
+  },
+  "binary_path": "./Binaries/nosTensorSubsystem",
+   "custom_types": [
+        "./Config/MLInfraTypes.fbs"
+    ]
+}
