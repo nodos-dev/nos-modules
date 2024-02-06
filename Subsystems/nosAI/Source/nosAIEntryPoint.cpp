@@ -1,18 +1,18 @@
 // Copyright Nodos AS. All Rights Reserved.
 #include <Nodos/SubsystemAPI.h>
-#include "TensorServices.h"
+#include "nosAIServices.h"
 
 NOS_INIT();
 
-namespace nos::tensor
+namespace nos::ai
 {
 	extern "C"
 	{
 
 		NOSAPI_ATTR nosResult NOSAPI_CALL nosExportSubsystem(nosSubsystemFunctions* subsystemFunctions, void** exported)
 		{
-			auto subsystem = new nosTensorSubsystem;
-			nosResult res = nos::tensor::Bind(subsystem);
+			auto subsystem = new nosAISubsystem;
+			nosResult res = nos::ai::Bind(subsystem);
 			if (res != NOS_RESULT_SUCCESS)
 				return res;
 

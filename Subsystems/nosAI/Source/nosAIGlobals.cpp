@@ -1,6 +1,6 @@
-#include "TensorGlobals.h"
+#include "nosAIGlobals.h"
 
-namespace nos::tensor
+namespace nos::ai
 {
 
 }
