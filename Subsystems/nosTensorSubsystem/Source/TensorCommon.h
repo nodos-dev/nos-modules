@@ -1,6 +1,6 @@
 #pragma once
-#ifndef ML_SUBSYS_COMMON_H_INCLUDED
-#define ML_SUBSYS_COMMON_H_INCLUDED
+#ifndef TENSOR_SUBSYS_COMMON_H_INCLUDED
+#define TENSOR_SUBSYS_COMMON_H_INCLUDED
 #include "nosTensorSubsystem/nosTensorSubsystem.h"
 #include "nosVulkanSubsystem/nosVulkanSubsystem.h"
 
@@ -297,4 +297,4 @@ namespace nos::tensor {
 	}
 }
 
-#endif //ML_SUBSYS_COMMON_H_INCLUDED
+#endif //TENSOR_SUBSYS_COMMON_H_INCLUDED

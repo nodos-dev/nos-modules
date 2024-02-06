@@ -59,7 +59,7 @@ namespace nos::cudass
 		subsys->ImportExternalSemaphore = ImportExternalSemaphore;
 		subsys->ImportExternalMemoryAsCUDABuffer = ImportExternalMemoryAsCUDABuffer;
 	}
-	nosResult CreateCUDAContext(nosCUDAContext* cudaContext, int device, nosCUDAContextFlags flags)
+	nosResult NOSAPI_CALL CreateCUDAContext(nosCUDAContext* cudaContext, int device, nosCUDAContextFlags flags)
 	{
 		uint64_t ID = NULL;
 		nosResult nosRes = GetCallingModuleID(&ID);
@@ -75,7 +75,7 @@ namespace nos::cudass
 		return NOS_RESULT_SUCCESS;
 	}
 
-	nosResult DestroyCUDAContext(nosCUDAContext cudaContext)
+	nosResult NOSAPI_CALL DestroyCUDAContext(nosCUDAContext cudaContext)
 	{
 		if (cudaContext == PrimaryContext)
 			return NOS_RESULT_SUCCESS;
@@ -87,6 +87,11 @@ namespace nos::cudass
 
 	nosResult NOSAPI_CALL Initialize(int device)
 	{
+		if (device == CurrentDevice && PrimaryContext != nullptr) {
+			//Already initialized
+			return NOS_RESULT_SUCCESS;
+		}
+		
 		//We will initialize CUDA Runtime explicitly, Driver API will also be initialized implicitly
 		int cudaVersion = 0;
 		cudaError res = cudaSuccess;
@@ -116,23 +121,24 @@ namespace nos::cudass
 		size_t Size = CoreDumpFile.size();
 
 		cuRes = cuCoredumpSetAttribute(CU_COREDUMP_FILE, &CoreDumpFile, &Size);
+		CurrentDevice = device;
 		return NOS_RESULT_SUCCESS;
 	}
-	nosResult SetContext(nosCUDAContext cudaContext)
+	nosResult NOSAPI_CALL SetContext(nosCUDAContext cudaContext)
 	{
 		CUresult cuRes = cuCtxSetCurrent(reinterpret_cast<CUcontext>(cudaContext));
 		CHECK_CUDA_DRIVER_ERROR(cuRes);
 		ActiveContext = cudaContext;
 		return NOS_RESULT_SUCCESS;
 	}
-	nosResult SetCurrentContextToPrimary()
+	nosResult NOSAPI_CALL SetCurrentContextToPrimary()
 	{
 		CUresult cuRes = cuCtxSetCurrent(reinterpret_cast<CUcontext>(PrimaryContext));
 		CHECK_CUDA_DRIVER_ERROR(cuRes);
 		ActiveContext = PrimaryContext;
 		return NOS_RESULT_SUCCESS;
 	}
-	nosResult GetCurrentContext(nosCUDAContext* cudaContext)
+	nosResult NOSAPI_CALL GetCurrentContext(nosCUDAContext* cudaContext)
 	{
 		(*cudaContext) = reinterpret_cast<nosCUDAContext>(PrimaryContext);  
 		return NOS_RESULT_SUCCESS;

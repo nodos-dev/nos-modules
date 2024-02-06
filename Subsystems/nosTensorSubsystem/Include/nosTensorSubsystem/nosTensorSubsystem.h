@@ -1,6 +1,6 @@
 #pragma once
-#ifndef NOS_ML_INFRASTRUCTURE_H_INCLUDED
-#define NOS_ML_INFRASTRUCTURE_H_INCLUDED
+#ifndef NOS_TENSOR_H_INCLUDED
+#define NOS_TENSOR_H_INCLUDED
 
 #include "Nodos/Types.h"
 //#include "nosCUDASubsystem/nosCUDASubsystem.h"
@@ -95,5 +95,5 @@ typedef struct nosTensorSubsystem
 } nosTensorSubsystem;
 
 extern nosTensorSubsystem* nosTensorSubsys;
-#define NOS_ML_INFRASTRUCTURE_NAME "nos.ml.infra"
-#endif //NOS_ML_INFRASTRUCTURE_H_INCLUDED
+#define NOS_TENSOR_NAME "nos.sys.tensor"
+#endif //NOS_TENSOR_H_INCLUDED
