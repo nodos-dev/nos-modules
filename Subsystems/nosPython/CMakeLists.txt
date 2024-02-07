@@ -8,3 +8,6 @@ if (GENERATE_FLATBUFFERS_FILES)
 endif()
 
 add_folder_as_subsystem_project("nosPython" "pybind11::embed" "${CMAKE_CURRENT_SOURCE_DIR}/Include")
+
+get_targets(NOSPY_EXTERNAL_TARGETS "./External/pybind11")
+group_targets("${NOSPY_EXTERNAL_TARGETS}" "External")
