@@ -5,8 +5,15 @@
 #include <onnxruntime_cxx_api.h>
 #include "AICommonMacros.h"
 
-namespace nos::ai {
-	static nosResult FillAIModelFromSession(AIModel* model, Ort::Session* session) {
+struct AIModelContext {
+	std::unique_ptr<Ort::SessionOptions> SessionOptions;
+	std::unique_ptr<Ort::Session> ModelSession;
+	std::unique_ptr<Ort::RunOptions> RunOptions;
+};
+
+namespace nos::ai 
+{
+static nosResult FillAIModelFromSession(AIModel* model, Ort::Session* session) {
 		CHECK_POINTER(model);
 		CHECK_POINTER(session);
 		model->InputCount = session->GetInputCount();
@@ -135,6 +142,7 @@ namespace nos::ai {
 		}
 		return NOS_RESULT_SUCCESS;
 	}
+
 }
 
 
