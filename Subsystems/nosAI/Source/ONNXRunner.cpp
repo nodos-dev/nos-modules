@@ -6,8 +6,13 @@ ONNXRunner::ONNXRunner(ONNXLogLevel logLevel, const char* logID)
 
 }
 
-nosResult ONNXRunner::LoadONNXModel(std::filesystem::path path, ONNXLoadConfig config)
+nosResult ONNXRunner::LoadONNXModel(AIModel* model, std::filesystem::path path, ONNXLoadConfig config)
 {
+	CHECK_POINTER(model);
+	CHECK_MODEL_FORMAT(model, MODEL_FORMAT_ONNX);
+	CHECK_PATH(path);
+	CHECK_FILE_EXTENSION(path, ".onnx");
+
 	Ort::SessionOptions Options;
 	switch(config.RunLocation){
 		case RUN_ON_CPU:
@@ -19,7 +24,6 @@ nosResult ONNXRunner::LoadONNXModel(std::filesystem::path path, ONNXLoadConfig c
 			if (config.ExecutionMode != nullptr) {
 				Options.SetExecutionMode(static_cast<ExecutionMode>(*config.ExecutionMode));
 			}
-
 		}
 		case RUN_ON_CUDA:
 		{
@@ -45,8 +49,14 @@ nosResult ONNXRunner::LoadONNXModel(std::filesystem::path path, ONNXLoadConfig c
 		}
 	}
 	Options.SetGraphOptimizationLevel(static_cast<GraphOptimizationLevel>(config.OptimizationLevel));
+	Options.SetLogId(config.LogID);
 
 	ModelSession = std::make_unique<Ort::Session>((*Environment), path.c_str(), Options);
+	nos::ai::FillAIModelFromSession(model, ModelSession.get());
+	model->Model = ModelSession.get();
+
+	ModelContainer.emplace_back(model); //For memory management
+	
 	return NOS_RESULT_SUCCESS;
 }
 
