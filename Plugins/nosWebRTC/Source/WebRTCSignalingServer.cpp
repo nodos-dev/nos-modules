@@ -36,8 +36,8 @@ struct WebRTCSignalingServerNodeContext : nos::NodeContext {
 		flatbuffers::FlatBufferBuilder fbb;
 
 		HandleEvent(
-			nos::CreateAppEvent(fbb, nos::app::CreatePartialNodeUpdateDirect(fbb, &StopServerUUID,
-				nos::app::ClearFlags::NONE, 0, 0, 0, 0, 0, 0, 0, 0, 0, nos::fb::CreateOrphanStateDirect(fbb, true))));
+			nos::CreateAppEvent(fbb, nos::CreatePartialNodeUpdateDirect(fbb, &StopServerUUID,
+				nos::ClearFlags::NONE, 0, 0, 0, 0, 0, 0, 0, 0, 0, nos::fb::CreateOrphanStateDirect(fbb, true))));
 	}
 
 	~WebRTCSignalingServerNodeContext() {
@@ -66,24 +66,24 @@ struct WebRTCSignalingServerNodeContext : nos::NodeContext {
 		flatbuffers::FlatBufferBuilder fbb;
 
 		HandleEvent(
-			nos::CreateAppEvent(fbb, nos::app::CreatePartialNodeUpdateDirect(fbb, &StartServerUUID,
-				nos::app::ClearFlags::NONE, 0, 0, 0, 0, 0, 0, 0, 0, 0, nos::fb::CreateOrphanStateDirect(fbb, true))));
+			nos::CreateAppEvent(fbb, nos::CreatePartialNodeUpdateDirect(fbb, &StartServerUUID,
+				nos::ClearFlags::NONE, 0, 0, 0, 0, 0, 0, 0, 0, 0, nos::fb::CreateOrphanStateDirect(fbb, true))));
 
 		HandleEvent(
-			nos::CreateAppEvent(fbb, nos::app::CreatePartialNodeUpdateDirect(fbb, &StopServerUUID,
-				nos::app::ClearFlags::NONE, 0, 0, 0, 0, 0, 0, 0, 0, 0, nos::fb::CreateOrphanStateDirect(fbb, false))));
+			nos::CreateAppEvent(fbb, nos::CreatePartialNodeUpdateDirect(fbb, &StopServerUUID,
+				nos::ClearFlags::NONE, 0, 0, 0, 0, 0, 0, 0, 0, 0, nos::fb::CreateOrphanStateDirect(fbb, false))));
 	}
 
 	void OnServerDestroyed() {
 		flatbuffers::FlatBufferBuilder fbb;
 
 		HandleEvent(
-			nos::CreateAppEvent(fbb, nos::app::CreatePartialNodeUpdateDirect(fbb, &StartServerUUID,
-				nos::app::ClearFlags::NONE, 0, 0, 0, 0, 0, 0, 0, 0, 0, nos::fb::CreateOrphanStateDirect(fbb, false))));
+			nos::CreateAppEvent(fbb, nos::CreatePartialNodeUpdateDirect(fbb, &StartServerUUID,
+				nos::ClearFlags::NONE, 0, 0, 0, 0, 0, 0, 0, 0, 0, nos::fb::CreateOrphanStateDirect(fbb, false))));
 
 		HandleEvent(
-			nos::CreateAppEvent(fbb, nos::app::CreatePartialNodeUpdateDirect(fbb, &StopServerUUID,
-				nos::app::ClearFlags::NONE, 0, 0, 0, 0, 0, 0, 0, 0, 0, nos::fb::CreateOrphanStateDirect(fbb, true))));
+			nos::CreateAppEvent(fbb, nos::CreatePartialNodeUpdateDirect(fbb, &StopServerUUID,
+				nos::ClearFlags::NONE, 0, 0, 0, 0, 0, 0, 0, 0, 0, nos::fb::CreateOrphanStateDirect(fbb, true))));
 	}
 
 	void OnStreamerConnected(int id, std::string path) {

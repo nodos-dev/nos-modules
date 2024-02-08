@@ -258,8 +258,8 @@ struct WebRTCNodeContext : nos::NodeContext {
 		flatbuffers::FlatBufferBuilder fbb;
 
 		HandleEvent(
-			nos::CreateAppEvent(fbb, nos::app::CreatePartialNodeUpdateDirect(fbb, &DisconnectFromServerID,
-				nos::app::ClearFlags::NONE, 0, 0, 0, 0, 0, 0, 0, 0, 0, nos::fb::CreateOrphanStateDirect(fbb, true))));
+			nos::CreateAppEvent(fbb, nos::CreatePartialNodeUpdateDirect(fbb, &DisconnectFromServerID,
+				nos::ClearFlags::NONE, 0, 0, 0, 0, 0, 0, 0, 0, 0, nos::fb::CreateOrphanStateDirect(fbb, true))));
 	}
 
 	~WebRTCNodeContext() override {
@@ -579,12 +579,12 @@ struct WebRTCNodeContext : nos::NodeContext {
 
 					flatbuffers::FlatBufferBuilder fbb;
 					HandleEvent(
-						nos::CreateAppEvent(fbb, nos::app::CreatePartialNodeUpdateDirect(fbb, &ConnectToServerID, 
-							nos::app::ClearFlags::NONE, 0, 0, 0, 0, 0, 0, 0, 0, 0, nos::fb::CreateOrphanStateDirect(fbb, true))));
+						nos::CreateAppEvent(fbb, nos::CreatePartialNodeUpdateDirect(fbb, &ConnectToServerID, 
+							nos::ClearFlags::NONE, 0, 0, 0, 0, 0, 0, 0, 0, 0, nos::fb::CreateOrphanStateDirect(fbb, true))));
 
 					HandleEvent(
-						nos::CreateAppEvent(fbb, nos::app::CreatePartialNodeUpdateDirect(fbb, &DisconnectFromServerID,
-							nos::app::ClearFlags::NONE, 0, 0, 0, 0, 0, 0, 0, 0, 0, nos::fb::CreateOrphanStateDirect(fbb, false))));
+						nos::CreateAppEvent(fbb, nos::CreatePartialNodeUpdateDirect(fbb, &DisconnectFromServerID,
+							nos::ClearFlags::NONE, 0, 0, 0, 0, 0, 0, 0, 0, 0, nos::fb::CreateOrphanStateDirect(fbb, false))));
 
 					currentState = EWebRTCPlayerStates::eNONE;
 					break;
@@ -607,11 +607,11 @@ struct WebRTCNodeContext : nos::NodeContext {
 
 					flatbuffers::FlatBufferBuilder fbb;
 					HandleEvent(
-						nos::CreateAppEvent(fbb, nos::app::CreatePartialNodeUpdateDirect(fbb, &ConnectToServerID, nos::app::ClearFlags::NONE, 0, 0, 0, 0, 0, 0, 0, 0, 0, nos::fb::CreateOrphanStateDirect(fbb, false))));
+						nos::CreateAppEvent(fbb, nos::CreatePartialNodeUpdateDirect(fbb, &ConnectToServerID, nos::ClearFlags::NONE, 0, 0, 0, 0, 0, 0, 0, 0, 0, nos::fb::CreateOrphanStateDirect(fbb, false))));
 					
 					HandleEvent(
-						nos::CreateAppEvent(fbb, nos::app::CreatePartialNodeUpdateDirect(fbb, &DisconnectFromServerID,
-							nos::app::ClearFlags::NONE, 0, 0, 0, 0, 0, 0, 0, 0, 0, nos::fb::CreateOrphanStateDirect(fbb, true))));
+						nos::CreateAppEvent(fbb, nos::CreatePartialNodeUpdateDirect(fbb, &DisconnectFromServerID,
+							nos::ClearFlags::NONE, 0, 0, 0, 0, 0, 0, 0, 0, 0, nos::fb::CreateOrphanStateDirect(fbb, true))));
 					
 					ClearNodeInternals();
 					

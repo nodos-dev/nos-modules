@@ -59,24 +59,24 @@ struct MergeContext : NodeContext
 		if (TextureCount > 2)
 		{
 			flatbuffers::FlatBufferBuilder fbb;
-			std::vector<flatbuffers::Offset<app::PartialPinUpdate>> updatePins;
+			std::vector<flatbuffers::Offset<PartialPinUpdate>> updatePins;
 
 			for (int i = 0; i < node->pins()->size(); ++i)
 			{
 				if (node->pins()->Get(i)->orphan_state()->is_orphan())
 				{
 					updatePins.emplace_back(
-						nos::app::CreatePartialPinUpdate
+						nos::CreatePartialPinUpdate
 						(fbb, node->pins()->Get(i)->id(),
-							0, nos::fb::CreateOrphanStateDirect(fbb, false), app::Action::NOP));
+							0, nos::fb::CreateOrphanStateDirect(fbb, false)));
 				}
 			}
 
 			HandleEvent(
 				CreateAppEvent(fbb,
-					nos::app::CreatePartialNodeUpdateDirect(fbb,
+					nos::CreatePartialNodeUpdateDirect(fbb,
 						node->id(),
-						app::ClearFlags::NONE,
+						ClearFlags::NONE,
 						0,
 						0,
 						0,
@@ -227,7 +227,7 @@ struct MergeContext : NodeContext
 			                                    CreatePartialNodeUpdateDirect(
 				                                    fbb,
 				                                    &NodeId,
-				                                    app::ClearFlags::NONE,
+				                                    ClearFlags::NONE,
 				                                    0,
 				                                    &pins)));
 		}
@@ -243,7 +243,7 @@ struct MergeContext : NodeContext
 				                                    CreatePartialNodeUpdateDirect(
 					                                    fbb,
 					                                    &NodeId,
-					                                    app::ClearFlags::NONE,
+					                                    ClearFlags::NONE,
 					                                    &ids)));
 				AddedPins.pop_back();
 			}
