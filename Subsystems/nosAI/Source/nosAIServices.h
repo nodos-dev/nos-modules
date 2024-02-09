@@ -2,17 +2,14 @@
 
 #pragma once
 #include "nosAI/nosAI.h"
-
-#define CHECK_RESULT(nosRes) \
-	do { \
-		nosResult result = nosRes; \
-		if (result != NOS_RESULT_SUCCESS) { \
-			nosEngine.LogE("Failed from %s %d with error %d.",__FILE__, __LINE__, result); \
-			return NOS_RESULT_FAILED; \
-		} \
-	} while (0); \
+#include "nosAIGlobals.h"
+#include"AICommonMacros.h"
 
 namespace nos::ai
 {
 	nosResult Bind(nosAISubsystem* subsys);
+	nosResult NOSAPI_CALL LoadONNXModel(ONNXModel* model, const char* path, ONNXLoadConfig config);
+	nosResult NOSAPI_CALL RunONNXModel(ONNXModel* model);
+	nosResult NOSAPI_CALL SetONNXModelInput(ONNXModel* model, uint32_t inputIndex, void* Data, ParameterMemoryInfo memoryInfo);
+	nosResult NOSAPI_CALL SetONNXModelOutput(ONNXModel* model, uint32_t inputIndex, void* Data, ParameterMemoryInfo memoryInfo);
 }

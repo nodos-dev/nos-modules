@@ -1,6 +1,6 @@
 #include "AIModelContainer.h"
 
-AIModelContainer::AIModelContainer(AIModel* model) : Model(model)
+AIModelContainer::AIModelContainer(ONNXModel* model) : Model(model)
 {
 }
 
@@ -10,14 +10,20 @@ AIModelContainer::~AIModelContainer()
 		return;
 	
 	delete[] Model->Inputs->Shape.Dimensions;
-	delete[] Model->Inputs->Name;
+	for (int i = 0; i < Model->InputCount; i++) {
+		delete[] Model->InputNames[i];
+	}
+	delete[] Model->InputNames;
 	delete[] Model->Inputs;
 	
 	delete[] Model->Outputs->Shape.Dimensions;
-	delete[] Model->Outputs->Name;
+	for (int i = 0; i < Model->OutputCount; i++) {
+		delete[] Model->OutputNames[i];
+	}
+	delete[] Model->OutputNames;
 	delete[] Model->Outputs;
 
-	delete reinterpret_cast<nos::ai::AIModelContext*>(Model->Model);
+	delete reinterpret_cast<AIModelContext*>(Model->Model);
 
 	delete Model;
 }

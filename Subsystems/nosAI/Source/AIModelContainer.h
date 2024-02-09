@@ -3,10 +3,10 @@
 #include "nosAICommon.h"
 
 //A smart object for AIModels to handle memory management
-class AIModelContainer {
+class AIModelContainer { //TODO: Inherit from AIModel
 public:
-	AIModelContainer(AIModel* model);
+	AIModelContainer(ONNXModel* model);
 	~AIModelContainer();
 private:
-	AIModel* Model;
+	ONNXModel* Model;
 };

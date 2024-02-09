@@ -2,5 +2,5 @@
 
 namespace nos::ai
 {
-
+	ONNXRunner ONNX_Runner;
 }

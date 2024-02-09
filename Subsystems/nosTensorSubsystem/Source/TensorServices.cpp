@@ -6,13 +6,23 @@
 #include "nosCUDASubsystem/nosCUDASubsystem.h"
 #include "nosVulkanSubsystem/nosVulkanSubsystem.h"
 #include "TensorCommon.h"
+#include <Nodos/Name.hpp>
 
 extern nosVulkanSubsystem* nosVulkan = nullptr;
 extern nosCUDASubsystem* nosCUDA = nullptr;
 
 namespace nos::tensor
 {
+
 	nosResult Bind(nosTensorSubsystem* subsys) {
+		nosResult returnRes = nosEngine.RequestSubsystem(NOS_NAME_STATIC(NOS_VULKAN_SUBSYSTEM_NAME), 2, 0, (void**)&nosVulkan);
+		if (returnRes != NOS_RESULT_SUCCESS)
+			return NOS_RESULT_FAILED;
+
+		returnRes = nosEngine.RequestSubsystem(NOS_NAME_STATIC(NOS_CUDA_SUBSYSTEM_NAME), 1, 0, (void**)&nosCUDA);
+		if (returnRes != NOS_RESULT_SUCCESS)
+			return NOS_RESULT_FAILED;
+
 		CHECK_RESULT(nosCUDA->Initialize(0));
 		subsys->ImportTensorFromCUDABuffer = ImportTensorFromCUDABuffer;
 		subsys->ImportTensorFromVulkanResource = ImportTensorFromVulkanResource;

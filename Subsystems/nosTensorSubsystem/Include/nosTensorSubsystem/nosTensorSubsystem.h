@@ -3,8 +3,8 @@
 #define NOS_TENSOR_H_INCLUDED
 
 #include "Nodos/Types.h"
-//#include "nosCUDASubsystem/nosCUDASubsystem.h"
-//#include "nosVulkanSubsystem/nosVulkanSubsystem.h"
+#include "nosCUDASubsystem/nosCUDASubsystem.h"
+#include "nosVulkanSubsystem/nosVulkanSubsystem.h"
 
 //dummy...
 #define CREATE_TENSOR_SHAPE(...)\
@@ -13,8 +13,7 @@
 	{.Dimensions = f, .Size = size}; \
 
 #pragma region Type Definitions
-typedef void* nosCUDABufferInfo;
-typedef void* nosResourceShareInfo;
+
 #pragma endregion
 
 

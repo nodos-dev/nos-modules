@@ -3,9 +3,7 @@
         {
             "class_name": "ONNXRunner",
             "contents_type": "Job",
-            "contents": {
-                "type": "CPU"
-            },
+            "contents": {},
           "pins": [
             {
               "name": "ModelPath",

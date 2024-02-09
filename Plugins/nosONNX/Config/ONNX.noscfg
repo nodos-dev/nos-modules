@@ -8,41 +8,15 @@
         "display_name": "ONNX"
     },
     "node_definitions": [
-      "ONNXRunner.nosdef",
-      "RGBAtoTensor.nosdef",
-      "TensorVisualizer.nosdef",
-      "TensorSlicer.nosdef",
-      "TensorPreprocessor.nosdef"
+      "ONNXRunner.nosdef"
     ],
-    "custom_types": [
-      "ONNX.fbs"
-    ],
+    "custom_types": [],
     "binary_path": "../Binaries/nosONNX",
     "associated_nodes": [
       {
         "category": "ML|ONNXRunner",
         "class_name": "ONNXRunner",
         "display_name": "ONNX Runner"
-      },
-      {
-        "category": "ML|ONNXRunner",
-        "class_name": "RGBAtoTensor",
-        "display_name": "RGBA to Tensor"
-      },
-      {
-        "category": "ML|ONNXRunner",
-        "class_name": "TensorVisualizer",
-        "display_name": "Tensor Visualizer"
-      },
-      {
-        "category": "ML|ONNXRunner",
-        "class_name": "TensorSlicer",
-        "display_name": "Tensor Slicer"
-      },
-      {
-        "category": "ML|ONNXRunner",
-        "class_name": "TensorPreprocessor",
-        "display_name": "Tensor Preprocessor"
       }
     ]
 }

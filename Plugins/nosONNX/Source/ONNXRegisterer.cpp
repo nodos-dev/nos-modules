@@ -3,29 +3,25 @@
 #include <Nodos/Helpers.hpp>
 #include <AppService_generated.h>
 #include <AppEvents_generated.h>
+#include "nosAI/nosAI.h"
 
 NOS_INIT();
 void RegisterONNXRunner(nosNodeFunctions* outFunctions);
-void RegisterRGBAtoTensor(nosNodeFunctions* outFunctions);
-void RegisterTensorVisualizer(nosNodeFunctions* outFunctions);
-void RegisterTensorSlicer(nosNodeFunctions* outFunctions);
-void RegisterTensorPreprocessor(nosNodeFunctions* outFunctions);
-void RegisterTensorToRGBA(nosNodeFunctions* outFunctions);
-
+extern nosAISubsystem* nosAI = nullptr;
 extern "C"
 {
 	NOSAPI_ATTR nosResult NOSAPI_CALL nosExportNodeFunctions(size_t* outCount, nosNodeFunctions** outFunctions)
 	{
-		*outCount = (size_t)(6);
+		*outCount = (size_t)(1);
 		if (!outFunctions)
 			return NOS_RESULT_SUCCESS;
 
+		nosResult returnRes;
+		returnRes = nosEngine.RequestSubsystem(NOS_NAME_STATIC(NOS_AI_SUBSYSTEM_NAME), 1, 0, (void**)&nosAI);
+		if (returnRes != NOS_RESULT_SUCCESS)
+			return NOS_RESULT_FAILED;
+
 		RegisterONNXRunner(outFunctions[0]);
-		RegisterRGBAtoTensor(outFunctions[1]);
-		RegisterTensorVisualizer(outFunctions[2]);
-		RegisterTensorSlicer(outFunctions[3]);
-		RegisterTensorPreprocessor(outFunctions[4]);
-		RegisterTensorToRGBA(outFunctions[5]);
 
 		return NOS_RESULT_SUCCESS;
 	}

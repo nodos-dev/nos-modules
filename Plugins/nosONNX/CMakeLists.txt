@@ -1,17 +1,11 @@
 
-list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR}/External/CPU)
+if (GENERATE_FLATBUFFERS_FILES)
+    generate_flatbuffers("${TOOLS_DIR}/flatc" "${CMAKE_CURRENT_SOURCE_DIR}/Config" "${CMAKE_CURRENT_SOURCE_DIR}/Source" "${CMAKE_CURRENT_SOURCE_DIR}/__temp__")
+endif()
 
-find_library(onnxruntime.lib NAMES onnxruntime.lib PATHS ${CMAKE_CURRENT_LIST_DIR}/External/CPU/lib REQUIRED NO_DEFAULT_PATH)
+add_folder_as_plugin_project("nosONNX" "" 
+	"${CMAKE_CURRENT_SOURCE_DIR};${SUBSYSTEMS_SOURCE_DIR}/nosVulkanSubsystem/Include;${SUBSYSTEMS_SOURCE_DIR}/nosCUDASubsystem/Include;${SUBSYSTEMS_SOURCE_DIR}/nosAI/Include;${SUBSYSTEMS_SOURCE_DIR}/nosTensorSubsystem/Include")
 
-link_directories(${CMAKE_CURRENT_LIST_DIR}/External/CPU/lib)
-
-add_folder_as_plugin_project("nosONNX" 
-			"onnxruntime.lib"
- "${CMAKE_CURRENT_SOURCE_DIR}")
-
-#Always force MD (because webrtc.lib built in Release => MD )
-target_compile_options(nosONNX PRIVATE
-    $<$<CXX_COMPILER_ID:MSVC>:/MD>)
 set_target_properties(nosONNX PROPERTIES OUTPUT_NAME "nosONNX")
 
-include_directories(${CMAKE_CURRENT_LIST_DIR}/External/CPU/include)
+include_directories(${CMAKE_CURRENT_LIST_DIR}/External/include)

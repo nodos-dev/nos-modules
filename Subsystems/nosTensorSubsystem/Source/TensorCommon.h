@@ -5,20 +5,6 @@
 #include "nosVulkanSubsystem/nosVulkanSubsystem.h"
 
 namespace nos::tensor {
-	static uint64_t GetTensorSizeFromCreateInfo(nosTensorCreateInfo createInfo) {
-		uint64_t totalElementCount = 1;
-		for (int i = 0; i < createInfo.ShapeInfo.Size; i++) {
-			totalElementCount *= createInfo.ShapeInfo.Dimensions[i];
-		}
-		return GetSizeOfElementType(createInfo.ElementType) * totalElementCount;
-	}
-
-	static uint64_t GetVulkanTextureSizeLinear(nosTextureInfo texture) {
-		return ((uint64_t)texture.Width * (uint64_t)texture.Height 
-			* (uint64_t)nos::tensor::GetComponentBytesFromVulkanFormat(texture.Format) 
-			* (uint64_t)nos::tensor::GetComponentNumFromVulkanFormat(texture.Format));
-	}
-
 	static short GetSizeOfElementType(TensorElementType type) {
 		switch (type) {
 		case ELEMENT_TYPE_UINT8:
@@ -48,7 +34,6 @@ namespace nos::tensor {
 		}
 		return 0;
 	}
-
 	static short GetComponentBytesFromVulkanFormat(nosFormat format)
 	{
 		switch (format) {
@@ -295,6 +280,21 @@ namespace nos::tensor {
 			return ELEMENT_TYPE_UNDEFINED;
 		}
 	}
+
+	static uint64_t GetTensorSizeFromCreateInfo(nosTensorCreateInfo createInfo) {
+		uint64_t totalElementCount = 1;
+		for (int i = 0; i < createInfo.ShapeInfo.DimensionCount; i++) {
+			totalElementCount *= createInfo.ShapeInfo.Dimensions[i];
+		}
+		return static_cast<uint64_t>(GetSizeOfElementType(createInfo.ElementType)) * totalElementCount;
+	}
+
+	static uint64_t GetVulkanTextureSizeLinear(nosTextureInfo texture) {
+		return ((uint64_t)texture.Width * (uint64_t)texture.Height 
+			* (uint64_t)nos::tensor::GetComponentBytesFromVulkanFormat(texture.Format) 
+			* (uint64_t)nos::tensor::GetComponentNumFromVulkanFormat(texture.Format));
+	}
+
 }
 
 #endif //TENSOR_SUBSYS_COMMON_H_INCLUDED

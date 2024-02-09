@@ -5,13 +5,22 @@
 #include "nosAICommon.h"
 #include "nosAI/nosAI.h"
 #include "AIModelContainer.h"
-   
+
+
 class ONNXRunner {
+private:
 public:
+	ONNXRunner();
 	ONNXRunner(ONNXLogLevel logLevel, const char* logID);
-	nosResult LoadONNXModel(AIModel* model, std::filesystem::path path, ONNXLoadConfig config);
+	void Initialize(ONNXLogLevel logLevel, const char* logID);
+	nosResult LoadONNXModel(ONNXModel* model, std::filesystem::path path, ONNXLoadConfig config);
+	nosResult RunONNXModel(ONNXModel* model);
+	nosResult SetModelInput(ONNXModel* model, uint32_t inputIndex, void* Data, ParameterMemoryInfo memoryInfo);
+	nosResult SetModelOutput(ONNXModel* model, uint32_t inputIndex, void* Data, ParameterMemoryInfo memoryInfo);
+
 private:
 	static void LoggerCallback (void* param, OrtLoggingLevel severity, const char* category, const char* logid, const char* code_location, const char* message);
+	nosResult FillAIModelFromSession(ONNXModel* model, Ort::Session* session);
 	std::unique_ptr<Ort::Env> Environment;
 
 	std::vector<AIModelContainer> ModelContainer; //Crucial for memory management
