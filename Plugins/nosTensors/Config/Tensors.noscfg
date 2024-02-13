@@ -1,0 +1,22 @@
+{
+    "info": {
+        "id": {
+            "name": "nos.ML.Tensors",
+            "version": "1.0.0"
+        },
+        "description": "Tensors Nodes",
+        "display_name": "Tensors"
+    },
+    "node_definitions": [
+      "TextureToTensor.nosdef"
+    ],
+    "custom_types": [],
+    "binary_path": "../Binaries/nosTensors",
+    "associated_nodes": [
+      {
+        "category": "ML|Tensors",
+        "class_name": "TextureToTensor",
+        "display_name": "Texture to Tensor converter"
+      }
+    ]
+}
