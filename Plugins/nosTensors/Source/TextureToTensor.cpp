@@ -8,7 +8,7 @@
 #include "flatbuffers/flatbuffers.h"
 #include "ORT_generated.h"
 #include <nosVulkanSubsystem/Helpers.hpp>
-#include "CUDAKernels/TensorSlicer.ptx.h"
+#include "CUDAKernels/RGBAtoRGB.cu.ptx_generated.h"
 
 #define CHECK_NOS_RESULT(nosRes) \
 	do { \
@@ -35,6 +35,7 @@ struct TextureToTensor : nos::NodeContext
 	nosResourceShareInfo InputTexture = {}, InputTextureLinear = {};
 	std::string NHWC = "NHWC";
 	std::string NCHW = "NCHW";
+	std::string CurrentLayout;
 	nosCUDAModule CUDAModule = {};
 	nosCUDAKernelFunction CUDAFunction = {};
 	TextureToTensor(nos::fb::Node const* node) :NodeContext(node) {
@@ -43,8 +44,9 @@ struct TextureToTensor : nos::NodeContext
 		char ErrorLog[8192];
 		nosCUDAModule cudaModule = {};
 		nosCUDAKernelFunction function = {};
-		nosCUDA->LoadKernelModuleFromCString(SliceTensor, ErrorLog, 8192, &CUDAModule);
-		nosCUDA->GetModuleKernelFunction("SliceTensor", CUDAModule, &CUDAFunction);
+		nosCUDA->LoadKernelModuleFromCString(RGBAtoRGB, ErrorLog, 8192, &CUDAModule);
+		nosCUDA->GetModuleKernelFunction(RGBAtoRGB_NAME, CUDAModule, &CUDAFunction);
+		CurrentLayout = NHWC;
 		
 	}
 
@@ -62,7 +64,7 @@ struct TextureToTensor : nos::NodeContext
 					return;
 
 				//Slice and merge the tensor
-
+				LaunchConverterKernel();
 				
 			}
 		}
@@ -74,22 +76,33 @@ struct TextureToTensor : nos::NodeContext
 	}
 
 	void LaunchConverterKernel() {
+		
+		nosCUDABufferInfo CPUData = {};
+		nosCUDA->CreateBuffer(&CPUData, InputTensor.MemoryInfo.Size);
+		nosCUDA->CopyBuffers(&InputLinearCUDA, &CPUData);
+		uint16_t* CPUDataPointer = reinterpret_cast<uint16_t*>(CPUData.Address);
+		uint8_t* vulkanCPUPointer = nosVulkan->Map(&InputTextureLinear);
+
 		void* InData = reinterpret_cast<void*>(InputTensor.MemoryInfo.Address);
 		int TotalSizeInBytes = InputTensor.MemoryInfo.Size;
 		int BytesPerElement = GetComponentBytesFromVulkanFormat(InputTexture.Info.Texture.Format);
 		int Width = InputTexture.Info.Texture.Width;
 		int Height = InputTexture.Info.Texture.Height;
 		void* OutData = reinterpret_cast<void*>(InputTensorPlanar.MemoryInfo.Address);
-		void* args[] = { &InData, &TotalSizeInBytes, &BytesPerElement, &BytesPerElement, &Width, &Height, &OutData };
+		void* args[] = { &InData, &TotalSizeInBytes, &BytesPerElement, &Width, &Height, &OutData };
 		nosCUDAStream stream = {};
 		nosCUDA->CreateStream(&stream);
 
 		nosCUDAKernelLaunchConfig config = { .GridDimensions = {.x = (InputTexture.Info.Texture.Width * InputTexture.Info.Texture.Height / MAX_THREAD_PER_BLOCK ) + 1, .y = 1, .z = 1 }, 
-											.BlockDimensions = {.x = MAX_THREAD_PER_BLOCK, .y = 1, .z = 1},
-											.DynamicMemorySize = 0 };
+											 .BlockDimensions = {.x = MAX_THREAD_PER_BLOCK, .y = 1, .z = 1},
+											 .DynamicMemorySize = 0 };
 		
 		nosCUDA->LaunchModuleKernelFunction(stream, CUDAFunction, config, args, nullptr, nullptr);
-		nosCUDA->WaitStream(&stream);
+		nosCUDA->WaitStream(stream);
+
+		nosCUDA->CopyBuffers(&InputLinearPlanarCUDA, &CPUData);
+
+		nosCUDAError lastError = nosCUDA->GetLastError();
 	}
 
 	nosResult PrepareResources(nosResourceShareInfo& in) {
@@ -104,6 +117,9 @@ struct TextureToTensor : nos::NodeContext
 			nosVulkan->Copy(texToBuf, &in, &InputTextureLinear, 0);
 			nosVulkan->End(texToBuf, &endParams);
 			nosVulkan->WaitGpuEvent(&waitTexToBuf, UINT64_MAX);
+			if (CurrentLayout == NCHW) {
+				LaunchConverterKernel();
+			}
 			return NOS_RESULT_SUCCESS;
 		}
 
@@ -114,6 +130,7 @@ struct TextureToTensor : nos::NodeContext
 		}
 		if (InputTextureLinear.Memory.Handle != NULL) {
 			nosVulkan->DestroyResource(&InputTextureLinear);
+			nosCUDA->DestroyBuffer(&InputLinearCUDA);
 		}
 
 		int componentNum = GetComponentNumFromVulkanFormat(in.Info.Texture.Format);
@@ -135,7 +152,7 @@ struct TextureToTensor : nos::NodeContext
 		nosTensorCreateInfo tensorCreateInfo = {};
 		tensorCreateInfo.Location = MEMORY_LOCATION_VULKAN;
 		tensorCreateInfo.ShapeInfo.DimensionCount = componentNum;
-		int64_t tensorDimensions[] = { 1, InputTexture.Info.Texture.Height, InputTexture.Info.Texture.Width, componentNum }; //NHWC
+		int64_t tensorDimensions[] = { 1, in.Info.Texture.Height, in.Info.Texture.Width, componentNum }; //NHWC
 		tensorCreateInfo.ShapeInfo.Dimensions = tensorDimensions;
 
 		res = nosCUDA->ImportExternalMemoryAsCUDABuffer(InputTextureLinear.Memory.ExternalMemory.Handle, InputTextureLinear.Memory.ExternalMemory.AllocationSize,
@@ -149,6 +166,15 @@ struct TextureToTensor : nos::NodeContext
 		CHECK_NOS_RESULT(res);
 
 		res = nosCUDA->CreateBufferOnCUDA(&InputLinearPlanarCUDA, InputTensor.MemoryInfo.Size * 3 / 4);
+		CHECK_NOS_RESULT(res);
+		
+		nosTensorCreateInfo planarCreateInfo = {};
+		planarCreateInfo.ElementType = elementType;
+		int64_t planarTensorDimensions[] = { 1, 3, in.Info.Texture.Height, in.Info.Texture.Width };
+		planarCreateInfo.ShapeInfo.DimensionCount = 4;
+		planarCreateInfo.ShapeInfo.Dimensions = planarTensorDimensions;
+
+		res = nosTensor->ImportTensorFromCUDABuffer(&InputTensorPlanar, &InputLinearPlanarCUDA, planarCreateInfo.ShapeInfo, elementType);
 		CHECK_NOS_RESULT(res);
 		
 		InputTexture = in;

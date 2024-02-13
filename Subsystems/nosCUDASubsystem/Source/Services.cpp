@@ -368,6 +368,9 @@ namespace nos::cudass
 	nosResult NOSAPI_CALL AddCallback(nosCUDAStream stream, nosCUDACallbackFunction callback, void* callbackData)
 	{
 		CHECK_CONTEXT_SWITCH();
+		if (callback == nullptr || callbackData == nullptr)
+			return NOS_RESULT_SUCCESS;
+
 		CUresult res = cuLaunchHostFunc(reinterpret_cast<CUstream>(stream), callback, callbackData);
 		CHECK_CUDA_DRIVER_ERROR(res);
 		return NOS_RESULT_SUCCESS;
@@ -596,7 +599,7 @@ namespace nos::cudass
 		outBuffer->CreateInfo.IsImported = true;
 		outBuffer->ShareInfo.CreateHandle = NULL;
 		outBuffer->ShareInfo.ShareableHandle = NULL;
-
+		outBuffer->MemoryType = MEMORY_TYPE_DEVICE;
 		return NOS_RESULT_SUCCESS;
 	}
 	nosResult ImportExternalSemaphore(uint64_t handle, nosCUDAExternalSemaphoreHandleType handleType, nosCUDAExtSemaphore* extSem)
