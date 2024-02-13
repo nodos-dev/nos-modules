@@ -1,3 +1,4 @@
+// Copyright MediaZ AS. All Rights Reserved.
 
 struct Input
 {
