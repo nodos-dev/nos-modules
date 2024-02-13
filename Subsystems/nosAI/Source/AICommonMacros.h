@@ -29,7 +29,7 @@
 
 #define CHECK_POINTER(ptr)\
 	do {\
-		if (ptr == nullptr || ptr == NULL) {\
+		if (ptr == nullptr) {\
 			return NOS_RESULT_FAILED;\
 		}\
 	} while (0);\

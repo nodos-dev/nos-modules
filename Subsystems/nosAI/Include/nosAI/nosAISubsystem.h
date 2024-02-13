@@ -1,11 +1,7 @@
 #pragma once
 #ifndef NOS_AI_SUBSYSTEM_H_INCLUDED
 #define NOS_AI_SUBSYSTEM_H_INCLUDED
-
-#include "Nodos/Types.h"
 #include "nosTensorSubsystem/nosTensorSubsystem.h"
-#include "nosCUDASubsystem/nosCUDASubsystem.h"
-
 
 #pragma region Type Definitions
 typedef void* Model;

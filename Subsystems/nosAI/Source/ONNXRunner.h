@@ -1,9 +1,10 @@
-#pragma once
+#ifndef ONNX_RUNNER_H_INCLUDED
+#define ONNX_RUNNER_H_INCLUDED
 #include "Nodos/SubsystemAPI.h"
 #include <filesystem>
 #include <onnxruntime_cxx_api.h>
 #include "nosAICommon.h"
-#include "nosAI/nosAI.h"
+#include "nosAI/nosAISubsystem.h"
 #include "AIModelContainer.h"
 
 
@@ -25,3 +26,5 @@ private:
 
 	std::vector<AIModelContainer> ModelContainer; //Crucial for memory management
 };
+
+#endif //ONNX_RUNNER_H_INCLUDED

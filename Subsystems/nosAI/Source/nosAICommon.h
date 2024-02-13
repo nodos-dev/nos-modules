@@ -1,7 +1,5 @@
-#pragma once
 #ifndef AI_COMMON_H_INCLUDED
 #define AI_COMMON_H_INCLUDED
-#include "nosAI/nosAI.h"
 #include <onnxruntime_cxx_api.h>
 #include "AICommonMacros.h"
 

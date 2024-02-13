@@ -1,5 +1,7 @@
- #pragma once
-#include "nosAI/nosAI.h"
+#ifndef AI_MODEL_CONTAINER_H_INCLUDED
+#define AI_MODEL_CONTAINER_H_INCLUDED
+#include "Nodos/SubsystemAPI.h" 
+#include "nosAI/nosAISubsystem.h"
 #include "nosAICommon.h"
 
 //A smart object for AIModels to handle memory management
@@ -10,3 +12,4 @@ public:
 private:
 	ONNXModel* Model;
 };
+#endif //AI_MODEL_CONTAINER_H_INCLUDED

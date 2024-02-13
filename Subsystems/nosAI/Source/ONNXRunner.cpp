@@ -1,5 +1,4 @@
 #include "ONNXRunner.h"
-
 ONNXRunner::ONNXRunner()
 {
 }
@@ -74,9 +73,18 @@ nosResult ONNXRunner::LoadONNXModel(ONNXModel* model, std::filesystem::path path
 	}
 	Options->SetGraphOptimizationLevel(static_cast<GraphOptimizationLevel>(config.OptimizationLevel));
 	//TODO: Create a meta data of the saved ORT model so that we can know if we re-use it or not (if model optimized & saved for CUDA but next time user wants to run it on CPU we cant re-use it)
-	std::wstring ORT_Path = config.OptimizedModelSavePath; // save the optimized model //TODO: (may be save it to under nodos?)
-	ORT_Path += path.filename().wstring() + L"_optimized.ort";
-	Options->SetOptimizedModelFilePath(ORT_Path.c_str());
+
+	/*
+		Ort::SessionOptions session_options;
+		session_options.AddConfigEntry("session.load_model_format", "ORT");
+		
+		Ort::Env env;
+		Ort::Session session(env, <path to model>, session_options);
+	*/
+	if (config.OptimizedModelSavePath != nullptr) {
+		std::wstring ORT_Path = config.OptimizedModelSavePath; // save the optimized model //TODO: (may be save it to under nodos?)
+		Options->SetOptimizedModelFilePath(config.OptimizedModelSavePath);
+	}
 	Options->SetLogId(config.LogID);
 	std::unique_ptr<Ort::Session> ModelSession = std::make_unique<Ort::Session>((*Environment), path.wstring().c_str(), *Options);
 	

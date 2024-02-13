@@ -1,9 +1,6 @@
 // Copyright MediaZ AS. All Rights Reserved.
 #include <Nodos/SubsystemAPI.h>
 #include <cstring>
-#include "nosCUDASubsystem/nosCUDASubsystem.h"
-#include "nosVulkanSubsystem/nosVulkanSubsystem.h"
-#include "nosAI/nosAI.h"
 #include "nosAIServices.h"
 
 extern nosVulkanSubsystem* nosVulkan = nullptr;
