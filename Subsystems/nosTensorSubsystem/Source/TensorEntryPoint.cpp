@@ -1,11 +1,13 @@
 // Copyright Nodos AS. All Rights Reserved.
 #include <Nodos/SubsystemAPI.h>
 #include "TensorServices.h"
+#include "nosTensorSubsystem/TensorTypes_generated.h"
 
 NOS_INIT();
 
 namespace nos::tensor
 {
+	NOS_REGISTER_NAME_SPACED(TensorTypeName, nos::sys::tensor::Tensor::GetFullyQualifiedName());
 	extern "C"
 	{
 
@@ -22,9 +24,12 @@ namespace nos::tensor
 
 		NOSAPI_ATTR nosResult NOSAPI_CALL nosExportSubsystemTypeFunctions(size_t* outSize, nosSubsystemTypeFunctions** outList)
 		{
-			*outSize = 0;
+			*outSize = 1;
 			if (!outList)
 				return NOS_RESULT_SUCCESS;
+			auto textureTypeFunctions = outList[0];
+			textureTypeFunctions->TypeName = NSN_TensorTypeName;
+			textureTypeFunctions->CanConnectPins = nos::tensor::type::CanConnectPins;
 			return NOS_RESULT_SUCCESS;
 		}
 

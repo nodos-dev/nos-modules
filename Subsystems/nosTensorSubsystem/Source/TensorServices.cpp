@@ -7,6 +7,7 @@
 #include "nosVulkanSubsystem/nosVulkanSubsystem.h"
 #include "TensorCommon.h"
 #include <Nodos/Name.hpp>
+#include "nosTensorSubsystem/TensorTypes_generated.h"
 
 extern nosVulkanSubsystem* nosVulkan = nullptr;
 extern nosCUDASubsystem* nosCUDA = nullptr;
@@ -32,10 +33,12 @@ namespace nos::tensor
 		subsys->InitTensor = InitTensor;
 		subsys->CopyDataToTensor = CopyDataToTensor;
 		subsys->SliceTensor = SliceTensor;
+		subsys->CreateTensorPin = CreateTensorPin;
+		subsys->GetTensorElementTypeFromVulkanResource = GetTensorElementTypeFromVulkanResource;
 		return NOS_RESULT_SUCCESS;
 	}
 
-	nosResult NOSAPI_CALL ImportTensorFromCUDABuffer(nosTensor* tensorOut, nosCUDABufferInfo* cudaBuffer, nosTensorShapeInfo shapeInfo, TensorElementType elementType)
+	nosResult NOSAPI_CALL ImportTensorFromCUDABuffer(nosTensorInfo* tensorOut, nosCUDABufferInfo* cudaBuffer, nosTensorShapeInfo shapeInfo, TensorElementType elementType)
 	{
 		nosTensorCreateInfo createInfo = {};
 		memcpy(&createInfo.ShapeInfo, &shapeInfo, sizeof(shapeInfo));
@@ -51,7 +54,7 @@ namespace nos::tensor
 		return NOS_RESULT_SUCCESS;
 	}
 
-	nosResult NOSAPI_CALL ImportTensorFromVulkanResource(nosTensor* tensorOut, nosResourceShareInfo* vulkanResource, nosTensorShapeInfo shapeInfo, TensorElementType elementType)
+	nosResult NOSAPI_CALL ImportTensorFromVulkanResource(nosTensorInfo* tensorOut, nosResourceShareInfo* vulkanResource, nosTensorShapeInfo shapeInfo, TensorElementType elementType)
 	{
 		uint64_t AllocationSize = 0;
 		switch (vulkanResource->Info.Type) {
@@ -89,7 +92,7 @@ namespace nos::tensor
 		return NOS_RESULT_SUCCESS;
 	}
 
-	nosResult NOSAPI_CALL CreateTensorFromCUDABuffer(nosTensor* tensorOut, nosCUDABufferInfo* cudaBuffer, nosTensorCreateInfo createInfo)
+	nosResult NOSAPI_CALL CreateTensorFromCUDABuffer(nosTensorInfo* tensorOut, nosCUDABufferInfo* cudaBuffer, nosTensorCreateInfo createInfo)
 	{
 		uint64_t AllocationSize = nos::tensor::GetTensorSizeFromCreateInfo(createInfo);
 		CHECK_SIZE(AllocationSize, cudaBuffer->CreateInfo.AllocationSize);
@@ -126,7 +129,7 @@ namespace nos::tensor
 		return NOS_RESULT_SUCCESS;
 	}
 
-	nosResult NOSAPI_CALL CreateTensorFromVulkanResource(nosTensor* tensorOut, nosResourceShareInfo* vulkanResource, nosTensorCreateInfo createInfo)
+	nosResult NOSAPI_CALL CreateTensorFromVulkanResource(nosTensorInfo* tensorOut, nosResourceShareInfo* vulkanResource, nosTensorCreateInfo createInfo)
 	{
 		uint64_t AllocationSize = 0;
 		TensorElementType elementType = ELEMENT_TYPE_UNDEFINED;
@@ -194,7 +197,7 @@ namespace nos::tensor
 		return NOS_RESULT_SUCCESS;
 	}
 
-	nosResult NOSAPI_CALL CreateEmptyTensor(nosTensor* tensorOut, nosTensorCreateInfo createInfo) {
+	nosResult NOSAPI_CALL CreateEmptyTensor(nosTensorInfo* tensorOut, nosTensorCreateInfo createInfo) {
 		uint64_t AllocationSize = GetTensorSizeFromCreateInfo(createInfo);
 		switch (createInfo.Location) {
 		case MEMORY_LOCATION_CPU:
@@ -234,7 +237,7 @@ namespace nos::tensor
 		return NOS_RESULT_SUCCESS;
 	}
 
-	nosResult NOSAPI_CALL InitTensor(nosTensor* tensorOut, void* MemoryAddress, nosTensorCreateInfo createInfo) {
+	nosResult NOSAPI_CALL InitTensor(nosTensorInfo* tensorOut, void* MemoryAddress, nosTensorCreateInfo createInfo) {
 		uint64_t AllocationSize = GetTensorSizeFromCreateInfo(createInfo);
 		tensorOut->MemoryInfo.Address = reinterpret_cast<uint64_t>(MemoryAddress);
 		tensorOut->MemoryInfo.Size = AllocationSize;
@@ -242,14 +245,69 @@ namespace nos::tensor
 		return NOS_RESULT_SUCCESS;
 	}
 
-	nosResult CopyDataToTensor(nosTensor* tensorOut, void* MemoryAddress, uint64_t Size)
+	nosResult CopyDataToTensor(nosTensorInfo* tensorOut, void* MemoryAddress, uint64_t Size)
 	{
 		return nosResult();
 	}
 
-	nosResult NOSAPI_CALL SliceTensor(nosTensor* tensorIn, uint64_t* outCount, nosTensor* outTensors)
+	nosResult NOSAPI_CALL SliceTensor(nosTensorInfo* tensorIn, uint64_t* outCount, nosTensorInfo* outTensors)
 	{
 
 		return nosResult();
 	}
+	nosResult CreateTensorPin(nosTensorInfo* tensor, nosUUID* NodeUUID, nosUUID* GeneratedPinUUID, TensorPinConfig config)
+	{
+		flatbuffers::FlatBufferBuilder fbb;
+		nos::sys::tensor::TTensor tensorPin;
+		tensorPin.buffer = tensor->MemoryInfo.Address;
+		tensorPin.element_type = static_cast<nos::sys::tensor::TensorElementDataType>(tensor->CreateInfo.ElementType);
+		tensorPin.memory_location = static_cast<nos::sys::tensor::TensorMemoryLocation>(tensor->CreateInfo.Location);
+		for (int i = 0; i < tensor->CreateInfo.ShapeInfo.DimensionCount; i++) {
+			tensorPin.shape.push_back(tensor->CreateInfo.ShapeInfo.Dimensions[i]);
+		}
+		auto bufPin = nos::Buffer::From(tensorPin);
+		auto tensorPinData = std::vector<uint8_t>((uint8_t*)bufPin.Data(), (uint8_t*)bufPin.Data() + bufPin.Size());
+
+		nosEngine.GenerateID(GeneratedPinUUID);
+		std::vector<flatbuffers::Offset<nos::fb::Pin>> Pins;
+		Pins.push_back(nos::fb::CreatePinDirect(fbb,
+			GeneratedPinUUID,
+			config.Name,
+			nos::sys::tensor::Tensor::GetFullyQualifiedName(),
+			static_cast<nos::fb::ShowAs>(config.ShowAs),
+			static_cast<nos::fb::CanShowAs>(config.CanShowAs),
+			0,
+			0,
+			&tensorPinData));
+		auto createPinEvent = CreateAppEvent(fbb,
+			nos::CreatePartialNodeUpdateDirect(fbb, NodeUUID, nos::ClearFlags::NONE, 0, &Pins));
+		nosResult res = nosEngine.EnqueueEvent(&createPinEvent);
+			
+		return res;
+	}
+	nosResult GetTensorElementTypeFromVulkanResource(TensorElementType* type, nosResourceShareInfo* vulkanResource)
+	{
+		(*type) = GetTensorElementTypeFromVulkanFormat(vulkanResource->Info.Texture.Format);
+		return NOS_RESULT_SUCCESS;
+	}
+}
+
+nosBool nos::tensor::type::CanConnectPins(const nosBuffer* srcPinData, const nosBuffer* dstPinData)
+{
+	nos::sys::tensor::TTensor srcTensor, dstTensor;
+	flatbuffers::GetRoot<nos::sys::tensor::Tensor>(srcPinData)->UnPackTo(&srcTensor);
+	flatbuffers::GetRoot<nos::sys::tensor::Tensor>(dstPinData)->UnPackTo(&dstTensor);
+
+	if ((srcTensor.memory_location != dstTensor.memory_location) || (srcTensor.element_type != dstTensor.element_type))
+		return NOS_FALSE;
+
+	for (const auto& srcDim : srcTensor.shape) {
+		for (const auto& dstDim : dstTensor.shape) {
+			if ((srcDim != -1 && dstDim != -1 ) && srcDim != dstDim) {
+				return NOS_FALSE;
+			}
+		}
+	}
+
+	return NOS_TRUE;
 }

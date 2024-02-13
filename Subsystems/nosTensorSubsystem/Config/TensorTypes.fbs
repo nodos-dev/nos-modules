@@ -1,4 +1,4 @@
-namespace nos.tensor;
+namespace nos.sys.tensor;
 
 enum TensorElementDataType: uint
 {
@@ -25,11 +25,19 @@ enum TensorElementDataType: uint
 	ELEMENT_TYPE_FLOAT8E5M2FNUZ,
 }
 
+enum TensorMemoryLocation: uint
+{
+	MEMORY_LOCATION_CPU,
+	MEMORY_LOCATION_CUDA,
+	MEMORY_LOCATION_VULKAN,
+}
+
 table Tensor
 {
     shape:[int64];
+	memory_location:TensorMemoryLocation;
+    element_type:TensorElementDataType;
     // if `shape` is [4, 3, 2], then index
     // [i, j, k] maps to data_buffer[i*3*2 + j*2 + k].
     buffer:uint64;
-    type:TensorElementDataType;
 }

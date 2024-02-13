@@ -1,6 +1,7 @@
 // Copyright MediaZ AS. All Rights Reserved.
 
-#pragma once
+#ifndef TENSOR_SERVICES_H_INCLUDED
+#define TENSOR_SERVICES_H_INCLUDED
 #include "nosTensorSubsystem/nosTensorSubsystem.h"
 #define CHECK_SIZE(size1, size2)\
 	do{\
@@ -22,12 +23,23 @@
 namespace nos::tensor
 {
 	nosResult Bind(nosTensorSubsystem* subsys);
-	nosResult ImportTensorFromCUDABuffer(nosTensor* tensorOut, nosCUDABufferInfo* cudaBuffer, nosTensorShapeInfo shapeInfo, TensorElementType elementType);
-	nosResult ImportTensorFromVulkanResource(nosTensor* tensorOut, nosResourceShareInfo* vulkanResource, nosTensorShapeInfo shapeInfo, TensorElementType elementType);
-	nosResult CreateTensorFromCUDABuffer(nosTensor* tensorOut, nosCUDABufferInfo* cudaBuffer, nosTensorCreateInfo createInfo);
-	nosResult CreateTensorFromVulkanResource(nosTensor* tensorOut, nosResourceShareInfo* vulkanResource, nosTensorCreateInfo createInfo);
-	nosResult CreateEmptyTensor(nosTensor* tensorOut, nosTensorCreateInfo createInfo);
-	nosResult InitTensor(nosTensor* tensorOut, void* MemoryAddress, nosTensorCreateInfo createInfo);
-	nosResult CopyDataToTensor(nosTensor* tensorOut, void* MemoryAddress, uint64_t Size);
-	nosResult SliceTensor(nosTensor* tensorIn, uint64_t* outCount, nosTensor* outTensors);
+	nosResult ImportTensorFromCUDABuffer(nosTensorInfo* tensorOut, nosCUDABufferInfo* cudaBuffer, nosTensorShapeInfo shapeInfo, TensorElementType elementType);
+	nosResult ImportTensorFromVulkanResource(nosTensorInfo* tensorOut, nosResourceShareInfo* vulkanResource, nosTensorShapeInfo shapeInfo, TensorElementType elementType);
+	nosResult CreateTensorFromCUDABuffer(nosTensorInfo* tensorOut, nosCUDABufferInfo* cudaBuffer, nosTensorCreateInfo createInfo);
+	nosResult CreateTensorFromVulkanResource(nosTensorInfo* tensorOut, nosResourceShareInfo* vulkanResource, nosTensorCreateInfo createInfo);
+	nosResult CreateEmptyTensor(nosTensorInfo* tensorOut, nosTensorCreateInfo createInfo);
+	nosResult InitTensor(nosTensorInfo* tensorOut, void* MemoryAddress, nosTensorCreateInfo createInfo);
+	nosResult CopyDataToTensor(nosTensorInfo* tensorOut, void* MemoryAddress, uint64_t Size);
+	nosResult SliceTensor(nosTensorInfo* tensorIn, uint64_t* outCount, nosTensorInfo* outTensors);
+	nosResult CreateTensorPin(nosTensorInfo* tensor, nosUUID* NodeUUID, nosUUID* GeneratedPinUUID, TensorPinConfig config);
+	nosResult GetTensorElementTypeFromVulkanResource(TensorElementType* type, nosResourceShareInfo* vulkanResource);
+
+
+	namespace type
+	{
+		nosBool CanConnectPins(const nosBuffer* srcPinData, const nosBuffer* dstPinData);
+	}
 }
+
+
+#endif //TENSOR_SERVICES_H_INCLUDED
