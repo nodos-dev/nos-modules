@@ -29,6 +29,7 @@ namespace nos::cudass
 		subsys->DestroyCUDAEvent = DestroyCUDAEvent;
 
 		subsys->LoadKernelModuleFromPTX = LoadKernelModuleFromPTX;
+		subsys->LoadKernelModuleFromCString = LoadKernelModuleFromCString;
 		subsys->GetModuleKernelFunction = GetModuleKernelFunction;
 		subsys->LaunchModuleKernelFunction = LaunchModuleKernelFunction;
 
@@ -208,6 +209,25 @@ namespace nos::cudass
 		CHECK_CONTEXT_SWITCH();
 		CUmodule cuModule;
 		CUresult res = cuModuleLoad(&cuModule, ptxPath);
+		CHECK_CUDA_DRIVER_ERROR(res);
+		(*outModule) = cuModule;
+		return NOS_RESULT_SUCCESS;
+	}
+	nosResult LoadKernelModuleFromCString(const char* ptxString, const char* errorLogBuffer, uint64_t errorLogBufferSize, nosCUDAModule* outModule)
+	{
+		CHECK_CONTEXT_SWITCH();
+		CUmodule cuModule;
+		CUjit_option options[3];
+		void* values[3];
+
+		options[0] = CU_JIT_ERROR_LOG_BUFFER;
+		values[0] = (void*)errorLogBuffer;
+		options[1] = CU_JIT_ERROR_LOG_BUFFER_SIZE_BYTES;
+		values[1] = (void*)errorLogBufferSize;
+		options[2] = CU_JIT_TARGET_FROM_CUCONTEXT;
+		values[2] = 0;
+
+		CUresult res = cuModuleLoadDataEx(&cuModule, ptxString, 3, options, values);
 		CHECK_CUDA_DRIVER_ERROR(res);
 		(*outModule) = cuModule;
 		return NOS_RESULT_SUCCESS;

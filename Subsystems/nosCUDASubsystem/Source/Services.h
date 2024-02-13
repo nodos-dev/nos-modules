@@ -71,6 +71,8 @@ namespace nos::cudass
 	nosResult DestroyCUDAEvent(nosCUDAEvent cudaEvent);
 	
 	nosResult LoadKernelModuleFromPTX(const char* ptxPath, nosCUDAModule* outModule); //Loads .ptx files only. //TODO: This should be extended to char arrays and .cu files.
+	nosResult LoadKernelModuleFromCString(const char* ptxString, const char* errorLogBuffer, uint64_t errorLogBufferSize, nosCUDAModule* outModule);
+
 	nosResult GetModuleKernelFunction(const char* functionName, nosCUDAModule cudaModule, nosCUDAKernelFunction* outFunction);
 	
 	nosResult LaunchModuleKernelFunction(nosCUDAStream stream, nosCUDAKernelFunction outFunction, nosCUDAKernelLaunchConfig config, void** arguments, nosCUDACallbackFunction callback, void* callbackData);

@@ -328,8 +328,8 @@ typedef struct nosCUDASubsystem
 	nosResult(NOSAPI_CALL* DestroyCUDAEvent)(nosCUDAEvent cudaEvent);
 
 	nosResult(NOSAPI_CALL* LoadKernelModuleFromPTX)(const char* ptxPath, nosCUDAModule* outModule); //Loads .ptx files only
+	nosResult(NOSAPI_CALL* LoadKernelModuleFromCString)(const char* ptxString, const char* errorLogBuffer, uint64_t errorLogBufferSize, nosCUDAModule* outModule); //Loads kernels from CStrings (linking is not supported yet)
 	//nosResult(NOSAPI_CALL* LoadKernelModuleFromSource)(const char* cuFilePath, nosCUDAModule* outModule); //Loads .ptx files only
-	//nosResult(NOSAPI_CALL* LoadKernelModuleFromCString)(const char* cuFilePath, nosCUDAModule* outModule); //Loads .ptx files only
 	nosResult(NOSAPI_CALL* GetModuleKernelFunction)(const char* functionName, nosCUDAModule cudaModule, nosCUDAKernelFunction* outFunction);
 	
 	/**
