@@ -1,3 +1,5 @@
+# Copyright MediaZ AS. All Rights Reserved.
+
 
 if(WIN32)
 	add_compile_definitions(

@@ -1,3 +1,5 @@
+// Copyright MediaZ AS. All Rights Reserved.
+
 #include "SignalingServer.h"
 #include "WebRTCJsonConfig.h"
 #include "nlohmann/json.hpp"

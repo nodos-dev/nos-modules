@@ -1,3 +1,5 @@
+// Copyright MediaZ AS. All Rights Reserved.
+
 #include "WebSocketClient.h"
 #include "WebSocketServer.h"
 #include "WebRTCManager.h"

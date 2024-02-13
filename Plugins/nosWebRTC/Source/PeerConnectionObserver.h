@@ -1,3 +1,7 @@
+/*
+ * Copyright MediaZ AS. All Rights Reserved.
+ */
+
 #pragma once
 #include "api/peer_connection_interface.h"
 

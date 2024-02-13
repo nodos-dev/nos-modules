@@ -1,3 +1,5 @@
+// Copyright MediaZ AS. All Rights Reserved.
+
 #include <Nodos/PluginHelpers.hpp>
 
 #include <nosVulkanSubsystem/Helpers.hpp>

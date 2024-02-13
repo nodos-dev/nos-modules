@@ -1,3 +1,7 @@
+/*
+ * Copyright MediaZ AS. All Rights Reserved.
+ */
+
 #pragma once
 #include <api/video_codecs/video_encoder.h>
 #include "EncodeImageObserver.h"

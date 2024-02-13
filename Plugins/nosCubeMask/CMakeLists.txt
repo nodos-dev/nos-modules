@@ -1,3 +1,5 @@
+# Copyright MediaZ AS. All Rights Reserved.
+
 
 if(NOT TARGET glm)
     add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/External/glm)

@@ -1,3 +1,5 @@
+// Copyright MediaZ AS. All Rights Reserved.
+
 #include <iostream>
 #include <exception>
 #include "WebSocketServer.h"

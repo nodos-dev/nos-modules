@@ -1,3 +1,7 @@
+/*
+ * Copyright MediaZ AS. All Rights Reserved.
+ */
+
 #pragma once
 #include <media/base/video_common.h>
 #include <api/video/video_frame.h>

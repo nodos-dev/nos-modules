@@ -1,3 +1,5 @@
+// Copyright MediaZ AS. All Rights Reserved.
+
 #include "CreateSDPObserver.h"
 
 nosCreateSDPObserver::nosCreateSDPObserver(int id) : peerConnectionID(id)

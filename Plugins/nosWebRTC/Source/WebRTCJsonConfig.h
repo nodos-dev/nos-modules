@@ -1,3 +1,7 @@
+/*
+ * Copyright MediaZ AS. All Rights Reserved.
+ */
+
 #ifndef NOS_WEBRTC_JSON_CONFIG
 #define NOS_WEBRTC_JSON_CONFIG
 

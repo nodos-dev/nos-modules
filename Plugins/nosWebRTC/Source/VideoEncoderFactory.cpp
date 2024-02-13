@@ -1,3 +1,5 @@
+// Copyright MediaZ AS. All Rights Reserved.
+
 #include "VideoEncoderFactory.h"
 
 nosVideoEncoderFactory::nosVideoEncoderFactory(nosEncodeImageObserver* observer) : observer(observer)

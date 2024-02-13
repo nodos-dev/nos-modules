@@ -1,3 +1,5 @@
+# Copyright MediaZ AS. All Rights Reserved.
+
 from loguru import logger
 import sys
 import argparse

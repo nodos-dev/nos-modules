@@ -1,3 +1,5 @@
+# Copyright MediaZ AS. All Rights Reserved.
+
 # TODO: A copy also exists in nodos repo. Create a submodule or copy to Tools.
 
 function(generate_flatbuffers FLATC_PATH FBS_FOLDERS OUT_FOLDER TEMP_FOLDER OUT_LANGUAGE)

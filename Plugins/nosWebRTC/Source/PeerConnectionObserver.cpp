@@ -1,3 +1,5 @@
+// Copyright MediaZ AS. All Rights Reserved.
+
 #include "PeerConnectionObserver.h"
 nosPeerConnectionObserver::nosPeerConnectionObserver(int _peerConnectionID) :peerConnectionID(_peerConnectionID)
 {

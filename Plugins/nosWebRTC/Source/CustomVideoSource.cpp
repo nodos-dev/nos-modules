@@ -1,3 +1,5 @@
+// Copyright MediaZ AS. All Rights Reserved.
+
 #include "CustomVideoSource.h"
 #include <iostream>
 #include "rtc_base/location.h"

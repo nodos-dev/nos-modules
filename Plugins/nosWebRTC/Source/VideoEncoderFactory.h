@@ -1,3 +1,7 @@
+/*
+ * Copyright MediaZ AS. All Rights Reserved.
+ */
+
 #pragma once
 #include <api/video_codecs/builtin_video_encoder_factory.h>
 #include "VideoEncoder.h"

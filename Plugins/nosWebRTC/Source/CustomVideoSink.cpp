@@ -1,3 +1,5 @@
+// Copyright MediaZ AS. All Rights Reserved.
+
 #include "CustomVideoSink.h"
 
 nosCustomVideoSink::nosCustomVideoSink()

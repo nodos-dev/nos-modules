@@ -1,3 +1,5 @@
+// Copyright MediaZ AS. All Rights Reserved.
+
 #include "GaussianBlur.hpp"
 #include "../Shaders/GaussianBlur.frag.spv.dat"
 

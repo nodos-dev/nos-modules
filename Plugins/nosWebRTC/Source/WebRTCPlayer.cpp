@@ -1,3 +1,5 @@
+// Copyright MediaZ AS. All Rights Reserved.
+
 #include <Nodos/PluginAPI.h>
 #include <Builtins_generated.h>
 #include <Nodos/PluginHelpers.hpp>

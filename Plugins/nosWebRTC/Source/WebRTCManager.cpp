@@ -1,3 +1,5 @@
+// Copyright MediaZ AS. All Rights Reserved.
+
 #include <stddef.h>
 #include <iostream>
 #include <stdint.h>

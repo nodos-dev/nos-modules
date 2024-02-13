@@ -1,3 +1,7 @@
+/*
+ * Copyright MediaZ AS. All Rights Reserved.
+ */
+
 #pragma once
 #include "api/video/i420_buffer.h"
 #include "api/video/video_frame.h"

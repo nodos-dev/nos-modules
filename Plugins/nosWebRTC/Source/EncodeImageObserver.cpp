@@ -1,3 +1,5 @@
+// Copyright MediaZ AS. All Rights Reserved.
+
 #include "EncodeImageObserver.h"
 
 nosEncodeImageObserver::nosEncodeImageObserver(std::function<void()> callback) : callback(callback)

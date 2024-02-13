@@ -1,3 +1,5 @@
+// Copyright MediaZ AS. All Rights Reserved.
+
 #include "SetSDPObserver.h"
 
 nosSetSDPObserver::nosSetSDPObserver(int id) : peerConnectionID(id)

@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# Copyright MediaZ AS. All Rights Reserved.
+
 
 from subprocess import PIPE, run, call, Popen
 import platform

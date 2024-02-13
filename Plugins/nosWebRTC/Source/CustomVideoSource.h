@@ -1,3 +1,7 @@
+/*
+ * Copyright MediaZ AS. All Rights Reserved.
+ */
+
 #pragma once
 #include <stdint.h>
 #include "rtc_base/ssl_adapter.h"
