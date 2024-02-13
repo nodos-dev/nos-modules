@@ -138,63 +138,6 @@ void main()
     }
     break;
     case 4: {
-        // Lanczos 3
-        const vec2 UV = uv * Size + 0.5;
-
-        vec2 tc = floor(UV - 0.5) + 0.5;
-        vec2 f = UV - tc + 2;
-
-        // compute at f, f-1, f-2, f-3, f-4, and f-5 using trig angle addition
-        vec2 fpi = f * PI, fpi3 = f * (PI / 3.0);
-        vec2 s = sin(fpi), s3 = sin(fpi3), c3 = cos(fpi3);
-        const float r3 = sqrt(3.0);
-        vec2 w0 = (s * s3) / (f * f);
-        vec2 w1 = (-s * (s3 - r3 * c3)) / ((f - 1.0) * (f - 1.0));
-        vec2 w2 = (s * (-s3 - r3 * c3)) / ((f - 2.0) * (f - 2.0));
-        vec2 w3 = (-s * (-2.0 * s3)) / ((f - 3.0) * (f - 3.0));
-        vec2 w4 = (s * (-s3 + r3 * c3)) / ((f - 4.0) * (f - 4.0));
-        vec2 w5 = (-s * (s3 + r3 * c3)) / ((f - 5.0) * (f - 5.0));
-
-        // use bilinear texture weights to merge center two samples in each dimension
-        vec2 W[5];
-        W[0] = w0;
-        W[1] = w1;
-        W[2] = w2 + w3;
-        W[3] = w4;
-        W[4] = w5;
-
-        vec2 S[5];
-        S[0] = InvSize * (tc - 2);
-        S[1] = InvSize * (tc - 1);
-        S[2] = InvSize * (tc + w3 / W[2]);
-        S[3] = InvSize * (tc + 2);
-        S[4] = InvSize * (tc + 3);
-
-        OutColor = vec4(0);
-
-        // 5x5 footprint with corners dropped to give 13 texture taps
-        OutColor += vec4(texture(Input, vec2(S[0].x, S[2].y), 0).rgb, 1) * W[0].x * W[2].y;
-
-        OutColor += vec4(texture(Input, vec2(S[1].x, S[1].y), 0).rgb, 1) * W[1].x * W[1].y;
-        OutColor += vec4(texture(Input, vec2(S[1].x, S[2].y), 0).rgb, 1) * W[1].x * W[2].y;
-        OutColor += vec4(texture(Input, vec2(S[1].x, S[3].y), 0).rgb, 1) * W[1].x * W[3].y;
-
-        OutColor += vec4(texture(Input, vec2(S[2].x, S[0].y), 0).rgb, 1) * W[2].x * W[0].y;
-        OutColor += vec4(texture(Input, vec2(S[2].x, S[1].y), 0).rgb, 1) * W[2].x * W[1].y;
-        OutColor += vec4(texture(Input, vec2(S[2].x, S[2].y), 0).rgb, 1) * W[2].x * W[2].y;
-        OutColor += vec4(texture(Input, vec2(S[2].x, S[3].y), 0).rgb, 1) * W[2].x * W[3].y;
-        OutColor += vec4(texture(Input, vec2(S[2].x, S[4].y), 0).rgb, 1) * W[2].x * W[4].y;
-
-        OutColor += vec4(texture(Input, vec2(S[3].x, S[1].y), 0).rgb, 1) * W[3].x * W[1].y;
-        OutColor += vec4(texture(Input, vec2(S[3].x, S[2].y), 0).rgb, 1) * W[3].x * W[2].y;
-        OutColor += vec4(texture(Input, vec2(S[3].x, S[3].y), 0).rgb, 1) * W[3].x * W[3].y;
-
-        OutColor += vec4(texture(Input, vec2(S[4].x, S[2].y), 0).rgb, 1) * W[4].x * W[2].y;
-
-        OutColor /= OutColor.w;
-        break;
-    }
-    case 5: {
         // Gaussian filtered unsharp mask
         vec2 UV = uv * Size;
         vec2 tc = floor(UV) + 0.5;
