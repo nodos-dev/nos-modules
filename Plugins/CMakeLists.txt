@@ -21,7 +21,6 @@ function(add_folder_as_plugin_project NAME DEPENDENCIES INCLUDE_FOLDERS)
     file(GLOB_RECURSE SOURCES CONFIGURE_DEPENDS ${SOURCE_FOLDER}
         "${SOURCE_FOLDER}/*.cpp" "${SOURCE_FOLDER}/*.inl" "${SOURCE_FOLDER}/*.glsl" "${SOURCE_FOLDER}/*.hlsl"
         "${SOURCE_FOLDER}/*.comp" "${SOURCE_FOLDER}/*.frag" "${SOURCE_FOLDER}/*.vert")
-	file(GLOB_RECURSE CU_FILES CONFIGURE_DEPENDS ${SOURCE_FOLDER} "${SOURCE_FOLDER}/*.cu")
 
     list(APPEND CONFIG_FILES)
     foreach(CONFIG_FOLDER ${CONFIG_FOLDERS})
@@ -41,7 +40,7 @@ function(add_folder_as_plugin_project NAME DEPENDENCIES INCLUDE_FOLDERS)
         list(APPEND SHADERS ${CUR_SHADERS})
     endforeach()
     
-    add_library(${NAME} MODULE ${SOURCES} ${SHADERS} ${HEADERS} ${RESOURCES} ${CONFIG_FILES} ${CU_FILES})
+    add_library(${NAME} MODULE ${SOURCES} ${SHADERS} ${HEADERS} ${RESOURCES} ${CONFIG_FILES})
     set_target_properties(${NAME} PROPERTIES
         CXX_STANDARD 20
         LIBRARY_OUTPUT_DIRECTORY_DEBUG "${CMAKE_CURRENT_SOURCE_DIR}/Binaries"
