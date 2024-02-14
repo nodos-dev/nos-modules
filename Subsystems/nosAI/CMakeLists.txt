@@ -2,7 +2,7 @@
 add_library(nosAI MODULE)
 
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR}/External/CPU)
-find_library(onnxruntime.lib NAMES onnxruntime.lib PATHS ${CMAKE_CURRENT_LIST_DIR}/External/ONNXRT/CPU/lib REQUIRED NO_DEFAULT_PATH)
+find_library(onnxruntime.lib NAMES onnxruntime.lib PATHS ${CMAKE_CURRENT_LIST_DIR}/External/ONNXRT/GPU/lib REQUIRED NO_DEFAULT_PATH)
 find_library(onnxruntime_providers_cuda.lib NAMES onnxruntime_providers_cuda.lib PATHS ${CMAKE_CURRENT_LIST_DIR}/External/ONNXRT/GPU/lib REQUIRED NO_DEFAULT_PATH)
 find_library(onnxruntime_providers_tensorrt.lib NAMES onnxruntime_providers_tensorrt.lib PATHS ${CMAKE_CURRENT_LIST_DIR}/External/ONNXRT/GPU/lib REQUIRED NO_DEFAULT_PATH)
 
