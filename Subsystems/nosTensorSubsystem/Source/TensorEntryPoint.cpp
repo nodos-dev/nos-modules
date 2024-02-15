@@ -29,7 +29,7 @@ namespace nos::tensor
 				return NOS_RESULT_SUCCESS;
 			auto textureTypeFunctions = outList[0];
 			textureTypeFunctions->TypeName = NSN_TensorTypeName;
-			textureTypeFunctions->CanConnectPins = nos::tensor::type::CanConnectPins;
+			//textureTypeFunctions->CanConnectPins = nos::tensor::type::CanConnectPins;
 			return NOS_RESULT_SUCCESS;
 		}
 

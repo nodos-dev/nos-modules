@@ -22,7 +22,7 @@ function(add_folder_as_plugin_project NAME DEPENDENCIES INCLUDE_FOLDERS)
 
     file(GLOB_RECURSE SOURCES CONFIGURE_DEPENDS ${SOURCE_FOLDER}
         "${SOURCE_FOLDER}/*.cpp" "${SOURCE_FOLDER}/*.inl" "${SOURCE_FOLDER}/*.glsl" "${SOURCE_FOLDER}/*.hlsl"
-        "${SOURCE_FOLDER}/*.comp" "${SOURCE_FOLDER}/*.frag" "${SOURCE_FOLDER}/*.vert" "${SOURCE_FOLDER}/*.cu"
+        "${SOURCE_FOLDER}/*.comp" "${SOURCE_FOLDER}/*.frag" "${SOURCE_FOLDER}/*.vert"
         "${SOURCE_FOLDER}/*.py")
     list(APPEND CONFIG_FILES)
     foreach(CONFIG_FOLDER ${CONFIG_FOLDERS})
@@ -30,7 +30,7 @@ function(add_folder_as_plugin_project NAME DEPENDENCIES INCLUDE_FOLDERS)
             "${CONFIG_FOLDER}/*.noscfg" "${CONFIG_FOLDER}/*.nosdef" "${CONFIG_FOLDER}/*.fbs")
         list(APPEND CONFIG_FILES ${CUR_CONFIG_FILES})
     endforeach()
-    file(GLOB_RECURSE HEADERS CONFIGURE_DEPENDS ${SOURCE_FOLDER} "${SOURCE_FOLDER}/*.h" "${SOURCE_FOLDER}/*.cuh" "${SOURCE_FOLDER}/*.hpp")
+    file(GLOB_RECURSE HEADERS CONFIGURE_DEPENDS ${SOURCE_FOLDER} "${SOURCE_FOLDER}/*.h" "${SOURCE_FOLDER}/*.hpp")
     file(GLOB_RECURSE RESOURCES CONFIGURE_DEPENDS ${SOURCE_FOLDER} "${SOURCE_FOLDER}/*.rc")
 
     set(SHADER_FOLDERS "${CMAKE_CURRENT_SOURCE_DIR}" "${CMAKE_CURRENT_SOURCE_DIR}/Shaders")
@@ -115,6 +115,8 @@ add_subdirectory(nosTest)
 add_subdirectory(nosCNN)
 add_subdirectory(nosWebRTC)
 add_subdirectory(nosCubeMask)
+#add_subdirectory(nosTensors)
+#add_subdirectory(nosONNX)
 
 get_targets(PLUGINS_COMMON_EXTERNAL_TARGETS "./External")
 group_targets("${PLUGINS_COMMON_EXTERNAL_TARGETS}" "External")

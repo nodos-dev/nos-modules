@@ -6,7 +6,7 @@
 	do { \
 		nosResult __MACRO__RESULT__= nosRes; \
 		if (__MACRO__RESULT__ != NOS_RESULT_SUCCESS) { \
-			nosEngine.LogE("Failed from %s %d with error %S.",__FILE__, __LINE__,GetNosResultString(__MACRO__RESULT__)); \
+			nosEngine.LogE("Failed from %s %d with error %d.",__FILE__, __LINE__,__MACRO__RESULT__); \
 			return NOS_RESULT_FAILED; \
 		} \
 	} while (0); \

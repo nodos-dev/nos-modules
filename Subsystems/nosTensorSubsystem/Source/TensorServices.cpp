@@ -2,7 +2,7 @@
 #include <Nodos/SubsystemAPI.h>
 #include "TensorServices.h"
 #include <cstring>
-#include "CUDAKernels/TensorSlicer.ptx.h"
+#include "CUDAKernels/TensorSlicer.cu.ptx_generated.h"
 #include "nosCUDASubsystem/nosCUDASubsystem.h"
 #include "nosVulkanSubsystem/nosVulkanSubsystem.h"
 #include "TensorCommon.h"
