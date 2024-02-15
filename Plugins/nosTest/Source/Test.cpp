@@ -15,6 +15,8 @@ NOS_INIT_WITH_MIN_REQUIRED_MINOR(0) // Do not forget to remove this minimum requ
 NOS_REGISTER_NAME(in1)
 NOS_REGISTER_NAME(in2)
 NOS_REGISTER_NAME(out)
+namespace nos::test
+{
 
 nosVulkanSubsystem* nosVulkan = nullptr;
 

@@ -1,0 +1,13 @@
+{
+  "info": {
+    "id": {
+      "name": "nos.sys.ai",
+      "version": "1.0.0"
+    },
+    "display_name": "AI",
+    "description": "AI framework of Nodos.",
+    "dependencies": []
+  },
+  "binary_path": "./Binaries/nosAI",
+   "custom_types": []
+}

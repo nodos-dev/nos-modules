@@ -1,0 +1,20 @@
+    {
+    "nodes": [
+      {
+        "class_name": "TensorSlicer",
+        "contents_type": "Job",
+        "contents": {
+          "type": "CPU"
+        },
+        "pins": [
+          {
+            "name": "In",
+            "type_name": "nos.fb.Tensor",
+            "show_as": "INPUT_PIN",
+            "can_show_as": "INPUT_PIN_OR_PROPERTY"
+          }
+        ],
+        "functions": []
+      }
+    ]
+}
