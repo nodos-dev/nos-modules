@@ -7,30 +7,72 @@
 namespace nos::tensor {
 	static short GetSizeOfElementType(TensorElementType type) {
 		switch (type) {
-		case ELEMENT_TYPE_UINT8:
-			return sizeof(uint8_t);
-		case ELEMENT_TYPE_UINT16:
-			return sizeof(uint16_t);
-		case ELEMENT_TYPE_UINT32:
-			return sizeof(uint32_t);
-		case ELEMENT_TYPE_UINT64:
-			return sizeof(uint64_t);
-		case ELEMENT_TYPE_INT8:
-			return sizeof(int8_t);
-		case ELEMENT_TYPE_INT16:
-			return sizeof(int16_t);
-		case ELEMENT_TYPE_INT32:
-			return sizeof(int32_t);
-		case ELEMENT_TYPE_INT64:
-			return sizeof(int64_t);
-		case ELEMENT_TYPE_STRING:
-			return sizeof(char);
-		case ELEMENT_TYPE_FLOAT:
-			return sizeof(float);
-		case ELEMENT_TYPE_DOUBLE:
-			return sizeof(double);
-		case ELEMENT_TYPE_BOOL:
-			return sizeof(bool);
+			case ELEMENT_TYPE_UNDEFINED:
+				return 0;
+				break;
+			case ELEMENT_TYPE_FLOAT:
+				return sizeof(float);
+				break;
+			case ELEMENT_TYPE_UINT8:
+				return sizeof(uint8_t);
+				break;
+			case ELEMENT_TYPE_INT8:
+				return sizeof(int8_t);
+				break;
+			case ELEMENT_TYPE_UINT16:
+				return sizeof(uint16_t);
+				break;
+			case ELEMENT_TYPE_INT16:
+				return sizeof(int16_t);
+				break;
+			case ELEMENT_TYPE_INT32:
+				return sizeof(int32_t);
+				break;
+			case ELEMENT_TYPE_INT64:
+				return sizeof(int64_t);
+				break;
+			case ELEMENT_TYPE_STRING:
+				return sizeof(char); // ???? not sure
+				break;
+			case ELEMENT_TYPE_BOOL:
+				return sizeof(bool);
+				break;
+			case ELEMENT_TYPE_FLOAT16:
+				return sizeof(uint16_t);
+				break;
+			case ELEMENT_TYPE_DOUBLE:
+				return sizeof(double);
+				break;
+			case ELEMENT_TYPE_UINT32:
+				return sizeof(uint32_t);
+				break;
+			case ELEMENT_TYPE_UINT64:
+				return sizeof(uint64_t);
+				break;
+			case ELEMENT_TYPE_COMPLEX64:
+				return sizeof(uint64_t);
+				break;
+			case ELEMENT_TYPE_COMPLEX128:
+				return 2* sizeof(uint64_t);
+				break;
+			case ELEMENT_TYPE_BFLOAT16:
+				return sizeof(uint16_t);
+				break;
+			//case ELEMENT_TYPE_FLOAT8E4M3FN:
+			//	return sizeof(
+			//	break;
+			//case ELEMENT_TYPE_FLOAT8E4M3FNUZ:
+			//	return sizeof(
+			//	break;
+			//case ELEMENT_TYPE_FLOAT8E5M2:
+			//	return sizeof(
+			//	break;
+			//case ELEMENT_TYPE_FLOAT8E5M2FNUZ:
+			//	return sizeof(
+			//	break;
+			default:
+				return 0;
+				break;
 		}
 		return 0;
 	}
@@ -255,7 +297,7 @@ namespace nos::tensor {
 		case NOS_FORMAT_R16G16_SFLOAT:
 		case NOS_FORMAT_R16G16B16_SFLOAT:
 		case NOS_FORMAT_R16G16B16A16_SFLOAT:
-			return ELEMENT_TYPE_FLOAT;
+			return ELEMENT_TYPE_FLOAT16;
 
 		case NOS_FORMAT_R32_UINT:
 		case NOS_FORMAT_R32G32_UINT:

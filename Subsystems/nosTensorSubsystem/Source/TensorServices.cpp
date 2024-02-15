@@ -16,7 +16,7 @@ namespace nos::tensor
 {
 
 	nosResult Bind(nosTensorSubsystem* subsys) {
-		nosResult returnRes = nosEngine.RequestSubsystem(NOS_NAME_STATIC(NOS_VULKAN_SUBSYSTEM_NAME), 2, 0, (void**)&nosVulkan);
+		nosResult returnRes = nosEngine.RequestSubsystem(NOS_NAME_STATIC(NOS_VULKAN_SUBSYSTEM_NAME), NOS_VULKAN_SUBSYSTEM_VERSION_MAJOR, NOS_VULKAN_SUBSYSTEM_VERSION_MINOR, (void**)&nosVulkan);
 		if (returnRes != NOS_RESULT_SUCCESS)
 			return NOS_RESULT_FAILED;
 
@@ -34,6 +34,8 @@ namespace nos::tensor
 		subsys->CopyDataToTensor = CopyDataToTensor;
 		subsys->SliceTensor = SliceTensor;
 		subsys->CreateTensorPin = CreateTensorPin;
+		subsys->UpdateTensorPin = UpdateTensorPin;
+		subsys->RemoveTensorPin = RemoveTensorPin;
 		subsys->GetTensorElementTypeFromVulkanResource = GetTensorElementTypeFromVulkanResource;
 		return NOS_RESULT_SUCCESS;
 	}
@@ -285,6 +287,55 @@ namespace nos::tensor
 			
 		return res;
 	}
+
+	nosResult UpdateTensorPin(nosTensorInfo* tensor, nosUUID* NodeUUID, nosUUID* GeneratedPinUUID, TensorPinConfig config)
+	{
+		//Delete the old tensor pin
+		std::vector<nos::fb::UUID> pinsToDelete = { *GeneratedPinUUID };
+		flatbuffers::FlatBufferBuilder fbb;
+		std::vector<flatbuffers::Offset<nos::app::AppEvent>> Offsets;
+		auto deletePinEvent = nos::CreateAppEvent(fbb,
+				nos::CreatePartialNodeUpdateDirect(fbb, NodeUUID, nos::ClearFlags::NONE, &pinsToDelete));
+		nosResult res = nosEngine.EnqueueEvent(&deletePinEvent);
+
+		flatbuffers::FlatBufferBuilder fbb2;
+		nos::sys::tensor::TTensor tensorPin;
+		tensorPin.buffer = tensor->MemoryInfo.Address;
+		tensorPin.element_type = static_cast<nos::sys::tensor::TensorElementDataType>(tensor->CreateInfo.ElementType);
+		tensorPin.memory_location = static_cast<nos::sys::tensor::TensorMemoryLocation>(tensor->CreateInfo.Location);
+		for (int i = 0; i < tensor->CreateInfo.ShapeInfo.DimensionCount; i++) {
+			tensorPin.shape.push_back(tensor->CreateInfo.ShapeInfo.Dimensions[i]);
+		}
+		auto bufPin = nos::Buffer::From(tensorPin);
+		auto tensorPinData = std::vector<uint8_t>((uint8_t*)bufPin.Data(), (uint8_t*)bufPin.Data() + bufPin.Size());
+
+		nosEngine.GenerateID(GeneratedPinUUID);
+		std::vector<flatbuffers::Offset<nos::fb::Pin>> Pins;
+		Pins.push_back(nos::fb::CreatePinDirect(fbb2,
+			GeneratedPinUUID,
+			config.Name,
+			nos::sys::tensor::Tensor::GetFullyQualifiedName(),
+			static_cast<nos::fb::ShowAs>(config.ShowAs),
+			static_cast<nos::fb::CanShowAs>(config.CanShowAs),
+			0,
+			0,
+			&tensorPinData));
+		auto createPinEvent = CreateAppEvent(fbb2,
+			nos::CreatePartialNodeUpdateDirect(fbb2, NodeUUID, nos::ClearFlags::NONE, 0, &Pins));
+		res = nosEngine.EnqueueEvent(&createPinEvent);
+
+		return res;
+	}
+	nosResult RemoveTensorPin(nosTensorInfo* tensor, nosUUID* NodeUUID, nosUUID* GeneratedPinUUID)
+	{
+		std::vector<nos::fb::UUID> pinsToDelete = { *GeneratedPinUUID };
+		flatbuffers::FlatBufferBuilder fbb;
+		std::vector<flatbuffers::Offset<nos::app::AppEvent>> Offsets;
+		auto deletePinEvent = nos::CreateAppEvent(fbb,
+			nos::CreatePartialNodeUpdateDirect(fbb, NodeUUID, nos::ClearFlags::CLEAR_PINS, &pinsToDelete));
+		nosResult res = nosEngine.EnqueueEvent(&deletePinEvent);
+		return res;
+	}
 	nosResult GetTensorElementTypeFromVulkanResource(TensorElementType* type, nosResourceShareInfo* vulkanResource)
 	{
 		(*type) = GetTensorElementTypeFromVulkanFormat(vulkanResource->Info.Texture.Format);
@@ -295,8 +346,8 @@ namespace nos::tensor
 nosBool nos::tensor::type::CanConnectPins(const nosBuffer* srcPinData, const nosBuffer* dstPinData)
 {
 	nos::sys::tensor::TTensor srcTensor, dstTensor;
-	flatbuffers::GetRoot<nos::sys::tensor::Tensor>(srcPinData)->UnPackTo(&srcTensor);
-	flatbuffers::GetRoot<nos::sys::tensor::Tensor>(dstPinData)->UnPackTo(&dstTensor);
+	flatbuffers::GetRoot<nos::sys::tensor::Tensor>(srcPinData->Data)->UnPackTo(&srcTensor);
+	flatbuffers::GetRoot<nos::sys::tensor::Tensor>(dstPinData->Data)->UnPackTo(&dstTensor);
 
 	if ((srcTensor.memory_location != dstTensor.memory_location) || (srcTensor.element_type != dstTensor.element_type))
 		return NOS_FALSE;

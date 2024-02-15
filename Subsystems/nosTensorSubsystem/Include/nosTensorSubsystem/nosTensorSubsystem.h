@@ -113,6 +113,8 @@ typedef struct nosTensorSubsystem
 	nosResult(NOSAPI_CALL* CopyDataToTensor)(nosTensorInfo* tensorOut,void* MemoryAddress, uint64_t Size);
 	nosResult(NOSAPI_CALL* SliceTensor)(nosTensorInfo* tensorIn,uint64_t* outCount, nosTensorInfo* outTensors);
 	nosResult(NOSAPI_CALL* CreateTensorPin)(nosTensorInfo* tensor, nosUUID* NodeUUID, nosUUID* GeneratedPinUUID, TensorPinConfig config);
+	nosResult(NOSAPI_CALL* UpdateTensorPin)(nosTensorInfo* tensor, nosUUID* NodeUUID, nosUUID* GeneratedPinUUID, TensorPinConfig config);
+	nosResult(NOSAPI_CALL* RemoveTensorPin)(nosTensorInfo* tensor, nosUUID* NodeUUID, nosUUID* GeneratedPinUUID);
 	nosResult(NOSAPI_CALL* GetTensorElementTypeFromVulkanResource)(TensorElementType* type, nosResourceShareInfo* vulkanResource);
 
 } nosTensorSubsystem;

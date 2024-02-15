@@ -32,6 +32,8 @@ namespace nos::tensor
 	nosResult CopyDataToTensor(nosTensorInfo* tensorOut, void* MemoryAddress, uint64_t Size);
 	nosResult SliceTensor(nosTensorInfo* tensorIn, uint64_t* outCount, nosTensorInfo* outTensors);
 	nosResult CreateTensorPin(nosTensorInfo* tensor, nosUUID* NodeUUID, nosUUID* GeneratedPinUUID, TensorPinConfig config);
+	nosResult UpdateTensorPin(nosTensorInfo* tensor, nosUUID* NodeUUID, nosUUID* GeneratedPinUUID, TensorPinConfig config);
+	nosResult RemoveTensorPin(nosTensorInfo* tensor, nosUUID* NodeUUID, nosUUID* GeneratedPinUUID);
 	nosResult GetTensorElementTypeFromVulkanResource(TensorElementType* type, nosResourceShareInfo* vulkanResource);
 
 
