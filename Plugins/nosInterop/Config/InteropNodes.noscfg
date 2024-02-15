@@ -1,0 +1,22 @@
+{
+    "info": {
+        "id": {
+            "name": "nos.Interop",
+            "version": "1.0.0"
+        },
+        "description": "Interop Nodes",
+        "display_name": "Interop"
+    },
+    "node_definitions": [
+      "TextureToBuffer.nosdef"
+    ],
+    "custom_types": [],
+    "binary_path": "../Binaries/nosInterop",
+    "associated_nodes": [
+      {
+        "category": "Interop",
+        "class_name": "TextureToBuffer",
+        "display_name": "Texture to Buffer converter"
+      }
+    ]
+}

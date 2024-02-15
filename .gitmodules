@@ -27,3 +27,6 @@
 [submodule "Subsystems/nosPython/External/pybind11"]
 	path = Subsystems/nosPython/External/pybind11
 	url = https://github.com/pybind/pybind11.git
+[submodule "Subsystems/nosAI/External/ONNXRT"]
+	path = Subsystems/nosAI/External/ONNXRT
+	url = https://github.com/mediaz/onnxrt-dependencies.git

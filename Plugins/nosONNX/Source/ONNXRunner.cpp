@@ -15,54 +15,9 @@ NOS_REGISTER_NAME(ModelPath);
 struct ONNXRunnerNodeContext : nos::NodeContext
 {
 	nosUUID NodeUUID, InputUUID, OutputUUID;
-
+	ONNXModel Model;
 	ONNXRunnerNodeContext(nos::fb::Node const* node) :NodeContext(node) {
 		NodeUUID = *node->id();
-		ONNXModel mnistModel;
-		ONNXLoadConfig loadConfig = {};
-		loadConfig.OptimizationLevel = OPTIMIZATION_ENABLE_ALL;
-		loadConfig.RunLocation = RUN_ONNX_ON_CPU;
-		std::filesystem::path modelPath = "D:/AI-Models/ONNX/depth_anything_vits14.onnx";
-		std::filesystem::path optModelPath = modelPath.string() + "_optimized.ort";
-		std::filesystem::path optModelJsonPath = optModelPath.string() + ".json";
-		std::wstring optPath = optModelPath.wstring();
-		loadConfig.OptimizedModelSavePath = optPath.c_str();
-
-		nosResult res = nosAI->LoadONNXModel(&mnistModel, modelPath.string().c_str(), loadConfig);
-		nosTensorInfo inputTensor = {};
-		memcpy(&inputTensor.CreateInfo.ShapeInfo, &mnistModel.Inputs->Shape, sizeof(nosTensorShapeInfo));
-		inputTensor.CreateInfo.Location = MEMORY_LOCATION_CUDA;
-		inputTensor.CreateInfo.ElementType = mnistModel.Inputs[0].ElementType;
-		TensorPinConfig inputCfg = { .Name = "Input Tensor", .ShowAs = TENSOR_SHOW_AS_INPUT_PIN, .CanShowAs = TENSOR_CAN_SHOW_AS_INPUT_PIN_OR_PROPERTY };
-		nosTensor->CreateTensorPin(&inputTensor, &NodeUUID, &InputUUID, inputCfg);
-
-		std::ifstream infile;
-		infile.open(optModelPath, std::ios::binary | std::ios::in);
-		infile.seekg(0, std::ios::end);
-		uint64_t length = infile.tellg();
-
-		//infile.seekg(0, std::ios::beg);
-		//char* data = new char[length];
-		//infile.read(data, length);
-		//infile.close();
-		//onnxruntime::fbs::TInferenceSession inferenceSession;
-		//auto ORTed = onnxruntime::fbs::GetInferenceSession(data);
-		//ORTed->UnPackTo(&inferenceSession);
-		//std::ifstream schemaFile;
-		//schemaFile.open("C:/dev/onnxrt-modules/Plugins/nosONNX/Config/ORT.fbs", std::ios::binary | std::ios::in);
-		//std::string content{ std::istreambuf_iterator<char>(schemaFile), std::istreambuf_iterator<char>() };
-		//
-		//// Close the file
-		//schemaFile.close();
-		//flatbuffers::Parser parser;
-		//parser.Parse(content.c_str(), { nullptr });
-		//std::string name = onnxruntime::fbs::InferenceSession::GetFullyQualifiedName();;
-		//parser.SetRootType(name.c_str());
-		//std::string out;
-		//flatbuffers::GenText(parser, data, &out);
-		//flatbuffers::SaveFile(optModelJsonPath.string().c_str(), out, false);
-		//onnxruntime::fbs::TModel modelT;
-		//auto a = ORTed->GetFullyQualifiedName();
 	}
 
 	~ONNXRunnerNodeContext() {
@@ -73,6 +28,34 @@ struct ONNXRunnerNodeContext : nos::NodeContext
 	}
 
 	nosResult LoadModel(std::filesystem::path modelPath, bool isReload = false) {
+
+		ONNXModel mnistModel;
+		ONNXLoadConfig loadConfig = {};
+		loadConfig.OptimizationLevel = OPTIMIZATION_ENABLE_ALL;
+		loadConfig.RunLocation = RUN_ONNX_ON_CUDA;
+		std::filesystem::path optModelPath = modelPath.string() + "_optimized.ort";
+		std::filesystem::path optModelJsonPath = optModelPath.string() + ".json";
+		std::wstring optPath = optModelPath.wstring();
+		loadConfig.OptimizedModelSavePath = optPath.c_str();
+		ONNXCUDAOptions cudaOptions = { .DeviceID = 0 };
+		loadConfig.CUDAOptions = &cudaOptions;
+
+		nosResult res = nosAI->LoadONNXModel(&mnistModel, modelPath.string().c_str(), loadConfig);
+		nosTensorInfo inputTensor = {};
+		memcpy(&inputTensor.CreateInfo.ShapeInfo, &mnistModel.Inputs->Shape, sizeof(nosTensorShapeInfo));
+		inputTensor.CreateInfo.Location = MEMORY_LOCATION_CUDA;
+		inputTensor.CreateInfo.ElementType = mnistModel.Inputs[0].ElementType;
+
+		nosTensorInfo outputTensor = {};
+		memcpy(&outputTensor.CreateInfo.ShapeInfo, &mnistModel.Outputs->Shape, sizeof(nosTensorShapeInfo));
+		outputTensor.CreateInfo.Location = MEMORY_LOCATION_CUDA;
+		outputTensor.CreateInfo.ElementType = mnistModel.Outputs[0].ElementType;
+
+		TensorPinConfig inputCfg = { .Name = "Input Tensor", .ShowAs = TENSOR_SHOW_AS_INPUT_PIN, .CanShowAs = TENSOR_CAN_SHOW_AS_INPUT_PIN_OR_PROPERTY };
+		TensorPinConfig outputCfg = { .Name = "Output Tensor", .ShowAs = TENSOR_SHOW_AS_OUTPUT_PIN, .CanShowAs = TENSOR_CAN_SHOW_AS_OUTPUT_PIN_OR_PROPERTY };
+		nosTensor->CreateTensorPin(&inputTensor, &NodeUUID, &InputUUID, inputCfg);
+		nosTensor->CreateTensorPin(&outputTensor, &NodeUUID, &OutputUUID, outputCfg);
+
 		return NOS_RESULT_SUCCESS;
 	}
 
