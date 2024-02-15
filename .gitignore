@@ -6,3 +6,4 @@
 .vs
 .cache
 __pycache__
+*_generated.h
