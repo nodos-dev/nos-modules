@@ -526,7 +526,6 @@ namespace nos::cudass
 		cudaBuffer->CreateInfo.AllocationSize = size;
 		cudaBuffer->CreateInfo.BlockSize = size;
 		cudaBuffer->CreateInfo.IsImported = false;
-
 		ResManager.Add(cudaBuffer->Address, *cudaBuffer);
 
 		return NOS_RESULT_SUCCESS;
@@ -591,12 +590,16 @@ namespace nos::cudass
 		res = cudaExternalMemoryGetMappedBuffer(&pointer, externalMemory, &bufferDesc);
 		CHECK_CUDA_RT_ERROR(res);
 
+		//Clean resources in case of re-importing
+		//DestroyBuffer(outBuffer);
+
 		uint64_t outCudaPointerAddres = NULL;
 		outBuffer->Address = reinterpret_cast<uint64_t>(pointer);
 		outBuffer->CreateInfo.BlockSize = BlockSize;
 		outBuffer->CreateInfo.AllocationSize = AllocationSize;
 		outBuffer->CreateInfo.Offset = Offset;
 		outBuffer->CreateInfo.IsImported = true;
+		outBuffer->CreateInfo.ImportedInternalHandle = reinterpret_cast<uint64_t>(externalMemory);
 		outBuffer->ShareInfo.CreateHandle = NULL;
 		outBuffer->ShareInfo.ShareableHandle = NULL;
 		outBuffer->MemoryType = MEMORY_TYPE_DEVICE;
@@ -681,6 +684,10 @@ namespace nos::cudass
 					rtRes = cudaFree(reinterpret_cast<void*>(cudaBuffer->Address));
 					CHECK_CUDA_RT_ERROR(rtRes);
 				}
+			}
+			else {
+				rtRes = cudaDestroyExternalMemory(reinterpret_cast<cudaExternalMemory_t>(cudaBuffer->CreateInfo.ImportedInternalHandle));
+				CHECK_CUDA_RT_ERROR(rtRes);
 			}
 		}
 		return NOS_RESULT_SUCCESS;

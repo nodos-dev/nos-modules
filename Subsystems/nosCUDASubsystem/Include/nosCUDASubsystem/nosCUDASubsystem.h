@@ -259,6 +259,7 @@ typedef struct nosCUDABufferCreateInfo {
 	uint64_t AllocationSize;
 	uint64_t BlockSize;
 	bool IsImported;
+	uint64_t ImportedInternalHandle;
 }nosCUDABufferCreateInfo;
 
 typedef struct nosCUDABufferShareInfo {
