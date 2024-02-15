@@ -5,3 +5,5 @@
 .vscode
 .vs
 .cache
+*.ptx
+*ptx.h
