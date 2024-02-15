@@ -62,6 +62,11 @@
         },
         {
             "category": "Test",
+            "class_name": "CopyBuffer",
+            "display_name": "Copy Buffer"
+        },
+        {
+            "category": "Test",
             "class_name": "FrameInterpolator",
             "display_name": "Frame Interpolator"
         },

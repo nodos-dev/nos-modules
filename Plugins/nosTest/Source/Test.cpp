@@ -114,7 +114,7 @@ extern "C"
 
 	NOSAPI_ATTR nosResult NOSAPI_CALL nosExportNodeFunctions(size_t* outCount, nosNodeFunctions** outFunctions)
 	{
-		*outCount = (size_t)(8);
+		*outCount = (size_t)(9);
 		if (!outFunctions)
 			return NOS_RESULT_SUCCESS;
 
@@ -154,11 +154,31 @@ extern "C"
 			nosResourceShareInfo input = nos::vkss::DeserializeTextureInfo(values[NOS_NAME_STATIC("Input")]);
 			nosResourceShareInfo output = nos::vkss::DeserializeTextureInfo(values[NOS_NAME_STATIC("Output")]);
 			nosVulkan->Copy(cmd, &input, &output, 0);
-			nosVulkan->End(cmd, NOS_FALSE);
+			nosVulkan->End(cmd, nullptr);
 			return NOS_RESULT_SUCCESS;
 		};
-		RegisterFrameInterpolator(outFunctions[6]);
-		nos::test::RegisterWindowNode(outFunctions[7]);
+		outFunctions[6]->ClassName = NOS_NAME_STATIC("nos.test.CopyBuffer");
+		outFunctions[6]->ExecuteNode = [](void* ctx, const nosNodeExecuteArgs* args) {
+			auto inBuf = nos::GetPinValue<sys::vulkan::Buffer>(nos::GetPinValues(args), NOS_NAME_STATIC("Input"));
+			auto outBuf = nos::GetPinValue<sys::vulkan::Buffer>(nos::GetPinValues(args), NOS_NAME_STATIC("Output"));
+			auto in = vkss::ConvertToResourceInfo(*inBuf);
+			auto out = vkss::ConvertToResourceInfo(*outBuf);
+			if (out.Info.Buffer.Size != in.Info.Buffer.Size)
+			{
+				out = in;
+				nosVulkan->CreateResource(&out);
+				out.Info.Buffer.Usage = nosBufferUsage(out.Info.Buffer.Usage | NOS_BUFFER_USAGE_TRANSFER_DST);
+				auto newBuf = nos::Buffer::From(vkss::ConvertBufferInfo(out));
+				nosEngine.SetPinValue(args->Pins[1].Id, newBuf);
+			}
+			nosCmd cmd{};
+			nosVulkan->Begin("(nos.test.CopyBuffer) Copy", &cmd);
+			nosVulkan->Copy(cmd, &in, &out, 0);
+			nosVulkan->End(cmd, nullptr);
+			return NOS_RESULT_SUCCESS;
+		};
+		RegisterFrameInterpolator(outFunctions[7]);
+		nos::test::RegisterWindowNode(outFunctions[8]);
 		return NOS_RESULT_SUCCESS;
 
 	}

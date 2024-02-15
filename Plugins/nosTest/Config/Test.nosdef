@@ -399,6 +399,24 @@
 					"can_show_as": "OUTPUT_PIN_OR_PROPERTY"
 				}
 			]
+		},
+		{
+			"class_name": "CopyBuffer",
+			"contents_type": "Job",
+			"pins": [
+				{
+					"name": "Input",
+					"type_name": "nos.sys.vulkan.Buffer",
+					"show_as": "INPUT_PIN",
+					"can_show_as": "INPUT_PIN_OR_PROPERTY"
+				},
+				{
+					"name": "Output",
+					"type_name": "nos.sys.vulkan.Buffer",
+					"show_as": "OUTPUT_PIN",
+					"can_show_as": "OUTPUT_PIN_OR_PROPERTY"
+				}
+			]
 		}
 	]
 }
