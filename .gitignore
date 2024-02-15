@@ -7,3 +7,4 @@
 .cache
 *.ptx
 *ptx.h
+*ptx_generated.h
