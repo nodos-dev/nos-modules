@@ -30,3 +30,6 @@
 [submodule "Subsystems/nosAI/External/ONNXRT"]
 	path = Subsystems/nosAI/External/ONNXRT
 	url = https://github.com/mediaz/onnxrt-dependencies.git
+[submodule "Subsystems/nosNVVFXDeps"]
+	path = Subsystems/nosNVVFXDeps
+	url = https://github.com/mediaz/nvvfx_sdk
