@@ -2,10 +2,8 @@
 #include <nosVulkanSubsystem/Helpers.hpp>
 #include <nosVulkanSubsystem/Types_generated.h>
 #include "InteropCommon.h"
+#include "InteropNames.h"
 
-NOS_REGISTER_NAME(TextureToBuffer)
-NOS_REGISTER_NAME(Input)
-NOS_REGISTER_NAME(OutputBuffer);
 	
 struct TextureToBufferNodeContext : nos::NodeContext
 {

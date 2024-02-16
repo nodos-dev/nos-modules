@@ -600,6 +600,7 @@ namespace nos::cudass
 		outBuffer->CreateInfo.Offset = Offset;
 		outBuffer->CreateInfo.IsImported = true;
 		outBuffer->CreateInfo.ImportedInternalHandle = reinterpret_cast<uint64_t>(externalMemory);
+		outBuffer->CreateInfo.ImportedExternalHandle = Handle;
 		outBuffer->ShareInfo.CreateHandle = NULL;
 		outBuffer->ShareInfo.ShareableHandle = NULL;
 		outBuffer->MemoryType = MEMORY_TYPE_DEVICE;

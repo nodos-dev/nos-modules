@@ -7,6 +7,13 @@
 
 NOS_INIT();
 
+NOS_REGISTER_NAME(VulkanBufferToCUDABuffer)
+NOS_REGISTER_NAME(InputBuffer)
+NOS_REGISTER_NAME(OutputBuffer);
+
+NOS_REGISTER_NAME(TextureToBuffer)
+NOS_REGISTER_NAME(Input)
+
 nosResult RegisterTextureToBuffer(nosNodeFunctions* outFunctions);
 nosResult RegisterVulkanBufferToCUDABuffer(nosNodeFunctions* outFunctions);
 

@@ -4,10 +4,7 @@
 #include <nosCUDASubsystem/nosCUDASubsystem.h>
 #include <nosCUDASubsystem/Types_generated.h>
 #include "InteropCommon.h"
-
-NOS_REGISTER_NAME(VulkanBufferToCUDABuffer)
-NOS_REGISTER_NAME(InputBuffer)
-NOS_REGISTER_NAME(OutputBuffer);
+#include "InteropNames.h"
 
 struct VulkanBufferToCUDABuffer : nos::NodeContext
 {
@@ -32,28 +29,31 @@ struct VulkanBufferToCUDABuffer : nos::NodeContext
 	void OnPinValueChanged(nos::Name pinName, nosUUID pinId, nosBuffer value) override
 	{
 		if (InputBufferUUID == pinId) {
-			auto VulkanBuf = flatbuffers::GetRoot<nos::sys::vulkan::Buffer>(value.Data);
-			if(VulkanBuf->handle() == CUDABuffer)
-			nosResult res = nosCUDA->ImportExternalMemoryAsCUDABuffer(VulkanBuf->external_memory()., VulkanBuf->size_in_bytes(), VulkanBuf->size_in_bytes(), VulkanBuf->offset(), EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUEWIN32, &CUDABuffer);
+			auto* VulkanBuf = flatbuffers::GetRoot<nos::sys::vulkan::Buffer>(value.Data);
+			if (VulkanBuf->handle() == CUDABuffer.CreateInfo.ImportedExternalHandle) {
+				//Resource already imported
+				return;
+			}
+			nosResult res = nosCUDA->ImportExternalMemoryAsCUDABuffer(VulkanBuf->external_memory().handle(), VulkanBuf->size_in_bytes(), VulkanBuf->size_in_bytes(), VulkanBuf->offset(), EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUEWIN32, &CUDABuffer);
 			if (res != NOS_RESULT_SUCCESS) {
 				nosEngine.LogE("Import from Vulkan to CUDA failed!");
 				return;
 			}
-			UpdateOutputPin();
+			UpdateOutputPin(VulkanBuf);
 		}
 	}
 	
 
 	nosResult ExecuteNode(const nosNodeExecuteArgs* args) override
 	{
-
+		return NOS_RESULT_SUCCESS;
 	}
 
 
 
-	void UpdateOutputPin(nos::sys::vulkan::Buffer vulkanBuf) {
+	void UpdateOutputPin(const nos::sys::vulkan::Buffer* vulkanBuf) {
 
-		if (VulkanBufferPinProxy.Address == vulkanBuf.handle()) {
+		if (VulkanBufferPinProxy.Address == vulkanBuf->handle()) {
 			return;
 		}
 
