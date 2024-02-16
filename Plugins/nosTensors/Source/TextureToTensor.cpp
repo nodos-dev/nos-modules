@@ -8,7 +8,7 @@
 #include "flatbuffers/flatbuffers.h"
 #include "ORT_generated.h"
 #include <nosVulkanSubsystem/Helpers.hpp>
-#include "CUDAKernels/RGBAtoRGB.cu.ptx_generated.h"
+#include "CUDAKernels/RGBAtoRGBAPlanar.cu.ptx_generated.h"
 
 #define CHECK_NOS_RESULT(nosRes) \
 	do { \
@@ -27,26 +27,31 @@ NOS_REGISTER_NAME(Out);
 
 struct TextureToTensor : nos::NodeContext
 {
-	nosUUID LayoutUUID;
-	nosUUID InputUUID;
+	nosUUID LayoutUUID, OutFormatUUID;
+	nosUUID InputUUID, OutputUUID;
 	nosUUID NodeID;
-	nosTensorInfo InputTensor = {}, InputTensorPlanar = {};
+	nosTensorInfo OutTensor = {};
 	nosCUDABufferInfo    InputLinearCUDA = {}, InputLinearPlanarCUDA = {};
 	nosResourceShareInfo InputTexture = {}, InputTextureLinear = {};
-	std::string NHWC = "NHWC";
-	std::string NCHW = "NCHW";
+	std::string Layout_NHWC = "NHWC", Layout_NCHW = "NCHW";
+	std::string OutFormat_RGBA = "RGBA", OutFormat_RGB = "RGB", OutFormat_RG = "RG", OutFormat_R = "R";
 	std::string CurrentLayout;
+	int InputFormatChannelCount, OutputFormatChannelCount;
 	nosCUDAModule CUDAModule = {};
 	nosCUDAKernelFunction CUDAFunction = {};
 	TextureToTensor(nos::fb::Node const* node) :NodeContext(node) {
 		NodeID = *node->id();
-		CreateStringList(LayoutUUID, NodeID, "Layout", { "NHWC","NCHW" });
+		
+		CreateStringList(LayoutUUID, NodeID, "Layout", { Layout_NHWC,Layout_NCHW });
+		CreateStringList(OutFormatUUID, NodeID, "Output Format", { OutFormat_RGBA, OutFormat_RGB, OutFormat_RG, OutFormat_R });  
+		OutputFormatChannelCount = 4;
+
 		char ErrorLog[8192];
 		nosCUDAModule cudaModule = {};
 		nosCUDAKernelFunction function = {};
-		nosCUDA->LoadKernelModuleFromCString(RGBAtoRGB, ErrorLog, 8192, &CUDAModule);
-		nosCUDA->GetModuleKernelFunction(RGBAtoRGB_NAME, CUDAModule, &CUDAFunction);
-		CurrentLayout = NHWC;
+		nosCUDA->LoadKernelModuleFromCString(RGBAtoRGBAPlanar, ErrorLog, 8192, &CUDAModule);
+		nosCUDA->GetModuleKernelFunction(RGBAtoRGBAPlanar_NAME, CUDAModule, &CUDAFunction);
+		CurrentLayout = Layout_NHWC;
 		
 	}
 
@@ -54,42 +59,54 @@ struct TextureToTensor : nos::NodeContext
 	}
 
 	void OnPinValueChanged(nos::Name pinName, nosUUID pinId, nosBuffer value) override{
-		if (LayoutUUID == pinId) {
-			auto layoutStr = std::string(static_cast<char*>(value.Data));
-			if (layoutStr == NHWC) {
-				//Do not do anything extra
-			}
-			else if (layoutStr == NCHW) {
-				if (InputTensor.MemoryInfo.Address == NULL)
-					return;
-
-				//Slice and merge the tensor
-				LaunchConverterKernel();
-				
-			}
-		}
-
 		if (NSN_In.Compare(pinName.AsCStr()) == 0) {
 			auto inputTex = nos::vkss::DeserializeTextureInfo(value.Data);
-			PrepareResources(inputTex);
+			UpdateResources(inputTex);
+		}
+		else if (LayoutUUID == pinId) {
+			auto layoutStr = std::string(static_cast<char*>(value.Data));
+			CurrentLayout = layoutStr;
+
+			if (layoutStr == Layout_NHWC) {
+				UpdateTensors();
+			}
+			else if (layoutStr == Layout_NCHW) {
+				UpdateTensors();
+			}
+		}
+		else if (OutFormatUUID == pinId) {
+			auto outFormatStr = std::string(static_cast<char*>(value.Data));
+			if (outFormatStr == OutFormat_RGBA) {
+				OutputFormatChannelCount = 4;
+			}
+			else if (outFormatStr == OutFormat_RGB) {
+				OutputFormatChannelCount = 3;
+			}
+			else if (outFormatStr == OutFormat_RG) {
+				OutputFormatChannelCount = 2;
+			}
+			else if (outFormatStr == OutFormat_R) {
+				OutputFormatChannelCount = 1;
+			}
+			UpdateTensors();
 		}
 	}
 
 	void LaunchConverterKernel() {
 		
 		nosCUDABufferInfo CPUData = {};
-		nosCUDA->CreateBuffer(&CPUData, InputTensor.MemoryInfo.Size);
+		nosCUDA->CreateBuffer(&CPUData, InputLinearCUDA.CreateInfo.AllocationSize);
 		nosCUDA->CopyBuffers(&InputLinearCUDA, &CPUData);
 		uint16_t* CPUDataPointer = reinterpret_cast<uint16_t*>(CPUData.Address);
 		uint8_t* vulkanCPUPointer = nosVulkan->Map(&InputTextureLinear);
 
-		void* InData = reinterpret_cast<void*>(InputTensor.MemoryInfo.Address);
-		int TotalSizeInBytes = InputTensor.MemoryInfo.Size;
+		void* InData = reinterpret_cast<void*>(InputLinearCUDA.Address);
+		int TotalSizeInBytes = InputLinearCUDA.CreateInfo.AllocationSize;
 		int BytesPerElement = GetComponentBytesFromVulkanFormat(InputTexture.Info.Texture.Format);
 		int Width = InputTexture.Info.Texture.Width;
 		int Height = InputTexture.Info.Texture.Height;
-		void* OutData = reinterpret_cast<void*>(InputTensorPlanar.MemoryInfo.Address);
-		void* args[] = { &InData, &TotalSizeInBytes, &BytesPerElement, &Width, &Height, &OutData };
+		void* OutData = reinterpret_cast<void*>(OutTensor.MemoryInfo.Address);
+		void* args[] = { &InData, &TotalSizeInBytes, &BytesPerElement, &Width, &Height, &InputFormatChannelCount ,&OutData };
 		nosCUDAStream stream = {};
 		nosCUDA->CreateStream(&stream);
 
@@ -105,7 +122,7 @@ struct TextureToTensor : nos::NodeContext
 		nosCUDAError lastError = nosCUDA->GetLastError();
 	}
 
-	nosResult PrepareResources(nosResourceShareInfo& in) {
+	nosResult UpdateResources(nosResourceShareInfo& in) {
 		if (in.Info.Texture.Width == InputTexture.Info.Texture.Width &&
 			in.Info.Texture.Height == InputTexture.Info.Texture.Height &&
 			in.Info.Texture.Format == InputTexture.Info.Texture.Format) {
@@ -117,7 +134,7 @@ struct TextureToTensor : nos::NodeContext
 			nosVulkan->Copy(texToBuf, &in, &InputTextureLinear, 0);
 			nosVulkan->End(texToBuf, &endParams);
 			nosVulkan->WaitGpuEvent(&waitTexToBuf, UINT64_MAX);
-			if (CurrentLayout == NCHW) {
+			if (CurrentLayout == Layout_NCHW) {
 				LaunchConverterKernel();
 			}
 			return NOS_RESULT_SUCCESS;
@@ -129,15 +146,17 @@ struct TextureToTensor : nos::NodeContext
 			nosVulkan->DestroyResource(&InputTexture);
 		}
 		if (InputTextureLinear.Memory.Handle != NULL) {
+			if (InputLinearCUDA.Address != NULL) {
+				nosCUDA->DestroyBuffer(&InputLinearCUDA);
+			}
 			nosVulkan->DestroyResource(&InputTextureLinear);
-			nosCUDA->DestroyBuffer(&InputLinearCUDA);
 		}
 
-		int componentNum = GetComponentNumFromVulkanFormat(in.Info.Texture.Format);
+		InputFormatChannelCount = GetComponentNumFromVulkanFormat(in.Info.Texture.Format);
 		int componentByte = GetComponentBytesFromVulkanFormat(in.Info.Texture.Format);
 
 		InputTextureLinear.Info.Type = NOS_RESOURCE_TYPE_BUFFER;
-		InputTextureLinear.Info.Buffer.Size = in.Info.Texture.Width * in.Info.Texture.Height * componentByte * componentNum;
+		InputTextureLinear.Info.Buffer.Size = in.Info.Texture.Width * in.Info.Texture.Height * componentByte * InputFormatChannelCount;
 		InputTextureLinear.Info.Buffer.Usage = nosBufferUsage(NOS_BUFFER_USAGE_TRANSFER_SRC | NOS_BUFFER_USAGE_TRANSFER_DST);
 		nosVulkan->CreateResource(&InputTextureLinear);
 
@@ -151,35 +170,55 @@ struct TextureToTensor : nos::NodeContext
 		
 		nosTensorCreateInfo tensorCreateInfo = {};
 		tensorCreateInfo.Location = MEMORY_LOCATION_VULKAN;
-		tensorCreateInfo.ShapeInfo.DimensionCount = componentNum;
-		int64_t tensorDimensions[] = { 1, in.Info.Texture.Height, in.Info.Texture.Width, componentNum }; //NHWC
+		tensorCreateInfo.ShapeInfo.DimensionCount = 4;
+		int64_t tensorDimensions[] = { 1, in.Info.Texture.Height, in.Info.Texture.Width, OutputFormatChannelCount }; //NHWC
 		tensorCreateInfo.ShapeInfo.Dimensions = tensorDimensions;
 
 		res = nosCUDA->ImportExternalMemoryAsCUDABuffer(InputTextureLinear.Memory.ExternalMemory.Handle, InputTextureLinear.Memory.ExternalMemory.AllocationSize,
 			InputTextureLinear.Memory.Size, InputTextureLinear.Memory.ExternalMemory.Offset, EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUEWIN32, &InputLinearCUDA);
 		CHECK_NOS_RESULT(res);
-
 		TensorElementType elementType = {};
 		nosTensor->GetTensorElementTypeFromVulkanResource(&elementType, &in);
 
-		res = nosTensor->ImportTensorFromCUDABuffer(&InputTensor, &InputLinearCUDA, tensorCreateInfo.ShapeInfo, elementType);
-		CHECK_NOS_RESULT(res);
+		if (InputLinearPlanarCUDA.Address != NULL) {
+			nosCUDA->DestroyBuffer(&InputLinearPlanarCUDA);
+		}
 
-		res = nosCUDA->CreateBufferOnCUDA(&InputLinearPlanarCUDA, InputTensor.MemoryInfo.Size * 3 / 4);
-		CHECK_NOS_RESULT(res);
-		
-		nosTensorCreateInfo planarCreateInfo = {};
-		planarCreateInfo.ElementType = elementType;
-		int64_t planarTensorDimensions[] = { 1, 3, in.Info.Texture.Height, in.Info.Texture.Width };
-		planarCreateInfo.ShapeInfo.DimensionCount = 4;
-		planarCreateInfo.ShapeInfo.Dimensions = planarTensorDimensions;
-
-		res = nosTensor->ImportTensorFromCUDABuffer(&InputTensorPlanar, &InputLinearPlanarCUDA, planarCreateInfo.ShapeInfo, elementType);
+		res = nosCUDA->CreateBufferOnCUDA(&InputLinearPlanarCUDA, InputLinearCUDA.CreateInfo.AllocationSize);
 		CHECK_NOS_RESULT(res);
 		
 		InputTexture = in;
 
+		UpdateTensors();
 		return res;
+	}
+
+	nosResult UpdateTensors() {
+		
+		TensorElementType elementType = {};
+		nosTensor->GetTensorElementTypeFromVulkanResource(&elementType, &InputTexture);
+
+		nosTensorCreateInfo planarCreateInfo = {};
+		planarCreateInfo.ShapeInfo.DimensionCount = 4; //this is fixed since either NHWC or NCHW
+		nosResult res;
+		if (CurrentLayout == Layout_NHWC) {
+			int64_t planarTensorDimensions[] = { 1, InputTexture.Info.Texture.Height, InputTexture.Info.Texture.Width, OutputFormatChannelCount };
+			planarCreateInfo.ShapeInfo.Dimensions = planarTensorDimensions;
+			res = nosTensor->ImportTensorFromCUDABuffer(&OutTensor, &InputLinearCUDA, planarCreateInfo.ShapeInfo, elementType);
+		}
+		else { //NCHW
+			int64_t planarTensorDimensions[] = { 1, OutputFormatChannelCount, InputTexture.Info.Texture.Height, InputTexture.Info.Texture.Width };
+			planarCreateInfo.ShapeInfo.Dimensions = planarTensorDimensions;
+			res = nosTensor->ImportTensorFromCUDABuffer(&OutTensor, &InputLinearPlanarCUDA, planarCreateInfo.ShapeInfo, elementType);
+			LaunchConverterKernel();
+		}
+
+		CHECK_NOS_RESULT(res);
+		TensorPinConfig pinConfig = {};
+		pinConfig.CanShowAs = TENSOR_CAN_SHOW_AS_OUTPUT_PIN_OR_PROPERTY;
+		pinConfig.ShowAs = TENSOR_SHOW_AS_OUTPUT_PIN;
+		pinConfig.Name = "Output Tensor";
+		nosTensor->UpdateTensorPin(&OutTensor, &NodeID, &OutputUUID, pinConfig);
 	}
 
 	static nosResult GetFunctions(size_t* count, nosName* names, nosPfnNodeFunctionExecute* fns)
