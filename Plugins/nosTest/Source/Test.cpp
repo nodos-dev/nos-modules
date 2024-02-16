@@ -162,6 +162,8 @@ extern "C"
 			auto inBuf = nos::GetPinValue<sys::vulkan::Buffer>(nos::GetPinValues(args), NOS_NAME_STATIC("Input"));
 			auto outBuf = nos::GetPinValue<sys::vulkan::Buffer>(nos::GetPinValues(args), NOS_NAME_STATIC("Output"));
 			auto in = vkss::ConvertToResourceInfo(*inBuf);
+			if (in.Memory.Handle == 0)
+				return NOS_RESULT_INVALID_ARGUMENT;
 			auto out = vkss::ConvertToResourceInfo(*outBuf);
 			if (out.Info.Buffer.Size != in.Info.Buffer.Size)
 			{
