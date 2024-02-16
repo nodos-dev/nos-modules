@@ -8,7 +8,8 @@
         "display_name": "Interop"
     },
     "node_definitions": [
-      "TextureToBuffer.nosdef"
+      "TextureToBuffer.nosdef",
+      "VulkanBufferToCUDABuffer.nosdef"
     ],
     "custom_types": [],
     "binary_path": "../Binaries/nosInterop",
@@ -16,7 +17,12 @@
       {
         "category": "Interop",
         "class_name": "TextureToBuffer",
-        "display_name": "Texture to Buffer converter"
+        "display_name": "Vulkan Texture to Vulkan Buffer"
+      },
+      {
+        "category": "Interop",
+        "class_name": "VulkanBufferToCUDABuffer",
+        "display_name": "Vulkan Buffer to CUDA Buffer"
       }
     ]
 }

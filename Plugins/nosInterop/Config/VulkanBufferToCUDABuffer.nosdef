@@ -5,7 +5,7 @@
       "contents_type": "Job",
       "pins": [
         {
-          "name": "Input",
+          "name": "InputBuffer",
           "type_name": "nos.sys.vulkan.Buffer",
           "show_as": "INPUT_PIN",
           "can_show_as": "INPUT_PIN_OR_PROPERTY"

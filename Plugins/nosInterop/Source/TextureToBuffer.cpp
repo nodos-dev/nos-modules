@@ -15,10 +15,11 @@ struct TextureToBufferNodeContext : nos::NodeContext
 		NodeUUID = *node->id();
 
 		for (const auto& pin : *node->pins()) {
-			if (NSN_Input.Compare(pin->name()->c_str())) {
+			const char* currentPinName = pin->name()->c_str();
+			if (NSN_Input.Compare(pin->name()->c_str()) == 0) {
 				InputUUID = *pin->id();
 			}
-			else if (NSN_OutputBuffer.Compare(pin->name()->c_str())) {
+			else if (NSN_OutputBuffer.Compare(pin->name()->c_str()) == 0) {
 				OutputBufferUUID = *pin->id();
 			}
 		}

@@ -8,7 +8,7 @@
 
 struct VulkanBufferToCUDABuffer : nos::NodeContext
 {
-	BufferPin VulkanBufferPinProxy = {}, CUDABufferPinProxy = {};
+	BufferPin VulkanBufferPinProxy = {};
 	nosResourceShareInfo Buffer = {};
 	nosUUID NodeUUID = {}, InputBufferUUID = {}, OutputBufferUUID = {};
 	nosCUDABufferInfo CUDABuffer = {};
@@ -17,10 +17,10 @@ struct VulkanBufferToCUDABuffer : nos::NodeContext
 		NodeUUID = *node->id();
 
 		for (const auto& pin : *node->pins()) {
-			if (NSN_InputBuffer.Compare(pin->name()->c_str())) {
+			if (NSN_InputBuffer.Compare(pin->name()->c_str()) == 0) {
 				InputBufferUUID = *pin->id();
 			}
-			else if (NSN_OutputBuffer.Compare(pin->name()->c_str())) {
+			else if (NSN_OutputBuffer.Compare(pin->name()->c_str()) == 0) {
 				OutputBufferUUID = *pin->id();
 			}
 		}
@@ -39,6 +39,7 @@ struct VulkanBufferToCUDABuffer : nos::NodeContext
 				nosEngine.LogE("Import from Vulkan to CUDA failed!");
 				return;
 			}
+
 			UpdateOutputPin(VulkanBuf);
 		}
 	}
@@ -51,22 +52,22 @@ struct VulkanBufferToCUDABuffer : nos::NodeContext
 
 
 
-	void UpdateOutputPin(const nos::sys::vulkan::Buffer* vulkanBuf) {
+	void UpdateOutputPin(const nos::sys::vulkan::Buffer* VulkanBuf) {
 
-		if (VulkanBufferPinProxy.Address == vulkanBuf->handle()) {
+		if (VulkanBufferPinProxy.Address == VulkanBuf->handle()) {
 			return;
 		}
 
 		nos::sys::cuda::Buffer buffer;
-		buffer.mutate_element_type(CUDABufferPinProxy.Element.CUDAElementType);
-		buffer.mutate_handle(CUDABufferPinProxy.Address);
-		buffer.mutate_size_in_bytes(CUDABufferPinProxy.Size);
-		buffer.mutate_offset(CUDABufferPinProxy.Offset);
+		buffer.mutate_element_type((nos::sys::cuda::BufferElementType)VulkanBuf->element_type());
+		buffer.mutate_handle(CUDABuffer.Address);
+		buffer.mutate_size_in_bytes(VulkanBuf->size_in_bytes());
+		buffer.mutate_offset(VulkanBuf->offset());
 
+		VulkanBufferPinProxy.Address = VulkanBuf->handle();
+		
 		auto bufPin = nos::Buffer::From(buffer);
-
 		nosEngine.SetPinValue(OutputBufferUUID, { .Data = &bufPin, .Size = sizeof(bufPin.Size()) });
-
 		return;
 	}
 

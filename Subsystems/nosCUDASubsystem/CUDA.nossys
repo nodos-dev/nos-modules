@@ -8,5 +8,8 @@
     "description": "CUDA Subsystem for Nodos.",
     "dependencies": []
   },
-  "binary_path": "./Binaries/nosCUDASubsystem"
+  "binary_path": "./Binaries/nosCUDASubsystem",
+  "custom_types": [
+    "./Config/Types.fbs"
+  ]
 }
