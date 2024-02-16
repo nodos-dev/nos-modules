@@ -687,10 +687,16 @@ namespace nos::cudass
 				}
 			}
 			else {
+				rtRes = cudaFree(reinterpret_cast<void*>(cudaBuffer->Address));
+				CHECK_CUDA_RT_ERROR(rtRes);
+
 				rtRes = cudaDestroyExternalMemory(reinterpret_cast<cudaExternalMemory_t>(cudaBuffer->CreateInfo.ImportedInternalHandle));
 				CHECK_CUDA_RT_ERROR(rtRes);
 			}
 		}
+		
+		memset(cudaBuffer, 0, sizeof(nosCUDABufferInfo));//Let the users know
+
 		return NOS_RESULT_SUCCESS;
 	}
 
