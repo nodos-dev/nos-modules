@@ -37,6 +37,7 @@ struct TextureToBufferNodeContext : nos::NodeContext
 	void PrepareResources(nosResourceShareInfo& in) {
 		uint64_t currentSize = static_cast<uint64_t>(GetComponentBytesFromVulkanFormat(in.Info.Texture.Format)) *
 			static_cast<uint64_t>(GetComponentNumFromVulkanFormat(in.Info.Texture.Format)) * in.Info.Texture.Width * in.Info.Texture.Height;
+		
 		if (currentSize == Buffer.Memory.Size) {
 			nosCmd texToBuf = {};
 			nosGPUEvent waitTexToBuf = {};
@@ -56,21 +57,23 @@ struct TextureToBufferNodeContext : nos::NodeContext
 		Buffer.Info.Buffer.Usage = nosBufferUsage(NOS_BUFFER_USAGE_TRANSFER_SRC | NOS_BUFFER_USAGE_TRANSFER_SRC);
 		nosVulkan->CreateResource(&Buffer);
 
-		BufferPinProxy.Address = Buffer.Memory.Handle;
-		BufferPinProxy.Element.VulkanElementType = (nos::sys::vulkan::BufferElementType)GetBufferElementTypeFromVulkanFormat(in.Info.Texture.Format);
-		BufferPinProxy.Offset = Buffer.Memory.ExternalMemory.Offset;
-		BufferPinProxy.Size = Buffer.Memory.Size;
-
 		nos::sys::vulkan::Buffer buffer;
-		buffer.mutate_element_type(BufferPinProxy.Element.VulkanElementType);
-		buffer.mutate_handle(BufferPinProxy.Address);
-		buffer.mutate_size_in_bytes(BufferPinProxy.Size);
-		buffer.mutate_offset(BufferPinProxy.Offset);
+		buffer.mutate_element_type((nos::sys::vulkan::BufferElementType)GetBufferElementTypeFromVulkanFormat(in.Info.Texture.Format));
+		buffer.mutate_handle(Buffer.Memory.Handle);
+		buffer.mutate_size_in_bytes(Buffer.Memory.Size);
+		buffer.mutate_offset(Buffer.Memory.ExternalMemory.Offset);
 
-		auto bufPin = nos::Buffer::From(buffer);
+		buffer.mutable_external_memory().mutate_allocation_size(Buffer.Memory.ExternalMemory.AllocationSize);
+		buffer.mutable_external_memory().mutate_handle(Buffer.Memory.ExternalMemory.Handle);
+		buffer.mutable_external_memory().mutate_handle_type(Buffer.Memory.ExternalMemory.HandleType);
+		buffer.mutable_external_memory().mutate_pid(Buffer.Memory.ExternalMemory.PID);
 
-		nosEngine.SetPinValue(OutputBufferUUID, { .Data = &bufPin, .Size = sizeof(bufPin.Size())});
 
+
+		nos::Buffer bufPin = nos::Buffer::From(buffer);
+
+		nosEngine.SetPinValueDirect(OutputBufferUUID, bufPin);
+		
 		return;
 	}
 

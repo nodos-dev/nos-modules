@@ -29,24 +29,32 @@ struct VulkanBufferToCUDABuffer : nos::NodeContext
 	void OnPinValueChanged(nos::Name pinName, nosUUID pinId, nosBuffer value) override
 	{
 		if (InputBufferUUID == pinId) {
-			auto* VulkanBuf = flatbuffers::GetRoot<nos::sys::vulkan::Buffer>(value.Data);
-			if (VulkanBuf->handle() == CUDABuffer.CreateInfo.ImportedExternalHandle) {
+
+			auto VulkanBuf = (nos::sys::vulkan::Buffer*)(value.Data);
+
+			if (VulkanBuf->external_memory().handle() == CUDABuffer.CreateInfo.ImportedExternalHandle) {
 				//Resource already imported
 				return;
 			}
-			nosResult res = nosCUDA->ImportExternalMemoryAsCUDABuffer(VulkanBuf->external_memory().handle(), VulkanBuf->size_in_bytes(), VulkanBuf->size_in_bytes(), VulkanBuf->offset(), EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUEWIN32, &CUDABuffer);
+			nosResult res = nosCUDA->ImportExternalMemoryAsCUDABuffer(VulkanBuf->external_memory().handle(), VulkanBuf->external_memory().allocation_size(),
+				VulkanBuf->size_in_bytes(), 
+				VulkanBuf->offset(), EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUEWIN32, &CUDABuffer);
 			if (res != NOS_RESULT_SUCCESS) {
 				nosEngine.LogE("Import from Vulkan to CUDA failed!");
 				return;
 			}
-
-			UpdateOutputPin(VulkanBuf);
 		}
 	}
 	
 
 	nosResult ExecuteNode(const nosNodeExecuteArgs* args) override
 	{
+		auto pinIds = nos::GetPinIds(args);
+		auto pinValues = nos::GetPinValues(args);
+		auto VulkanBuf = (nos::sys::vulkan::Buffer*)(pinValues[NSN_InputBuffer]);
+
+		UpdateOutputPin(VulkanBuf);
+
 		return NOS_RESULT_SUCCESS;
 	}
 
@@ -57,17 +65,21 @@ struct VulkanBufferToCUDABuffer : nos::NodeContext
 		if (VulkanBufferPinProxy.Address == VulkanBuf->handle()) {
 			return;
 		}
+		VulkanBufferPinProxy.Address = VulkanBuf->handle();
 
 		nos::sys::cuda::Buffer buffer;
 		buffer.mutate_element_type((nos::sys::cuda::BufferElementType)VulkanBuf->element_type());
 		buffer.mutate_handle(CUDABuffer.Address);
 		buffer.mutate_size_in_bytes(VulkanBuf->size_in_bytes());
 		buffer.mutate_offset(VulkanBuf->offset());
-
-		VulkanBufferPinProxy.Address = VulkanBuf->handle();
+		buffer.mutable_external_memory().mutate_allocation_size(CUDABuffer.CreateInfo.AllocationSize);
+		buffer.mutable_external_memory().mutate_handle(CUDABuffer.ShareInfo.ShareableHandle);
+		//buffer.mutable_external_memory().mutate_handle_type(CUDABuffer.ShareInfo.HandleType);
+		buffer.mutable_external_memory().mutate_pid(getpid());
 		
+
 		auto bufPin = nos::Buffer::From(buffer);
-		nosEngine.SetPinValue(OutputBufferUUID, { .Data = &bufPin, .Size = sizeof(bufPin.Size()) });
+		nosEngine.SetPinValueDirect(OutputBufferUUID, bufPin);
 		return;
 	}
 

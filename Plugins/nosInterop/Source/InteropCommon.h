@@ -16,7 +16,7 @@ typedef struct BufferPin {
 	uint64_t Size;
 	uint64_t Address;
 	uint64_t Offset;
-};
+}BufferPin;
 
 typedef struct PinConfig {
 	const char* Name;
