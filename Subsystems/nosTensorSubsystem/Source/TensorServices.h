@@ -27,6 +27,7 @@ namespace nos::tensor
 	nosResult ImportTensorFromVulkanResource(nosTensorInfo* tensorOut, nosResourceShareInfo* vulkanResource, nosTensorShapeInfo shapeInfo, TensorElementType elementType);
 	nosResult CreateTensorFromCUDABuffer(nosTensorInfo* tensorOut, nosCUDABufferInfo* cudaBuffer, nosTensorCreateInfo createInfo);
 	nosResult CreateTensorFromVulkanResource(nosTensorInfo* tensorOut, nosResourceShareInfo* vulkanResource, nosTensorCreateInfo createInfo);
+	nosResult DestroyTensor(nosTensorInfo* tensorOut);
 	nosResult CreateEmptyTensor(nosTensorInfo* tensorOut, nosTensorCreateInfo createInfo);
 	nosResult InitTensor(nosTensorInfo* tensorOut, void* MemoryAddress, nosTensorCreateInfo createInfo);
 	nosResult CopyDataToTensor(nosTensorInfo* tensorOut, void* MemoryAddress, uint64_t Size);

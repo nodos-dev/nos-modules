@@ -108,6 +108,7 @@ typedef struct nosTensorSubsystem
 	//Will perform copy from the data of Vulkan Resource to newly created nosTensorInfo. If the resource is texture, createInfo.ElementType will be deduced from the format and given parameter will be overridden.
 	nosResult(NOSAPI_CALL* CreateTensorFromVulkanResource)(nosTensorInfo* tensorOut, nosResourceShareInfo* vulkanResource, nosTensorCreateInfo createInfo); 
 
+	nosResult(NOSAPI_CALL* DestroyTensor)(nosTensorInfo* tensorOut);
 	nosResult(NOSAPI_CALL* CreateEmptyTensor)(nosTensorInfo* tensorOut, nosTensorCreateInfo createInfo);
 	nosResult(NOSAPI_CALL* InitTensor)(nosTensorInfo* tensorOut,void* MemoryAddress, nosTensorCreateInfo createInfo);
 	nosResult(NOSAPI_CALL* CopyDataToTensor)(nosTensorInfo* tensorOut,void* MemoryAddress, uint64_t Size);

@@ -29,6 +29,7 @@ namespace nos::tensor
 		subsys->ImportTensorFromVulkanResource = ImportTensorFromVulkanResource;
 		subsys->CreateTensorFromCUDABuffer = CreateTensorFromCUDABuffer;
 		subsys->CreateTensorFromVulkanResource = CreateTensorFromVulkanResource;
+		subsys->DestroyTensor = DestroyTensor;
 		subsys->CreateEmptyTensor = CreateEmptyTensor;
 		subsys->InitTensor = InitTensor;
 		subsys->CopyDataToTensor = CopyDataToTensor;
@@ -48,11 +49,15 @@ namespace nos::tensor
 		createInfo.Location = MEMORY_LOCATION_CUDA;
 
 		uint64_t AllocationSize = nos::tensor::GetTensorSizeFromCreateInfo(createInfo);
-		CHECK_SIZE(AllocationSize, cudaBuffer->CreateInfo.AllocationSize);
+		
+		if (AllocationSize > cudaBuffer->CreateInfo.AllocationSize) {
+			CHECK_SIZE(AllocationSize, cudaBuffer->CreateInfo.AllocationSize);
+		}
 
 		tensorOut->MemoryInfo.Address = cudaBuffer->Address;
 		tensorOut->MemoryInfo.Size = AllocationSize;
 		memcpy(&tensorOut->CreateInfo, &createInfo, sizeof(createInfo));
+		
 		return NOS_RESULT_SUCCESS;
 	}
 
@@ -196,6 +201,15 @@ namespace nos::tensor
 		tensorOut->MemoryInfo.Size = AllocationSize;
 		memcpy(&tensorOut->CreateInfo, &createInfo, sizeof(createInfo));
 
+		return NOS_RESULT_SUCCESS;
+	}
+
+	nosResult DestroyTensor(nosTensorInfo* tensorOut)
+	{
+		if (tensorOut->CreateInfo.ShapeInfo.Dimensions != nullptr) {
+			delete[] tensorOut->CreateInfo.ShapeInfo.Dimensions;
+		}
+		memset(tensorOut, 0, sizeof(nosTensorInfo));
 		return NOS_RESULT_SUCCESS;
 	}
 
