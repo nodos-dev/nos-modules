@@ -8,6 +8,7 @@
 NOS_INIT();
 
 nosResult RegisterTextureToBuffer(nosNodeFunctions* outFunctions);
+nosResult RegisterVulkanBufferToCUDABuffer(nosNodeFunctions* outFunctions);
 
 extern nosTensorSubsystem* nosTensor = nullptr;
 extern nosCUDASubsystem* nosCUDA = nullptr;
@@ -16,7 +17,7 @@ extern "C"
 {
 	NOSAPI_ATTR nosResult NOSAPI_CALL nosExportNodeFunctions(size_t* outCount, nosNodeFunctions** outFunctions)
 	{
-		*outCount = (size_t)(1);
+		*outCount = (size_t)(2);
 		if (!outFunctions)
 			return NOS_RESULT_SUCCESS;
 
@@ -34,7 +35,7 @@ extern "C"
 			return NOS_RESULT_FAILED;
 
 		RegisterTextureToBuffer(outFunctions[0]);
-		//RegisterVulkanToCUDA(outFunctions[1]);
+		RegisterVulkanBufferToCUDABuffer(outFunctions[1]);
 		//RegisterCUDAToVulkan(outFunctions[2]);
 
 		return NOS_RESULT_SUCCESS;
