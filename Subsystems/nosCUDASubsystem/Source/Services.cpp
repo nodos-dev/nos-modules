@@ -328,12 +328,12 @@ namespace nos::cudass
 			nosEngine.LogE("Invalid memory type for CUDA memcopy operation.");
 			return NOS_RESULT_FAILED;
 		}
-		if (source->CreateInfo.BlockSize != destination->CreateInfo.BlockSize) {
+		if (source->CreateInfo.AllocationSize != destination->CreateInfo.AllocationSize) {
 			nosEngine.LogW("nosCUDABuffers have size mismatch, trimming will be performed for copying.");
 		}
 
 		cudaError res = cudaSuccess;
-		size_t safeCopySize = std::min(source->CreateInfo.BlockSize, destination->CreateInfo.BlockSize);
+		size_t safeCopySize = std::min(source->CreateInfo.AllocationSize, destination->CreateInfo.BlockSize);
 		switch (source->MemoryType) {
 			case MEMORY_TYPE_HOST:
 				if (destination->MemoryType == MEMORY_TYPE_DEVICE) {
@@ -604,6 +604,7 @@ namespace nos::cudass
 		outBuffer->ShareInfo.CreateHandle = NULL;
 		outBuffer->ShareInfo.ShareableHandle = NULL;
 		outBuffer->MemoryType = MEMORY_TYPE_DEVICE;
+		ResManager.Add(outBuffer->Address, *outBuffer);
 		return NOS_RESULT_SUCCESS;
 	}
 	nosResult ImportExternalSemaphore(uint64_t handle, nosCUDAExternalSemaphoreHandleType handleType, nosCUDAExtSemaphore* extSem)
