@@ -24,6 +24,32 @@ typedef struct PinConfig {
 	nos::fb::CanShowAs CanShowAs;
 }PinConfig;
 
+__forceinline void CreateStringList(nosUUID& GenUUID, nosUUID& NodeUUID, std::string name, std::vector<std::string> list) {
+	flatbuffers::FlatBufferBuilder fbb;
+	flatbuffers::FlatBufferBuilder fbb2;
+	std::vector<flatbuffers::Offset<nos::fb::Pin>> StrListPin;
+	nos::fb::TVisualizer vis = { .type = nos::fb::VisualizerType::COMBO_BOX, .name = name };
+	auto buf = std::vector<u8>((u8*)list.front().data(), (u8*)list.front().data() + list.front().size() + 1);
+
+	nosEngine.GenerateID(&GenUUID);
+
+	StrListPin.push_back(nos::fb::CreatePinDirect(fbb,
+		&GenUUID,
+		name.c_str(),
+		"string",
+		nos::fb::ShowAs::PROPERTY,
+		nos::fb::CanShowAs::PROPERTY_ONLY,
+		0,
+		nos::fb::Visualizer::Pack(fbb, &vis),
+		&buf));
+
+	HandleEvent(nos::CreateAppEvent(fbb,
+		nos::CreatePartialNodeUpdateDirect(fbb, &NodeUUID, nos::ClearFlags::NONE, 0, &StrListPin)));
+
+	HandleEvent(nos::CreateAppEvent(
+		fbb2, nos::app::CreateUpdateStringList(fbb2, nos::fb::CreateStringList(fbb2, fbb2.CreateString(name), fbb2.CreateVectorOfStrings(list)))));
+}
+
 __forceinline void CreateOrUpdateVulkanBufferPin(BufferPin bufferPin, nosUUID* NodeUUID, nosUUID* GeneratedPinUUID, PinConfig config) {
 	std::vector<nos::fb::UUID> pinsToDelete = { *GeneratedPinUUID };
 	flatbuffers::FlatBufferBuilder fbb;

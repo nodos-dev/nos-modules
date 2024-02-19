@@ -9,7 +9,8 @@
     },
     "node_definitions": [
       "TextureToBuffer.nosdef",
-      "VulkanBufferToCUDABuffer.nosdef"
+      "VulkanBufferToCUDABuffer.nosdef",
+      "TextureFormatConverter.nosdef"
     ],
     "custom_types": [],
     "binary_path": "../Binaries/nosInterop",
@@ -23,6 +24,11 @@
         "category": "Interop",
         "class_name": "VulkanBufferToCUDABuffer",
         "display_name": "Vulkan Buffer to CUDA Buffer"
+      },
+      {
+        "category": "Interop",
+        "class_name": "TextureFormatConverter",
+        "display_name": "Texture Format Converter"
       }
     ]
 }
