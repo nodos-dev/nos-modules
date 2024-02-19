@@ -5,7 +5,6 @@ find_library(onnxruntime.lib NAMES onnxruntime.lib PATHS ${CMAKE_CURRENT_LIST_DI
 find_library(onnxruntime_providers_cuda.lib NAMES onnxruntime_providers_cuda.lib PATHS ${CMAKE_CURRENT_LIST_DIR}/External/ONNXRT/GPU/lib REQUIRED NO_DEFAULT_PATH)
 find_library(onnxruntime_providers_tensorrt.lib NAMES onnxruntime_providers_tensorrt.lib PATHS ${CMAKE_CURRENT_LIST_DIR}/External/ONNXRT/GPU/lib REQUIRED NO_DEFAULT_PATH)
 
-
 message("Will generate PTX headers, given file: ${CMAKE_CURRENT_LIST_DIR}/Source")
 execute_process(COMMAND python "${CMAKE_CURRENT_LIST_DIR}/generate_cuda_kernels.py" -folder="${CMAKE_CURRENT_LIST_DIR}/Source" WORKING_DIRECTORY "${CMAKE_CURRENT_LIST_DIR}")
 

@@ -6,7 +6,6 @@
 #include "nosTensorSubsystem/nosTensorSubsystem.h"
 #include "nosTensorSubsystem/TensorTypes_generated.h"
 #include "flatbuffers/flatbuffers.h"
-#include "ORT_generated.h"
 #include <nosVulkanSubsystem/Helpers.hpp>
 #include "CUDAKernels/RGBAtoRGBAPlanar.cu.ptx_generated.h"
 
