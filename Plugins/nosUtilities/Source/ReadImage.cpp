@@ -12,9 +12,15 @@
 
 // nosNodes
 #include <nosVulkanSubsystem/Helpers.hpp>
-#include "../Shaders/SRGB2Linear.frag.spv.dat"
 
 #include "Names.h"
+
+#include <atomic>
+
+namespace nos::vkss
+{
+#include <nosVulkanSubsystem/CAPIStructHelpers.inl>
+}
 
 namespace nos::utilities
 {
@@ -24,6 +30,17 @@ NOS_REGISTER_NAME(SRGB2Linear_Pass);
 NOS_REGISTER_NAME(SRGB2Linear_Shader);
 NOS_REGISTER_NAME_SPACED(Nos_Utilities_ReadImage, "nos.utilities.ReadImage")
 
+enum State
+{
+    Idle,
+    Loading,
+};
+
+struct ReadImageContext
+{
+    std::atomic<State> state;
+};
+
 static nosResult GetFunctions(size_t* count, nosName* names, nosPfnNodeFunctionExecute* fns)
 {
     *count = 1;
@@ -31,8 +48,21 @@ static nosResult GetFunctions(size_t* count, nosName* names, nosPfnNodeFunctionE
         return NOS_RESULT_SUCCESS;
     
     *names = NOS_NAME_STATIC("ReadImage_Load");
+    
 	*fns = [](void* ctx, const nosNodeExecuteArgs* nodeArgs, const nosNodeExecuteArgs* functionArgs)
     {
+        auto c = (ReadImageContext*)ctx;
+
+        if(c->state != State::Idle)
+        {
+            nosEngine.LogE("Read Image is already loading an image.");
+            return;
+        }
+		
+		c->state = State::Loading;
+
+		
+
 		nos::NodeExecuteArgs args(nodeArgs);
 		std::filesystem::path path = InterpretPinValue<const char>(args[NSN_Path].Data->Data);
 		try
@@ -42,46 +72,65 @@ static nosResult GetFunctions(size_t* count, nosName* names, nosPfnNodeFunctionE
 				nosEngine.LogE("Read Image cannot load file %s", path.string().c_str());
 				return;
 			}
-			
-			sys::vulkan::Texture* out = InterpretPinValue<sys::vulkan::Texture>(args[NSN_Out].Data->Data);
 
 			int w, h, n;
-			u8* img = stbi_load(path.string().c_str(), &w, &h, &n, 4);
-			if (!img)
-			{
-				nosEngine.LogE("Couldn't load image from %s.", path.string().c_str());
-				return;
-			}
-			sys::vulkan::TTexture tex;
-			tex.width = w;
-			tex.height = h;
+			stbi_info(path.string().c_str(), &w, &h, &n);
+			
+			
+			nosResourceShareInfo outRes = {
+				.Info = {.Type = NOS_RESOURCE_TYPE_TEXTURE,
+						 .Texture = {.Width = (u32)w, .Height = (u32)h, .Format = NOS_FORMAT_R8G8B8A8_UNORM, .FieldType = NOS_TEXTURE_FIELD_TYPE_PROGRESSIVE}}};
 
+			// unless reading raw bytes, this is useless since samplers convert to linear space automatically
 			if (*InterpretPinValue<bool>(args[NSN_sRGB].Data->Data))
-				tex.format = sys::vulkan::Format::R8G8B8A8_SRGB;
-			else
-				tex.format = sys::vulkan::Format::R8G8B8A8_UNORM;
+				outRes.Info.Texture.Format = NOS_FORMAT_R8G8B8A8_SRGB;
 
-			if (tex.width != out->width() || tex.height != out->height() || tex.format != out->format())
-			{
-				nosEngine.SetPinValue(args[NSN_Out].Id, nos::Buffer::From(tex));
-			}
-			nosResourceShareInfo outRes = vkss::DeserializeTextureInfo(args[NSN_Out].Data->Data);
+			nosEngine.SetPinValue(args[NSN_Out].Id, nos::Buffer::From(nos::vkss::ConvertTextureInfo(outRes)));
 
-			nosCmd cmd{};
-			nosVulkan->Begin("ReadImage: Load", &cmd);
-			nosVulkan->ImageLoad(cmd, img, nosVec2u(w, h), NOS_FORMAT_R8G8B8A8_SRGB, &outRes);
-			nosCmdEndParams endParams {.ForceSubmit = true};
-			nosVulkan->End(cmd, &endParams);
-			
-			free(img);
-			
-			flatbuffers::FlatBufferBuilder fbb;
-			HandleEvent(CreateAppEvent(fbb, app::CreatePinDirtied(fbb, &args[NSN_Out].Id)));
+			std::thread([c, nodeArgs = vkss::OwnedNodeExecuteArgs(*nodeArgs), &outRes] {
+				nos::NodeExecuteArgs args(&nodeArgs);
+				std::filesystem::path path = InterpretPinValue<const char>(args[NSN_Path].Data->Data);
+				try
+				{
+					if (!std::filesystem::exists(path))
+					{
+						nosEngine.LogE("Read Image cannot load file %s", path.string().c_str());
+						return;
+					}
+
+					int w, h, n;
+					u8* img = stbi_load(path.string().c_str(), &w, &h, &n, 4);
+					if (!img)
+					{
+						nosEngine.LogE("Couldn't load image from %s.", path.string().c_str());
+						return;
+					}
+
+					auto res = vkss::DeserializeTextureInfo(args[NSN_Out].Data->Data);
+
+					nosCmd cmd{};
+					nosVulkan->Begin("ReadImage: Load", &cmd);
+					nosVulkan->ImageLoad(cmd, img, nosVec2u(w, h), NOS_FORMAT_R8G8B8A8_SRGB, &res);
+					nosCmdEndParams endParams{.ForceSubmit = true};
+					nosVulkan->End(cmd, &endParams);
+
+					free(img);
+					flatbuffers::FlatBufferBuilder fbb;
+					HandleEvent(CreateAppEvent(fbb, app::CreatePinDirtied(fbb, &args[NSN_Out].Id)));
+				}
+				catch (const std::exception& e)
+				{
+					nosEngine.LogE("Error while loading image: %s", e.what());
+				}
+
+				c->state = State::Idle;
+			}).detach();
 		}
-		catch(const std::exception& e)
+		catch (const std::exception& e)
 		{
 			nosEngine.LogE("Error while loading image: %s", e.what());
 		}
+		
     };
     
     return NOS_RESULT_SUCCESS;
@@ -93,17 +142,16 @@ nosResult RegisterReadImage(nosNodeFunctions* fn)
 	fn->ClassName = NSN_Nos_Utilities_ReadImage;
 	fn->GetFunctions = GetFunctions;
 
-	nosShaderInfo shader = {.Key=NSN_SRGB2Linear_Shader, .Source = { .SpirvBlob = {(void*)SRGB2Linear_frag_spv, sizeof(SRGB2Linear_frag_spv)}}};
-	auto ret = nosVulkan->RegisterShaders(1, &shader);
-	if (NOS_RESULT_SUCCESS != ret)
-		return ret;
-
-	nosPassInfo pass = {
-		.Key = NSN_SRGB2Linear_Pass,
-		.Shader = NSN_SRGB2Linear_Shader,
-		.MultiSample = 1,
+	fn->OnNodeCreated = [](const nosFbNode* node, void** outCtxPtr)
+	{
+		*outCtxPtr = new ReadImageContext{};
 	};
-	return nosVulkan->RegisterPasses(1, &pass);
+	fn->OnNodeDeleted = [](void* ctx, nosUUID nodeId)
+	{
+		delete (ReadImageContext*)ctx;
+	};
+
+	return NOS_RESULT_SUCCESS;
 }
 
 // void RegisterReadImage(nosNodeFunctions* fn)
