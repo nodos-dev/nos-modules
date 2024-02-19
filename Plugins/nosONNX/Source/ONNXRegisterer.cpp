@@ -4,9 +4,11 @@
 #include <AppService_generated.h>
 #include <AppEvents_generated.h>
 #include "nosAI/nosAISubsystem.h"
+#include "nosTensorSubsystem/nosTensorSubsystem.h"
 
 NOS_INIT();
 void RegisterONNXRunner(nosNodeFunctions* outFunctions);
+
 extern nosAISubsystem* nosAI = nullptr;
 extern nosTensorSubsystem* nosTensor = nullptr;
 extern "C"
@@ -25,7 +27,7 @@ extern "C"
 		returnRes = nosEngine.RequestSubsystem(NOS_NAME_STATIC(NOS_TENSOR_SUBSYSTEM_NAME), 1, 0, (void**)&nosTensor);
 		if (returnRes != NOS_RESULT_SUCCESS)
 			return NOS_RESULT_FAILED;
-
+		
 		RegisterONNXRunner(outFunctions[0]);
 
 		return NOS_RESULT_SUCCESS;
