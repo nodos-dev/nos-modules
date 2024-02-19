@@ -29,6 +29,7 @@ namespace nos::tensor
 		subsys->ImportTensorFromVulkanResource = ImportTensorFromVulkanResource;
 		subsys->CreateTensorFromCUDABuffer = CreateTensorFromCUDABuffer;
 		subsys->CreateTensorFromVulkanResource = CreateTensorFromVulkanResource;
+		subsys->DeserializeTensorPin = DeserializeTensorPin;
 		subsys->DestroyTensor = DestroyTensor;
 		subsys->CreateEmptyTensor = CreateEmptyTensor;
 		subsys->InitTensor = InitTensor;
@@ -53,7 +54,6 @@ namespace nos::tensor
 		if (AllocationSize > cudaBuffer->CreateInfo.AllocationSize) {
 			CHECK_SIZE(AllocationSize, cudaBuffer->CreateInfo.AllocationSize);
 		}
-
 		tensorOut->MemoryInfo.Address = cudaBuffer->Address;
 		tensorOut->MemoryInfo.Size = AllocationSize;
 		memcpy(&tensorOut->CreateInfo, &createInfo, sizeof(createInfo));
@@ -200,6 +200,25 @@ namespace nos::tensor
 		}
 		tensorOut->MemoryInfo.Size = AllocationSize;
 		memcpy(&tensorOut->CreateInfo, &createInfo, sizeof(createInfo));
+
+		return NOS_RESULT_SUCCESS;
+	}
+
+	nosResult DeserializeTensorPin(nosTensorInfo* tensorOut,const nosTensorPinData tensorPin)
+	{
+		auto tensorPinTyped = reinterpret_cast<nos::sys::tensor::Tensor*>(tensorPin);
+		tensorOut->CreateInfo.ElementType = (TensorElementType)tensorPinTyped->element_type();
+		tensorOut->CreateInfo.Location = (TensorMemoryLocation)tensorPinTyped->memory_location();
+		tensorOut->CreateInfo.ShapeInfo.DimensionCount = tensorPinTyped->shape()->size();
+		if (tensorOut->CreateInfo.ShapeInfo.Dimensions != NULL) {
+			delete[] tensorOut->CreateInfo.ShapeInfo.Dimensions;
+		}
+		tensorOut->CreateInfo.ShapeInfo.Dimensions = new int64_t[tensorOut->CreateInfo.ShapeInfo.DimensionCount];
+		for (int i = 0; i < tensorOut->CreateInfo.ShapeInfo.DimensionCount; i++) {
+			tensorOut->CreateInfo.ShapeInfo.Dimensions[i] = tensorPinTyped->shape()->Get(i);
+		}
+		tensorOut->MemoryInfo.Address = tensorPinTyped->buffer();
+		tensorOut->MemoryInfo.Size = nos::tensor::GetTensorSizeFromCreateInfo(tensorOut->CreateInfo);
 
 		return NOS_RESULT_SUCCESS;
 	}

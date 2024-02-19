@@ -4,6 +4,13 @@
 #include "nosCUDASubsystem/nosCUDASubsystem.h"
 #include "nosVulkanSubsystem/nosVulkanSubsystem.h"
 
+#ifdef __cplusplus
+#include "nosTensorSubsystem/TensorTypes_generated.h"
+typedef nos::sys::tensor::Tensor* nosTensorPinData;
+#else
+typedef void* nosTensorPinData;
+#endif
+
 #pragma region Type Definitions
 
 #pragma endregion
@@ -107,6 +114,9 @@ typedef struct nosTensorSubsystem
 	nosResult(NOSAPI_CALL* CreateTensorFromCUDABuffer)(nosTensorInfo* tensorOut, nosCUDABufferInfo* cudaBuffer, nosTensorCreateInfo createInfo); 
 	//Will perform copy from the data of Vulkan Resource to newly created nosTensorInfo. If the resource is texture, createInfo.ElementType will be deduced from the format and given parameter will be overridden.
 	nosResult(NOSAPI_CALL* CreateTensorFromVulkanResource)(nosTensorInfo* tensorOut, nosResourceShareInfo* vulkanResource, nosTensorCreateInfo createInfo); 
+
+	//Deserializes nos::sys::tensor::Tensor to nosTensorInfo
+	nosResult(NOSAPI_CALL* DeserializeTensorPin)(nosTensorInfo* tensorOut, const nosTensorPinData tensorPin); 
 
 	nosResult(NOSAPI_CALL* DestroyTensor)(nosTensorInfo* tensorOut);
 	nosResult(NOSAPI_CALL* CreateEmptyTensor)(nosTensorInfo* tensorOut, nosTensorCreateInfo createInfo);
