@@ -8,7 +8,8 @@
         "display_name": "Tensors"
     },
     "node_definitions": [
-      "TextureToTensor.nosdef"
+      "TextureToTensor.nosdef",
+      "TensorToTexture.nosdef"
     ],
     "custom_types": [],
     "binary_path": "../Binaries/nosTensors",
@@ -17,6 +18,11 @@
         "category": "ML|Tensors",
         "class_name": "TextureToTensor",
         "display_name": "Texture to Tensor converter"
+      },
+      {
+        "category": "ML|Tensors",
+        "class_name": "TensorToTexture",
+        "display_name": "Tensor to Texture converter"
       }
     ]
 }

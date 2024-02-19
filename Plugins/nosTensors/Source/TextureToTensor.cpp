@@ -8,6 +8,7 @@
 #include "flatbuffers/flatbuffers.h"
 #include <nosVulkanSubsystem/Helpers.hpp>
 #include "CUDAKernels/RGBAtoRGBAPlanar.cu.ptx_generated.h"
+#include "TensorsNames.h"
 
 #define CHECK_NOS_RESULT(nosRes) \
 	do { \
@@ -17,12 +18,6 @@
 			return NOS_RESULT_FAILED; \
 		} \
 	} while (0); \
-
-
-NOS_REGISTER_NAME(TextureToTensor);
-NOS_REGISTER_NAME(Layot)
-NOS_REGISTER_NAME(In);
-NOS_REGISTER_NAME(Out);
 
 struct TextureToTensor : nos::NodeContext
 {
@@ -133,6 +128,17 @@ struct TextureToTensor : nos::NodeContext
 			nosVulkan->Copy(texToBuf, &in, &InputTextureLinear, 0);
 			nosVulkan->End(texToBuf, &endParams);
 			nosVulkan->WaitGpuEvent(&waitTexToBuf, UINT64_MAX);
+
+			nosCUDA->CopyBuffers(&InputLinearCUDA, &InputLinearPlanarCUDA);
+			nosCUDABufferInfo CPUData = {};
+			nosCUDA->CreateBuffer(&CPUData, InputLinearCUDA.CreateInfo.AllocationSize);
+			nosCUDA->CopyBuffers(&InputLinearCUDA, &CPUData);
+
+			void* InData = reinterpret_cast<void*>(CPUData.Address);
+			uint8_t* vulkanCPUPointer = nosVulkan->Map(&InputTextureLinear);
+
+
+
 			if (CurrentLayout == Layout_NCHW) {
 				LaunchConverterKernel();
 			}
@@ -179,11 +185,7 @@ struct TextureToTensor : nos::NodeContext
 		TensorElementType elementType = {};
 		nosTensor->GetTensorElementTypeFromVulkanResource(&elementType, &in);
 
-		if (InputLinearPlanarCUDA.Address != NULL) {
-			nosCUDA->DestroyBuffer(&InputLinearPlanarCUDA);
-		}
-
-		res = nosCUDA->CreateBufferOnCUDA(&InputLinearPlanarCUDA, InputLinearCUDA.CreateInfo.AllocationSize);
+		res = nosCUDA->CreateShareableBufferOnCUDA(&InputLinearPlanarCUDA, InputLinearCUDA.CreateInfo.AllocationSize);
 		CHECK_NOS_RESULT(res);
 		
 		InputTexture = in;
@@ -203,7 +205,7 @@ struct TextureToTensor : nos::NodeContext
 		if (CurrentLayout == Layout_NHWC) {
 			int64_t planarTensorDimensions[] = { 1, InputTexture.Info.Texture.Height, InputTexture.Info.Texture.Width, OutputFormatChannelCount };
 			planarCreateInfo.ShapeInfo.Dimensions = planarTensorDimensions;
-			res = nosTensor->ImportTensorFromCUDABuffer(&OutTensor, &InputLinearCUDA, planarCreateInfo.ShapeInfo, elementType);
+			res = nosTensor->ImportTensorFromCUDABuffer(&OutTensor, &InputLinearPlanarCUDA, planarCreateInfo.ShapeInfo, elementType);
 		}
 		else { //NCHW
 			int64_t planarTensorDimensions[] = { 1, OutputFormatChannelCount, InputTexture.Info.Texture.Height, InputTexture.Info.Texture.Width };

@@ -6,7 +6,16 @@
 #include "nosTensorSubsystem/nosTensorSubsystem.h"
 
 NOS_INIT();
+NOS_REGISTER_NAME(TextureToTensor);
+NOS_REGISTER_NAME(TensorToTexture);
+NOS_REGISTER_NAME(Layot)
+NOS_REGISTER_NAME(In);
+NOS_REGISTER_NAME(Out);
+
+
 void RegisterTextureToTensor(nosNodeFunctions* outFunctions);
+void RegisterTensorToTexture(nosNodeFunctions* outFunctions);
+
 extern nosTensorSubsystem* nosTensor = nullptr;
 extern nosCUDASubsystem* nosCUDA = nullptr;
 extern nosVulkanSubsystem* nosVulkan = nullptr;
@@ -14,7 +23,7 @@ extern "C"
 {
 	NOSAPI_ATTR nosResult NOSAPI_CALL nosExportNodeFunctions(size_t* outCount, nosNodeFunctions** outFunctions)
 	{
-		*outCount = (size_t)(1);
+		*outCount = (size_t)(2);
 		if (!outFunctions)
 			return NOS_RESULT_SUCCESS;
 
@@ -32,6 +41,7 @@ extern "C"
 			return NOS_RESULT_FAILED;
 
 		RegisterTextureToTensor(outFunctions[0]);
+		RegisterTensorToTexture(outFunctions[1]);
 
 		return NOS_RESULT_SUCCESS;
 	}
