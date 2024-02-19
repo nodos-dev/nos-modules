@@ -4,6 +4,12 @@ AIModelContainer::AIModelContainer(ONNXModel* model) : Model(model)
 {
 }
 
+AIModelContainer::AIModelContainer(AIModelContainer&& other)
+{
+	this->Model = other.Model;
+	other.Model = nullptr;
+}
+
 AIModelContainer::~AIModelContainer()
 {
 	if (Model == nullptr)

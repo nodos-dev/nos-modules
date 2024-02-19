@@ -25,10 +25,8 @@ nosResult ONNXRunner::LoadONNXModel(ONNXModel* model, std::filesystem::path path
 	//AIModel has dynamically allocated properties which will be destroyed in AIModelContainer's destructor when the ONNXRunner goes out of scope
 	//We can not trust users that they will keep the scope of their AIModel and ONNXRunner same, so we are creating our own and then will copy the data
 	//of our internalModel to the users model. (i.e. to prevent daggling pointer) 
-	ONNXModel* internalModel = new ONNXModel;
+	ONNXModel* internalModel = new ONNXModel();
 	memcpy(internalModel, model, sizeof(ONNXModel));
-
-	ModelContainer.emplace_back(internalModel); //For memory management
 
 	std::unique_ptr<Ort::SessionOptions> Options = std::make_unique<Ort::SessionOptions>();
 
@@ -96,6 +94,8 @@ nosResult ONNXRunner::LoadONNXModel(ONNXModel* model, std::filesystem::path path
 	context->ModelSession = std::move(ModelSession);
 	context->RunOptions = std::make_unique<Ort::RunOptions>();
 	internalModel->Model = reinterpret_cast<void*>(context);
+	ModelContainer.emplace_back(internalModel); //For memory management
+
 	//Tranfer updates to user's instance
 	memcpy(model, internalModel, sizeof(ONNXModel));
 	

@@ -8,6 +8,8 @@
 class AIModelContainer { //TODO: Inherit from AIModel
 public:
 	AIModelContainer(ONNXModel* model);
+	AIModelContainer(AIModelContainer&& other);
+	AIModelContainer(const AIModelContainer& other) = delete;
 	~AIModelContainer();
 private:
 	ONNXModel* Model;
