@@ -27,6 +27,7 @@ struct TensorToTexture : nos::NodeContext
 	std::string Layout_NHWC = "NHWC", Layout_NCHW = "NCHW", CurrentLayout;
 	int ChannelCountIndex = 3;
 	nosCUDABufferInfo TensorCUDABuffer = {};
+	nosTensorInfo newTensor = {};
 
 	TensorToTexture(nos::fb::Node const* node) :NodeContext(node) {
 		NodeID = *node->id();
@@ -51,7 +52,6 @@ struct TensorToTexture : nos::NodeContext
 	void OnPinValueChanged(nos::Name pinName, nosUUID pinId, nosBuffer value) override{
 		if (InputUUID == pinId) {
 			auto tensorPin = flatbuffers::GetMutableRoot<nos::sys::tensor::Tensor>(value.Data);
-			nosTensorInfo newTensor = {};
 			nosTensor->DeserializeTensorPin(&newTensor, tensorPin);
 			bool needRefresh = false;
 			if (newTensor.CreateInfo.ShapeInfo.DimensionCount == InputTensor.CreateInfo.ShapeInfo.DimensionCount) {
@@ -62,6 +62,9 @@ struct TensorToTexture : nos::NodeContext
 				}
 			}
 			else {
+				needRefresh = true;
+			}
+			if (tensorPin->buffer() != InputTensor.MemoryInfo.Address) {
 				needRefresh = true;
 			}
 			nosTensor->DeserializeTensorPin(&InputTensor, tensorPin);
@@ -89,20 +92,37 @@ struct TensorToTexture : nos::NodeContext
 		auto pinIds = nos::GetPinIds(args);
 		auto pinValues = nos::GetPinValues(args);
 
+
+		nosResourceShareInfo leak = {};
+		leak.Info.Type = NOS_RESOURCE_TYPE_BUFFER;
+		leak.Info.Buffer.Size = TensorCUDABuffer.CreateInfo.AllocationSize;
+		leak.Info.Buffer.Usage = nosBufferUsage(NOS_BUFFER_USAGE_TRANSFER_SRC | NOS_BUFFER_USAGE_TRANSFER_DST);
+		nosVulkan->CreateResource(&leak);
+		nosCmd cmd2;
+		nosGPUEvent gpuevent2 = {};
+		nosCmdEndParams endParams2 = { .ForceSubmit = true, .OutGPUEventHandle = &gpuevent2 };
+		nosVulkan->Begin("NVVFX Upload", &cmd2);
+		nosVulkan->Copy(cmd2, &OutputTextureBuffer, &leak, 0);
+		nosVulkan->End(cmd2, &endParams2);
+		nosVulkan->WaitGpuEvent(&gpuevent2, UINT64_MAX);
+
+		uint8_t* LEAK_GPU = nosVulkan->Map(&leak);
+
 		nosCmd cmd1;
 		nosGPUEvent gpuevent1 = {};
 		nosCmdEndParams endParams1 = { .ForceSubmit = true, .OutGPUEventHandle = &gpuevent1 };
 		nosVulkan->Begin("NVVFX Upload", &cmd1);
-		nosVulkan->Copy(cmd1, &OutputTextureBuffer, &OutputTexture, 0);
+		nosVulkan->Copy(cmd1, &leak, &OutputTexture, 0);
 		nosVulkan->End(cmd1, &endParams1);
 		nosVulkan->WaitGpuEvent(&gpuevent1, UINT64_MAX);
-		nosCUDABufferInfo CPUData = {};
-		nosCUDA->CreateBuffer(&CPUData, TensorCUDABuffer.CreateInfo.AllocationSize);
-		nosCUDA->CopyBuffers(&TensorCUDABuffer, &CPUData);
 
-		void* InData = reinterpret_cast<void*>(CPUData.Address);
-		uint8_t* vulkanCPUPointer = nosVulkan->Map(&OutputTextureBuffer);
+		nosCUDABufferInfo CPU = {};
+		nosCUDA->CreateBuffer(&CPU, TensorCUDABuffer.CreateInfo.AllocationSize);
+		nosCUDA->CopyBuffers(&TensorCUDABuffer, &CPU);
+
+		uint8_t* DATA = reinterpret_cast<uint8_t*>(CPU.Address);
 		int a = 5;
+
 		return NOS_RESULT_SUCCESS; 
 	}
 
@@ -123,7 +143,7 @@ struct TensorToTexture : nos::NodeContext
 			//TODO: Upload tensor data to VULKAN
 			OutputTextureBuffer.Info.Type = NOS_RESOURCE_TYPE_BUFFER;
 			OutputTextureBuffer.Info.Buffer.Size = TensorCUDABuffer.CreateInfo.AllocationSize;
-			OutputTextureBuffer.Info.Buffer.Usage = nosBufferUsage(nosBufferUsage::NOS_BUFFER_USAGE_TRANSFER_SRC | nosBufferUsage::NOS_BUFFER_USAGE_TRANSFER_DST);
+			OutputTextureBuffer.Info.Buffer.Usage = nosBufferUsage(NOS_BUFFER_USAGE_TRANSFER_SRC | NOS_BUFFER_USAGE_TRANSFER_DST | NOS_BUFFER_USAGE_DEVICE_MEMORY | NOS_BUFFER_USAGE_NOT_HOST_VISIBLE);
 			OutputTextureBuffer.Memory.Handle = 0;
 			OutputTextureBuffer.Memory.ExternalMemory.HandleType = NOS_EXTERNAL_MEMORY_HANDLE_TYPE_D3D12_RESOURCE;
 			OutputTextureBuffer.Memory.ExternalMemory.Handle = TensorCUDABuffer.ShareInfo.ShareableHandle;
@@ -169,6 +189,25 @@ struct TensorToTexture : nos::NodeContext
 			break;
 		}
 		}
+	}
+
+	static nosBool CanConnectPin(void* ctx, nosName pinName, nosUUID connectedPinId, const nosBuffer* connectedPinData) {
+		TensorToTexture* node = reinterpret_cast<TensorToTexture*>(ctx);
+
+		const nos::sys::tensor::Tensor* connectedTensor = flatbuffers::GetRoot<nos::sys::tensor::Tensor>(connectedPinData->Data);
+		if (connectedTensor->shape() != nullptr) {
+			nos::sys::tensor::TensorElementDataType ConnectedElementType = connectedTensor->element_type();
+
+			if (connectedTensor->shape()->size() != 4) {
+				return NOS_FALSE;
+			}
+
+			if (node != nullptr && (connectedTensor->shape()->Get(node->ChannelCountIndex) > 4 || connectedTensor->shape()->Get(node->ChannelCountIndex) < 1) ) {
+				return NOS_FALSE;
+			}
+		}
+
+		return NOS_TRUE;
 	}
 
 	static nosResult GetFunctions(size_t* count, nosName* names, nosPfnNodeFunctionExecute* fns)
@@ -610,5 +649,6 @@ struct TensorToTexture : nos::NodeContext
 };
 
 void RegisterTensorToTexture(nosNodeFunctions* outFunctions) {
+	outFunctions->CanConnectPin = TensorToTexture::CanConnectPin;
 	NOS_BIND_NODE_CLASS(NSN_TensorToTexture, TensorToTexture, outFunctions);
 }

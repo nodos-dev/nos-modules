@@ -133,7 +133,7 @@ struct TextureToTensor : nos::NodeContext
 			nosCUDABufferInfo CPUData = {};
 			nosCUDA->CreateBuffer(&CPUData, InputLinearCUDA.CreateInfo.AllocationSize);
 			nosCUDA->CopyBuffers(&InputLinearCUDA, &CPUData);
-
+			
 			void* InData = reinterpret_cast<void*>(CPUData.Address);
 			uint8_t* vulkanCPUPointer = nosVulkan->Map(&InputTextureLinear);
 
