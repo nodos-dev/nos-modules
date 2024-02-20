@@ -56,36 +56,33 @@ struct TextureFormatConverter : nos::NodeContext
 
 	nosResult ExecuteNode(const nosNodeExecuteArgs* args) override
 	{
-		if (OutputTexture.Memory.Handle == NULL) {
-			return NOS_RESULT_SUCCESS;
-		}
 		auto pinIds = nos::GetPinIds(args);
 		auto pinValues = nos::GetPinValues(args);
 		InputTexture = nos::vkss::DeserializeTextureInfo(pinValues[NSN_Input]);
-
+		auto Out = nos::vkss::DeserializeTextureInfo(pinValues[NSN_Output]);
 		nosCmd cmd = {};
 		nosGPUEvent waitEvent = {};
 		nosCmdEndParams endParams = { .ForceSubmit = true, .OutGPUEventHandle = &waitEvent };
 		nosVulkan->Begin("TexToTex", &cmd);
-		nosVulkan->Copy(cmd, &InputTexture, &OutputTexture, nullptr);
+		nosVulkan->Copy(cmd, &InputTexture, &Out, nullptr);
 		nosVulkan->End(cmd, &endParams);
 		nosVulkan->WaitGpuEvent(&waitEvent, UINT64_MAX);
 		
-		nosResourceShareInfo out = nos::vkss::DeserializeTextureInfo(pinValues[NSN_Output]);
-		nosCmd cmd2;
-		nosGPUEvent gpuevent2 = {};
-		nosCmdEndParams endParams2 = { .ForceSubmit = true, .OutGPUEventHandle = &gpuevent2 };
-		nosVulkan->Begin("NVVFX Upload", &cmd2);
-		nosVulkan->Copy(cmd2, &OutputTexture, &out, 0);
-		nosVulkan->End(cmd2, &endParams2);
-		nosVulkan->WaitGpuEvent(&gpuevent2, UINT64_MAX);
+		//nosResourceShareInfo out = nos::vkss::DeserializeTextureInfo(pinValues[NSN_Output]);
+		//nosCmd cmd2;
+		//nosGPUEvent gpuevent2 = {};
+		//nosCmdEndParams endParams2 = { .ForceSubmit = true, .OutGPUEventHandle = &gpuevent2 };
+		//nosVulkan->Begin("NVVFX Upload", &cmd2);
+		//nosVulkan->Copy(cmd2, &OutputTexture, &out, 0);
+		//nosVulkan->End(cmd2, &endParams2);
+		//nosVulkan->WaitGpuEvent(&gpuevent2, UINT64_MAX);
 
 		return NOS_RESULT_SUCCESS;
 	}
 
 	void PrepareResources() {
 		if (OutputTexture.Memory.Handle != NULL) {
-			nosVulkan->DestroyResource(&OutputTexture);
+			//nosVulkan->DestroyResource(&OutputTexture);
 		}
 
 		OutputTexture.Info.Type = NOS_RESOURCE_TYPE_TEXTURE;
@@ -96,14 +93,10 @@ struct TextureFormatConverter : nos::NodeContext
 		OutputTexture.Info.Texture.Usage = InputTexture.Info.Texture.Usage;
 		OutputTexture.Info.Texture.Width = InputTexture.Info.Texture.Width;
 
-		nosVulkan->CreateResource(&OutputTexture);
-
+		//nosVulkan->CreateResource(&OutputTexture);
 		auto TTexture = nos::vkss::ConvertTextureInfo(OutputTexture);
-		flatbuffers::FlatBufferBuilder fbb;
-		auto TextureTable = nos::sys::vulkan::Texture::Pack(fbb, &TTexture);
-		fbb.Finish(TextureTable);
 		
-		nosEngine.SetPinValueDirect(OutputUUID, {.Data = fbb.GetBufferPointer(), .Size = fbb.GetSize() });
+		nosEngine.SetPinValue(OutputUUID, nos::Buffer::From(TTexture));
 	}
 	
 

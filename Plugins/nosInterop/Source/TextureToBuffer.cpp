@@ -35,8 +35,9 @@ struct TextureToBufferNodeContext : nos::NodeContext
 	}
 
 	void PrepareResources(nosResourceShareInfo& in) {
-		uint64_t currentSize = static_cast<uint64_t>(GetComponentBytesFromVulkanFormat(in.Info.Texture.Format)) *
-			static_cast<uint64_t>(GetComponentNumFromVulkanFormat(in.Info.Texture.Format)) * in.Info.Texture.Width * in.Info.Texture.Height;
+		uint64_t currentSize = in.Memory.Size;
+			//static_cast<uint64_t>(GetComponentBytesFromVulkanFormat(in.Info.Texture.Format)) *
+			//static_cast<uint64_t>(GetComponentNumFromVulkanFormat(in.Info.Texture.Format)) * in.Info.Texture.Width * in.Info.Texture.Height;
 		
 		if (currentSize == Buffer.Memory.Size) {
 			nosCmd texToBuf = {};
@@ -46,6 +47,7 @@ struct TextureToBufferNodeContext : nos::NodeContext
 			nosVulkan->Copy(texToBuf, &in, &Buffer, 0);
 			nosVulkan->End(texToBuf, &endParams);
 			nosVulkan->WaitGpuEvent(&waitTexToBuf, UINT64_MAX);
+			uint8_t* b = nosVulkan->Map(&Buffer);
 			return;
 		}
 
