@@ -45,12 +45,16 @@ namespace nos::tensor
 	nosResult NOSAPI_CALL ImportTensorFromCUDABuffer(nosTensorInfo* tensorOut, nosCUDABufferInfo* cudaBuffer, nosTensorShapeInfo shapeInfo, TensorElementType elementType)
 	{
 		nosTensorCreateInfo createInfo = {};
+		
+		createInfo.ShapeInfo.Dimensions = new int64_t[shapeInfo.DimensionCount];
 		memcpy(&createInfo.ShapeInfo, &shapeInfo, sizeof(shapeInfo));
+		memcpy(&createInfo.ShapeInfo.Dimensions, &shapeInfo.Dimensions, sizeof(int64_t)* shapeInfo.DimensionCount);
 		createInfo.ElementType = elementType;
 		createInfo.Location = MEMORY_LOCATION_CUDA;
 
 		uint64_t AllocationSize = nos::tensor::GetTensorSizeFromCreateInfo(createInfo);
 		
+
 		if (AllocationSize > cudaBuffer->CreateInfo.AllocationSize) {
 			CHECK_SIZE(AllocationSize, cudaBuffer->CreateInfo.AllocationSize);
 		}
