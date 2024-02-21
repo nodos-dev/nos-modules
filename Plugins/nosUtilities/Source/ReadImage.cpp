@@ -16,6 +16,10 @@
 #include "Names.h"
 
 #include <atomic>
+#include <chrono>
+#include <sstream>
+
+using Clock = std::chrono::high_resolution_clock;
 
 namespace nos::vkss
 {
@@ -32,13 +36,42 @@ NOS_REGISTER_NAME_SPACED(Nos_Utilities_ReadImage, "nos.utilities.ReadImage")
 
 enum State
 {
-    Idle,
-    Loading,
+    Idle = 0,
+    Loading = 1,
 };
 
 struct ReadImageContext
 {
     std::atomic<State> state;
+    decltype(Clock::now()) time_started;
+	fb::UUID nodeid;
+	std::string load_path;
+
+
+	void UpdateStatus(State newState)
+	{
+        if(newState == state.exchange(newState))
+        {
+            return;
+        }
+
+        flatbuffers::FlatBufferBuilder fbb;
+        std::vector<flatbuffers::Offset<nos::fb::NodeStatusMessage>> msg;
+        if(newState == State::Loading)
+        {
+			time_started = Clock::now();
+			msg.push_back(fb::CreateNodeStatusMessageDirect(fbb, "Loading image", fb::NodeStatusMessageType::INFO));
+        }
+        else
+        {
+			std::stringstream ss;
+			auto dt = std::chrono::duration_cast<std::chrono::milliseconds>(Clock::now() - time_started);
+            ss << "Read Image: Loaded in " << dt << "\nFile: " << load_path;
+
+            nosEngine.LogDI(load_path.c_str(), ss.str().c_str());
+        }
+        HandleEvent(CreateAppEvent(fbb, nos::CreatePartialNodeUpdateDirect(fbb, &nodeid, ClearFlags::NONE, 0, 0, 0, 0, 0, 0, &msg)));
+	}
 };
 
 static nosResult GetFunctions(size_t* count, nosName* names, nosPfnNodeFunctionExecute* fns)
@@ -52,19 +85,16 @@ static nosResult GetFunctions(size_t* count, nosName* names, nosPfnNodeFunctionE
 	*fns = [](void* ctx, const nosNodeExecuteArgs* nodeArgs, const nosNodeExecuteArgs* functionArgs)
     {
         auto c = (ReadImageContext*)ctx;
-
         if(c->state != State::Idle)
         {
             nosEngine.LogE("Read Image is already loading an image.");
             return;
         }
-		
-		c->state = State::Loading;
-
-		
+        c->UpdateStatus(State::Loading);
 
 		nos::NodeExecuteArgs args(nodeArgs);
 		std::filesystem::path path = InterpretPinValue<const char>(args[NSN_Path].Data->Data);
+		c->load_path = path.string();
 		try
 		{
 			if (!std::filesystem::exists(path))
@@ -75,7 +105,6 @@ static nosResult GetFunctions(size_t* count, nosName* names, nosPfnNodeFunctionE
 
 			int w, h, n;
 			stbi_info(path.string().c_str(), &w, &h, &n);
-			
 			
 			nosResourceShareInfo outRes = {
 				.Info = {.Type = NOS_RESOURCE_TYPE_TEXTURE,
@@ -123,7 +152,7 @@ static nosResult GetFunctions(size_t* count, nosName* names, nosPfnNodeFunctionE
 					nosEngine.LogE("Error while loading image: %s", e.what());
 				}
 
-				c->state = State::Idle;
+                c->UpdateStatus(State::Idle);
 			}).detach();
 		}
 		catch (const std::exception& e)
@@ -144,7 +173,7 @@ nosResult RegisterReadImage(nosNodeFunctions* fn)
 
 	fn->OnNodeCreated = [](const nosFbNode* node, void** outCtxPtr)
 	{
-		*outCtxPtr = new ReadImageContext{};
+		*outCtxPtr = new ReadImageContext{.nodeid = *node->id()};
 	};
 	fn->OnNodeDeleted = [](void* ctx, nosUUID nodeId)
 	{
