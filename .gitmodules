@@ -1,15 +1,9 @@
 [submodule "Shaders"]
 	path = Plugins/Shaders
 	url = https://github.com/mediaz/shaders
-[submodule "mzCNN/External/cnn-models"]
-	path = Plugins/nosCNN/External/cnn-models
-	url = https://github.com/mediaz/cnn-models.git
 [submodule "mzWebRTC/External"]
 	path = Plugins/nosWebRTC/External
 	url = https://github.com/mediaz/webRTC-builds.git
-[submodule "Subsystems/mzVulkanSubsystem/External/nosVulkan"]
-	path = Subsystems/nosVulkanSubsystem/External/nosVulkan
-	url = https://github.com/mediaz/nosVulkan.git
 [submodule "Subsystems/nosVulkanSubsystem/External/nosVulkan"]
 	url = https://github.com/mediaz/nosVulkan.git
 [submodule "Plugins/nosCubeMask/External/glm"]
@@ -27,9 +21,3 @@
 [submodule "Subsystems/nosPython/External/pybind11"]
 	path = Subsystems/nosPython/External/pybind11
 	url = https://github.com/pybind/pybind11.git
-[submodule "Subsystems/nosAI/External/ONNXRT"]
-	path = Subsystems/nosAI/External/ONNXRT
-	url = https://github.com/mediaz/onnxrt-dependencies.git
-[submodule "Subsystems/nosNVVFXDeps"]
-	path = Subsystems/nosNVVFXDeps
-	url = https://github.com/mediaz/nvvfx_sdk
