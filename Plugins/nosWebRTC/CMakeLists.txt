@@ -1,4 +1,4 @@
-# Copyright MediaZ AS. All Rights Reserved.
+# Copyright MediaZ Teknoloji A.S. All Rights Reserved.
 
 
 if(WIN32)

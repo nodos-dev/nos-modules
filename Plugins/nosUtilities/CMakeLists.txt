@@ -1,3 +1,3 @@
-# Copyright MediaZ AS. All Rights Reserved.
+# Copyright MediaZ Teknoloji A.S. All Rights Reserved.
 
 add_folder_as_plugin_project("nosUtilities" stb "${CMAKE_CURRENT_SOURCE_DIR};${SUBSYSTEMS_SOURCE_DIR}/nosVulkanSubsystem/Include")

@@ -1,4 +1,4 @@
-# Copyright MediaZ AS. All Rights Reserved.
+# Copyright MediaZ Teknoloji A.S. All Rights Reserved.
 
 # TODO: A copy also exists in nodos repo. Create a submodule or copy to Tools.
 

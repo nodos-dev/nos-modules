@@ -1,4 +1,4 @@
-# Copyright MediaZ AS. All Rights Reserved.
+# Copyright MediaZ Teknoloji A.S. All Rights Reserved.
 
 cmake_minimum_required(VERSION 3.24.2)
 project("Subsystems")

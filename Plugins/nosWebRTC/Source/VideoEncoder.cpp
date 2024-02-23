@@ -1,4 +1,4 @@
-// Copyright MediaZ AS. All Rights Reserved.
+// Copyright MediaZ Teknoloji A.S. All Rights Reserved.
 
 #include "VideoEncoder.h"
 #include <api/video_codecs/builtin_video_encoder_factory.h>

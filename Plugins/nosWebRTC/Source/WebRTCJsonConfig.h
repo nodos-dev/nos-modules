@@ -1,5 +1,5 @@
 /*
- * Copyright MediaZ AS. All Rights Reserved.
+ * Copyright MediaZ Teknoloji A.S. All Rights Reserved.
  */
 
 #ifndef NOS_WEBRTC_JSON_CONFIG
