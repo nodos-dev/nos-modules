@@ -38,6 +38,7 @@ enum State
 {
     Idle = 0,
     Loading = 1,
+    Failed = 2,
 };
 
 struct ReadImageContext
@@ -57,19 +58,25 @@ struct ReadImageContext
 
         flatbuffers::FlatBufferBuilder fbb;
         std::vector<flatbuffers::Offset<nos::fb::NodeStatusMessage>> msg;
-        if(newState == State::Loading)
+        switch(newState)
         {
-			time_started = Clock::now();
+        case State::Loading:
+		    time_started = Clock::now();
 			msg.push_back(fb::CreateNodeStatusMessageDirect(fbb, "Loading image", fb::NodeStatusMessageType::INFO));
-        }
-        else
+            break;
+        case State::Idle:
         {
 			std::stringstream ss;
 			auto dt = std::chrono::duration_cast<std::chrono::milliseconds>(Clock::now() - time_started);
             ss << "Read Image: Loaded in " << dt << "\nFile: " << load_path;
-
             nosEngine.LogDI(load_path.c_str(), ss.str().c_str());
+            break;
         }
+        case State::Failed:
+            msg.push_back(fb::CreateNodeStatusMessageDirect(fbb, "Failed to load image", fb::NodeStatusMessageType::FAILURE));
+            break;
+        }
+
         HandleEvent(CreateAppEvent(fbb, nos::CreatePartialNodeUpdateDirect(fbb, &nodeid, ClearFlags::NONE, 0, 0, 0, 0, 0, 0, &msg)));
 	}
 };
@@ -85,11 +92,12 @@ static nosResult GetFunctions(size_t* count, nosName* names, nosPfnNodeFunctionE
 	*fns = [](void* ctx, const nosNodeExecuteArgs* nodeArgs, const nosNodeExecuteArgs* functionArgs)
     {
         auto c = (ReadImageContext*)ctx;
-        if(c->state != State::Idle)
+        if(c->state == State::Loading)
         {
             nosEngine.LogE("Read Image is already loading an image.");
             return;
         }
+
         c->UpdateStatus(State::Loading);
 
 		nos::NodeExecuteArgs args(nodeArgs);
@@ -100,6 +108,7 @@ static nosResult GetFunctions(size_t* count, nosName* names, nosPfnNodeFunctionE
 			if (!std::filesystem::exists(path))
 			{
 				nosEngine.LogE("Read Image cannot load file %s", path.string().c_str());
+				c->UpdateStatus(State::Failed);
 				return;
 			}
 
@@ -158,8 +167,8 @@ static nosResult GetFunctions(size_t* count, nosName* names, nosPfnNodeFunctionE
 		catch (const std::exception& e)
 		{
 			nosEngine.LogE("Error while loading image: %s", e.what());
+            c->UpdateStatus(State::Failed);
 		}
-		
     };
     
     return NOS_RESULT_SUCCESS;
@@ -182,41 +191,5 @@ nosResult RegisterReadImage(nosNodeFunctions* fn)
 
 	return NOS_RESULT_SUCCESS;
 }
-
-// void RegisterReadImage(nosNodeFunctions* fn)
-// {
-	// auto& actions = functions["nos.ReadImage"];
-
-	// actions.NodeCreated = [](fb::Node const& node, Args& args, void** context) {
-	// 	*context = new ReadImageContext(node);
-	// };
-
-	// actions.EntryPoint = [](nos::Args& args, void* context) mutable {
-	// 	auto path = args.Get<char>("Path");
-	// 	if (!path || strlen(path) == 0)
-	// 		return false;
-
-	// 	i32 width, height, channels;
-	// 	auto* ctx = static_cast<ReadImageContext*>(context);
-	// 	u8* img = stbi_load(path, &width, &height, &channels, STBI_rgb_alpha);
-	// 	bool ret = !!img && ctx->Upload(img, width, height, args.GetBuffer("Out"));
-	// 	if (!ret)
-	// 	{
-	// 		nosEngine.LogE("ReadImage: Failed to load image");
-	// 		flatbuffers::FlatBufferBuilder fbb;
-	// 		std::vector<flatbuffers::Offset<nos::fb::NodeStatusMessage>> messages{nos::fb::CreateNodeStatusMessageDirect(
-	// 			fbb, "Failed to load image", nos::fb::NodeStatusMessageType::FAILURE)};
-	// 		HandleEvent(CreateAppEvent(
-	// 			fbb,
-	// 			nos::app::CreatePartialNodeUpdateDirect(fbb, &ctx->NodeId, ClearFlags::NONE, 0, 0, 0, 0, 0, 0, &messages)));
-	// 	}
-	// 	if (img)
-	// 		stbi_image_free(img);
-
-	// 	return ret;
-	// };
-
-	// actions.NodeRemoved = [](void* ctx, nos::fb::UUID const& id) { delete static_cast<ReadImageContext*>(ctx); };
-// }
 
 } // namespace nos::utilities
