@@ -1,0 +1,27 @@
+namespace nos.utilities;
+
+enum ColorSpace : uint {
+    REC709  = 0,
+    REC601  = 1,
+    REC2020 = 2,
+}
+
+enum GammaCurve : uint {
+    REC709  = 0,
+    HLG  = 1,
+    ST2084 = 2,
+}
+
+enum GammaConversionType : uint {
+    ENCODE, // From linear to non-linear
+    DECODE, // From non-linear to linear
+}
+
+enum YCbCrConversionFlags : uint(bit_flags) {
+    // Interlaced
+    OUTPUT_EVEN = 0,
+    OUTPUT_ODD = 1,
+    INPUT_EVEN = 2,
+    INPUT_ODD = 3,
+    V210 = 4 // YUV-8 will be used if not set
+}

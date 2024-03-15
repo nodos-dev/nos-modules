@@ -417,6 +417,31 @@
 					"can_show_as": "OUTPUT_PIN_OR_PROPERTY"
 				}
 			]
+		},
+		{
+			"class_name": "ComputeTest1",
+			"contents_type": "Job",
+			"contents": {
+			    "type": "nos.sys.vulkan.GPUNode",
+			    "options": {
+			        "shader": "../Shaders/ComputeTest1.comp",
+					"stage": "COMPUTE"
+			    }
+			},
+			"pins": [
+				{
+					"name": "Input",
+					"type_name": "nos.sys.vulkan.Texture",
+					"show_as": "INPUT_PIN",
+					"can_show_as": "INPUT_PIN_ONLY"
+				},
+				{
+					"name": "Output",
+					"type_name": "nos.sys.vulkan.Texture",
+					"show_as": "OUTPUT_PIN",
+					"can_show_as": "OUTPUT_PIN_ONLY"
+				}
+			]
 		}
 	]
 }

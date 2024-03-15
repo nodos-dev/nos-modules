@@ -8,7 +8,6 @@
 
 namespace nos::utilities
 {
-extern nosVulkanSubsystem* nosVulkan;
 
 NOS_REGISTER_NAME(RESIZE_PASS);
 NOS_REGISTER_NAME(Method);

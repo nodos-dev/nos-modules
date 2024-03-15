@@ -20,8 +20,6 @@ NOS_REGISTER_NAME(Utilities_Deinterlace_Pass);
 
 namespace nos::utilities
 {
-extern nosVulkanSubsystem* nosVulkan;
-
 struct InterlaceNode : NodeContext
 {
 	nosTextureFieldType Field = NOS_TEXTURE_FIELD_TYPE_EVEN;

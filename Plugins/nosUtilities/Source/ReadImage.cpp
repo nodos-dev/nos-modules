@@ -28,8 +28,6 @@ namespace nos::vkss
 
 namespace nos::utilities
 {
-extern nosVulkanSubsystem* nosVulkan;
-
 NOS_REGISTER_NAME(SRGB2Linear_Pass);
 NOS_REGISTER_NAME(SRGB2Linear_Shader);
 NOS_REGISTER_NAME_SPACED(Nos_Utilities_ReadImage, "nos.utilities.ReadImage")

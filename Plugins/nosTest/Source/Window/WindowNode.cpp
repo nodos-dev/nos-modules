@@ -123,11 +123,9 @@ void WindowNode::WindowThread()
 		return;
 	}
 	
-	nosSchedulePinParams params = {};
-	params.PinId = PinName2Id[NOS_NAME_STATIC("Input")];
-	params.Clear = false;
-	params.DeltaSeconds = {1, 60};
-	params.Monitor = true;
+	nosScheduleNodeParams params = {};
+	params.NodeId = NodeId;
+	params.Reset = false;
 	params.AddScheduleCount = 1;
 	Ready = true;
 	while (!glfwWindowShouldClose(Window) && !Stop)
@@ -162,7 +160,7 @@ void WindowNode::WindowThread()
 			PresentCV.notify_one();
 		}
 
-		nosEngine.SchedulePin(&params);
+		nosEngine.ScheduleNode(&params);
 		glfwPollEvents();
 		CurrentFrame = (CurrentFrame + 1) % FrameCount;
 	}

@@ -16,10 +16,10 @@ NOS_REGISTER_NAME(Out);
 NOS_REGISTER_NAME(Path);
 NOS_REGISTER_NAME(sRGB);
 
+nosVulkanSubsystem* nosVulkan = nullptr;
+
 namespace nos::utilities
 {
-
-nosVulkanSubsystem* nosVulkan = nullptr;
 
 enum Utilities : int
 {	// CPU nodes
@@ -31,6 +31,12 @@ enum Utilities : int
 	WriteImage,
 	Interlace,
 	Deinterlace,
+	RGB2YCbCr,
+	GammaLUT,
+	Buffer2Texture,
+	ColorSpaceMatrix,
+	CPUSleep,
+	BufferRing,
 	Count
 };
 
@@ -42,6 +48,12 @@ nosResult RegisterChannelViewer(nosNodeFunctions*);
 nosResult RegisterResize(nosNodeFunctions*);
 nosResult RegisterInterlace(nosNodeFunctions*);
 nosResult RegisterDeinterlace(nosNodeFunctions*);
+nosResult RegisterRGB2YCbCr(nosNodeFunctions*);
+nosResult RegisterGammaLUT(nosNodeFunctions*);
+nosResult RegisterBuffer2Texture(nosNodeFunctions*);
+nosResult RegisterColorSpaceMatrix(nosNodeFunctions*);
+nosResult RegisterCPUSleep(nosNodeFunctions*);
+nosResult RegisterBufferRing(nosNodeFunctions*);
 
 extern "C"
 {
@@ -56,7 +68,7 @@ NOSAPI_ATTR nosResult NOSAPI_CALL nosExportNodeFunctions(size_t* outSize, nosNod
 	if (ret != NOS_RESULT_SUCCESS)
 		return ret;
 
-#define GEN_CASE_CPU_NODE(name)				\
+#define GEN_CASE_NODE(name)				\
 	case Utilities::name: {					\
 		auto ret = Register##name(node);	\
 		if (NOS_RESULT_SUCCESS != ret)		\
@@ -70,14 +82,20 @@ NOSAPI_ATTR nosResult NOSAPI_CALL nosExportNodeFunctions(size_t* outSize, nosNod
 		switch ((Utilities)i) {
 			default:
 				break;
-			GEN_CASE_CPU_NODE(Merge)
-			GEN_CASE_CPU_NODE(Time)
-			GEN_CASE_CPU_NODE(ReadImage)
-			GEN_CASE_CPU_NODE(WriteImage)
-			GEN_CASE_CPU_NODE(ChannelViewer)
-			GEN_CASE_CPU_NODE(Resize)
-			GEN_CASE_CPU_NODE(Interlace)
-			GEN_CASE_CPU_NODE(Deinterlace)
+			GEN_CASE_NODE(Merge)
+			GEN_CASE_NODE(Time)
+			GEN_CASE_NODE(ReadImage)
+			GEN_CASE_NODE(WriteImage)
+			GEN_CASE_NODE(ChannelViewer)
+			GEN_CASE_NODE(Resize)
+			GEN_CASE_NODE(Interlace)
+			GEN_CASE_NODE(Deinterlace)
+			GEN_CASE_NODE(RGB2YCbCr)
+			GEN_CASE_NODE(GammaLUT)
+			GEN_CASE_NODE(Buffer2Texture)
+			GEN_CASE_NODE(ColorSpaceMatrix)
+			GEN_CASE_NODE(CPUSleep)
+			GEN_CASE_NODE(BufferRing)
 		}
 	}
 	return NOS_RESULT_SUCCESS;

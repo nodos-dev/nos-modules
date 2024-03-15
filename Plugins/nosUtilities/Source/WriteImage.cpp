@@ -16,8 +16,6 @@
 
 namespace nos::utilities
 {
-extern nosVulkanSubsystem* nosVulkan;
-
 NOS_REGISTER_NAME(Linear2SRGB_Pass);
 NOS_REGISTER_NAME(Linear2SRGB_Shader);
 NOS_REGISTER_NAME(In);
@@ -144,8 +142,9 @@ struct WriteImage : NodeContext {
             auto writeImage = (WriteImage*)ctx;
             auto ids = GetPinIds(nodeArgs);
             writeImage->WriteRequested = true;
-			nosSchedulePinParams scheduleParams{ids[NSN_In], 1, true, {0, 1}, false};
-			nosEngine.SchedulePin(&scheduleParams);
+			// TODO: PathRunner
+			//nosSchedulePinParams scheduleParams{ids[NSN_In], 1, true};
+			//nosEngine.ScheduleNode(&scheduleParams);
             nosEngine.LogI("WriteImage: Write requested");
         };
 

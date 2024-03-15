@@ -67,6 +67,11 @@
         },
         {
             "category": "Test",
+            "class_name": "ComputeTest1",
+            "display_name": "ComputeTest1"
+        },
+        {
+            "category": "Test",
             "class_name": "FrameInterpolator",
             "display_name": "Frame Interpolator"
         },

@@ -425,8 +425,8 @@ struct WebRTCNodeContext : nos::NodeContext {
 		std::chrono::microseconds passedTime;
 
 		nosVec2u deltaSec{10'000u, (uint32_t)std::floor(FPS * 10'000)};
-		nosSchedulePinParams scheduleParams{InputPinUUID, InputBuffers.size(), true, deltaSec, true};
-		nosEngine.SchedulePin(&scheduleParams);
+		nosScheduleNodeParams scheduleParams{NodeId, InputBuffers.size(), true};
+		nosEngine.ScheduleNode(&scheduleParams);
 
 		while (shouldSendFrame && p_nosWebRTC)
 		{
@@ -543,11 +543,11 @@ struct WebRTCNodeContext : nos::NodeContext {
 
 			
 			nosVec2u deltaSec{10'000u, (uint32_t)std::floor(FPS * 10'000)};
-			nosSchedulePinParams scheduleParams
+			nosScheduleNodeParams scheduleParams
 			{
-				InputPinUUID, 1, false, deltaSec, true
+				InputPinUUID, 1, false
 			};
-			nosEngine.SchedulePin(&scheduleParams);
+			nosEngine.ScheduleNode(&scheduleParams);
 
 
 			auto t_end = std::chrono::high_resolution_clock::now();

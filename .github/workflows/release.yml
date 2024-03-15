@@ -45,19 +45,24 @@ jobs:
     name: Configure
     runs-on: self-hosted
     steps:
-      - uses: actions/checkout@v4 # checkout the repository content to github runner.
-        with:
-          submodules: recursive
-          token: ${{ secrets.CI_TOKEN }}
-          lfs: 'true'
-          fetch-depth: 0 # We need the full history to get the latest tag.
-          clean: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.clean == 'true' }} # Clean only if workflow_dispatch with clean=true
-          path: "modules-${{ github.ref_name }}"
-
       - name: Update Git Credentials
         continue-on-error: true
         run: |
           git credential-manager github login --username ${{ env.GH_USERNAME }} --token ${{ env.GH_TOKEN }} --force
+
+      - name: Clone
+        shell: pwsh
+        if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.clean == 'true' }}
+        run: |
+          Remove-Item -Recurse -Force -ErrorAction SilentlyContinue ./modules-${{ github.ref_name }}
+          git clone --branch ${{ github.ref_name }} --depth 1 ${{ env.GH_RELEASE_REPO_URL }} --recurse-submodule --shallow-submodules ./modules-${{ github.ref_name }}
+
+      - name: Checkout
+        run: |
+          git fetch origin
+          git checkout ${{ github.sha }}
+          git submodule update --force --recursive --init
+        working-directory: ./modules-${{ github.ref_name }}
 
       - name: Install Python Prerequisites
         run: |

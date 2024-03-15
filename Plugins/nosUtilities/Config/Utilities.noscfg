@@ -27,7 +27,10 @@
         "ChannelViewer.nosdef",
         "Time.nosdef",
         "ImageIO.nosdef",
-        "Interlace.nosdef"
+        "Interlace.nosdef",
+        "Conversions.nosdef",
+        "CPUSleep.nosdef",
+        "BufferRing.nosdef"
     ],
     "custom_types": [
         "Merge.fbs",
@@ -35,7 +38,8 @@
         "Resize.fbs",
         "Swizzle.fbs",
         "TextureSwitcher.fbs",
-        "ChannelViewer.fbs"
+        "ChannelViewer.fbs",
+        "Conversion.fbs"
     ],
     "binary_path": "../Binaries/nosUtilities",
     "associated_nodes": [
@@ -118,6 +122,36 @@
             "category": "Utilities",
             "class_name": "Time",
             "display_name": "Time"
+        },
+        {
+            "category": "Utilities",
+            "class_name": "CPUSleep",
+            "display_name": "CPU Sleep"
+        },
+        {
+            "category": "Utilities|Conversions",
+            "class_name": "RGB2YCbCr",
+            "display_name": "RGB to YCbCr Converter"
+        },
+        {
+            "category": "Utilities|Conversions",
+            "class_name": "GammaLUT",
+            "display_name": "Gamma LUT"
+        },
+        {
+            "category": "Utilities|Conversions",
+            "class_name": "Buffer2Texture",
+            "display_name": "Buffer to Texture Converter"
+        },
+        {
+            "category": "Utilities|Conversions",
+            "class_name": "ColorSpaceMatrix",
+            "display_name": "Color Space"
+        },
+        {
+            "category": "Utilities",
+            "class_name": "BufferRing",
+            "display_name": "Buffer Ring"
         }
     ],
     "subsystem_options": [

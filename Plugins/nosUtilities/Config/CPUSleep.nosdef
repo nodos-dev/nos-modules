@@ -1,0 +1,36 @@
+{
+	"nodes": [
+		{
+			"class_name": "CPUSleep",
+			"contents_type": "Job",
+			"pins": [
+				{
+					"name": "InputThread",
+					"type_name": "nos.exe",
+					"show_as": "INPUT_PIN",
+					"can_show_as": "INPUT_PIN_OR_PROPERTY"
+				},
+				{
+					"name": "OutputThread",
+					"type_name": "nos.exe",
+					"show_as": "OUTPUT_PIN",
+					"can_show_as": "OUTPUT_PIN_OR_PROPERTY"
+				},
+				{
+					"name": "WaitTimeMS",
+					"type_name": "double",
+					"show_as": "PROPERTY",
+					"can_show_as": "INPUT_PIN_OR_PROPERTY",
+					"data": 16.0
+				},
+				{
+					"name": "BusyWait",
+					"type_name": "bool",
+					"show_as": "PROPERTY",
+					"can_show_as": "INPUT_PIN_OR_PROPERTY",
+					"data": false
+				}
+			]
+		}
+	]
+}

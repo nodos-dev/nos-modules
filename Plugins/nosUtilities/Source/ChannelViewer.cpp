@@ -14,8 +14,6 @@ NOS_REGISTER_NAME_SPACED(Nos_Utilities_ChannelViewer, "nos.utilities.ChannelView
 
 namespace nos::utilities
 {
-extern nosVulkanSubsystem* nosVulkan;
-
 static nosResult ExecuteNode(void* ctx, const nosNodeExecuteArgs* pins)
 {
 	auto values = GetPinValues(pins);

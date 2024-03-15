@@ -1,0 +1,27 @@
+#version 450 core
+
+// Binding for the input texture (read-only)
+layout(binding = 0, rgba8) readonly uniform image2D Input;
+
+// Binding for the output texture (write-only)
+layout(binding = 1, rgba8) writeonly uniform image2D Output;
+
+// The compute shader's global invocation ID provides the current thread's x, y, and z indices
+layout (local_size_x = 16, local_size_y = 16) in;
+
+void main() {
+    // Calculate the current pixel coordinate
+    const ivec2 D = ivec2(gl_NumWorkGroups * gl_WorkGroupSize).xy;
+    const ivec2 Q = imageSize(Output);
+    const ivec2 N = Q / D;
+    const ivec2 Coord = ivec2(gl_GlobalInvocationID.xy) * N;
+    
+    for(int i = 0; i < N.x; ++i)
+    {
+        for(int j = 0; j < N.y; j++)
+        {
+            const ivec2 ij = Coord + ivec2(i, j);
+            imageStore(Output, ij, imageLoad(Input, ij));
+        }
+    }
+}

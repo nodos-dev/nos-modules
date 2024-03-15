@@ -60,8 +60,7 @@
             "deps": [
                 "nosWebRTC/*"
             ]
-        },
-        "nos.nvvfx":
+        }
     },
     "subsystems": {
         "nos.sys.vulkan": {

@@ -5,8 +5,6 @@
 namespace nos::utilities
 {
 NOS_REGISTER_NAME(Seconds);
-NOS_REGISTER_NAME(Time_Pass);
-NOS_REGISTER_NAME(Time_Shader);
 NOS_REGISTER_NAME_SPACED(Nos_Utilities_Time, "nos.utilities.Time")
 struct TimeNodeContext : NodeContext
 {

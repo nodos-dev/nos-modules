@@ -28,7 +28,6 @@ uuids::uuid_random_generator generator(mtengine);
 
 namespace nos::utilities
 {
-extern nosVulkanSubsystem* nosVulkan;
 
 NOS_REGISTER_NAME(Textures);
 NOS_REGISTER_NAME(Texture_Count);

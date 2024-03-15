@@ -69,13 +69,13 @@ struct TRing
         Size = size;
     }
     
-    TRing(nosVec2u extent, u32 Size, nosBufferUsage usage) 
+    TRing(u32 ringSize, u32 bufferSize, nosBufferUsage usage) 
         requires(std::is_same_v<T, nosBufferInfo>)
-        : Extent(extent), Sample()
+        : Sample()
     {
-        Sample.Size = Extent.x * Extent.y * 4;
+        Sample.Size = bufferSize;
         Sample.Usage = usage;
-        Resize(Size);
+        Resize(ringSize);
     }
     
     TRing(nosVec2u extent, u32 Size, nosImageUsage usage, nosFormat format = NOS_FORMAT_R16G16B16A16_UNORM)
@@ -126,10 +126,15 @@ struct TRing
 		return Read.Pool.size() == Resources.size(); 
     }
 
-    bool CanTakeoGPU()
-    {
-		std::unique_lock lock(Read.Mutex);
-		return !Write.Pool.empty();
+	bool HasEmptySlots()
+	{
+		return EmptyFrames() != 0;
+	}
+
+	u32 EmptyFrames()
+	{
+		std::unique_lock lock(Write.Mutex);
+		return Write.Pool.size();
 	}
 
     bool IsEmpty()
@@ -207,11 +212,12 @@ struct TRing
         std::unique_lock lock(Read.Mutex);
         if (Read.Pool.size() > spare)
         {
-            auto newFrameNumber = Read.Pool.front()->FrameNumber.load();
-            bool result = ResetFrameCount || !frameNumber || newFrameNumber > frameNumber;
-            frameNumber = newFrameNumber;
-            ResetFrameCount = false;
-            return result;
+        	// TODO: Under current arch, schedule requests are sent for the node instead of pin, so this code shouldn't be needed, but check.
+            // auto newFrameNumber = Read.Pool.front()->FrameNumber.load();
+            // bool result = ResetFrameCount || !frameNumber || newFrameNumber > frameNumber;
+            // frameNumber = newFrameNumber;
+            // ResetFrameCount = false;
+            return true;
         }
 
         return false;
