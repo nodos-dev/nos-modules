@@ -61,6 +61,8 @@ jobs:
         run: |
           git fetch origin
           git checkout ${{ github.sha }}
+          git restore .
+          git clean -ffd
           git submodule update --force --recursive --init
         working-directory: ./modules-${{ github.ref_name }}
 
