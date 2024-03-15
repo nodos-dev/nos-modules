@@ -6,6 +6,9 @@
 
 #include "Ring.h"
 
+NOS_REGISTER_NAME(Size)
+NOS_REGISTER_NAME(Spare)
+
 namespace nos::utilities
 {
 struct BufferRingNodeContext : NodeContext
@@ -20,8 +23,18 @@ struct BufferRingNodeContext : NodeContext
 	std::atomic_uint32_t SpareCount = 0;
 	std::atomic<RingMode> Mode = RingMode::FILL;
 
-	BufferRingNodeContext(const nosFbNode* node) : NodeContext(node)
-	{
+	BufferRingNodeContext(const nosFbNode* node) : NodeContext(node) { 
+		AddPinValueWatcher(NSN_Size, [this](nos::Buffer const& newSize, nos::Buffer const& oldSize) 
+			{
+				uint32_t size = *newSize.As<uint32_t>();
+				if (Ring && Ring->Size != size)
+				{
+					Ring->Resize(size);
+					nosPathCommand ringSizeChange{.Event = NOS_RING_SIZE_CHANGE,
+												  .PinId = PinName2Id[NOS_NAME_STATIC("Input")]};
+					nosEngine.SendPathCommand(ringSizeChange);
+				}
+			});
 	}
 
 	void SendRingStats() const
@@ -34,15 +47,15 @@ struct BufferRingNodeContext : NodeContext
 	nosResult ExecuteNode(const nosNodeExecuteArgs* args) override
 	{
 		NodeExecuteArgs pins(args);
-		auto ringSize = *pins.GetPinData<uint32_t>(NOS_NAME_STATIC("Size"));
+		auto ringSize = *pins.GetPinData<uint32_t>(NSN_Size);
 		ringSize = std::max(1u, ringSize);
-		SpareCount = *pins.GetPinData<uint32_t>(NOS_NAME_STATIC("Spare"));
+		SpareCount = *pins.GetPinData<uint32_t>(NSN_Spare);
 		if (SpareCount >= ringSize)
 		{
 			uint32_t newSpareCount = ringSize - 1; 
 			SpareCount = newSpareCount;
 			nosEngine.LogW("Spare count must be less than ring size! Capping spare count at %u.", newSpareCount);
-			nosEngine.SetPinValueByName(NodeId, NOS_NAME_STATIC("Spare"), nosBuffer{.Data = &newSpareCount, .Size = sizeof(newSpareCount)});
+			nosEngine.SetPinValueByName(NodeId, NSN_Spare, nosBuffer{.Data = &newSpareCount, .Size = sizeof(newSpareCount)});
 		}
 		auto* output = pins.GetPinData<sys::vulkan::Buffer>(NOS_NAME_STATIC("Output"));
 		nosResourceShareInfo input = vkss::ConvertToResourceInfo(*pins.GetPinData<sys::vulkan::Buffer>(NOS_NAME_STATIC("Input")));
@@ -127,7 +140,7 @@ struct BufferRingNodeContext : NodeContext
 			break;
 		}
 		case NOS_RING_SIZE_CHANGE: {
-			nosEngine.SetPinValue(*GetPinId(NOS_NAME_STATIC("Size")), nos::Buffer::From(command->RingSize));
+			nosEngine.SetPinValue(*GetPinId(NSN_Size), nos::Buffer::From(command->RingSize));
 			Mode = RingMode::FILL;
 			break;
 		}
@@ -154,7 +167,7 @@ struct BufferRingNodeContext : NodeContext
 
 	void OnPathStart() override
 	{
-		uint64_t ringSize = 2;
+		uint32_t ringSize = *InterpretPinValue<uint32_t>(*GetWatchedPinValue(NSN_Size));
 		if (Ring)
 			ringSize = Ring->Write.Pool.size();
 		nosScheduleNodeParams schedule{.NodeId = NodeId, .AddScheduleCount = ringSize, .Reset = true};

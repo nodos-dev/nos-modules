@@ -28,6 +28,12 @@ public:
 	TestNode(const nosFbNode* node) : nos::NodeContext(node) 
 	{ 
 		nosEngine.LogI("TestNode: " __FUNCTION__);
+		AddPinValueWatcher(NOS_NAME_STATIC("double_prop"), [this](nos::Buffer const& newVal, nos::Buffer const& oldVal) {
+			double optOldVal = 0.0f;
+			if (oldVal.Size() > 0)
+				optOldVal = *oldVal.As<double>();
+			nosEngine.LogI("TestNode: double_prop changed to %f from %f", *newVal.As<double>(), optOldVal);
+		});
 	}
 	~TestNode() 
 	{ 
