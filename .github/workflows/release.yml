@@ -58,7 +58,7 @@ jobs:
           }
           cd ./modules-${{ github.ref_name }}
           git fetch origin
-          git checkout ${{ github.sha }}
+          git checkout ${{ github.ref_name }}
           git restore .
           git clean -ffd
           git submodule update --force --recursive --init
