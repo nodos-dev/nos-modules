@@ -33,9 +33,9 @@ struct BufferRingNodeContext : NodeContext
 			if (Ring->Size != size)
 			{
 				Ring->Resize(size);
-				nosPathCommand ringSizeChange{.Event = NOS_RING_SIZE_CHANGE,
-											  .PinId = PinName2Id[NOS_NAME_STATIC("Input")]};
-				nosEngine.SendPathCommand(ringSizeChange);
+				nosPathCommand ringSizeChange{.Event = NOS_RING_SIZE_CHANGE, .RingSize = size};
+				nosEngine.SendPathCommand(PinName2Id[NOS_NAME_STATIC("Input")], ringSizeChange);
+				SendPathRestart();
 			}
 		});
 		AddPinValueWatcher(NOS_NAME_STATIC("Input"), [this](nos::Buffer const& newBuf, nos::Buffer const& oldBuf) {
@@ -47,9 +47,7 @@ struct BufferRingNodeContext : NodeContext
 					info.Info.Buffer.Size,
 					nosBufferUsage(NOS_BUFFER_USAGE_TRANSFER_SRC | NOS_BUFFER_USAGE_TRANSFER_DST));
 				Ring->Stop();
-				nosPathCommand ringSizeChange{.Event = NOS_RING_SIZE_CHANGE,
-											  .PinId = PinName2Id[NOS_NAME_STATIC("Input")]};
-				nosEngine.SendPathCommand(ringSizeChange);
+				SendPathRestart();
 			}
 		});
 	}
@@ -138,16 +136,10 @@ struct BufferRingNodeContext : NodeContext
 
 	void OnPathCommand(const nosPathCommand* command) override
 	{
-		assert(false);
 		switch (command->Event)
 		{
-		case NOS_DROP: {
-			Mode = RingMode::FILL;
-			break;
-		}
 		case NOS_RING_SIZE_CHANGE: {
 			nosEngine.SetPinValue(*GetPinId(NSN_Size), nos::Buffer::From(command->RingSize));
-			Mode = RingMode::FILL;
 			break;
 		}
 		default: return;
@@ -180,6 +172,11 @@ struct BufferRingNodeContext : NodeContext
 		nosEngine.ScheduleNode(&schedule);
 		if (Ring)
 			Ring->Exit = false;
+	}
+
+	void SendPathRestart()
+	{
+		nosEngine.SendPathRestart(PinName2Id[NOS_NAME_STATIC("Input")]);
 	}
 };
 
