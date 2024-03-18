@@ -59,9 +59,11 @@ jobs:
           cd ./modules-${{ github.ref_name }}
           git fetch origin
           git checkout ${{ github.ref_name }}
+          git pull
           git restore .
           git clean -ffd
           git submodule update --force --recursive --init
+          git status
 
       - name: Clean
         shell: pwsh
