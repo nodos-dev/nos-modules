@@ -23,18 +23,35 @@ struct BufferRingNodeContext : NodeContext
 	std::atomic_uint32_t SpareCount = 0;
 	std::atomic<RingMode> Mode = RingMode::FILL;
 
-	BufferRingNodeContext(const nosFbNode* node) : NodeContext(node) { 
-		AddPinValueWatcher(NSN_Size, [this](nos::Buffer const& newSize, nos::Buffer const& oldSize) 
+	BufferRingNodeContext(const nosFbNode* node) : NodeContext(node)
+	{
+		Ring = std::make_unique<TRing<nosBufferInfo>>(
+			1, 1, nosBufferUsage(NOS_BUFFER_USAGE_TRANSFER_SRC | NOS_BUFFER_USAGE_TRANSFER_DST));
+		Ring->Stop();
+		AddPinValueWatcher(NSN_Size, [this](nos::Buffer const& newSize, nos::Buffer const& oldSize) {
+			uint32_t size = *newSize.As<uint32_t>();
+			if (Ring->Size != size)
 			{
-				uint32_t size = *newSize.As<uint32_t>();
-				if (Ring && Ring->Size != size)
-				{
-					Ring->Resize(size);
-					nosPathCommand ringSizeChange{.Event = NOS_RING_SIZE_CHANGE,
-												  .PinId = PinName2Id[NOS_NAME_STATIC("Input")]};
-					nosEngine.SendPathCommand(ringSizeChange);
-				}
-			});
+				Ring->Resize(size);
+				nosPathCommand ringSizeChange{.Event = NOS_RING_SIZE_CHANGE,
+											  .PinId = PinName2Id[NOS_NAME_STATIC("Input")]};
+				nosEngine.SendPathCommand(ringSizeChange);
+			}
+		});
+		AddPinValueWatcher(NOS_NAME_STATIC("Input"), [this](nos::Buffer const& newBuf, nos::Buffer const& oldBuf) {
+			auto info = vkss::ConvertToResourceInfo(*InterpretPinValue<sys::vulkan::Buffer>(newBuf.Data()));
+			if (Ring->Sample.Size != info.Info.Buffer.Size)
+			{
+				Ring = std::make_unique<TRing<nosBufferInfo>>(
+					Ring->Size,
+					info.Info.Buffer.Size,
+					nosBufferUsage(NOS_BUFFER_USAGE_TRANSFER_SRC | NOS_BUFFER_USAGE_TRANSFER_DST));
+				Ring->Stop();
+				nosPathCommand ringSizeChange{.Event = NOS_RING_SIZE_CHANGE,
+											  .PinId = PinName2Id[NOS_NAME_STATIC("Input")]};
+				nosEngine.SendPathCommand(ringSizeChange);
+			}
+		});
 	}
 
 	void SendRingStats() const
@@ -46,6 +63,8 @@ struct BufferRingNodeContext : NodeContext
 
 	nosResult ExecuteNode(const nosNodeExecuteArgs* args) override
 	{
+		if (Ring->Exit)
+			return NOS_RESULT_FAILED;
 		NodeExecuteArgs pins(args);
 		auto ringSize = *pins.GetPinData<uint32_t>(NSN_Size);
 		ringSize = std::max(1u, ringSize);
@@ -61,19 +80,6 @@ struct BufferRingNodeContext : NodeContext
 		nosResourceShareInfo input = vkss::ConvertToResourceInfo(*pins.GetPinData<sys::vulkan::Buffer>(NOS_NAME_STATIC("Input")));
 		if (!input.Memory.Handle)
 			return NOS_RESULT_SUCCESS;
-		if (!Ring)
-			Ring = std::make_unique<TRing<nosBufferInfo>>(ringSize, input.Info.Buffer.Size, nosBufferUsage(NOS_BUFFER_USAGE_TRANSFER_SRC | NOS_BUFFER_USAGE_TRANSFER_DST));
-		if (Ring->Size != ringSize) {
-			Mode = RingMode::FILL;
-			Ring->Resize(ringSize);
-			// SendScheduleRequest(ringSize, true);
-			nosPathCommand ringSizeChange {
-				.Event = NOS_RING_SIZE_CHANGE,
-				.PinId = pins[NOS_NAME_STATIC("Input")].Id
-			};
-			nosEngine.SendPathCommand(ringSizeChange);
-			return NOS_RESULT_FAILED;
-		}
 
 		if (Ring->IsFull())
 		{
