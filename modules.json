@@ -51,6 +51,7 @@
                 "Shaders/*.frag",
                 "Shaders/*.hlsl",
                 "Shaders/*.spv",
+                "Shaders/*.comp",
                 "Config/*.json"
             ]
         },
