@@ -109,6 +109,11 @@ jobs:
           cmake -S . -B Build -DCMAKE_BUILD_TYPE=Release -DGENERATE_FLATBUFFERS_FILES=1
         working-directory: ./modules-${{ github.ref_name }}
 
+  run_release_tool:
+    name: Run Release Tool
+    runs-on: self-hosted
+    needs: configure
+    steps:
       - name: Checkout Release Target Repo
         uses: actions/checkout@v3 # checkout the repository content to github runner.
         with:
@@ -117,11 +122,6 @@ jobs:
           path: ./modules-${{ github.ref_name }}/release-target-repo
           clean: true
 
-  run_release_tool:
-    name: Run Release Tool
-    runs-on: self-hosted
-    needs: configure
-    steps:
       - name: Setup Git
         run: |
           git config user.email "${{ env.GIT_EMAIL }}"
