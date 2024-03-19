@@ -243,15 +243,6 @@ def upload_releases(repo_url, org_name, repo_name, cloned_release_repo, dry_run)
             logger.error(f"Failed to set git user name: {re.stderr}")
             exit(re.returncode)
 
-        # Update repo
-        re = custom_run(["git", "clean", "-ffd"], dry_run)
-        if re.returncode != 0:
-            logger.error(f"Failed to pull: {re.stderr}")
-            exit(re.returncode)
-        re = custom_run(["git", "pull"], dry_run)
-        if re.returncode != 0:
-            logger.error(f"Failed to pull: {re.stderr}")
-            exit(re.returncode)
         # Commit the result and create a release
         re = custom_run(["git", "add", f"{module_name}/index.json"], dry_run)
         if re.returncode != 0:
