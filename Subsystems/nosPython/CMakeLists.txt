@@ -2,7 +2,7 @@
 add_subdirectory(External/pybind11 EXCLUDE_FROM_ALL)
 
 if (GENERATE_FLATBUFFERS_FILES)
-    generate_flatbuffers("${TOOLS_DIR}/flatc" "${CMAKE_CURRENT_SOURCE_DIR}/Config" "${CMAKE_CURRENT_SOURCE_DIR}/Include/nosPython" "${CMAKE_CURRENT_SOURCE_DIR}/__temp__" "cpp")
+    generate_flatbuffers("${TOOLS_DIR}/flatc" "${CMAKE_CURRENT_SOURCE_DIR}/Config" "${CMAKE_CURRENT_SOURCE_DIR}/Include/nosPython" "${CMAKE_CURRENT_SOURCE_DIR}/__temp__" "cpp" "")
     # TODO: Python custom types
     # generate_flatbuffers("${TOOLS_DIR}/flatc" "${CMAKE_CURRENT_SOURCE_DIR}/Config" "${CMAKE_CURRENT_SOURCE_DIR}/Include/nosPython" "${CMAKE_CURRENT_SOURCE_DIR}/__temp__" "python")
 endif()
