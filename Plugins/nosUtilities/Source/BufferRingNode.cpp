@@ -30,6 +30,11 @@ struct BufferRingNodeContext : NodeContext
 		Ring->Stop();
 		AddPinValueWatcher(NSN_Size, [this](nos::Buffer const& newSize, nos::Buffer const& oldSize) {
 			uint32_t size = *newSize.As<uint32_t>();
+			if (size == 0)
+			{
+				nosEngine.LogW("Ring size cannot be 0");
+				return;
+			}
 			if (Ring->Size != size)
 			{
 				Ring->Resize(size);
@@ -61,15 +66,13 @@ struct BufferRingNodeContext : NodeContext
 
 	nosResult ExecuteNode(const nosNodeExecuteArgs* args) override
 	{
-		if (Ring->Exit)
+		if (Ring->Exit || Ring->Size == 0)
 			return NOS_RESULT_FAILED;
 		NodeExecuteArgs pins(args);
-		auto ringSize = *pins.GetPinData<uint32_t>(NSN_Size);
-		ringSize = std::max(1u, ringSize);
 		SpareCount = *pins.GetPinData<uint32_t>(NSN_Spare);
-		if (SpareCount >= ringSize)
+		if (SpareCount >= Ring->Size)
 		{
-			uint32_t newSpareCount = ringSize - 1; 
+			uint32_t newSpareCount = Ring->Size - 1; 
 			SpareCount = newSpareCount;
 			nosEngine.LogW("Spare count must be less than ring size! Capping spare count at %u.", newSpareCount);
 			nosEngine.SetPinValueByName(NodeId, NSN_Spare, nosBuffer{.Data = &newSpareCount, .Size = sizeof(newSpareCount)});
