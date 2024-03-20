@@ -18,8 +18,8 @@ struct BufferRingNodeContext : NodeContext
 		CONSUME,
 		FILL,
 	};
-
 	std::unique_ptr<TRing<nosBufferInfo>> Ring = nullptr;
+	uint32_t RequestedRingSize = 1;
 	std::atomic_uint32_t SpareCount = 0;
 	std::atomic<RingMode> Mode = RingMode::FILL;
 
@@ -35,12 +35,12 @@ struct BufferRingNodeContext : NodeContext
 				nosEngine.LogW("Ring size cannot be 0");
 				return;
 			}
-			if (Ring->Size != size)
+			if (RequestedRingSize != size)
 			{
-				Ring->Resize(size);
 				nosPathCommand ringSizeChange{.Event = NOS_RING_SIZE_CHANGE, .RingSize = size};
 				nosEngine.SendPathCommand(PinName2Id[NOS_NAME_STATIC("Input")], ringSizeChange);
 				SendPathRestart();
+				RequestedRingSize = size;
 			}
 		});
 		AddPinValueWatcher(NOS_NAME_STATIC("Input"), [this](nos::Buffer const& newBuf, nos::Buffer const& oldBuf) {
@@ -80,7 +80,7 @@ struct BufferRingNodeContext : NodeContext
 		auto* output = pins.GetPinData<sys::vulkan::Buffer>(NOS_NAME_STATIC("Output"));
 		nosResourceShareInfo input = vkss::ConvertToResourceInfo(*pins.GetPinData<sys::vulkan::Buffer>(NOS_NAME_STATIC("Input")));
 		if (!input.Memory.Handle)
-			return NOS_RESULT_SUCCESS;
+			return NOS_RESULT_FAILED;
 
 		if (Ring->IsFull())
 		{
@@ -108,7 +108,7 @@ struct BufferRingNodeContext : NodeContext
 		if (!Ring || Ring->Exit)
 			return NOS_RESULT_FAILED;
 		SendRingStats();
-		if (Mode == RingMode::FILL && Ring->HasEmptySlots())
+		if (Mode == RingMode::FILL)
 			return NOS_RESULT_PENDING;
 
 		auto outputBufferDesc = static_cast<sys::vulkan::Buffer*>(cpy->PinData->Data);
@@ -142,7 +142,16 @@ struct BufferRingNodeContext : NodeContext
 		switch (command->Event)
 		{
 		case NOS_RING_SIZE_CHANGE: {
-			nosEngine.SetPinValue(*GetPinId(NSN_Size), nos::Buffer::From(command->RingSize));
+			if (command->RingSize == 0)
+			{
+				nosEngine.LogW("Ring size cannot be 0");
+				return;
+			}
+			if (RequestedRingSize != command->RingSize)
+			{
+				RequestedRingSize = command->RingSize;
+				SendPathRestart();
+			}
 			break;
 		}
 		default: return;
@@ -168,13 +177,15 @@ struct BufferRingNodeContext : NodeContext
 
 	void OnPathStart() override
 	{
-		uint32_t ringSize = *InterpretPinValue<uint32_t>(*GetWatchedPinValue(NSN_Size));
-		if (Ring)
-			ringSize = Ring->Write.Pool.size();
-		nosScheduleNodeParams schedule{.NodeId = NodeId, .AddScheduleCount = ringSize, .Reset = true};
+		assert(RequestedRingSize != 0);
+		if (RequestedRingSize != Ring->Size)
+			Ring->Resize(RequestedRingSize);
+		auto emptySlotCount = Ring->Write.Pool.size();
+		nosScheduleNodeParams schedule{.NodeId = NodeId, .AddScheduleCount = emptySlotCount};
 		nosEngine.ScheduleNode(&schedule);
-		if (Ring)
-			Ring->Exit = false;
+		if (emptySlotCount == 0)
+			Mode = RingMode::CONSUME;
+		Ring->Exit = false;
 	}
 
 	void SendPathRestart()
