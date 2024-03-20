@@ -70,13 +70,14 @@ struct RGB2YCbCrNodeContext : NodeContext
 		nos::NodeExecuteArgs execArgs(args);
 		const nosBuffer* inputPinData = execArgs[NOS_NAME_STATIC("Source")].Data;
 		const nosBuffer* outputPinData = execArgs[NOS_NAME_STATIC("Output")].Data;
-		auto conversionFlags = *InterpretPinValue<YCbCrConversionFlags>(execArgs[NOS_NAME_STATIC("ConversionFlags")].Data->Data);
+		auto interlacedFlags = *InterpretPinValue<InterlacedFlags>(execArgs[NOS_NAME_STATIC("InterlacedFlags")].Data->Data);
+		auto fmt = *InterpretPinValue<YCbCrPixelFormat>(execArgs[NOS_NAME("PixelFormat")].Data->Data);
 		auto input = vkss::DeserializeTextureInfo(inputPinData->Data);
 		auto& output = *InterpretPinValue<sys::vulkan::Buffer>(execArgs[NOS_NAME_STATIC("Output")].Data->Data);
-		int isOutInterlaced = bool(conversionFlags & (YCbCrConversionFlags::OUTPUT_EVEN | YCbCrConversionFlags::OUTPUT_ODD));
+		int isOutInterlaced = bool(interlacedFlags & (InterlacedFlags::OUTPUT_EVEN | InterlacedFlags::OUTPUT_ODD));
 
 		nosVec2u ext = { input.Info.Texture.Width, input.Info.Texture.Height };
-		nosVec2u yCbCrExt((bool(conversionFlags & YCbCrConversionFlags::V210)) ? ((ext.x + (48 - ext.x % 48) % 48) / 3) << 1 : ext.x >> 1, 
+		nosVec2u yCbCrExt((fmt == YCbCrPixelFormat::V210) ? ((ext.x + (48 - ext.x % 48) % 48) / 3) << 1 : ext.x >> 1, 
 						  ext.y >> isOutInterlaced);
 		uint32_t bufSize = yCbCrExt.x * yCbCrExt.y * 4;
 		// auto alignedSize = bufSize + (bufSize % 4096); 
@@ -94,7 +95,7 @@ struct RGB2YCbCrNodeContext : NodeContext
 			nosEngine.SetPinValueByName(NodeId, NOS_NAME_STATIC("Output"), Buffer::From(bufferDesc));
 		}
 		auto* dispatchSize = execArgs.GetPinData<nosVec2u>(NOS_NAME_STATIC("DispatchSize"));
-		*dispatchSize = GetSuitableDispatchSize(*dispatchSize, yCbCrExt, bool(conversionFlags & YCbCrConversionFlags::V210) ? 10 : 8, isOutInterlaced);
+		*dispatchSize = GetSuitableDispatchSize(*dispatchSize, yCbCrExt, fmt == YCbCrPixelFormat::V210 ? 10 : 8, isOutInterlaced);
 		return nosVulkan->ExecuteGPUNode(this, args);
 	}
 };
@@ -297,9 +298,9 @@ struct ColorSpaceMatrixNodeContext : NodeContext
 	{
 		nos::NodeExecuteArgs execArgs(args);
 		const auto& colorSpace = *InterpretPinValue<ColorSpace>(execArgs[NOS_NAME_STATIC("ColorSpace")].Data->Data);
-		auto conversionFlags = *InterpretPinValue<YCbCrConversionFlags>(execArgs[NOS_NAME_STATIC("ConversionFlags")].Data->Data);
+		auto fmt = *InterpretPinValue<YCbCrPixelFormat>(execArgs[NOS_NAME_STATIC("PixelFormat")].Data->Data);
 		auto narrowRange = *InterpretPinValue<bool>(execArgs[NOS_NAME_STATIC("NarrowRange")].Data->Data);
-		glm::mat4 matrix = GetMatrix<f64>(colorSpace, bool(conversionFlags & YCbCrConversionFlags::V210) ? 10 : 8, narrowRange);
+		glm::mat4 matrix = GetMatrix<f64>(colorSpace, fmt == YCbCrPixelFormat::V210 ? 10 : 8, narrowRange);
 		nosEngine.SetPinValueByName(NodeId, NOS_NAME_STATIC("Output"), Buffer::From(matrix));
 		return NOS_RESULT_SUCCESS;
 	}

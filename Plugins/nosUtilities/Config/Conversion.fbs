@@ -17,11 +17,15 @@ enum GammaConversionType : uint {
     DECODE, // From non-linear to linear
 }
 
-enum YCbCrConversionFlags : uint(bit_flags) {
+enum InterlacedFlags : uint(bit_flags) {
     // Interlaced
     OUTPUT_EVEN = 0,
     OUTPUT_ODD = 1,
     INPUT_EVEN = 2,
     INPUT_ODD = 3,
-    V210 = 4 // YUV-8 will be used if not set
+}
+
+enum YCbCrPixelFormat: uint {
+    YUV8,
+    V210
 }

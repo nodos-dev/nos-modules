@@ -11,10 +11,15 @@ layout(binding = 2) uniform UBO
 {
     mat4 Colorspace;
     mat4 ColorspaceT;
-    uint ConversionFlags;
+    uint InterlacedFlags;
+    uint PixelFormat;
 } ubo;
 
-uint InterlacedFlags = ubo.ConversionFlags;
+// Defined in Conversion.fbs
+#define YCBCR_PIXEL_FORMAT_YUV8 0
+#define YCBCR_PIXEL_FORMAT_V210 1
+
+uint InterlacedFlags = ubo.InterlacedFlags;
 
 layout(binding = 3) buffer SSBO
 {

@@ -2,7 +2,7 @@
 
 #version 450
 #include "ConversionsCommon.glsl"
-#include "InterlacedFlags.h"
+#include "InterlacedFlags.glsl"
 
 layout (local_size_x = 8, local_size_y = 9) in;
 layout (binding = 0)  uniform sampler2D Source;
@@ -15,8 +15,7 @@ ivec2 OutputTextureSize()
 {
 	ivec2 TexSize = textureSize(Source, 0);
     const int OutInterlaced = int((InterlacedFlags & NOS_OUTPUT_INTERLACED_MASK) != 0);
-	const int IsV210 = int((InterlacedFlags & NOS_COMP10_MASK) != 0);
-	ivec2 YCbCrExt = ivec2((IsV210 == 1) ? ((TexSize.x + (48 - TexSize.x % 48) % 48) / 3) << 1 : TexSize.x >> 1, 
+	ivec2 YCbCrExt = ivec2((ubo.PixelFormat == YCBCR_PIXEL_FORMAT_V210) ? ((TexSize.x + (48 - TexSize.x % 48) % 48) / 3) << 1 : TexSize.x >> 1, 
 					TexSize.y >> OutInterlaced);
 	return YCbCrExt;
 }
@@ -105,8 +104,8 @@ void main_v210()
 
 void main()
 {
-    if((InterlacedFlags & NOS_COMP10_MASK) == 0) main_yuv8();
-    else main_v210();
+    if (ubo.PixelFormat == YCBCR_PIXEL_FORMAT_V210) main_v210();
+    else main_yuv8();
 }
 
 

@@ -24,9 +24,16 @@
 					"can_show_as": "INPUT_PIN_ONLY"
 				},
 				{
-					"name": "ConversionFlags",
-					"display_name": "Conversion Flags",
-					"type_name": "nos.utilities.YCbCrConversionFlags",
+					"name": "InterlacedFlags",
+					"display_name": "Interlaced Flags",
+					"type_name": "nos.utilities.InterlacedFlags",
+					"show_as": "INPUT_PIN",
+					"can_show_as": "INPUT_PIN_OR_PROPERTY"
+				},
+				{
+					"name": "PixelFormat", 
+					"display_name": "Pixel Format",
+					"type_name": "nos.utilities.YCbCrPixelFormat",
 					"show_as": "INPUT_PIN",
 					"can_show_as": "INPUT_PIN_OR_PROPERTY"
 				},
@@ -137,9 +144,9 @@
 					"can_show_as": "INPUT_PIN_OR_PROPERTY"
 				},
 				{
-					"name": "ConversionFlags",
-					"display_name": "Conversion Flags",
-					"type_name": "nos.utilities.YCbCrConversionFlags",
+					"name": "PixelFormat",
+					"display_name": "Pixel Format",
+					"type_name": "nos.utilities.YCbCrPixelFormat",
 					"show_as": "INPUT_PIN",
 					"can_show_as": "INPUT_PIN_OR_PROPERTY"
 				},
