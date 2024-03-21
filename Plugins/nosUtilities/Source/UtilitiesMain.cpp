@@ -30,6 +30,7 @@ enum Utilities : int
 	Interlace,
 	Deinterlace,
 	RGB2YCbCr,
+	YCbCr2RGB,
 	GammaLUT,
 	Buffer2Texture,
 	ColorSpaceMatrix,
@@ -47,6 +48,7 @@ nosResult RegisterResize(nosNodeFunctions*);
 nosResult RegisterInterlace(nosNodeFunctions*);
 nosResult RegisterDeinterlace(nosNodeFunctions*);
 nosResult RegisterRGB2YCbCr(nosNodeFunctions*);
+nosResult RegisterYCbCr2RGB(nosNodeFunctions*);
 nosResult RegisterGammaLUT(nosNodeFunctions*);
 nosResult RegisterBuffer2Texture(nosNodeFunctions*);
 nosResult RegisterColorSpaceMatrix(nosNodeFunctions*);
@@ -89,6 +91,7 @@ NOSAPI_ATTR nosResult NOSAPI_CALL nosExportNodeFunctions(size_t* outSize, nosNod
 			GEN_CASE_NODE(Interlace)
 			GEN_CASE_NODE(Deinterlace)
 			GEN_CASE_NODE(RGB2YCbCr)
+			GEN_CASE_NODE(YCbCr2RGB)
 			GEN_CASE_NODE(GammaLUT)
 			GEN_CASE_NODE(Buffer2Texture)
 			GEN_CASE_NODE(ColorSpaceMatrix)

@@ -106,6 +106,105 @@ nosResult RegisterRGB2YCbCr(nosNodeFunctions* funcs)
 	return NOS_RESULT_SUCCESS;
 }
 
+struct YCbCr2RGBNodeContext : NodeContext
+{
+	YCbCr2RGBNodeContext(const nosFbNode* node) : NodeContext(node)
+	{
+	}
+
+	static std::set<u32> const& FindDivisors(const u32 N)
+	{
+		static std::map<u32, std::set<u32>> Map;
+
+		auto it = Map.find(N);
+		if(it != Map.end()) 
+			return it->second;
+
+		u32 p2 = 0, p3 = 0, p5 = 0;
+		std::set<u32> D;
+		u32 n = N;
+		while(0 == n % 2) n /= 2, p2++;
+		while(0 == n % 3) n /= 3, p3++;
+		while(0 == n % 5) n /= 5, p5++;
+	
+		for(u32 i = 0; i <= p2; ++i)
+			for(u32 j = 0; j <= p3; ++j)
+				for(u32 k = 0; k <= p5; ++k)
+					D.insert(pow(2, i) * pow(3, j) * pow(5, k));
+
+		static std::mutex Lock;
+		Lock.lock();
+		std::set<u32> const& re = (Map[N] = std::move(D));
+		Lock.unlock();
+		return re;
+	}
+
+	nosVec2u GetSuitableDispatchSize(nosVec2u dispatchSize, nosVec2u outSize, uint8_t bitWidth, bool interlaced) const
+	{
+		constexpr auto BestFit = [](i64 val, i64 res) -> u32 {
+			auto d = FindDivisors(res);
+			auto it = d.upper_bound(val);
+			if (it == d.begin())
+				return *it;
+			if (it == d.end())
+				return res;
+			const i64 hi = *it;
+			const i64 lo = *--it;
+			return u32(abs(val - lo) < abs(val - hi) ? lo : hi);
+		};
+
+		const u32 q = 0;//TODO: IsQuad(); ?
+		f32 x = glm::clamp<u32>(dispatchSize.x, 1, outSize.x) * (1 + q) * (.25 * bitWidth - 1);
+		f32 y = glm::clamp<u32>(dispatchSize.y, 1, outSize.y) * (1. + q) * (1 + uint8_t(interlaced));
+
+		return nosVec2u(BestFit(x + .5, outSize.x >> (bitWidth - 5)),
+						 BestFit(y + .5, outSize.y / 9));
+	}
+
+
+	nosResult ExecuteNode(const nosNodeExecuteArgs* args) override
+	{
+		nos::NodeExecuteArgs execArgs(args);
+		auto interlacedFlags = *InterpretPinValue<InterlacedFlags>(execArgs[NOS_NAME_STATIC("InterlacedFlags")].Data->Data);
+		auto fmt = *InterpretPinValue<YCbCrPixelFormat>(execArgs[NOS_NAME("PixelFormat")].Data->Data);
+		auto res = *InterpretPinValue<nos::fb::vec2i>(execArgs[NOS_NAME("Resolution")].Data->Data);
+		auto& output = *InterpretPinValue<sys::vulkan::Texture>(execArgs[NOS_NAME_STATIC("Output")].Data->Data);
+		auto& input = *InterpretPinValue<sys::vulkan::Buffer>(execArgs[NOS_NAME_STATIC("Source")].Data->Data);
+
+		int isOutInterlaced = bool(interlacedFlags & (InterlacedFlags::OUTPUT_EVEN | InterlacedFlags::OUTPUT_ODD));
+
+		nosVec2u ext = { res.x(), res.y()};
+
+		nosVec2u yCbCrExt((fmt == YCbCrPixelFormat::V210) ? ((ext.x + (48 - ext.x % 48) % 48) / 3) << 1 : ext.x >> 1, 
+						  ext.y >> isOutInterlaced);
+		
+		if (output.width() != res.x() || 
+			output.height() != res.y())
+		{
+			nosResourceShareInfo tex{.Info = {
+				.Type = NOS_RESOURCE_TYPE_TEXTURE,
+				.Texture = {
+					.Width = static_cast<uint32_t>(res.x()),
+					.Height = static_cast<uint32_t>(res.y()),
+					.Format = NOS_FORMAT_R16G16B16A16_UNORM
+				}
+			}};
+			sys::vulkan::TTexture texDef = vkss::ConvertTextureInfo(tex);
+			nosEngine.SetPinValueByName(NodeId, NOS_NAME_STATIC("Output"), Buffer::From(texDef));
+		}
+		auto* dispatchSize = execArgs.GetPinData<nosVec2u>(NOS_NAME_STATIC("DispatchSize"));
+		*dispatchSize = GetSuitableDispatchSize(*dispatchSize, yCbCrExt, fmt == YCbCrPixelFormat::V210 ? 10 : 8, isOutInterlaced);
+		return nosVulkan->ExecuteGPUNode(this, args);
+	}
+};
+
+nosResult RegisterYCbCr2RGB(nosNodeFunctions* funcs)
+{
+	NOS_BIND_NODE_CLASS(NOS_NAME_STATIC("nos.utilities.YCbCr2RGB"), YCbCr2RGBNodeContext, funcs);
+	return NOS_RESULT_SUCCESS;
+}
+
+
 struct GammaLUTNodeContext : NodeContext
 {
 	static constexpr auto SSBO_SIZE = 10; // Can have a better name.
@@ -299,8 +398,11 @@ struct ColorSpaceMatrixNodeContext : NodeContext
 		nos::NodeExecuteArgs execArgs(args);
 		const auto& colorSpace = *InterpretPinValue<ColorSpace>(execArgs[NOS_NAME_STATIC("ColorSpace")].Data->Data);
 		auto fmt = *InterpretPinValue<YCbCrPixelFormat>(execArgs[NOS_NAME_STATIC("PixelFormat")].Data->Data);
+		const auto& dir = *InterpretPinValue<GammaConversionType>(execArgs[NOS_NAME_STATIC("Type")].Data->Data);
 		auto narrowRange = *InterpretPinValue<bool>(execArgs[NOS_NAME_STATIC("NarrowRange")].Data->Data);
 		glm::mat4 matrix = GetMatrix<f64>(colorSpace, fmt == YCbCrPixelFormat::V210 ? 10 : 8, narrowRange);
+		if(dir == GammaConversionType::DECODE)
+			matrix = glm::inverse(matrix);
 		nosEngine.SetPinValueByName(NodeId, NOS_NAME_STATIC("Output"), Buffer::From(matrix));
 		return NOS_RESULT_SUCCESS;
 	}

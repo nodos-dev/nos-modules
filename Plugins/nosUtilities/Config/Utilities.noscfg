@@ -135,6 +135,11 @@
         },
         {
             "category": "Utilities|Conversions",
+            "class_name": "YCbCr2RGB",
+            "display_name": "YCbCr to RGB Converter"
+        },
+        {
+            "category": "Utilities|Conversions",
             "class_name": "GammaLUT",
             "display_name": "Gamma LUT"
         },

@@ -13,6 +13,7 @@ layout(binding = 2) uniform UBO
     mat4 ColorspaceT;
     uint InterlacedFlags;
     uint PixelFormat;
+	ivec2 Resolution;
 } ubo;
 
 // Defined in Conversion.fbs

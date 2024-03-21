@@ -31,7 +31,7 @@
 					"can_show_as": "INPUT_PIN_OR_PROPERTY"
 				},
 				{
-					"name": "PixelFormat", 
+					"name": "PixelFormat",
 					"display_name": "Pixel Format",
 					"type_name": "nos.utilities.YCbCrPixelFormat",
 					"show_as": "INPUT_PIN",
@@ -57,6 +57,80 @@
 				{
 					"name": "Output",
 					"type_name": "nos.sys.vulkan.Buffer",
+					"show_as": "OUTPUT_PIN",
+					"can_show_as": "OUTPUT_PIN_ONLY"
+				}
+			]
+		},
+		{
+			"class_name": "YCbCr2RGB",
+			"contents_type": "Job",
+			"contents": {
+				"type": "nos.sys.vulkan.GPUNode",
+				"options": {
+					"shader": "../Shaders/YCbCr2RGB.comp.spv",
+					"stage": "COMPUTE"
+				}
+			},
+			"pins": [
+				{
+					"name": "Source",
+					"type_name": "nos.sys.vulkan.Buffer",
+					"show_as": "INPUT_PIN",
+					"can_show_as": "INPUT_PIN_ONLY"
+				},
+				{
+					"name": "GammaLUT",
+					"type_name": "nos.sys.vulkan.Buffer",
+					"show_as": "INPUT_PIN",
+					"can_show_as": "INPUT_PIN_ONLY"
+				},
+				{
+					"name": "InterlacedFlags",
+					"display_name": "Interlaced Flags",
+					"type_name": "nos.utilities.InterlacedFlags",
+					"show_as": "INPUT_PIN",
+					"can_show_as": "INPUT_PIN_OR_PROPERTY"
+				},
+				{
+					"name": "PixelFormat", 
+					"display_name": "Pixel Format",
+					"type_name": "nos.utilities.YCbCrPixelFormat",
+					"show_as": "INPUT_PIN",
+					"can_show_as": "INPUT_PIN_OR_PROPERTY"
+				},
+				{
+					"name": "Colorspace",
+					"display_name": "Colorspace Matrix",
+					"type_name": "nos.fb.mat4",
+					"show_as": "INPUT_PIN",
+					"can_show_as": "INPUT_PIN_OR_PROPERTY"
+				},
+				{
+					"name": "Resolution",
+					"display_name": "Resolution",
+					"type_name": "nos.fb.vec2i",
+					"show_as": "INPUT_PIN",
+					"can_show_as": "INPUT_PIN_OR_PROPERTY",
+					"data": {
+						"x": 1920,
+						"y": 1080
+					}
+
+				},
+				{
+					"name": "DispatchSize",
+					"type_name": "nos.fb.vec2u",
+					"show_as": "PROPERTY",
+					"can_show_as": "INPUT_PIN_OR_PROPERTY",
+					"data": {
+						"x": 120,
+						"y": 120
+					}
+				},
+				{
+					"name": "Output",
+					"type_name": "nos.sys.vulkan.Texture",
 					"show_as": "OUTPUT_PIN",
 					"can_show_as": "OUTPUT_PIN_ONLY"
 				}
@@ -148,6 +222,12 @@
 					"display_name": "Pixel Format",
 					"type_name": "nos.utilities.YCbCrPixelFormat",
 					"show_as": "INPUT_PIN",
+					"can_show_as": "INPUT_PIN_OR_PROPERTY"
+				},
+				{
+					"name": "Type",
+					"type_name": "nos.utilities.GammaConversionType",
+					"show_as": "PROPERTY",
 					"can_show_as": "INPUT_PIN_OR_PROPERTY"
 				},
 				{
