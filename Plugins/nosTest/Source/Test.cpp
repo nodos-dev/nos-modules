@@ -11,12 +11,13 @@
 
 #include "Window/WindowNode.h"
 
-NOS_INIT_WITH_MIN_REQUIRED_MINOR(0) // Do not forget to remove this minimum required minor version on major version changes, or we might not be loaded.
+NOS_INIT_WITH_MIN_REQUIRED_MINOR(0) // Do not forget to remove this minimum required minor version on major version
+									// changes, or we might not be loaded.
 NOS_REGISTER_NAME(in1)
 NOS_REGISTER_NAME(in2)
 NOS_REGISTER_NAME(out)
 
-nosVulkanSubsystem* nosVulkan = nullptr;
+NOS_VULKAN_INIT();
 
 namespace nos::test
 {
@@ -124,7 +125,7 @@ extern "C"
 		if (!outFunctions)
 			return NOS_RESULT_SUCCESS;
 
-		auto ret = nosEngine.RequestSubsystem(NOS_NAME_STATIC("nos.sys.vulkan"), NOS_VULKAN_SUBSYSTEM_VERSION_MAJOR, 0, (void**)&nosVulkan);
+		auto ret = RequestVulkanSubsystem();
 		if (ret != NOS_RESULT_SUCCESS)
 			return ret;
 		

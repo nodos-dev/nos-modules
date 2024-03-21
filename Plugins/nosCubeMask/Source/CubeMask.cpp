@@ -24,9 +24,7 @@
 typedef u32 uint;
 
 NOS_INIT();
-
-nosVulkanSubsystem* vk = 0;
-
+NOS_VULKAN_INIT();
 namespace nos
 {
 #undef near
@@ -184,8 +182,8 @@ struct CubeMask : PinMapping
 	{
 		if (Verts[0].Buffer.Memory.Handle)
 		{
-			vk->DestroyResource(&Verts[0].Buffer);
-			vk->DestroyResource(&Verts[1].Buffer);
+			nosVulkan->DestroyResource(&Verts[0].Buffer);
+			nosVulkan->DestroyResource(&Verts[1].Buffer);
 		}
 
 		std::vector<Vertex> vertices;
@@ -206,10 +204,10 @@ struct CubeMask : PinMapping
 		// Verts.mutate_depth_test(true);
 		// Verts.mutate_depth_write(true);
 
-		vk->CreateResource(&Verts[0].Buffer);
-		vk->CreateResource(&Verts[1].Buffer);
-		u8* mapping0 = vk->Map(&Verts[0].Buffer);
-		u8* mapping1 = vk->Map(&Verts[1].Buffer);
+		nosVulkan->CreateResource(&Verts[0].Buffer);
+		nosVulkan->CreateResource(&Verts[1].Buffer);
+		u8* mapping0 = nosVulkan->Map(&Verts[0].Buffer);
+		u8* mapping1 = nosVulkan->Map(&Verts[1].Buffer);
 		memcpy(mapping0, vertices.data(), vsz);
 		memcpy(mapping1, vertices.data(), vsz);
 		memcpy(mapping0 + vsz, indices.data(), isz);
@@ -236,8 +234,8 @@ struct CubeMask : PinMapping
 
 	~CubeMask() 
 	{ 
-		vk->DestroyResource(&Verts[0].Buffer); 
-		vk->DestroyResource(&Verts[1].Buffer); 
+		nosVulkan->DestroyResource(&Verts[0].Buffer); 
+		nosVulkan->DestroyResource(&Verts[1].Buffer); 
 	}
 
 	// Node graph event callbacks
@@ -334,7 +332,7 @@ struct CubeMask : PinMapping
 		calls[1].Bindings	  = inputs[1].data();
 		calls[1].BindingCount = inputs[1].size();
 		calls[1].Vertices	  = c->Verts[1];
-		vk->RunPass2(0, &pass);
+		nosVulkan->RunPass2(0, &pass);
 
 		return NOS_RESULT_SUCCESS;
 	}
@@ -356,6 +354,10 @@ NOSAPI_ATTR nosResult NOSAPI_CALL nosExportNodeFunctions(size_t* outSize, nosNod
 	if (!outList)
 		return NOS_RESULT_SUCCESS;
 
+	auto ret = RequestVulkanSubsystem();
+	if (ret != NOS_RESULT_SUCCESS)
+		return ret;
+
 	using namespace nos;
 	auto* funcs = outList[0];
 	funcs->ClassName = NOS_NAME_STATIC("CubeMask");
@@ -373,8 +375,6 @@ NOSAPI_ATTR nosResult NOSAPI_CALL nosExportNodeFunctions(size_t* outSize, nosNod
 	funcs->OnMenuCommand = CubeMask::OnMenuCommand;
 	funcs->OnKeyEvent = CubeMask::OnKeyEvent;
 
-	nosEngine.RequestSubsystem(NOS_NAME_STATIC(NOS_VULKAN_SUBSYSTEM_NAME), NOS_VULKAN_SUBSYSTEM_VERSION_MAJOR, 0, (void**)&vk);
-
 	// std::string root = nosEngine.Context->RootFolderPath;
 	// {
 	// 	std::string v0 = root + "./Shaders/CubeMask.vert";
@@ -390,7 +390,7 @@ NOSAPI_ATTR nosResult NOSAPI_CALL nosExportNodeFunctions(size_t* outSize, nosNod
 	// 			.Source = {.Stage = NOS_SHADER_STAGE_FRAG, .GLSLPath = v1.data()},
 	// 		},
 	// 	};
-	// 	vk->RegisterShaders(infos.size(), infos.data());
+	// 	nosVulkan->RegisterShaders(infos.size(), infos.data());
 	// }
 
 	// {
@@ -403,7 +403,7 @@ NOSAPI_ATTR nosResult NOSAPI_CALL nosExportNodeFunctions(size_t* outSize, nosNod
 	// 			.MultiSample = 1,
 	// 		},
 	// 	};
-	// 	vk->RegisterPasses(infos.size(), infos.data());
+	// 	nosVulkan->RegisterPasses(infos.size(), infos.data());
 	// }
 	return NOS_RESULT_SUCCESS;
 }

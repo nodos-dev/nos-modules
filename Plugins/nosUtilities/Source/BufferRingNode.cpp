@@ -114,7 +114,7 @@ struct BufferRingNodeContext : NodeContext
 		auto outputBufferDesc = static_cast<sys::vulkan::Buffer*>(cpy->PinData->Data);
 		auto output = vkss::ConvertToResourceInfo(*outputBufferDesc);
 		auto effectiveSpareCount = SpareCount.load(); // TODO: * (1 + u32(th->Interlaced()));
-		auto* slot = Ring->TryPop(cpy->FrameNumber, effectiveSpareCount);
+		auto* slot = Ring->BeginPop();
 		if (!slot)
 			return Ring->Exit ? NOS_RESULT_FAILED : NOS_RESULT_PENDING;
 		if (slot->Res.Info.Buffer.Size != output.Info.Buffer.Size)

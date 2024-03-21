@@ -84,7 +84,7 @@ struct WriteImage : NodeContext {
         nosVulkan->End(cmd, &endParams);
 		if (WriteRequested)
 		{
-		    nosEngine.EndScheduling(copyInfo->ID);
+			nosEngine.RecompilePath(NodeId);
 			WriteRequested = false;
 			SignalWrite();
 		}
@@ -129,6 +129,11 @@ struct WriteImage : NodeContext {
         nosVulkan->DestroyResource(&captures.Buf);
         nosVulkan->DestroyResource(&captures.SRGB);
     }
+
+    void GetScheduleInfo(nosScheduleInfo* info) override
+    { 
+        info->NotScheduled = !WriteRequested;
+	}
 
     static nosResult GetFunctions(size_t* count, nosName* names, nosPfnNodeFunctionExecute* fns)
     {

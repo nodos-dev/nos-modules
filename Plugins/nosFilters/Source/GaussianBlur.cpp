@@ -7,7 +7,7 @@
 #include <nosVulkanSubsystem/Helpers.hpp>
 #include <nosVulkanSubsystem/Types_generated.h>
 
-nosVulkanSubsystem* nosVulkan = 0;
+NOS_VULKAN_INIT();
 
 NOS_REGISTER_NAME(Input);
 NOS_REGISTER_NAME(Output);
@@ -24,15 +24,13 @@ struct GaussBlurContext
 {
 	nosResourceShareInfo IntermediateTexture = {};
 	nos::fb::UUID NodeId;
-	nosVulkanSubsystem* vk = 0;
 
 	GaussBlurContext(fb::Node const& node)
 	{
 		NodeId = *node.id();
 		IntermediateTexture.Info.Type = NOS_RESOURCE_TYPE_TEXTURE;
 		IntermediateTexture.Info.Texture.Filter = NOS_TEXTURE_FILTER_LINEAR;
-		IntermediateTexture.Info.Texture.Usage = nosImageUsage(NOS_IMAGE_USAGE_RENDER_TARGET | NOS_IMAGE_USAGE_SAMPLED); 
-		nosEngine.RequestSubsystem(NOS_NAME_STATIC("nos.sys.vulkan"), NOS_VULKAN_SUBSYSTEM_VERSION_MAJOR, 0, (void**)&vk);
+		IntermediateTexture.Info.Texture.Usage = nosImageUsage(NOS_IMAGE_USAGE_RENDER_TARGET | NOS_IMAGE_USAGE_SAMPLED);
 	}
 
 	~GaussBlurContext()
@@ -43,9 +41,7 @@ struct GaussBlurContext
 	void DestroyResources()
 	{
 		if (IntermediateTexture.Memory.Handle)
-		{
-			vk->DestroyResource(&IntermediateTexture);
-		}
+			nosVulkan->DestroyResource(&IntermediateTexture);
 	}
 
 	void SetupIntermediateTexture(nosResourceShareInfo* outputTexture)
@@ -62,7 +58,7 @@ struct GaussBlurContext
 		IntermediateTexture.Info.Texture.Height = outputTexture->Info.Texture.Height;
 		IntermediateTexture.Info.Texture.Format = outputTexture->Info.Texture.Format;
 		
-		vk->CreateResource(&IntermediateTexture); // TODO Check result
+		nosVulkan->CreateResource(&IntermediateTexture); // TODO Check result
 	}
 
 	void Run(const nosNodeExecuteArgs* pins)
@@ -92,7 +88,7 @@ struct GaussBlurContext
 			.Output = IntermediateTexture,
 			.Wireframe = false,
 		};
-		vk->RunPass(0, &pass);
+		nosVulkan->RunPass(0, &pass);
 
 		// Vert pass
 		bindings[0] = nos::vkss::ShaderBinding(NSN_Input, IntermediateTexture);
@@ -100,7 +96,7 @@ struct GaussBlurContext
 		bindings[2] = nos::vkss::ShaderBinding(NSN_Pass_Type, passType.y);
 
 		pass.Output = output;
-		vk->RunPass(0, &pass);
+		nosVulkan->RunPass(0, &pass);
 	}
 };
 
@@ -120,7 +116,7 @@ void RegisterGaussianBlur(nosNodeFunctions* out)
 		return NOS_RESULT_SUCCESS;
 	};
 
-	auto ret = nosEngine.RequestSubsystem(NOS_NAME_STATIC("nos.sys.vulkan"), NOS_VULKAN_SUBSYSTEM_VERSION_MAJOR, 0, (void**)&nosVulkan);
+	auto ret = RequestVulkanSubsystem();
 	if (ret != NOS_RESULT_SUCCESS)
 		return;
 	
