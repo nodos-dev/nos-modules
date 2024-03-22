@@ -1,0 +1,40 @@
+﻿{
+  "nodes": [
+    {
+      "class_name": "TextureBoundedQueue",
+      "display_name": "Texture Bounded Queue",
+      "contents_type": "Job",
+      "description":  "",
+      "pins": [
+        {
+          "name": "Thread",
+          "type_name": "nos.exe",
+          "show_as": "INPUT_PIN",
+          "can_show_as": "INPUT_PIN_ONLY"
+        },
+        {
+          "name": "Size",
+          "type_name": "uint",
+          "data": 2,
+          "max": 120,
+          "min": 1,
+          "show_as": "INPUT_PIN",
+          "can_show_as": "INPUT_PIN_OR_PROPERTY"
+        },
+        {
+          "name": "Input",
+          "type_name": "nos.sys.vulkan.Texture",
+          "show_as": "INPUT_PIN",
+          "can_show_as": "INPUT_PIN_ONLY"
+        },
+        {
+          "name": "Output",
+          "type_name": "nos.sys.vulkan.Texture",
+          "show_as": "OUTPUT_PIN",
+          "can_show_as": "OUTPUT_PIN_ONLY",
+          "live": true
+        }
+      ]
+    }
+  ]
+}

@@ -30,7 +30,8 @@
         "Interlace.nosdef",
         "Conversions.nosdef",
         "CPUSleep.nosdef",
-        "BufferRing.nosdef"
+		"BufferRing.nosdef",
+		"TextureBoundedQueue.nosdef"
     ],
     "custom_types": [
         "Merge.fbs",
@@ -157,7 +158,13 @@
             "category": "Utilities",
             "class_name": "BufferRing",
             "display_name": "Buffer Ring"
+        },
+        {
+            "category": "Utilities",
+            "class_name": "TextureBoundedQueue",
+            "display_name": "Texture Bounded Queue"
         }
+
     ],
     "subsystem_options": [
         {
