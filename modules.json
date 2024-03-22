@@ -29,6 +29,7 @@
             "files": [
                 "Shaders/*.frag",
                 "Shaders/*.hlsl",
+                "Shaders/*.glsl",
                 "Shaders/*.spv"
             ]
         },
@@ -52,6 +53,7 @@
                 "Shaders/*.hlsl",
                 "Shaders/*.spv",
                 "Shaders/*.comp",
+                "Shaders/*.glsl",
                 "Config/*.json"
             ]
         },
