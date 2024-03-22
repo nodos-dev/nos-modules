@@ -9,13 +9,6 @@ function(add_folder_as_plugin_project NAME DEPENDENCIES INCLUDE_FOLDERS)
     project(${NAME})
     message("Processing plugin ${NAME}")
 
-    # TODO: Set convenient paths for debug too. Or, remove it if not used.
-    string(REGEX REPLACE "\\\\" "/" NOS_WORK_FOLDER "$ENV{PROGRAMDATA}/Nodos/core")
-    set(NOS_WORK_FOLDER "${NOS_WORK_FOLDER}")
-    set(NOS_REPO_ROOT "${NOS_WORK_FOLDER}")
-    add_compile_definitions(NOS_WORK_FOLDER="${NOS_WORK_FOLDER}")
-    add_compile_definitions(NOS_REPO_ROOT="${NOS_REPO_ROOT}")
-
     set(SOURCE_FOLDER "${CMAKE_CURRENT_SOURCE_DIR}/Source")
     set(CONFIG_FOLDERS "${CMAKE_CURRENT_SOURCE_DIR}" "${CMAKE_CURRENT_SOURCE_DIR}/Config")
 
