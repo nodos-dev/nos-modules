@@ -6,7 +6,7 @@
 			"contents": {
 				"type": "nos.sys.vulkan.GPUNode",
 				"options": {
-					"shader": "../Shaders/RGB2YCbCr.comp.spv",
+					"shader": "../Shaders/RGB2YCbCr.comp",
 					"stage": "COMPUTE"
 				}
 			},
@@ -68,7 +68,7 @@
 			"contents": {
 				"type": "nos.sys.vulkan.GPUNode",
 				"options": {
-					"shader": "../Shaders/YCbCr2RGB.comp.spv",
+					"shader": "../Shaders/YCbCr2RGB.comp",
 					"stage": "COMPUTE"
 				}
 			},
