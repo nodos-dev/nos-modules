@@ -124,7 +124,7 @@ def make_release(args):
 
     if "target_name" in module_info.keys():
         release_target = module_info["target_name"]
-        re = run(["cmake", "--build", args.cmake_build_dir, "--config", "Release", "--target", release_target], universal_newlines=True)
+        re = run(["cmake", "--build", args.cmake_build_dir, "--config", "RelWithDebInfo", "--target", release_target], universal_newlines=True) # TODO: Make Release produce PDBs and remove RelWithDebInfo
         if re.returncode != 0:
             logger.error(f"Failed to build {release_target}")
             exit(re.returncode)
