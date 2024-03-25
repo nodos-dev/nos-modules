@@ -1,8 +1,8 @@
 ﻿{
   "nodes": [
     {
-      "class_name": "TextureBoundedQueue",
-      "display_name": "Texture Bounded Queue",
+      "class_name": "BoundedTextureQueue",
+      "display_name": "Bounded Texture Queue",
       "contents_type": "Job",
       "description":  "",
       "pins": [

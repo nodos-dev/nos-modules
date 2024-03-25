@@ -8,7 +8,7 @@
 
 namespace nos::utilities
 {
-struct TextureBoundedQueueNodeContext : NodeContext
+struct BoundedTextureQueueNodeContext : NodeContext
 {
 	enum class RingMode
 	{
@@ -20,7 +20,7 @@ struct TextureBoundedQueueNodeContext : NodeContext
 	std::atomic_uint32_t SpareCount = 0;
 	std::atomic<RingMode> Mode = RingMode::CONSUME;
 
-	TextureBoundedQueueNodeContext(const nosFbNode* node) : NodeContext(node)
+	BoundedTextureQueueNodeContext(const nosFbNode* node) : NodeContext(node)
 	{
 		Ring = std::make_unique<TRing<nosTextureInfo>>(nosVec2u(1920, 1080), 1, 
 			nosImageUsage(NOS_IMAGE_USAGE_TRANSFER_SRC | NOS_IMAGE_USAGE_TRANSFER_DST), NOS_FORMAT_R16G16B16A16_SFLOAT);
@@ -93,7 +93,7 @@ struct TextureBoundedQueueNodeContext : NodeContext
 		// TODO: FieldType
 		slot->FrameNumber = args->FrameNumber;
 		nosCmd cmd;
-		nosVulkan->Begin("Texture Bounded Queue: Input Buffer Copy To Queue Slot", &cmd);
+		nosVulkan->Begin("Bounded Texture Queue: Input Buffer Copy To Queue Slot", &cmd);
 		nosVulkan->Copy(cmd, &input, &slot->Res, 0);
 		nosCmdEndParams end{.ForceSubmit = NOS_TRUE, .OutGPUEventHandle = &slot->Params.WaitEvent};
 		nosVulkan->End(cmd, &end);
@@ -134,7 +134,7 @@ struct TextureBoundedQueueNodeContext : NodeContext
 		}
 		nosCmd cmd;
 
-		nosVulkan->Begin("Texture Bounded Queue: Bounded Queue Slot Copy To Output Buffer", &cmd);
+		nosVulkan->Begin("Bounded Texture Queue: Bounded Queue Slot Copy To Output Buffer", &cmd);
 		nosVulkan->Copy(cmd, &slot->Res, &output, 0);
 		nosCmdEndParams end{ .ForceSubmit = NOS_TRUE, .OutGPUEventHandle = &slot->Params.WaitEvent };
 		nosVulkan->End(cmd, &end);
@@ -205,9 +205,9 @@ struct TextureBoundedQueueNodeContext : NodeContext
 	}
 };
 
-nosResult RegisterTextureBoundedQueue(nosNodeFunctions* functions)
+nosResult RegisterBoundedTextureQueue(nosNodeFunctions* functions)
 {
-	NOS_BIND_NODE_CLASS(NOS_NAME("TextureBoundedQueue"), TextureBoundedQueueNodeContext, functions)
+	NOS_BIND_NODE_CLASS(NOS_NAME("BoundedTextureQueue"), BoundedTextureQueueNodeContext, functions)
 	return NOS_RESULT_SUCCESS;
 }
 
