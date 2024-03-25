@@ -81,15 +81,15 @@ struct RGB2YCbCrNodeContext : NodeContext
 						  ext.y >> isOutInterlaced);
 		uint32_t bufSize = yCbCrExt.x * yCbCrExt.y * 4;
 		// auto alignedSize = bufSize + (bufSize % 4096); 
-		if (output.size_in_bytes() != bufSize)
+		constexpr auto outBufferUsage = NOS_BUFFER_USAGE_STORAGE_BUFFER | NOS_BUFFER_USAGE_TRANSFER_SRC | NOS_BUFFER_USAGE_DEVICE_MEMORY | NOS_BUFFER_USAGE_NOT_HOST_VISIBLE;
+		if (output.size_in_bytes() != bufSize || output.usage() != (nos::sys::vulkan::BufferUsage)(outBufferUsage))
 		{
 			nosResourceShareInfo bufInfo = {
 				.Info = {
 					.Type = NOS_RESOURCE_TYPE_BUFFER,
 					.Buffer = nosBufferInfo{
 						.Size = (uint32_t)bufSize,
-						.Usage = nosBufferUsage(NOS_BUFFER_USAGE_STORAGE_BUFFER | NOS_BUFFER_USAGE_TRANSFER_DST |
-												NOS_BUFFER_USAGE_TRANSFER_SRC | NOS_BUFFER_USAGE_DEVICE_MEMORY),
+						.Usage = nosBufferUsage(outBufferUsage),
 					}}};
 			auto bufferDesc = vkss::ConvertBufferInfo(bufInfo);
 			nosEngine.SetPinValueByName(NodeId, NOS_NAME_STATIC("Output"), Buffer::From(bufferDesc));
@@ -207,9 +207,14 @@ nosResult RegisterYCbCr2RGB(nosNodeFunctions* funcs)
 
 struct GammaLUTNodeContext : NodeContext
 {
+	nosResourceShareInfo StagingBuffer{};
 	static constexpr auto SSBO_SIZE = 10; // Can have a better name.
 	GammaLUTNodeContext(const nosFbNode* node) : NodeContext(node)
 	{
+		StagingBuffer.Info.Type = NOS_RESOURCE_TYPE_BUFFER;
+		StagingBuffer.Info.Buffer.Size = (1 << (SSBO_SIZE)) * sizeof(u16);
+		StagingBuffer.Info.Buffer.Usage = nosBufferUsage(NOS_BUFFER_USAGE_TRANSFER_SRC);
+		nosVulkan->CreateResource(&StagingBuffer);
 	}
 
 	nosResult ExecuteNode(const nosNodeExecuteArgs* args) override
@@ -223,19 +228,25 @@ struct GammaLUTNodeContext : NodeContext
 		if (!OutputBuffer.Memory.Handle)
 		{
 			OutputBuffer.Info.Type = NOS_RESOURCE_TYPE_BUFFER;
-			OutputBuffer.Info.Buffer.Size = (1 << (SSBO_SIZE)) * sizeof(u16);
-			OutputBuffer.Info.Buffer.Usage = nosBufferUsage(NOS_BUFFER_USAGE_TRANSFER_DST | NOS_BUFFER_USAGE_TRANSFER_SRC | NOS_BUFFER_USAGE_STORAGE_BUFFER | NOS_BUFFER_USAGE_DEVICE_MEMORY);
+			OutputBuffer.Info.Buffer.Size = StagingBuffer.Info.Buffer.Size;
+			OutputBuffer.Info.Buffer.Usage = nosBufferUsage(
+				NOS_BUFFER_USAGE_TRANSFER_DST | NOS_BUFFER_USAGE_TRANSFER_SRC | NOS_BUFFER_USAGE_STORAGE_BUFFER |
+				NOS_BUFFER_USAGE_DEVICE_MEMORY | NOS_BUFFER_USAGE_NOT_HOST_VISIBLE);
 			auto pinBuf = vkss::ConvertBufferInfo(OutputBuffer);
 			nosEngine.SetPinValueByName(NodeId, NOS_NAME_STATIC("LUT"), Buffer::From(pinBuf));
 		}
 		const auto& output = *InterpretPinValue<sys::vulkan::Buffer>(outputPinData->Data);
 		OutputBuffer = vkss::ConvertToResourceInfo(output);
 		auto data = GetGammaLUT(dir == GammaConversionType::DECODE, curve, SSBO_SIZE);
-		auto* ptr = nosVulkan->Map(&OutputBuffer);
+		auto* ptr = nosVulkan->Map(&StagingBuffer);
 		memcpy(ptr, data.data(), data.size() * sizeof(u16));
 		nosEngine.LogI("GammaLUT: Buffer updated");
 		Curve = curve;
 		Type = dir;
+		nosCmd cmd;
+		nosVulkan->Begin("GammaLUT Staging Copy", &cmd);
+		nosVulkan->Copy(cmd, &StagingBuffer, &OutputBuffer, 0);
+		nosVulkan->End(cmd, nullptr);
 		return NOS_RESULT_SUCCESS;
 	}
 	
@@ -321,10 +332,7 @@ struct Buffer2TextureNodeContext : NodeContext
 		nosVulkan->Begin("Buffer2Texture Copy", &cmd);
 		nosVulkan->Copy(cmd, &in, &out, 0);
 		nosGPUEvent event;
-		nosCmdEndParams params{
-.ForceSubmit = true,
-.OutGPUEventHandle = &event
-		};
+		nosCmdEndParams params{.ForceSubmit = true, .OutGPUEventHandle = &event};
 		nosVulkan->End(cmd, &params);
 		nosVulkan->WaitGpuEvent(&event, UINT_MAX);
 		return NOS_RESULT_SUCCESS;
