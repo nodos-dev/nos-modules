@@ -31,7 +31,8 @@
         "Conversions.nosdef",
         "CPUSleep.nosdef",
 		"BufferRing.nosdef",
-		"BoundedTextureQueue.nosdef"
+		"BoundedTextureQueue.nosdef",
+		"UploadBuffer.nosdef"
     ],
     "custom_types": [
         "Merge.fbs",
@@ -159,10 +160,15 @@
             "class_name": "BufferRing",
             "display_name": "Buffer Ring"
         },
+		{
+			"category": "Utilities",
+			"class_name": "BoundedTextureQueue",
+			"display_name": "Bounded Texture Queue"
+		},
         {
             "category": "Utilities",
-            "class_name": "BoundedTextureQueue",
-            "display_name": "Bounded Texture Queue"
+            "class_name": "UploadBuffer",
+            "display_name": "Upload Buffer"
         }
 
     ],

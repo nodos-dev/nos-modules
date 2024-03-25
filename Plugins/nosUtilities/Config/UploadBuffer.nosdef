@@ -1,0 +1,24 @@
+﻿{
+  "nodes": [
+    {
+      "class_name": "UploadBuffer",
+      "display_name": "Upload Buffer",
+      "contents_type": "Job",
+      "description":  "",
+      "pins": [
+        {
+          "name": "Input",
+          "type_name": "nos.sys.vulkan.Buffer",
+          "show_as": "INPUT_PIN",
+          "can_show_as": "INPUT_PIN_ONLY"
+        },
+        {
+          "name": "Output",
+          "type_name": "nos.sys.vulkan.Buffer",
+          "show_as": "OUTPUT_PIN",
+          "can_show_as": "OUTPUT_PIN_ONLY"
+        }
+      ]
+    }
+  ]
+}

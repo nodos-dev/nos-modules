@@ -37,6 +37,7 @@ enum Utilities : int
 	CPUSleep,
 	BufferRing,
 	BoundedTextureQueue,
+	UploadBuffer,
 	Count
 };
 
@@ -56,6 +57,7 @@ nosResult RegisterColorSpaceMatrix(nosNodeFunctions*);
 nosResult RegisterCPUSleep(nosNodeFunctions*);
 nosResult RegisterBufferRing(nosNodeFunctions*);
 nosResult RegisterBoundedTextureQueue(nosNodeFunctions*);
+nosResult RegisterUploadBuffer(nosNodeFunctions*);
 
 extern "C"
 {
@@ -100,6 +102,7 @@ NOSAPI_ATTR nosResult NOSAPI_CALL nosExportNodeFunctions(size_t* outSize, nosNod
 			GEN_CASE_NODE(CPUSleep)
 			GEN_CASE_NODE(BufferRing)
 			GEN_CASE_NODE(BoundedTextureQueue)
+			GEN_CASE_NODE(UploadBuffer)
 		}
 	}
 	return NOS_RESULT_SUCCESS;
