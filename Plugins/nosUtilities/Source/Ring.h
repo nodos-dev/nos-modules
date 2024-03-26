@@ -69,12 +69,11 @@ struct TRing
         Size = size;
     }
     
-    TRing(u32 ringSize, u32 bufferSize, nosBufferUsage usage) 
+    TRing(u32 ringSize, nosBufferInfo buffer) 
         requires(std::is_same_v<T, nosBufferInfo>)
         : Sample()
     {
-        Sample.Size = bufferSize;
-        Sample.Usage = usage;
+		Sample = buffer;
         Resize(ringSize);
     }
     

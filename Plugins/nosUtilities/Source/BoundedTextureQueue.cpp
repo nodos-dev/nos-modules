@@ -155,10 +155,7 @@ struct BoundedTextureQueueNodeContext : NodeContext
 				return;
 			}
 			if (RequestedRingSize != command->RingSize)
-			{
 				RequestedRingSize = command->RingSize;
-				SendPathRestart();
-			}
 			break;
 		}
 		default: return;

@@ -22,16 +22,16 @@ struct UploadBufferNodeContext : NodeContext
 		if (input.size_in_bytes() != output.size_in_bytes())
 		{
 			nosResourceShareInfo bufInfo = {
-				.Info = {
-					.Type = NOS_RESOURCE_TYPE_BUFFER,
-					.Buffer = nosBufferInfo{
-						.Size = (uint32_t)input.size_in_bytes(),
-						.Usage = nosBufferUsage(
-							NOS_BUFFER_USAGE_TRANSFER_DST | NOS_BUFFER_USAGE_TRANSFER_SRC | NOS_BUFFER_USAGE_STORAGE_BUFFER |
-							NOS_BUFFER_USAGE_DEVICE_MEMORY | NOS_BUFFER_USAGE_NOT_HOST_VISIBLE)
-					}}};
+				.Info = {.Type = NOS_RESOURCE_TYPE_BUFFER,
+						 .Buffer = nosBufferInfo{.Size = (uint32_t)input.size_in_bytes(),
+												 .Usage = nosBufferUsage(NOS_BUFFER_USAGE_TRANSFER_DST |
+																		 NOS_BUFFER_USAGE_TRANSFER_SRC |
+																		 NOS_BUFFER_USAGE_STORAGE_BUFFER),
+												 .MemoryFlags = nosMemoryFlags(NOS_MEMORY_FLAGS_DEVICE_MEMORY)}}};
 			auto bufferDesc = vkss::ConvertBufferInfo(bufInfo);
 			nosEngine.SetPinValueByName(NodeId, NOS_NAME_STATIC("Output"), Buffer::From(bufferDesc));
+
+			output = *InterpretPinValue<sys::vulkan::Buffer>(execArgs[NOS_NAME_STATIC("Output")].Data->Data);
 		}
 
 		if (!output.handle() || !input.handle())

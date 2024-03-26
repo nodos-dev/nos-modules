@@ -81,15 +81,16 @@ struct RGB2YCbCrNodeContext : NodeContext
 						  ext.y >> isOutInterlaced);
 		uint32_t bufSize = yCbCrExt.x * yCbCrExt.y * 4;
 		// auto alignedSize = bufSize + (bufSize % 4096); 
-		constexpr auto outBufferUsage = NOS_BUFFER_USAGE_STORAGE_BUFFER | NOS_BUFFER_USAGE_TRANSFER_SRC | NOS_BUFFER_USAGE_DEVICE_MEMORY | NOS_BUFFER_USAGE_NOT_HOST_VISIBLE;
-		if (output.size_in_bytes() != bufSize || output.usage() != (nos::sys::vulkan::BufferUsage)(outBufferUsage))
+		constexpr auto outMemoryFlags = NOS_MEMORY_FLAGS_DEVICE_MEMORY;
+		if (output.size_in_bytes() != bufSize || output.memory_flags() != (nos::sys::vulkan::MemoryFlags)(outMemoryFlags))
 		{
 			nosResourceShareInfo bufInfo = {
 				.Info = {
 					.Type = NOS_RESOURCE_TYPE_BUFFER,
 					.Buffer = nosBufferInfo{
 						.Size = (uint32_t)bufSize,
-						.Usage = nosBufferUsage(outBufferUsage),
+						.Usage = nosBufferUsage(NOS_BUFFER_USAGE_TRANSFER_SRC | NOS_BUFFER_USAGE_STORAGE_BUFFER),
+						.MemoryFlags = outMemoryFlags,
 					}}};
 			auto bufferDesc = vkss::ConvertBufferInfo(bufInfo);
 			nosEngine.SetPinValueByName(NodeId, NOS_NAME_STATIC("Output"), Buffer::From(bufferDesc));
@@ -214,6 +215,7 @@ struct GammaLUTNodeContext : NodeContext
 		StagingBuffer.Info.Type = NOS_RESOURCE_TYPE_BUFFER;
 		StagingBuffer.Info.Buffer.Size = (1 << (SSBO_SIZE)) * sizeof(u16);
 		StagingBuffer.Info.Buffer.Usage = nosBufferUsage(NOS_BUFFER_USAGE_TRANSFER_SRC);
+		StagingBuffer.Info.Buffer.MemoryFlags = NOS_MEMORY_FLAGS_HOST_VISIBLE;
 		nosVulkan->CreateResource(&StagingBuffer);
 	}
 
@@ -225,13 +227,13 @@ struct GammaLUTNodeContext : NodeContext
 		const auto& dir = *InterpretPinValue<GammaConversionType>(execArgs[NOS_NAME_STATIC("Type")].Data->Data);
 		if (Curve == curve && Type == dir)
 			return NOS_RESULT_SUCCESS;
-		if (!OutputBuffer.Memory.Handle)
+		constexpr auto outMemoryFlags = NOS_MEMORY_FLAGS_DEVICE_MEMORY;
+		if (!OutputBuffer.Memory.Handle || OutputBuffer.Info.Buffer.MemoryFlags != outMemoryFlags)
 		{
 			OutputBuffer.Info.Type = NOS_RESOURCE_TYPE_BUFFER;
 			OutputBuffer.Info.Buffer.Size = StagingBuffer.Info.Buffer.Size;
-			OutputBuffer.Info.Buffer.Usage = nosBufferUsage(
-				NOS_BUFFER_USAGE_TRANSFER_DST | NOS_BUFFER_USAGE_TRANSFER_SRC | NOS_BUFFER_USAGE_STORAGE_BUFFER |
-				NOS_BUFFER_USAGE_DEVICE_MEMORY | NOS_BUFFER_USAGE_NOT_HOST_VISIBLE);
+			OutputBuffer.Info.Buffer.Usage = nosBufferUsage(NOS_BUFFER_USAGE_TRANSFER_DST | NOS_BUFFER_USAGE_TRANSFER_SRC | NOS_BUFFER_USAGE_STORAGE_BUFFER);
+			OutputBuffer.Info.Buffer.MemoryFlags = outMemoryFlags;
 			auto pinBuf = vkss::ConvertBufferInfo(OutputBuffer);
 			nosEngine.SetPinValueByName(NodeId, NOS_NAME_STATIC("LUT"), Buffer::From(pinBuf));
 		}

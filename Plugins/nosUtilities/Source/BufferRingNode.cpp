@@ -5,6 +5,7 @@
 #include <nosVulkanSubsystem/Helpers.hpp>
 
 #include "Ring.h"
+#include "nosUtil/Stopwatch.hpp"
 
 NOS_REGISTER_NAME(Size)
 NOS_REGISTER_NAME(Spare)
@@ -22,11 +23,13 @@ struct BufferRingNodeContext : NodeContext
 	uint32_t RequestedRingSize = 1;
 	std::atomic_uint32_t SpareCount = 0;
 	std::atomic<RingMode> Mode = RingMode::FILL;
-
+	const nosBufferInfo SampleBuffer =
+		nosBufferInfo{.Size = 1,
+					  .Usage = nosBufferUsage(NOS_BUFFER_USAGE_TRANSFER_SRC | NOS_BUFFER_USAGE_TRANSFER_DST),
+					  .MemoryFlags = nosMemoryFlags(NOS_MEMORY_FLAGS_DOWNLOAD | NOS_MEMORY_FLAGS_HOST_VISIBLE)};
 	BufferRingNodeContext(const nosFbNode* node) : NodeContext(node)
 	{
-		Ring = std::make_unique<TRing<nosBufferInfo>>(
-			1, 1, nosBufferUsage(NOS_BUFFER_USAGE_TRANSFER_SRC | NOS_BUFFER_USAGE_TRANSFER_DST));
+		Ring = std::make_unique<TRing<nosBufferInfo>>(1, SampleBuffer);
 		Ring->Stop();
 		AddPinValueWatcher(NSN_Size, [this](nos::Buffer const& newSize, nos::Buffer const& oldSize) {
 			uint32_t size = *newSize.As<uint32_t>();
@@ -39,18 +42,15 @@ struct BufferRingNodeContext : NodeContext
 			{
 				nosPathCommand ringSizeChange{.Event = NOS_RING_SIZE_CHANGE, .RingSize = size};
 				nosEngine.SendPathCommand(PinName2Id[NOS_NAME_STATIC("Input")], ringSizeChange);
-				SendPathRestart();
-				RequestedRingSize = size;
 			}
 		});
 		AddPinValueWatcher(NOS_NAME_STATIC("Input"), [this](nos::Buffer const& newBuf, nos::Buffer const& oldBuf) {
 			auto info = vkss::ConvertToResourceInfo(*InterpretPinValue<sys::vulkan::Buffer>(newBuf.Data()));
 			if (Ring->Sample.Size != info.Info.Buffer.Size)
 			{
-				Ring = std::make_unique<TRing<nosBufferInfo>>(
-					Ring->Size,
-					info.Info.Buffer.Size,
-					nosBufferUsage(NOS_BUFFER_USAGE_TRANSFER_SRC | NOS_BUFFER_USAGE_TRANSFER_DST));
+				auto sample = SampleBuffer;
+				sample.Size = info.Info.Buffer.Size;
+				Ring = std::make_unique<TRing<nosBufferInfo>>(Ring->Size, sample);
 				Ring->Stop();
 				SendPathRestart();
 			}
@@ -95,7 +95,6 @@ struct BufferRingNodeContext : NodeContext
 		nosVulkan->Copy(cmd, &input, &slot->Res, 0);
 		nosCmdEndParams end{.ForceSubmit = NOS_TRUE, .OutGPUEventHandle = &slot->Params.WaitEvent};
 		nosVulkan->End(cmd, &end);
-		nosVulkan->WaitGpuEvent(&slot->Params.WaitEvent, UINT64_MAX);
 		Ring->EndPush(slot);
 		if (Mode == RingMode::FILL && Ring->IsFull())
 			Mode = RingMode::CONSUME;
@@ -125,13 +124,20 @@ struct BufferRingNodeContext : NodeContext
 			outputBufferDesc = static_cast<sys::vulkan::Buffer*>(cpy->PinData->Data);
 			output = vkss::ConvertToResourceInfo(*outputBufferDesc);
 		}
-		nosCmd cmd;
-
-		nosVulkan->Begin("nos.aja.BufferRing: Ring Slot Copy To Output Buffer", &cmd);
-		nosVulkan->Copy(cmd, &slot->Res, &output, 0);
-		nosCmdEndParams end{ .ForceSubmit = NOS_TRUE, .OutGPUEventHandle = &slot->Params.WaitEvent };
-		nosVulkan->End(cmd, &end);
-		nosVulkan->WaitGpuEvent(&slot->Params.WaitEvent, UINT64_MAX);
+		if (slot->Params.WaitEvent)
+		{
+			nos::util::Stopwatch sw;
+			nosVulkan->WaitGpuEvent(&slot->Params.WaitEvent, UINT64_MAX);
+			auto elapsed = sw.Elapsed();
+			nosEngine.WatchLog(("Ring Copy From GPU Wait: " + NodeName.AsString()).c_str(),
+							   nos::util::Stopwatch::ElapsedString(elapsed).c_str());
+		}
+		//nosCmd cmd;
+		//nosVulkan->Begin("nos.aja.BufferRing: Ring Slot Copy To Output Buffer", &cmd);
+		//nosVulkan->Copy(cmd, &slot->Res, &output, 0);
+		//nosCmdEndParams end{.ForceSubmit = NOS_FALSE, .OutGPUEventHandle = &slot->Params.WaitEvent};
+		//nosVulkan->End(cmd, &end);
+		nosEngine.SetPinValueDirect(cpy->ID, Buffer::From(vkss::ConvertBufferInfo(slot->Res)));
 		Ring->EndPop(slot);
 		SendScheduleRequest(1);
 		return NOS_RESULT_SUCCESS;
