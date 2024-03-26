@@ -219,7 +219,8 @@ def upload_releases(repo_url, org_name, repo_name, cloned_release_repo, dry_run)
         if module_name in MODULES["plugins"]:
             release_info["plugin_api_version"] = get_api_version("PluginAPI.h", "PLUGIN")
         elif module_name in MODULES["subsystems"]:
-            release_info["subsystem_api_version"] = get_api_version("SubsystemAPI.h", "SUBSYSTEM")
+            if not ("file_only_subsystem" in MODULES["subsystems"][module_name] and MODULES["subsystems"][module_name]["file_only_subsystem"]):
+                release_info["subsystem_api_version"] = get_api_version("SubsystemAPI.h", "SUBSYSTEM")
 
         index["releases"].insert(0, release_info)
         with open(f"{module_name}/index.json", "w") as f:

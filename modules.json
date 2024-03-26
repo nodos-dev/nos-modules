@@ -79,6 +79,7 @@
         },
         "nos.sys.shaderc": {
             "path": "nosShaderCompiler",
+            "file_only_subsystem": true,
             "deps": [
                 "nosShaderCompiler/*"
             ],
