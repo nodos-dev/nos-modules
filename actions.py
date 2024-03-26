@@ -137,7 +137,10 @@ if __name__ == "__main__":
 
     modules_to_release = set()
     if args.build_all:
-        modules_to_release.update(MODULES_FLAT.keys())
+        for module_name, module_info in MODULES_FLAT.items():
+            if "exclude_from_all" in module_info and module_info["exclude_from_all"]:
+                continue
+            modules_to_release.add(module_name)
     else:
         latest_tag = get_latest_release_tag()
         logger.info(f"Latest release tag: {latest_tag}")
