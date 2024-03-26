@@ -131,11 +131,11 @@ jobs:
       - name: Run Release Tool (Build All)
         if: ${{ github.event.inputs.build_all == 'true' }}
         run: |
-          python actions.py --build-all --cmake-build-dir="./Build"  --repo-url=${{ env.GH_RELEASE_REPO_URL }} --repo-org=${{ env.GH_RELEASE_REPO_ORG }} --repo-name=${{ env.GH_RELEASE_REPO_NAME }} --build-number=${{ env.BUILD_NUMBER }} --cloned-release-repo-dir="./release-target-repo"
+          python ./Scripts/actions.py --scripts-dir="./Scripts" --build-all --cmake-build-dir="./Build"  --repo-url=${{ env.GH_RELEASE_REPO_URL }} --repo-org=${{ env.GH_RELEASE_REPO_ORG }} --repo-name=${{ env.GH_RELEASE_REPO_NAME }} --build-number=${{ env.BUILD_NUMBER }} --cloned-release-repo-dir="./release-target-repo"
         working-directory: ./modules-${{ github.ref_name }}
 
       - name: Run Release Tool (Build Changed)
         if: ${{ github.event.inputs.build_all == null || github.event.inputs.build_all == 'false'}}
         run: |
-          python actions.py --cmake-build-dir="./Build"  --repo-url=${{ env.GH_RELEASE_REPO_URL }} --repo-org=${{ env.GH_RELEASE_REPO_ORG }} --repo-name=${{ env.GH_RELEASE_REPO_NAME }} --build-number=${{ env.BUILD_NUMBER }} --cloned-release-repo-dir="./release-target-repo"
+          python ./Scripts/actions.py --scripts-dir="./Scripts" --cmake-build-dir="./Build"  --repo-url=${{ env.GH_RELEASE_REPO_URL }} --repo-org=${{ env.GH_RELEASE_REPO_ORG }} --repo-name=${{ env.GH_RELEASE_REPO_NAME }} --build-number=${{ env.BUILD_NUMBER }} --cloned-release-repo-dir="./release-target-repo"
         working-directory: ./modules-${{ github.ref_name }}
