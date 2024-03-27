@@ -9,61 +9,67 @@
 
 namespace nos::utilities
 {
+
+static std::set<u32> const& FindDivisors(const u32 N)
+{
+	static std::map<u32, std::set<u32>> Map;
+
+	auto it = Map.find(N);
+	if(it != Map.end()) 
+		return it->second;
+
+	u32 p2 = 0, p3 = 0, p5 = 0;
+	std::set<u32> D;
+
+	if (N == 0)
+		return D;
+
+	u32 n = N;
+	while(0 == n % 2) n /= 2, p2++;
+	while(0 == n % 3) n /= 3, p3++;
+	while(0 == n % 5) n /= 5, p5++;
+
+	for(u32 i = 0; i <= p2; ++i)
+		for(u32 j = 0; j <= p3; ++j)
+			for(u32 k = 0; k <= p5; ++k)
+				D.insert(pow(2, i) * pow(3, j) * pow(5, k));
+
+	static std::mutex Lock;
+	Lock.lock();
+	std::set<u32> const& re = (Map[N] = std::move(D));
+	Lock.unlock();
+	return re;
+}
+
+nosVec2u GetSuitableDispatchSize(nosVec2u dispatchSize, nosVec2u outSize, uint8_t bitWidth, bool interlaced)
+{
+	constexpr auto BestFit = [](i64 val, i64 res) -> u32 {
+		if (res == 0)
+			return val;
+		auto d = FindDivisors(res);
+		auto it = d.upper_bound(val);
+		if (it == d.begin())
+			return *it;
+		if (it == d.end())
+			return res;
+		const i64 hi = *it;
+		const i64 lo = *--it;
+		return u32(abs(val - lo) < abs(val - hi) ? lo : hi);
+	};
+
+	const u32 q = 0;//TODO: IsQuad(); ?
+	f32 x = glm::clamp<u32>(dispatchSize.x, 1, outSize.x) * (1 + q) * (.25 * bitWidth - 1);
+	f32 y = glm::clamp<u32>(dispatchSize.y, 1, outSize.y) * (1. + q) * (1 + uint8_t(interlaced));
+
+	return nosVec2u(BestFit(x + .5, outSize.x >> (bitWidth - 5)),
+					 BestFit(y + .5, outSize.y / 9));
+}
+
 struct RGB2YCbCrNodeContext : NodeContext
 {
 	RGB2YCbCrNodeContext(const nosFbNode* node) : NodeContext(node)
 	{
 	}
-
-	static std::set<u32> const& FindDivisors(const u32 N)
-	{
-		static std::map<u32, std::set<u32>> Map;
-
-		auto it = Map.find(N);
-		if(it != Map.end()) 
-			return it->second;
-
-		u32 p2 = 0, p3 = 0, p5 = 0;
-		std::set<u32> D;
-		u32 n = N;
-		while(0 == n % 2) n /= 2, p2++;
-		while(0 == n % 3) n /= 3, p3++;
-		while(0 == n % 5) n /= 5, p5++;
-	
-		for(u32 i = 0; i <= p2; ++i)
-			for(u32 j = 0; j <= p3; ++j)
-				for(u32 k = 0; k <= p5; ++k)
-					D.insert(pow(2, i) * pow(3, j) * pow(5, k));
-
-		static std::mutex Lock;
-		Lock.lock();
-		std::set<u32> const& re = (Map[N] = std::move(D));
-		Lock.unlock();
-		return re;
-	}
-
-	nosVec2u GetSuitableDispatchSize(nosVec2u dispatchSize, nosVec2u outSize, uint8_t bitWidth, bool interlaced) const
-	{
-		constexpr auto BestFit = [](i64 val, i64 res) -> u32 {
-			auto d = FindDivisors(res);
-			auto it = d.upper_bound(val);
-			if (it == d.begin())
-				return *it;
-			if (it == d.end())
-				return res;
-			const i64 hi = *it;
-			const i64 lo = *--it;
-			return u32(abs(val - lo) < abs(val - hi) ? lo : hi);
-		};
-
-		const u32 q = 0;//TODO: IsQuad(); ?
-		f32 x = glm::clamp<u32>(dispatchSize.x, 1, outSize.x) * (1 + q) * (.25 * bitWidth - 1);
-		f32 y = glm::clamp<u32>(dispatchSize.y, 1, outSize.y) * (1. + q) * (1 + uint8_t(interlaced));
-
-		return nosVec2u(BestFit(x + .5, outSize.x >> (bitWidth - 5)),
-						 BestFit(y + .5, outSize.y / 9));
-	}
-
 
 	nosResult ExecuteNode(const nosNodeExecuteArgs* args) override
 	{
@@ -112,56 +118,6 @@ struct YCbCr2RGBNodeContext : NodeContext
 	YCbCr2RGBNodeContext(const nosFbNode* node) : NodeContext(node)
 	{
 	}
-
-	static std::set<u32> const& FindDivisors(const u32 N)
-	{
-		static std::map<u32, std::set<u32>> Map;
-
-		auto it = Map.find(N);
-		if(it != Map.end()) 
-			return it->second;
-
-		u32 p2 = 0, p3 = 0, p5 = 0;
-		std::set<u32> D;
-		u32 n = N;
-		while(0 == n % 2) n /= 2, p2++;
-		while(0 == n % 3) n /= 3, p3++;
-		while(0 == n % 5) n /= 5, p5++;
-	
-		for(u32 i = 0; i <= p2; ++i)
-			for(u32 j = 0; j <= p3; ++j)
-				for(u32 k = 0; k <= p5; ++k)
-					D.insert(pow(2, i) * pow(3, j) * pow(5, k));
-
-		static std::mutex Lock;
-		Lock.lock();
-		std::set<u32> const& re = (Map[N] = std::move(D));
-		Lock.unlock();
-		return re;
-	}
-
-	nosVec2u GetSuitableDispatchSize(nosVec2u dispatchSize, nosVec2u outSize, uint8_t bitWidth, bool interlaced) const
-	{
-		constexpr auto BestFit = [](i64 val, i64 res) -> u32 {
-			auto d = FindDivisors(res);
-			auto it = d.upper_bound(val);
-			if (it == d.begin())
-				return *it;
-			if (it == d.end())
-				return res;
-			const i64 hi = *it;
-			const i64 lo = *--it;
-			return u32(abs(val - lo) < abs(val - hi) ? lo : hi);
-		};
-
-		const u32 q = 0;//TODO: IsQuad(); ?
-		f32 x = glm::clamp<u32>(dispatchSize.x, 1, outSize.x) * (1 + q) * (.25 * bitWidth - 1);
-		f32 y = glm::clamp<u32>(dispatchSize.y, 1, outSize.y) * (1. + q) * (1 + uint8_t(interlaced));
-
-		return nosVec2u(BestFit(x + .5, outSize.x >> (bitWidth - 5)),
-						 BestFit(y + .5, outSize.y / 9));
-	}
-
 
 	nosResult ExecuteNode(const nosNodeExecuteArgs* args) override
 	{
