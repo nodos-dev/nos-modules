@@ -33,6 +33,7 @@ env:
   GIT_EMAIL: "bot@mediaz.io"
   NODOS_SDK_DIR: ${{ github.workspace }}/nosSDK
   GH_TOKEN: ${{ secrets.CI_TOKEN }}
+  DIST_TARGET_DIR: "D:/Builds/Nodos-Modules"
 
 # TODO: Support parallel runs
 concurrency:
