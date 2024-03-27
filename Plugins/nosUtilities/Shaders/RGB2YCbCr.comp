@@ -20,9 +20,10 @@ ivec2 OutputTextureSize()
 	return YCbCrExt;
 }
 
-void Store(const ivec2 dst, const uvec4 color)
+void Store(const ivec2 dst, uvec4 color)
 {
 	ivec2 texSize = OutputTextureSize();
+	color = clamp(color, 0, 255);
     uint target = (color.a << 24) | (color.b << 16) | (color.g << 8) | (color.r);
     Output.Pixels[(dst.y * texSize.x) + dst.x] = target;
 }
