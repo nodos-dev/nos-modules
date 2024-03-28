@@ -25,3 +25,6 @@
 [submodule "Scripts"]
 	path = Scripts
 	url = https://github.com/mediaz/modules-scripts.git
+[submodule "Plugins/nosAJA/External/libajantv2"]
+	path = Plugins/nosAJA/External/libajantv2
+	url = https://github.com/mediaz/libajantv2.git
