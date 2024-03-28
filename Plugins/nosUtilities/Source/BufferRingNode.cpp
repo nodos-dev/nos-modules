@@ -23,8 +23,9 @@ struct BufferRingNodeContext : NodeContext
 	uint32_t RequestedRingSize = 1;
 	std::atomic_uint32_t SpareCount = 0;
 	std::atomic<RingMode> Mode = RingMode::FILL;
-	const nosBufferInfo SampleBuffer =
-		nosBufferInfo{.Size = 1,
+	nosBufferInfo SampleBuffer =
+		nosBufferInfo{ .Size = 1,
+					  .Alignment = 0,
 					  .Usage = nosBufferUsage(NOS_BUFFER_USAGE_TRANSFER_SRC | NOS_BUFFER_USAGE_TRANSFER_DST),
 					  .MemoryFlags = nosMemoryFlags(NOS_MEMORY_FLAGS_DOWNLOAD | NOS_MEMORY_FLAGS_HOST_VISIBLE)};
 	BufferRingNodeContext(const nosFbNode* node) : NodeContext(node)
@@ -44,13 +45,21 @@ struct BufferRingNodeContext : NodeContext
 				nosEngine.SendPathCommand(PinName2Id[NOS_NAME_STATIC("Input")], ringSizeChange);
 			}
 		});
-		AddPinValueWatcher(NOS_NAME_STATIC("Input"), [this](nos::Buffer const& newBuf, nos::Buffer const& oldBuf) {
+		AddPinValueWatcher(NOS_NAME("Alignment"), [this](nos::Buffer const& newAlignment, nos::Buffer const& oldSize) {
+			uint32_t alignment = *newAlignment.As<uint32_t>();
+			if (SampleBuffer.Alignment == alignment)
+				return;
+			SampleBuffer.Alignment = alignment;
+			Ring = std::make_unique<TRing<nosBufferInfo>>(Ring->Size, SampleBuffer);
+			Ring->Stop();
+			SendPathRestart();
+		});
+		AddPinValueWatcher(NOS_NAME("Input"), [this](nos::Buffer const& newBuf, nos::Buffer const& oldBuf) {
 			auto info = vkss::ConvertToResourceInfo(*InterpretPinValue<sys::vulkan::Buffer>(newBuf.Data()));
 			if (Ring->Sample.Size != info.Info.Buffer.Size)
 			{
-				auto sample = SampleBuffer;
-				sample.Size = info.Info.Buffer.Size;
-				Ring = std::make_unique<TRing<nosBufferInfo>>(Ring->Size, sample);
+				SampleBuffer.Size = info.Info.Buffer.Size; 
+				Ring = std::make_unique<TRing<nosBufferInfo>>(Ring->Size, SampleBuffer);
 				Ring->Stop();
 				SendPathRestart();
 			}

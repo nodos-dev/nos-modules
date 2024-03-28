@@ -31,6 +31,14 @@
           "can_show_as": "INPUT_PIN_OR_PROPERTY"
         },
         {
+          "name": "Alignment",
+          "description": "Used for creating memory-aligned buffers in memory",
+          "type_name": "uint",
+          "def": 0,
+          "show_as": "PROPERTY",
+          "can_show_as": "INPUT_PIN_OR_PROPERTY"
+        },
+        {
           "name": "Input",
           "type_name": "nos.sys.vulkan.Buffer",
           "show_as": "INPUT_PIN",
