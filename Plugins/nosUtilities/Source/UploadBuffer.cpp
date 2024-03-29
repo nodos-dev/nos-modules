@@ -43,7 +43,7 @@ struct UploadBufferNodeContext : NodeContext
 		auto InputBuffer = vkss::ConvertToResourceInfo(input);
 
 		nosCmd cmd;
-		nosVulkan->Begin("GammaLUT Staging Copy", &cmd);
+		nosVulkan->Begin("UploadBuffer Staging Copy", &cmd);
 		nosVulkan->Copy(cmd, &InputBuffer, &OutputBuffer, 0);
 		nosVulkan->End(cmd, nullptr);
 
