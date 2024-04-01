@@ -124,7 +124,7 @@ struct YCbCr2RGBNodeContext : NodeContext
 		nos::NodeExecuteArgs execArgs(args);
 		auto interlacedFlags = *InterpretPinValue<InterlacedFlags>(execArgs[NOS_NAME_STATIC("InterlacedFlags")].Data->Data);
 		auto fmt = *InterpretPinValue<YCbCrPixelFormat>(execArgs[NOS_NAME("PixelFormat")].Data->Data);
-		auto res = *InterpretPinValue<nos::fb::vec2i>(execArgs[NOS_NAME("Resolution")].Data->Data);
+		auto res = *InterpretPinValue<nos::fb::vec2u>(execArgs[NOS_NAME("Resolution")].Data->Data);
 		auto& output = *InterpretPinValue<sys::vulkan::Texture>(execArgs[NOS_NAME_STATIC("Output")].Data->Data);
 		auto& input = *InterpretPinValue<sys::vulkan::Buffer>(execArgs[NOS_NAME_STATIC("Source")].Data->Data);
 
@@ -141,8 +141,8 @@ struct YCbCr2RGBNodeContext : NodeContext
 			nosResourceShareInfo tex{.Info = {
 				.Type = NOS_RESOURCE_TYPE_TEXTURE,
 				.Texture = {
-					.Width = static_cast<uint32_t>(res.x()),
-					.Height = static_cast<uint32_t>(res.y()),
+					.Width = res.x(),
+					.Height = res.y(),
 					.Format = NOS_FORMAT_R16G16B16A16_UNORM
 				}
 			}};

@@ -109,7 +109,7 @@
 				{
 					"name": "Resolution",
 					"display_name": "Resolution",
-					"type_name": "nos.fb.vec2i",
+					"type_name": "nos.fb.vec2u",
 					"show_as": "INPUT_PIN",
 					"can_show_as": "INPUT_PIN_OR_PROPERTY",
 					"data": {

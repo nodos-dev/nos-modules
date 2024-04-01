@@ -11,11 +11,11 @@ layout (binding = 0) readonly buffer SourceBuffer
 } Source;
 layout (binding = 1, rgba16)  uniform writeonly  image2D Output;
 
-ivec2 InputTextureSize()
+uvec2 InputTextureSize()
 {
-	ivec2 TexSize = ubo.Resolution;
+	uvec2 TexSize = ubo.Resolution;
     const int OutInterlaced = int((InterlacedFlags & NOS_OUTPUT_INTERLACED_MASK) != 0);
-	ivec2 YCbCrExt = ivec2((ubo.PixelFormat == YCBCR_PIXEL_FORMAT_V210) ? ((TexSize.x + (48 - TexSize.x % 48) % 48) / 3) << 1 : TexSize.x >> 1, 
+	uvec2 YCbCrExt = uvec2((ubo.PixelFormat == YCBCR_PIXEL_FORMAT_V210) ? ((TexSize.x + (48 - TexSize.x % 48) % 48) / 3) << 1 : TexSize.x >> 1, 
 					TexSize.y >> OutInterlaced);
 	return YCbCrExt;
 }
@@ -69,7 +69,7 @@ void main_yuv8()
 {
     const int   Interlaced = int((InterlacedFlags & NOS_OUTPUT_INTERLACED_MASK) != 0);
     const ivec2 D = ivec2(gl_NumWorkGroups * gl_WorkGroupSize).xy;
-    const ivec2 Q = InputTextureSize();
+    const ivec2 Q = ivec2(InputTextureSize());
 
     const ivec2 N          = Q / D;
     const ivec2 uv         = ivec2(gl_GlobalInvocationID.xy) * N;
@@ -137,7 +137,7 @@ void v210(const ivec2 dst, const ivec2 src, const bool interlaced)
 void main_v210()
 {
     const int   Interlaced = int((InterlacedFlags & NOS_OUTPUT_INTERLACED_MASK) != 0);
-    const ivec2 N          =  InputTextureSize() / ivec2(4, 1) / ivec2(gl_NumWorkGroups * gl_WorkGroupSize).xy;
+    const ivec2 N          = ivec2(InputTextureSize()) / ivec2(4, 1) / ivec2(gl_NumWorkGroups * gl_WorkGroupSize).xy;
     const ivec2 uv         = ivec2(gl_GlobalInvocationID.xy) * N;
  
     for(int i = 0; i < N.x; ++i)
