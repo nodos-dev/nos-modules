@@ -32,7 +32,7 @@ struct BufferRingNodeContext : NodeContext
 	{
 		Ring = std::make_unique<TRing<nosBufferInfo>>(1, SampleBuffer);
 		Ring->Stop();
-		AddPinValueWatcher(NSN_Size, [this](nos::Buffer const& newSize, nos::Buffer const& oldSize) {
+		AddPinValueWatcher(NSN_Size, [this](nos::Buffer const& newSize, nos::Buffer const& oldSize, bool first) {
 			uint32_t size = *newSize.As<uint32_t>();
 			if (size == 0)
 			{
@@ -45,7 +45,7 @@ struct BufferRingNodeContext : NodeContext
 				nosEngine.SendPathCommand(PinName2Id[NOS_NAME_STATIC("Input")], ringSizeChange);
 			}
 		});
-		AddPinValueWatcher(NOS_NAME("Alignment"), [this](nos::Buffer const& newAlignment, nos::Buffer const& oldSize) {
+		AddPinValueWatcher(NOS_NAME("Alignment"), [this](nos::Buffer const& newAlignment, nos::Buffer const& oldSize, bool first) {
 			uint32_t alignment = *newAlignment.As<uint32_t>();
 			if (SampleBuffer.Alignment == alignment)
 				return;
@@ -54,7 +54,7 @@ struct BufferRingNodeContext : NodeContext
 			Ring->Stop();
 			SendPathRestart();
 		});
-		AddPinValueWatcher(NOS_NAME("Input"), [this](nos::Buffer const& newBuf, nos::Buffer const& oldBuf) {
+		AddPinValueWatcher(NOS_NAME("Input"), [this](nos::Buffer const& newBuf, nos::Buffer const& oldBuf, bool first) {
 			auto info = vkss::ConvertToResourceInfo(*InterpretPinValue<sys::vulkan::Buffer>(newBuf.Data()));
 			if (Ring->Sample.Size != info.Info.Buffer.Size)
 			{

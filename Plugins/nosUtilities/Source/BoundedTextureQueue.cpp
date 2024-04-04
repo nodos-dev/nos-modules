@@ -26,7 +26,7 @@ struct BoundedTextureQueueNodeContext : NodeContext
 			nosImageUsage(NOS_IMAGE_USAGE_TRANSFER_SRC | NOS_IMAGE_USAGE_TRANSFER_DST), NOS_FORMAT_R16G16B16A16_SFLOAT);
 
 		Ring->Stop();
-		AddPinValueWatcher(NOS_NAME_STATIC("Size"), [this](nos::Buffer const& newSize, nos::Buffer const& oldSize) {
+		AddPinValueWatcher(NOS_NAME_STATIC("Size"), [this](nos::Buffer const& newSize, nos::Buffer const& oldSize, bool first) {
 			uint32_t size = *newSize.As<uint32_t>();
 			if (size == 0)
 			{
@@ -41,7 +41,7 @@ struct BoundedTextureQueueNodeContext : NodeContext
 				RequestedRingSize = size;
 			}
 		});
-		AddPinValueWatcher(NOS_NAME_STATIC("Input"), [this](nos::Buffer const& newBuf, nos::Buffer const& oldBuf) {
+		AddPinValueWatcher(NOS_NAME_STATIC("Input"), [this](nos::Buffer const& newBuf, nos::Buffer const& oldBuf, bool first) {
 			auto info = vkss::DeserializeTextureInfo(newBuf.Data());
 			if (Ring->Sample.Width != info.Info.Texture.Width ||
 			Ring->Sample.Height != info.Info.Texture.Height ||
