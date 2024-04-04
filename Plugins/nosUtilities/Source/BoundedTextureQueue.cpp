@@ -125,6 +125,7 @@ struct BoundedTextureQueueNodeContext : NodeContext
 		{
 			output.Info.Type = NOS_RESOURCE_TYPE_TEXTURE;
 			output.Info.Texture = slot->Res.Info.Texture;
+			output.Info.Texture.Usage = nosImageUsage(NOS_IMAGE_USAGE_TRANSFER_SRC | NOS_IMAGE_USAGE_TRANSFER_DST | NOS_IMAGE_USAGE_SAMPLED);
 
 			sys::vulkan::TTexture texDef = vkss::ConvertTextureInfo(output);
 			nosEngine.SetPinValueByName(NodeId, NOS_NAME_STATIC("Output"), Buffer::From(texDef));
@@ -134,7 +135,7 @@ struct BoundedTextureQueueNodeContext : NodeContext
 		}
 		nosCmd cmd;
 
-		nosVulkan->Begin("Bounded Texture Queue: Bounded Queue Slot Copy To Output Buffer", &cmd);
+		nosVulkan->Begin("Bounded Texture Queue: Bounded Queue Slot Copy To Output Texture", &cmd);
 		nosVulkan->Copy(cmd, &slot->Res, &output, 0);
 		nosCmdEndParams end{ .ForceSubmit = NOS_TRUE, .OutGPUEventHandle = &slot->Params.WaitEvent };
 		nosVulkan->End(cmd, &end);

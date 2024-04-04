@@ -22,7 +22,7 @@ layout(binding = 2) uniform UBO
 
 uint InterlacedFlags = ubo.InterlacedFlags;
 
-layout(binding = 3) buffer SSBO
+layout(binding = 3) readonly buffer SSBO
 {
     uint16_t LUT[];
 } GammaLUT;
