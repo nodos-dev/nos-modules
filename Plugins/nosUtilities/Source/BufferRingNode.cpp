@@ -108,7 +108,8 @@ struct BufferRingNodeContext : NodeContext
 							   nos::util::Stopwatch::ElapsedString(elapsed).c_str());
 		}
 		nosCmd cmd;
-		nosVulkan->Begin("nos.aja.BufferRing: Input Buffer Copy To Ring Slot", &cmd);
+		nosCmdBeginParams beginParams {NOS_NAME("BufferRing: Input Buffer Copy To Ring Slot"), NodeId, &cmd};
+		nosVulkan->Begin2(&beginParams);
 		nosVulkan->Copy(cmd, &input, &slot->Res, 0);
 		nosCmdEndParams end{.ForceSubmit = NOS_TRUE, .OutGPUEventHandle = &slot->Params.WaitEvent};
 		nosVulkan->End(cmd, &end);
@@ -150,7 +151,8 @@ struct BufferRingNodeContext : NodeContext
 							   nos::util::Stopwatch::ElapsedString(elapsed).c_str());
 		}
 		nosCmd cmd;
-		nosVulkan->Begin("nos.aja.BufferRing: Ring Slot Copy To Output Buffer", &cmd);
+		nosCmdBeginParams beginParams {NOS_NAME("BufferRing: Ring Slot Copy To Output Buffer"), NodeId, &cmd};
+		nosVulkan->Begin2(&beginParams);
 		nosVulkan->Copy(cmd, &slot->Res, &output, 0);
 		nosCmdEndParams end{.ForceSubmit = NOS_TRUE, .OutGPUEventHandle = &slot->Params.WaitEvent};
 		nosVulkan->End(cmd, &end);

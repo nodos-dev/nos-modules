@@ -93,7 +93,8 @@ struct BoundedTextureQueueNodeContext : NodeContext
 		// TODO: FieldType
 		slot->FrameNumber = args->FrameNumber;
 		nosCmd cmd;
-		nosVulkan->Begin("Bounded Texture Queue: Input Buffer Copy To Queue Slot", &cmd);
+		nosCmdBeginParams params {NOS_NAME("BoundedTextureQueue: Input Buffer Copy To Queue Slot"), NodeId, &cmd};
+		nosVulkan->Begin2(&params);
 		nosVulkan->Copy(cmd, &input, &slot->Res, 0);
 		nosCmdEndParams end{.ForceSubmit = NOS_TRUE, .OutGPUEventHandle = &slot->Params.WaitEvent};
 		nosVulkan->End(cmd, &end);
@@ -134,8 +135,8 @@ struct BoundedTextureQueueNodeContext : NodeContext
 			output = vkss::DeserializeTextureInfo(outputTextureDesc);
 		}
 		nosCmd cmd;
-
-		nosVulkan->Begin("Bounded Texture Queue: Bounded Queue Slot Copy To Output Texture", &cmd);
+		nosCmdBeginParams params {NOS_NAME("BoundedTextureQueue: Slot Copy To Output Texture"), NodeId, &cmd};
+		nosVulkan->Begin2(&params);
 		nosVulkan->Copy(cmd, &slot->Res, &output, 0);
 		nosCmdEndParams end{ .ForceSubmit = NOS_TRUE, .OutGPUEventHandle = &slot->Params.WaitEvent };
 		nosVulkan->End(cmd, &end);

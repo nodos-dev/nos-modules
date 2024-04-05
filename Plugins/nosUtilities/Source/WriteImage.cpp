@@ -115,11 +115,7 @@ struct WriteImage : NodeContext {
         captures.SRGB.Info.Texture.Usage = nosImageUsage(NOS_IMAGE_USAGE_TRANSFER_SRC | NOS_IMAGE_USAGE_TRANSFER_DST);
         nosVulkan->CreateResource(&captures.SRGB);
 
-        nosCmd cmd;
-        nosVulkan->Begin("WriteImage: SRGB & Download Passes", &cmd);
-        nosVulkan->Copy(cmd, &input, &captures.SRGB, nullptr);
-        nosVulkan->Download(cmd, &captures.SRGB, &captures.Buf);
-        nosVulkan->End(cmd, NOS_FALSE);
+        nosVulkan->Download(0, &captures.SRGB, &captures.Buf);
 
         if (auto buf2write = nosVulkan->Map(&captures.Buf))
             if (!stbi_write_png(captures.Path.string().c_str(), captures.SRGB.Info.Texture.Width, captures.SRGB.Info.Texture.Height, 4, buf2write, captures.SRGB.Info.Texture.Width * 4))

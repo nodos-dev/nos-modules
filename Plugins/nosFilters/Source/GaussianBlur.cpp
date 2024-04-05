@@ -88,7 +88,11 @@ struct GaussBlurContext
 			.Output = IntermediateTexture,
 			.Wireframe = false,
 		};
-		nosVulkan->RunPass(0, &pass);
+		nosCmd horz;
+		nosCmdBeginParams horzBeginParams {NOS_NAME("GaussianBlur: Horizontal Pass"), NodeId, &horz};
+		nosVulkan->Begin2(&horzBeginParams);
+		nosVulkan->RunPass(horz, &pass);
+		nosVulkan->End(horz, nullptr);
 
 		// Vert pass
 		bindings[0] = nos::vkss::ShaderBinding(NSN_Input, IntermediateTexture);
@@ -96,7 +100,12 @@ struct GaussBlurContext
 		bindings[2] = nos::vkss::ShaderBinding(NSN_Pass_Type, passType.y);
 
 		pass.Output = output;
-		nosVulkan->RunPass(0, &pass);
+
+		nosCmd vert;
+		nosCmdBeginParams vertBeginParams {NOS_NAME("GaussianBlur: Vertical Pass"), NodeId, &vert};
+		nosVulkan->Begin2(&vertBeginParams);
+		nosVulkan->RunPass(vert, &pass);
+		nosVulkan->End(vert, nullptr);
 	}
 };
 
