@@ -55,7 +55,7 @@ jobs:
         shell: pwsh
         run: |
           if (-not (Test-Path -Path ./modules-${{ github.ref_name }})) {
-            git clone --branch ${{ github.ref_name }} --depth 1 ${{ env.GH_RELEASE_REPO_URL }} --recurse-submodule --shallow-submodules ./modules-${{ github.ref_name }}
+            git clone --branch ${{ github.ref_name }} --depth 1 ${{ github.repositoryUrl }} --recurse-submodule --shallow-submodules ./modules-${{ github.ref_name }}
           }
           cd ./modules-${{ github.ref_name }}
           git fetch origin
