@@ -129,6 +129,8 @@ struct BoundedTextureQueueNodeContext : NodeContext
 			output.Info.Texture.Usage = nosImageUsage(NOS_IMAGE_USAGE_TRANSFER_SRC | NOS_IMAGE_USAGE_TRANSFER_DST | NOS_IMAGE_USAGE_SAMPLED);
 
 			sys::vulkan::TTexture texDef = vkss::ConvertTextureInfo(output);
+			texDef.unscaled = true;
+
 			nosEngine.SetPinValueByName(NodeId, NOS_NAME_STATIC("Output"), Buffer::From(texDef));
 
 			outputTextureDesc = static_cast<sys::vulkan::Texture*>(cpy->PinData->Data);
