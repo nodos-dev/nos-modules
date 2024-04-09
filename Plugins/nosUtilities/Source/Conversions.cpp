@@ -113,10 +113,17 @@ nosResult RegisterRGB2YCbCr(nosNodeFunctions* funcs)
 	return NOS_RESULT_SUCCESS;
 }
 
+NOS_REGISTER_NAME(Resolution);
+
 struct YCbCr2RGBNodeContext : NodeContext
 {
 	YCbCr2RGBNodeContext(const nosFbNode* node) : NodeContext(node)
 	{
+		AddPinValueWatcher(NSN_Resolution, [this](const nos::Buffer& newVal, auto const& old, bool first) {
+			auto newDispatchSize = nosVec2u(120, 120);
+			nosEngine.SetPinValueByName(NodeId, NOS_NAME_STATIC("DispatchSize"), Buffer::From(newDispatchSize));
+		});
+
 	}
 
 	nosResult ExecuteNode(const nosNodeExecuteArgs* args) override
