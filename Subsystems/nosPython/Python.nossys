@@ -7,6 +7,10 @@
         "display_name": "Python Subsystem",
         "description": "Python subsystem for Nodos. Allows Python scripts to be run inside Nodos.\n\nConsiderations:\n- Requires Python 3 to be installed on the system.",
         "dependencies": [
+			{
+				"name": "nos.py.deps",
+				"version": "1.0.0"
+			}
         ]
     },
     "binary_path": "./Binaries/nosPython",

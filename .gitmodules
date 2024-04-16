@@ -28,3 +28,6 @@
 [submodule "Plugins/nosAJA/External/libajantv2"]
 	path = Plugins/nosAJA/External/libajantv2
 	url = https://github.com/mediaz/libajantv2.git
+[submodule "Subsystems/nosPythonDeps"]
+	path = Subsystems/nosPythonDeps
+	url = https://github.com/mediaz/nosPythonDeps.git
