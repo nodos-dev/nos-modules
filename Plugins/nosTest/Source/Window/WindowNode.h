@@ -13,13 +13,16 @@ class WindowNode : public nos::NodeContext
 public:
 	WindowNode(const nos::fb::Node* node);
 	~WindowNode();
-	void InitWindow();
 	bool CreateSwapchain();
+	void Clear();
 	void DestroySwapchain();
 	void DestroyWindowSurface();
 	void DestroyWindow();
 
-	nosResult CopyTo(nosCopyInfo* cpy) override;
+	nosResult ExecuteNode(const nosNodeExecuteArgs* args) override;
+
+	void OnPathStop() override;
+	void OnPathStart() override;
 
 private:
 	void WindowThread();
@@ -32,17 +35,5 @@ private:
 	uint32_t CurrentFrame = 0;
 	nosSurfaceHandle Surface{};
 	nosSwapchainHandle Swapchain{};
-	std::thread Thread{};
-	std::atomic_bool Stop = false;
-	nosResourceShareInfo Input{};
-	std::mutex Mutex{};
-
-	std::atomic_bool Presented = false;
-	std::condition_variable PresentCV{};
-	std::mutex PresentMutex{};
-
-	std::atomic_bool Ready = false;
-	std::condition_variable ReadyCV{};
-	std::mutex ReadyMutex{};
 };
 }
