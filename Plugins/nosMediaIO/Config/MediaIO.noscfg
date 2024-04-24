@@ -1,0 +1,75 @@
+{
+    "info": {
+        "id": {
+            "name": "nos.MediaIO",
+            "version": "1.1.0"
+        },
+        "description": "MediaIO nodes.",
+        "display_name": "MediaIO",
+        "dependencies": [
+            {
+                "name": "nos.sys.vulkan",
+                "version": "5.0.0"
+            }
+        ]
+    },
+    "node_definitions": [
+        "Interlace.nosdef",
+        "Conversions.nosdef",
+		"BufferRing.nosdef",
+		"BoundedTextureQueue.nosdef"
+    ],
+    "custom_types": [
+        "Conversion.fbs"
+    ],
+    "binary_path": "../Binaries/nosMediaIO",
+    "associated_nodes": [
+        {
+            "category": "Media",
+            "class_name": "Interlace",
+            "display_name": "Interlace"
+        },
+        {
+            "category": "Media",
+            "class_name": "Deinterlace",
+            "display_name": "Deinterlace"
+        },
+        {
+            "category": "MediaIO|Conversions",
+            "class_name": "RGB2YCbCr",
+            "display_name": "RGB to YCbCr Converter"
+        },
+        {
+            "category": "MediaIO|Conversions",
+            "class_name": "YCbCr2RGB",
+            "display_name": "YCbCr to RGB Converter"
+        },
+        {
+            "category": "MediaIO|Conversions",
+            "class_name": "GammaLUT",
+            "display_name": "Gamma LUT"
+        },
+        {
+            "category": "MediaIO|Conversions",
+            "class_name": "ColorSpaceMatrix",
+            "display_name": "Color Space"
+        },
+        {
+            "category": "MediaIO",
+            "class_name": "BufferRing",
+            "display_name": "Buffer Ring"
+        },
+		{
+			"category": "MediaIO",
+			"class_name": "BoundedTextureQueue",
+			"display_name": "Bounded Texture Queue"
+		}
+    ],
+    "subsystem_options": [
+        {
+            "subsystem": "nos.sys.vulkan",
+            "type": "nos.sys.vulkan.Resources",
+            "path": "Resources.json"
+        }
+    ]
+}

@@ -6,7 +6,7 @@
 
 #include "Ring.h"
 
-namespace nos::utilities
+namespace nos::MediaIO
 {
 struct BoundedTextureQueueNodeContext : NodeContext
 {

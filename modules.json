@@ -63,6 +63,22 @@
             "deps": [
                 "nosWebRTC/*"
             ]
+        },
+        "nos.MediaIO": {
+            "target_name": "nosMediaIO",
+            "path": "nosMediaIO",
+            "deps": [
+                "nosMediaIO/*",
+                "Shaders/*"
+            ],
+            "files": [
+                "Shaders/*.frag",
+                "Shaders/*.hlsl",
+                "Shaders/*.spv",
+                "Shaders/*.comp",
+                "Shaders/*.glsl",
+                "Config/*.json"
+            ]
         }
     },
     "subsystems": {

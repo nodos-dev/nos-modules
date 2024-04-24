@@ -42,6 +42,7 @@ add_subdirectory(nosFilters)
 add_subdirectory(nosUtilities)
 add_subdirectory(nosTest)
 add_subdirectory(nosWebRTC)
+add_subdirectory(nosMediaIO)
 
 get_targets(PLUGINS_COMMON_EXTERNAL_TARGETS "./External")
 group_targets("${PLUGINS_COMMON_EXTERNAL_TARGETS}" "External")

@@ -27,17 +27,9 @@ enum Utilities : int
 	Time,
 	ReadImage,
 	WriteImage,
-	Interlace,
-	Deinterlace,
-	RGB2YCbCr,
-	YCbCr2RGB,
-	GammaLUT,
-	Buffer2Texture,
-	ColorSpaceMatrix,
 	CPUSleep,
-	BufferRing,
-	BoundedTextureQueue,
 	UploadBuffer,
+	Buffer2Texture,
 	Count
 };
 
@@ -47,17 +39,9 @@ nosResult RegisterReadImage(nosNodeFunctions*);
 nosResult RegisterWriteImage(nosNodeFunctions*);
 nosResult RegisterChannelViewer(nosNodeFunctions*);
 nosResult RegisterResize(nosNodeFunctions*);
-nosResult RegisterInterlace(nosNodeFunctions*);
-nosResult RegisterDeinterlace(nosNodeFunctions*);
-nosResult RegisterRGB2YCbCr(nosNodeFunctions*);
-nosResult RegisterYCbCr2RGB(nosNodeFunctions*);
-nosResult RegisterGammaLUT(nosNodeFunctions*);
-nosResult RegisterBuffer2Texture(nosNodeFunctions*);
-nosResult RegisterColorSpaceMatrix(nosNodeFunctions*);
 nosResult RegisterCPUSleep(nosNodeFunctions*);
-nosResult RegisterBufferRing(nosNodeFunctions*);
-nosResult RegisterBoundedTextureQueue(nosNodeFunctions*);
 nosResult RegisterUploadBuffer(nosNodeFunctions*);
+nosResult RegisterBuffer2Texture(nosNodeFunctions*);
 
 extern "C"
 {
@@ -92,17 +76,9 @@ NOSAPI_ATTR nosResult NOSAPI_CALL nosExportNodeFunctions(size_t* outSize, nosNod
 			GEN_CASE_NODE(WriteImage)
 			GEN_CASE_NODE(ChannelViewer)
 			GEN_CASE_NODE(Resize)
-			GEN_CASE_NODE(Interlace)
-			GEN_CASE_NODE(Deinterlace)
-			GEN_CASE_NODE(RGB2YCbCr)
-			GEN_CASE_NODE(YCbCr2RGB)
-			GEN_CASE_NODE(GammaLUT)
-			GEN_CASE_NODE(Buffer2Texture)
-			GEN_CASE_NODE(ColorSpaceMatrix)
 			GEN_CASE_NODE(CPUSleep)
-			GEN_CASE_NODE(BufferRing)
-			GEN_CASE_NODE(BoundedTextureQueue)
 			GEN_CASE_NODE(UploadBuffer)
+			GEN_CASE_NODE(Buffer2Texture)
 		}
 	}
 	return NOS_RESULT_SUCCESS;

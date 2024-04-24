@@ -9,16 +9,16 @@
 
 NOS_REGISTER_NAME(ShouldOutputOdd);
 NOS_REGISTER_NAME(IsOdd);
-NOS_REGISTER_NAME_SPACED(TypeName_Utilities_Interlace, "nos.utilities.Interlace")
-NOS_REGISTER_NAME_SPACED(TypeName_Utilities_Deinterlace, "nos.utilities.Deinterlace")
+NOS_REGISTER_NAME_SPACED(TypeName_MediaIO_Interlace, "nos.MediaIO.Interlace")
+NOS_REGISTER_NAME_SPACED(TypeName_MediaIO_Deinterlace, "nos.MediaIO.Deinterlace")
 
-NOS_REGISTER_NAME(Utilities_Interlace_Fragment_Shader);
-NOS_REGISTER_NAME(Utilities_Interlace_Pass);
+NOS_REGISTER_NAME(MediaIO_Interlace_Fragment_Shader);
+NOS_REGISTER_NAME(MediaIO_Interlace_Pass);
 
-NOS_REGISTER_NAME(Utilities_Deinterlace_Fragment_Shader);
-NOS_REGISTER_NAME(Utilities_Deinterlace_Pass);
+NOS_REGISTER_NAME(MediaIO_Deinterlace_Fragment_Shader);
+NOS_REGISTER_NAME(MediaIO_Deinterlace_Pass);
 
-namespace nos::utilities
+namespace nos::MediaIO
 {
 struct InterlaceNode : NodeContext
 {
@@ -47,7 +47,7 @@ struct InterlaceNode : NodeContext
 		auto inputTextureInfo = vkss::DeserializeTextureInfo(pinValues[NSN_Input]);
 		auto outputTextureInfo = vkss::DeserializeTextureInfo(pinValues[NSN_Output]);
 		nosRunPassParams interlacePass = {};
-		interlacePass.Key = NSN_Utilities_Interlace_Pass;
+		interlacePass.Key = NSN_MediaIO_Interlace_Pass;
 		uint32_t isOdd = Field - 1;
 		std::vector bindings = {
 			vkss::ShaderBinding(NSN_Input, inputTextureInfo),
@@ -92,7 +92,7 @@ struct DeinterlaceNode : NodeContext
 		auto inputTextureInfo = vkss::DeserializeTextureInfo(pinValues[NSN_Input]);
 		auto outputTextureInfo = vkss::DeserializeTextureInfo(pinValues[NSN_Output]);
 		nosRunPassParams deinterlacePass = {};
-		deinterlacePass.Key = NSN_Utilities_Deinterlace_Pass;
+		deinterlacePass.Key = NSN_MediaIO_Deinterlace_Pass;
 		auto field = inputTextureInfo.Info.Texture.FieldType;
 		bool isInterlaced = vkss::IsTextureFieldTypeInterlaced(field);
 		if (!isInterlaced)
@@ -124,32 +124,32 @@ struct DeinterlaceNode : NodeContext
 
 nosResult RegisterInterlace(nosNodeFunctions* nodeFunctions)
 {
-	NOS_BIND_NODE_CLASS(NSN_TypeName_Utilities_Interlace, InterlaceNode, nodeFunctions);
-	nosShaderInfo shader = {.Key = NSN_Utilities_Interlace_Fragment_Shader,
+	NOS_BIND_NODE_CLASS(NSN_TypeName_MediaIO_Interlace, InterlaceNode, nodeFunctions);
+	nosShaderInfo shader = {.Key = NSN_MediaIO_Interlace_Fragment_Shader,
 	                        .Source = {.SpirvBlob = {(void*)Interlace_frag_spv, sizeof(Interlace_frag_spv)}}};
 	auto ret = nosVulkan->RegisterShaders(1, &shader);
 	if (NOS_RESULT_SUCCESS != ret)
 		return ret;
-	nosPassInfo pass = {.Key = NSN_Utilities_Interlace_Pass,
-	                    .Shader = NSN_Utilities_Interlace_Fragment_Shader,
+	nosPassInfo pass = {.Key = NSN_MediaIO_Interlace_Pass,
+	                    .Shader = NSN_MediaIO_Interlace_Fragment_Shader,
 	                    .MultiSample = 1,};
 	return nosVulkan->RegisterPasses(1, &pass);
 }
 
 nosResult RegisterDeinterlace(nosNodeFunctions* nodeFunctions)
 {
-	NOS_BIND_NODE_CLASS(NSN_TypeName_Utilities_Deinterlace, DeinterlaceNode, nodeFunctions);
+	NOS_BIND_NODE_CLASS(NSN_TypeName_MediaIO_Deinterlace, DeinterlaceNode, nodeFunctions);
 
-	nosShaderInfo shader = {.Key = NSN_Utilities_Deinterlace_Fragment_Shader,
+	nosShaderInfo shader = {.Key = NSN_MediaIO_Deinterlace_Fragment_Shader,
 	                        .Source = {.SpirvBlob = {(void*)Deinterlace_frag_spv, sizeof(Deinterlace_frag_spv)}}};
 	auto ret = nosVulkan->RegisterShaders(1, &shader);
 	if (NOS_RESULT_SUCCESS != ret)
 		return ret;
 	nosPassInfo pass = {
-		.Key = NSN_Utilities_Deinterlace_Pass,
-		.Shader = NSN_Utilities_Deinterlace_Fragment_Shader,
+		.Key = NSN_MediaIO_Deinterlace_Pass,
+		.Shader = NSN_MediaIO_Deinterlace_Fragment_Shader,
 		.MultiSample = 1,};
 	return nosVulkan->RegisterPasses(1, &pass);
 }
 
-} // namespace nos::utilities
+} // namespace nos::MediaIO

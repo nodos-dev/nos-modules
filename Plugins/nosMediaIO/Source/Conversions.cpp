@@ -7,7 +7,7 @@
 #include <stb_image.h>
 #include <stb_image_write.h>
 
-namespace nos::utilities
+namespace nos::MediaIO
 {
 
 static std::set<u32> const& FindDivisors(const u32 N)
@@ -109,7 +109,7 @@ struct RGB2YCbCrNodeContext : NodeContext
 
 nosResult RegisterRGB2YCbCr(nosNodeFunctions* funcs)
 {
-	NOS_BIND_NODE_CLASS(NOS_NAME_STATIC("nos.utilities.RGB2YCbCr"), RGB2YCbCrNodeContext, funcs);
+	NOS_BIND_NODE_CLASS(NOS_NAME_STATIC("nos.MediaIO.RGB2YCbCr"), RGB2YCbCrNodeContext, funcs);
 	return NOS_RESULT_SUCCESS;
 }
 
@@ -164,7 +164,7 @@ struct YCbCr2RGBNodeContext : NodeContext
 
 nosResult RegisterYCbCr2RGB(nosNodeFunctions* funcs)
 {
-	NOS_BIND_NODE_CLASS(NOS_NAME_STATIC("nos.utilities.YCbCr2RGB"), YCbCr2RGBNodeContext, funcs);
+	NOS_BIND_NODE_CLASS(NOS_NAME_STATIC("nos.MediaIO.YCbCr2RGB"), YCbCr2RGBNodeContext, funcs);
 	return NOS_RESULT_SUCCESS;
 }
 
@@ -255,62 +255,9 @@ struct GammaLUTNodeContext : NodeContext
 
 nosResult RegisterGammaLUT(nosNodeFunctions* funcs)
 {
-	NOS_BIND_NODE_CLASS(NOS_NAME_STATIC("nos.utilities.GammaLUT"), GammaLUTNodeContext, funcs);
+	NOS_BIND_NODE_CLASS(NOS_NAME_STATIC("nos.MediaIO.GammaLUT"), GammaLUTNodeContext, funcs);
 	return NOS_RESULT_SUCCESS;
 }
-
-struct Buffer2TextureNodeContext : NodeContext
-{
-	Buffer2TextureNodeContext(const nosFbNode* node) : NodeContext(node)
-	{
-	}
-	nosResult ExecuteNode(const nosNodeExecuteArgs* args) override
-	{
-		nos::NodeExecuteArgs execArgs(args);
-		const auto& inputPinData = *InterpretPinValue<sys::vulkan::Buffer>(execArgs[NOS_NAME_STATIC("Input")].Data->Data);
-		const nosBuffer* outputPinData = execArgs[NOS_NAME_STATIC("Output")].Data;
-		const auto& output = *InterpretPinValue<sys::vulkan::Texture>(outputPinData->Data);
-		const auto& size = *InterpretPinValue<fb::vec2u>(execArgs[NOS_NAME_STATIC("Size")].Data->Data);
-		const auto& format = *InterpretPinValue<sys::vulkan::Format>(execArgs[NOS_NAME_STATIC("Format")].Data->Data);
-		if (size.x() != output.width() ||
-			size.y() != output.height() ||
-			format != output.format())
-		{
-			nosResourceShareInfo tex{.Info = {
-				.Type = NOS_RESOURCE_TYPE_TEXTURE,
-				.Texture = {
-					.Width = size.x(),
-					.Height = size.y(),
-					.Format = nosFormat(format)
-				}
-			}};
-			sys::vulkan::TTexture texDef = vkss::ConvertTextureInfo(tex);
-			nosEngine.SetPinValueByName(NodeId, NOS_NAME_STATIC("Output"), Buffer::From(texDef));
-		}
-		nosResourceShareInfo out = vkss::DeserializeTextureInfo(outputPinData->Data);
-		nosResourceShareInfo in = vkss::ConvertToResourceInfo(inputPinData);
-
-		if (!in.Memory.Handle || !out.Memory.Handle)
-			return NOS_RESULT_SUCCESS;
-
-		nosCmd cmd;
-		nosVulkan->Begin("Buffer2Texture Copy", &cmd);
-		nosVulkan->Copy(cmd, &in, &out, 0);
-		nosGPUEvent event;
-		nosCmdEndParams params{.ForceSubmit = true, .OutGPUEventHandle = &event};
-		nosVulkan->End(cmd, &params);
-		nosVulkan->WaitGpuEvent(&event, UINT_MAX);
-		return NOS_RESULT_SUCCESS;
-	}
-};
-
-nosResult RegisterBuffer2Texture(nosNodeFunctions* funcs)
-{
-	NOS_BIND_NODE_CLASS(NOS_NAME_STATIC("nos.utilities.Buffer2Texture"), Buffer2TextureNodeContext, funcs);
-	return NOS_RESULT_SUCCESS;
-}
-
-
 
 struct ColorSpaceMatrixNodeContext : NodeContext
 {
@@ -383,7 +330,7 @@ struct ColorSpaceMatrixNodeContext : NodeContext
 
 nosResult RegisterColorSpaceMatrix(nosNodeFunctions* funcs)
 {
-	NOS_BIND_NODE_CLASS(NOS_NAME_STATIC("nos.utilities.ColorSpaceMatrix"), ColorSpaceMatrixNodeContext, funcs);
+	NOS_BIND_NODE_CLASS(NOS_NAME_STATIC("nos.MediaIO.ColorSpaceMatrix"), ColorSpaceMatrixNodeContext, funcs);
 	return NOS_RESULT_SUCCESS;
 }
 

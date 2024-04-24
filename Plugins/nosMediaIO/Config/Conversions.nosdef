@@ -26,14 +26,14 @@
 				{
 					"name": "InterlacedFlags",
 					"display_name": "Interlaced Flags",
-					"type_name": "nos.utilities.InterlacedFlags",
+					"type_name": "nos.MediaIO.InterlacedFlags",
 					"show_as": "INPUT_PIN",
 					"can_show_as": "INPUT_PIN_OR_PROPERTY"
 				},
 				{
 					"name": "PixelFormat",
 					"display_name": "Pixel Format",
-					"type_name": "nos.utilities.YCbCrPixelFormat",
+					"type_name": "nos.MediaIO.YCbCrPixelFormat",
 					"show_as": "INPUT_PIN",
 					"can_show_as": "INPUT_PIN_OR_PROPERTY"
 				},
@@ -88,14 +88,14 @@
 				{
 					"name": "InterlacedFlags",
 					"display_name": "Interlaced Flags",
-					"type_name": "nos.utilities.InterlacedFlags",
+					"type_name": "nos.MediaIO.InterlacedFlags",
 					"show_as": "INPUT_PIN",
 					"can_show_as": "INPUT_PIN_OR_PROPERTY"
 				},
 				{
 					"name": "PixelFormat", 
 					"display_name": "Pixel Format",
-					"type_name": "nos.utilities.YCbCrPixelFormat",
+					"type_name": "nos.MediaIO.YCbCrPixelFormat",
 					"show_as": "INPUT_PIN",
 					"can_show_as": "INPUT_PIN_OR_PROPERTY"
 				},
@@ -149,52 +149,16 @@
 				},
 				{
 					"name": "Type",
-					"type_name": "nos.utilities.GammaConversionType",
+					"type_name": "nos.MediaIO.GammaConversionType",
 					"show_as": "PROPERTY",
 					"can_show_as": "INPUT_PIN_OR_PROPERTY"
 				},
 				{
 					"name": "GammaCurve",
 					"display name": "Gamma Curve",
-					"type_name": "nos.utilities.GammaCurve",
+					"type_name": "nos.MediaIO.GammaCurve",
 					"show_as": "PROPERTY",
 					"can_show_as": "INPUT_PIN_OR_PROPERTY"
-				}
-			]
-		},
-		{
-			"class_name": "Buffer2Texture",
-			"contents_type": "Job",
-			"description": "Converts the given buffer to a texture",
-			"pins": [
-				{
-					"name": "Output",
-					"type_name": "nos.sys.vulkan.Texture",
-					"show_as": "OUTPUT_PIN",
-					"can_show_as": "OUTPUT_PIN_ONLY"
-				},
-				{
-					"name": "Format",
-					"type_name": "nos.sys.vulkan.Format",
-					"show_as": "PROPERTY",
-					"can_show_as": "INPUT_PIN_OR_PROPERTY",
-					"data": "R16G16B16A16_SFLOAT"
-				},
-				{
-					"name": "Size",
-					"type_name": "nos.fb.vec2u",
-					"show_as": "PROPERTY",
-					"can_show_as": "INPUT_PIN_OR_PROPERTY",
-					"data": {
-						"x": 1920,
-						"y": 1080
-					}
-				},
-				{
-					"name": "Input",
-					"type_name": "nos.sys.vulkan.Buffer",
-					"show_as": "INPUT_PIN",
-					"can_show_as": "INPUT_PIN_ONLY"
 				}
 			]
 		},
@@ -213,20 +177,20 @@
 				{
 					"name": "ColorSpace",
 					"display_name": "Color Space",
-					"type_name": "nos.utilities.ColorSpace",
+					"type_name": "nos.MediaIO.ColorSpace",
 					"show_as": "PROPERTY",
 					"can_show_as": "INPUT_PIN_OR_PROPERTY"
 				},
 				{
 					"name": "PixelFormat",
 					"display_name": "Pixel Format",
-					"type_name": "nos.utilities.YCbCrPixelFormat",
+					"type_name": "nos.MediaIO.YCbCrPixelFormat",
 					"show_as": "INPUT_PIN",
 					"can_show_as": "INPUT_PIN_OR_PROPERTY"
 				},
 				{
 					"name": "Type",
-					"type_name": "nos.utilities.GammaConversionType",
+					"type_name": "nos.MediaIO.GammaConversionType",
 					"show_as": "PROPERTY",
 					"can_show_as": "INPUT_PIN_OR_PROPERTY"
 				},

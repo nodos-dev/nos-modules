@@ -10,7 +10,7 @@
 NOS_REGISTER_NAME(Size)
 NOS_REGISTER_NAME(Spare)
 
-namespace nos::utilities
+namespace nos::MediaIO
 {
 struct BufferRingNodeContext : NodeContext
 {
