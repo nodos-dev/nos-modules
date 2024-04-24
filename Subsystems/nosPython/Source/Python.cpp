@@ -185,13 +185,13 @@ nosResult NOSAPI_CALL ExecutePyNode(void* ctx, const nosNodeExecuteArgs* args)
 extern "C"
 {
 
-NOSAPI_ATTR nosResult NOSAPI_CALL nosExportSubsystem(nosSubsystemFunctions* subsystemFunctions, void** exported)
+NOSAPI_ATTR nosResult NOSAPI_CALL nosExportSubsystem(nosSubsystemFunctions* subsystemFunctions)
 {
 	nos::py::Init();
 	return NOS_RESULT_SUCCESS;
 }
 
-NOSAPI_ATTR nosResult NOSAPI_CALL nosUnloadSubsystem(void* subsystemContext)
+NOSAPI_ATTR nosResult NOSAPI_CALL nosUnloadSubsystem()
 {
 	nos::py::Deinit();
 	// Python DLL might not be released when nos.py is unloaded, due to some third party python module (like numpy).
