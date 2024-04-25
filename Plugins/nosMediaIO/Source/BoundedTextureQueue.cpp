@@ -99,6 +99,7 @@ struct BoundedTextureQueueNodeContext : NodeContext
 		nosCmdEndParams end{.ForceSubmit = NOS_TRUE, .OutGPUEventHandle = &slot->Params.WaitEvent};
 		nosVulkan->End(cmd, &end);
 		nosVulkan->WaitGpuEvent(&slot->Params.WaitEvent, UINT64_MAX);
+		slot->Res.Info.Texture.FieldType = input.Info.Texture.FieldType;
 		Ring->EndPush(slot);
 		if (Mode == RingMode::FILL && Ring->IsFull())
 			Mode = RingMode::CONSUME;
@@ -143,6 +144,10 @@ struct BoundedTextureQueueNodeContext : NodeContext
 		nosCmdEndParams end{ .ForceSubmit = NOS_TRUE, .OutGPUEventHandle = &slot->Params.WaitEvent };
 		nosVulkan->End(cmd, &end);
 		nosVulkan->WaitGpuEvent(&slot->Params.WaitEvent, UINT64_MAX);
+		output.Info.Texture.FieldType = slot->Res.Info.Texture.FieldType;
+		sys::vulkan::TTexture texDef = vkss::ConvertTextureInfo(output);
+		texDef.unscaled = true;
+		nosEngine.SetPinValueByName(NodeId, NOS_NAME_STATIC("Output"), Buffer::From(texDef));
 		Ring->EndPop(slot);
 		SendScheduleRequest(1);
 		return NOS_RESULT_SUCCESS;

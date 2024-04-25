@@ -49,7 +49,11 @@ static nosResult ExecuteNode(void* ctx, const nosNodeExecuteArgs* args)
 		.Benchmark = 0,
 	};
 
-	nosVulkan->RunPass(nullptr, &resizeParam);
+	nosCmd cmd;
+	nosCmdBeginParams beginParams {.Name = NOS_NAME("Resize"), .AssociatedNodeId = args->NodeId, .OutCmdHandle = &cmd};
+	nosVulkan->Begin2(&beginParams);
+	nosVulkan->RunPass(cmd, &resizeParam);
+	nosVulkan->End(cmd, nullptr);
 
 	return NOS_RESULT_SUCCESS;
 }

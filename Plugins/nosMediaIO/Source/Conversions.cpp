@@ -76,17 +76,21 @@ struct RGB2YCbCrNodeContext : NodeContext
 		nos::NodeExecuteArgs execArgs(args);
 		const nosBuffer* inputPinData = execArgs[NOS_NAME_STATIC("Source")].Data;
 		const nosBuffer* outputPinData = execArgs[NOS_NAME_STATIC("Output")].Data;
-		auto interlacedFlags = *InterpretPinValue<InterlacedFlags>(execArgs[NOS_NAME_STATIC("InterlacedFlags")].Data->Data);
+		auto* inputFieldType = InterpretPinValue<nos::sys::vulkan::FieldType>(execArgs[NOS_NAME("FieldType")].Data->Data);
+		auto isOutInterlaced = *InterpretPinValue<bool>(execArgs[NOS_NAME("IsOutputInterlaced")].Data->Data);
 		auto fmt = *InterpretPinValue<YCbCrPixelFormat>(execArgs[NOS_NAME("PixelFormat")].Data->Data);
 		auto input = vkss::DeserializeTextureInfo(inputPinData->Data);
-		auto& output = *InterpretPinValue<sys::vulkan::Buffer>(execArgs[NOS_NAME_STATIC("Output")].Data->Data);
-		int isOutInterlaced = bool(interlacedFlags & (InterlacedFlags::OUTPUT_EVEN | InterlacedFlags::OUTPUT_ODD));
+		auto& output = *InterpretPinValue<sys::vulkan::Buffer>(execArgs[NOS_NAME("Output")].Data->Data);
+		*inputFieldType = (nos::sys::vulkan::FieldType)input.Info.Texture.FieldType;
+		if (isOutInterlaced)
+			output.mutate_field_type(*inputFieldType);
+		else
+			output.mutate_field_type(sys::vulkan::FieldType::PROGRESSIVE);
 
 		nosVec2u ext = { input.Info.Texture.Width, input.Info.Texture.Height };
 		nosVec2u yCbCrExt((fmt == YCbCrPixelFormat::V210) ? ((ext.x + (48 - ext.x % 48) % 48) / 3) << 1 : ext.x >> 1, 
-						  ext.y >> isOutInterlaced);
+						  ext.y >> int(isOutInterlaced));
 		uint32_t bufSize = yCbCrExt.x * yCbCrExt.y * 4;
-		// auto alignedSize = bufSize + (bufSize % 4096); 
 		constexpr auto outMemoryFlags = NOS_MEMORY_FLAGS_DEVICE_MEMORY;
 		if (output.size_in_bytes() != bufSize || output.memory_flags() != (nos::sys::vulkan::MemoryFlags)(outMemoryFlags))
 		{
@@ -99,6 +103,7 @@ struct RGB2YCbCrNodeContext : NodeContext
 						.MemoryFlags = outMemoryFlags,
 					}}};
 			auto bufferDesc = vkss::ConvertBufferInfo(bufInfo);
+			bufferDesc.mutate_field_type(*inputFieldType);
 			nosEngine.SetPinValueByName(NodeId, NOS_NAME_STATIC("Output"), Buffer::From(bufferDesc));
 		}
 		auto* dispatchSize = execArgs.GetPinData<nosVec2u>(NOS_NAME_STATIC("DispatchSize"));
@@ -129,35 +134,42 @@ struct YCbCr2RGBNodeContext : NodeContext
 	nosResult ExecuteNode(const nosNodeExecuteArgs* args) override
 	{
 		nos::NodeExecuteArgs execArgs(args);
-		auto interlacedFlags = *InterpretPinValue<InterlacedFlags>(execArgs[NOS_NAME_STATIC("InterlacedFlags")].Data->Data);
 		auto fmt = *InterpretPinValue<YCbCrPixelFormat>(execArgs[NOS_NAME("PixelFormat")].Data->Data);
 		auto res = *InterpretPinValue<nos::fb::vec2u>(execArgs[NOS_NAME("Resolution")].Data->Data);
-		auto& output = *InterpretPinValue<sys::vulkan::Texture>(execArgs[NOS_NAME_STATIC("Output")].Data->Data);
-		auto& input = *InterpretPinValue<sys::vulkan::Buffer>(execArgs[NOS_NAME_STATIC("Source")].Data->Data);
-
-		int isOutInterlaced = bool(interlacedFlags & (InterlacedFlags::OUTPUT_EVEN | InterlacedFlags::OUTPUT_ODD));
+		auto* outputPinData = execArgs[NOS_NAME("Output")].Data;
+		auto& output = *InterpretPinValue<sys::vulkan::Texture>(outputPinData->Data);
+		auto& input = *InterpretPinValue<sys::vulkan::Buffer>(execArgs[NOS_NAME("Source")].Data->Data);
+		bool isInterlaced = input.field_type() == sys::vulkan::FieldType::EVEN || input.field_type() == sys::vulkan::FieldType::ODD;
+		nosEngine.SetPinValueByName(NodeId, NOS_NAME("IsInterlaced"), nos::Buffer::From(isInterlaced));
 
 		nosVec2u ext = { res.x(), res.y()};
-
 		nosVec2u yCbCrExt((fmt == YCbCrPixelFormat::V210) ? ((ext.x + (48 - ext.x % 48) % 48) / 3) << 1 : ext.x >> 1, 
-						  ext.y >> isOutInterlaced);
-		
-		if (output.width() != res.x() || 
-			output.height() != res.y())
+						  ext.y >> int(isInterlaced));
+
+		sys::vulkan::TTexture texDef;
+		if (output.width() != ext.x || 
+			output.height() != ext.y)
 		{
 			nosResourceShareInfo tex{.Info = {
 				.Type = NOS_RESOURCE_TYPE_TEXTURE,
 				.Texture = {
-					.Width = res.x(),
-					.Height = res.y(),
-					.Format = NOS_FORMAT_R16G16B16A16_UNORM
+					.Width = ext.x,
+					.Height = ext.y,
+					.Format = NOS_FORMAT_R16G16B16A16_UNORM,
+					.FieldType = (nosTextureFieldType)input.field_type(),
 				}
 			}};
-			sys::vulkan::TTexture texDef = vkss::ConvertTextureInfo(tex);
-			nosEngine.SetPinValueByName(NodeId, NOS_NAME_STATIC("Output"), Buffer::From(texDef));
+			texDef = vkss::ConvertTextureInfo(tex);
+			nosEngine.SetPinValueByName(NodeId, NOS_NAME("Output"), nos::Buffer::From(texDef));
 		}
-		auto* dispatchSize = execArgs.GetPinData<nosVec2u>(NOS_NAME_STATIC("DispatchSize"));
-		*dispatchSize = GetSuitableDispatchSize(*dispatchSize, yCbCrExt, fmt == YCbCrPixelFormat::V210 ? 10 : 8, isOutInterlaced);
+		else
+		{
+			output.UnPackTo(&texDef);
+			texDef.field_type = input.field_type();
+			nosEngine.SetPinValueByName(NodeId, NOS_NAME("Output"), Buffer::From(texDef));
+		}
+		auto* dispatchSize = execArgs.GetPinData<nosVec2u>(NOS_NAME("DispatchSize"));
+		*dispatchSize = GetSuitableDispatchSize(*dispatchSize, yCbCrExt, fmt == YCbCrPixelFormat::V210 ? 10 : 8, isInterlaced);
 		return nosVulkan->ExecuteGPUNode(this, args);
 	}
 };

@@ -14,7 +14,7 @@ layout (binding = 1) writeonly buffer OutputBuffer
 ivec2 OutputTextureSize()
 {
 	ivec2 TexSize = textureSize(Source, 0);
-    const int OutInterlaced = int((InterlacedFlags & NOS_OUTPUT_INTERLACED_MASK) != 0);
+    const int OutInterlaced = int(IsOutputInterlaced);
 	ivec2 YCbCrExt = ivec2((ubo.PixelFormat == YCBCR_PIXEL_FORMAT_V210) ? ((TexSize.x + (48 - TexSize.x % 48) % 48) / 3) << 1 : TexSize.x >> 1, 
 					TexSize.y >> OutInterlaced);
 	return YCbCrExt;
@@ -39,10 +39,10 @@ void yuv8(const ivec2 dst, const ivec2 src, const int YOffset)
 
 void main_yuv8()
 {
-    const int   OutInterlaced = int((InterlacedFlags & NOS_OUTPUT_INTERLACED_MASK) != 0);
-    const int   InProgressive = int((InterlacedFlags & NOS_INPUT_INTERLACED_MASK) == 0);
-    const int   OutYOffset    = int((InterlacedFlags & NOS_OUTPUT_ODD_FIELD_MASK) != 0);
-    const int   InOdd         = int((InterlacedFlags & NOS_INPUT_ODD_FIELD_MASK) != 0);
+    const int   OutInterlaced = int(IsOutputInterlaced);
+    const int   InProgressive = int((FieldType ^ NOS_INTERLACED_MASK) == 0);
+    const int   OutYOffset    = 0;int((FieldType & NOS_FIELD_TYPE_ODD) != 0);
+    const int   InOdd         = int((FieldType & NOS_FIELD_TYPE_ODD) != 0);
     const ivec2 D = ivec2(gl_NumWorkGroups * gl_WorkGroupSize).xy;
     const ivec2 Q = OutputTextureSize();
     const ivec2 N          = Q / D;
@@ -85,10 +85,10 @@ void v210(const ivec2 dst, const ivec2 src, const int YOffset)
 
 void main_v210()
 {
-    const int   OutInterlaced = int((InterlacedFlags & NOS_OUTPUT_INTERLACED_MASK) != 0);
-    const int   InProgressive = int((InterlacedFlags & NOS_INPUT_INTERLACED_MASK) == 0);
-    const int   OutYOffset    = int((InterlacedFlags & NOS_OUTPUT_ODD_FIELD_MASK) != 0);
-    const int   InOdd         = int((InterlacedFlags & NOS_INPUT_ODD_FIELD_MASK) != 0);
+    const int   OutInterlaced = int(IsOutputInterlaced);
+    const int   InProgressive = int((FieldType ^ NOS_INTERLACED_MASK) == 0);
+    const int   OutYOffset    = int((FieldType & NOS_FIELD_TYPE_ODD) != 0);
+    const int   InOdd         = int((FieldType & NOS_FIELD_TYPE_ODD) != 0);
     const ivec2 N             = OutputTextureSize() / ivec2(4, 1) /  ivec2(gl_NumWorkGroups * gl_WorkGroupSize).xy;
     const ivec2 LocalGroupCoord = ivec2(gl_GlobalInvocationID.xy) * N;
     
@@ -108,5 +108,9 @@ void main()
     if (ubo.PixelFormat == YCBCR_PIXEL_FORMAT_V210) main_v210();
     else main_yuv8();
 }
+
+
+
+
 
 

@@ -18,6 +18,7 @@ struct UploadBufferNodeContext : NodeContext
 		auto execArgs = nos::NodeExecuteArgs(args);
 		auto& output = *InterpretPinValue<sys::vulkan::Buffer>(execArgs[NOS_NAME_STATIC("Output")].Data->Data);
 		auto& input = *InterpretPinValue<sys::vulkan::Buffer>(execArgs[NOS_NAME_STATIC("Input")].Data->Data);
+		output.mutate_field_type(input.field_type());
 
 		if (input.size_in_bytes() != output.size_in_bytes())
 		{

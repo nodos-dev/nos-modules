@@ -86,7 +86,6 @@ struct BufferRingNodeContext : NodeContext
 			nosEngine.LogW("Spare count must be less than ring size! Capping spare count at %u.", newSpareCount);
 			nosEngine.SetPinValueByName(NodeId, NSN_Spare, nosBuffer{.Data = &newSpareCount, .Size = sizeof(newSpareCount)});
 		}
-		auto* output = pins.GetPinData<sys::vulkan::Buffer>(NOS_NAME_STATIC("Output"));
 		nosResourceShareInfo input = vkss::ConvertToResourceInfo(*pins.GetPinData<sys::vulkan::Buffer>(NOS_NAME_STATIC("Input")));
 		if (!input.Memory.Handle)
 			return NOS_RESULT_FAILED;
@@ -97,7 +96,18 @@ struct BufferRingNodeContext : NodeContext
 		}
 
 		auto slot = Ring->BeginPush();
-		// TODO: FieldType
+		auto wantedField = slot->Res.Info.Buffer.FieldType;
+		auto outInterlaced = vkss::IsTextureFieldTypeInterlaced(wantedField);
+		auto incomingField = input.Info.Buffer.FieldType;
+		auto inInterlaced = vkss::IsTextureFieldTypeInterlaced(incomingField);
+		if ((inInterlaced && outInterlaced) && incomingField != wantedField)
+		{
+			nosEngine.LogW("BufferRing: Field mismatch. Waiting for a new frame.");
+			Ring->CancelPush(slot);
+			SendScheduleRequest(0);
+			return NOS_RESULT_FAILED;
+		}
+		slot->Res.Info.Buffer.FieldType = incomingField;
 		slot->FrameNumber = args->FrameNumber;
 		if (slot->Params.WaitEvent)
 		{
@@ -128,8 +138,8 @@ struct BufferRingNodeContext : NodeContext
 		if (Mode == RingMode::FILL)
 			return NOS_RESULT_PENDING;
 
-		auto outputBufferDesc = static_cast<sys::vulkan::Buffer*>(cpy->PinData->Data);
-		auto output = vkss::ConvertToResourceInfo(*outputBufferDesc);
+		auto outputBufferDesc = *static_cast<sys::vulkan::Buffer*>(cpy->PinData->Data);
+		auto output = vkss::ConvertToResourceInfo(outputBufferDesc);
 		auto effectiveSpareCount = SpareCount.load(); // TODO: * (1 + u32(th->Interlaced()));
 		auto* slot = Ring->BeginPop();
 		if (!slot)
@@ -139,8 +149,8 @@ struct BufferRingNodeContext : NodeContext
 			output.Info.Type = NOS_RESOURCE_TYPE_BUFFER;
 			output.Info.Buffer = slot->Res.Info.Buffer;
 			nosEngine.SetPinValueByName(NodeId, NOS_NAME_STATIC("Output"), Buffer::From(vkss::ConvertBufferInfo(output)));
-			outputBufferDesc = static_cast<sys::vulkan::Buffer*>(cpy->PinData->Data);
-			output = vkss::ConvertToResourceInfo(*outputBufferDesc);
+			outputBufferDesc = *static_cast<sys::vulkan::Buffer*>(cpy->PinData->Data);
+			output = vkss::ConvertToResourceInfo(outputBufferDesc);
 		}
 		if (slot->Params.WaitEvent)
 		{
@@ -156,7 +166,8 @@ struct BufferRingNodeContext : NodeContext
 		nosVulkan->Copy(cmd, &slot->Res, &output, 0);
 		nosCmdEndParams end{.ForceSubmit = NOS_TRUE, .OutGPUEventHandle = &slot->Params.WaitEvent};
 		nosVulkan->End(cmd, &end);
-		//nosEngine.SetPinValueDirect(cpy->ID, Buffer::From(vkss::ConvertBufferInfo(slot->Res)));
+		outputBufferDesc.mutate_field_type((sys::vulkan::FieldType)slot->Res.Info.Buffer.FieldType);
+		nosEngine.SetPinValueDirect(cpy->ID, nos::Buffer::From(outputBufferDesc));
 		Ring->EndPop(slot);
 		SendScheduleRequest(1);
 		return NOS_RESULT_SUCCESS;

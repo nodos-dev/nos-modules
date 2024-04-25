@@ -24,11 +24,21 @@
 					"can_show_as": "INPUT_PIN_ONLY"
 				},
 				{
-					"name": "InterlacedFlags",
-					"display_name": "Interlaced Flags",
-					"type_name": "nos.MediaIO.InterlacedFlags",
-					"show_as": "INPUT_PIN",
-					"can_show_as": "INPUT_PIN_OR_PROPERTY"
+					"name": "FieldType",
+					"display_name": "Input Field Type",
+					"type_name": "nos.sys.vulkan.FieldType",
+					"show_as": "PROPERTY",
+					"can_show_as": "INPUT_PIN_OR_PROPERTY",
+					"data": "PROGRESSIVE",
+					"readonly": true
+				},
+				{
+					"name": "IsOutputInterlaced",
+					"display_name": "Is Output Interlaced",
+					"type_name": "bool",
+					"show_as": "PROPERTY",
+					"can_show_as": "INPUT_PIN_OR_PROPERTY",
+					"data": false
 				},
 				{
 					"name": "PixelFormat",
@@ -86,11 +96,13 @@
 					"can_show_as": "INPUT_PIN_ONLY"
 				},
 				{
-					"name": "InterlacedFlags",
-					"display_name": "Interlaced Flags",
-					"type_name": "nos.MediaIO.InterlacedFlags",
-					"show_as": "INPUT_PIN",
-					"can_show_as": "INPUT_PIN_OR_PROPERTY"
+					"name": "IsInterlaced",
+					"display_name": "Is Interlaced",
+					"type_name": "bool",
+					"show_as": "PROPERTY",
+					"can_show_as": "PROPERTY_ONLY",
+					"data": false,
+					"readonly": true
 				},
 				{
 					"name": "PixelFormat", 

@@ -11,16 +11,22 @@ layout(binding = 2) uniform UBO
 {
     mat4 Colorspace;
     mat4 ColorspaceT;
-    uint InterlacedFlags;
     uint PixelFormat;
 	uvec2 Resolution;
+    // RGB2YCBCR
+    uint FieldType;
+    uint IsOutputInterlaced;
+    // YCBCR2RGB
+    uint IsInterlaced;
 } ubo;
 
 // Defined in Conversion.fbs
 #define YCBCR_PIXEL_FORMAT_YUV8 0
 #define YCBCR_PIXEL_FORMAT_V210 1
 
-uint InterlacedFlags = ubo.InterlacedFlags;
+uint FieldType = ubo.FieldType;
+uint IsOutputInterlaced = ubo.IsOutputInterlaced;
+uint IsInterlaced = ubo.IsInterlaced;
 
 layout(binding = 3) readonly buffer SSBO
 {
