@@ -24,12 +24,21 @@
 					"can_show_as": "INPUT_PIN_ONLY"
 				},
 				{
-					"name": "FieldType",
+					"name": "InputFieldType",
 					"display_name": "Input Field Type",
 					"type_name": "nos.sys.vulkan.FieldType",
 					"show_as": "PROPERTY",
 					"can_show_as": "INPUT_PIN_OR_PROPERTY",
-					"data": "PROGRESSIVE",
+					"data": "UNKNOWN",
+					"readonly": true
+				},
+				{
+					"name": "OutputFieldType",
+					"display_name": "Output Field Type",
+					"type_name": "nos.sys.vulkan.FieldType",
+					"show_as": "PROPERTY",
+					"can_show_as": "INPUT_PIN_OR_PROPERTY",
+					"data": "UNKNOWN",
 					"readonly": true
 				},
 				{

@@ -78,22 +78,33 @@ struct RGB2YCbCrNodeContext : NodeContext
 	{
 	}
 
+	nosTextureFieldType FieldType = NOS_TEXTURE_FIELD_TYPE_EVEN;
 	nosResult ExecuteNode(const nosNodeExecuteArgs* args) override
 	{
 		nos::NodeExecuteArgs execArgs(args);
 		const nosBuffer* inputPinData = execArgs[NOS_NAME_STATIC("Source")].Data;
 		const nosBuffer* outputPinData = execArgs[NOS_NAME_STATIC("Output")].Data;
-		auto* inputFieldType = InterpretPinValue<nos::sys::vulkan::FieldType>(execArgs[NOS_NAME("FieldType")].Data->Data);
+		auto* inputFieldType = InterpretPinValue<nos::sys::vulkan::FieldType>(execArgs[NOS_NAME("InputFieldType")].Data->Data);
+		auto* outputFieldType = InterpretPinValue<nos::sys::vulkan::FieldType>(execArgs[NOS_NAME("OutputFieldType")].Data->Data);
 		auto isOutInterlaced = *InterpretPinValue<bool>(execArgs[NOS_NAME("IsOutputInterlaced")].Data->Data);
 		auto fmt = *InterpretPinValue<YCbCrPixelFormat>(execArgs[NOS_NAME("PixelFormat")].Data->Data);
 		auto input = vkss::DeserializeTextureInfo(inputPinData->Data);
-		auto& output = *InterpretPinValue<sys::vulkan::Buffer>(execArgs[NOS_NAME("Output")].Data->Data);
+		auto& output = *InterpretPinValue<sys::vulkan::Buffer>(outputPinData->Data);
 		*inputFieldType = (nos::sys::vulkan::FieldType)input.Info.Texture.FieldType;
+		*outputFieldType = *inputFieldType;
+		bool isInInterlaced = vkss::IsTextureFieldTypeInterlaced(input.Info.Texture.FieldType);
 		if (isOutInterlaced)
-			output.mutate_field_type(*inputFieldType);
+		{
+			if (!isInInterlaced)
+			{
+				*outputFieldType = (nos::sys::vulkan::FieldType)FieldType; // Deinterlace: Override with locally tracked field
+				FieldType = vkss::FlippedField(FieldType);
+			}
+			output.mutate_field_type(*outputFieldType);
+		}
 		else
 			output.mutate_field_type(sys::vulkan::FieldType::PROGRESSIVE);
-
+		
 		nosVec2u ext = { input.Info.Texture.Width, input.Info.Texture.Height };
 		nosVec2u yCbCrExt = GetYCbCrBufferResolution(ext, fmt, isOutInterlaced);
 

@@ -28,10 +28,10 @@ void Store(const ivec2 dst, uvec4 color)
     Output.Pixels[(dst.y * texSize.x) + dst.x] = target;
 }
 
-void yuv8(const ivec2 dst, const ivec2 src, const int YOffset)
+void yuv8(const ivec2 dst, const ivec2 src)
 {
-    uvec3 Y0 = SDR_Out_8(texelFetch(Source, src + ivec2(0, YOffset), 0).xyz);
-    uvec3 Y1 = SDR_Out_8(texelFetch(Source, src + ivec2(1, YOffset), 0).xyz);
+    uvec3 Y0 = SDR_Out_8(texelFetch(Source, src + ivec2(0, 0), 0).xyz);
+    uvec3 Y1 = SDR_Out_8(texelFetch(Source, src + ivec2(1, 0), 0).xyz);
     uvec2 C0  = (Y0.yz + Y1.yz) >> 1;
     //imageStore(Output, dst, uvec4(C0.x, Y0.x, C0.y, Y1.x));
     Store(dst, uvec4(C0.x, Y0.x, C0.y, Y1.x));
@@ -39,35 +39,32 @@ void yuv8(const ivec2 dst, const ivec2 src, const int YOffset)
 
 void main_yuv8()
 {
-    const int   OutInterlaced = int(IsOutputInterlaced); // Meaning the output buffer is half the height of the input
-    const int   InProgressive = int((FieldType ^ NOS_INTERLACED_MASK) == 0);
-    const int   OutYOffset    = int(OutInterlaced == 0 && InProgressive == 1 && (FieldType & NOS_FIELD_TYPE_ODD) != 0);
-    const int   InOdd         = int(InProgressive == 0 && (FieldType & NOS_FIELD_TYPE_ODD) != 0);
+    const int   OutInterlaced  = int(IsOutputInterlaced); // Meaning the output buffer is half the height of the input
+    const int   InProgressive  = int(InputFieldType == NOS_FIELD_TYPE_PROGRESSIVE);
+    const int   InterlaceOdd   = int((InProgressive == 1) && (OutInterlaced == 1) && (OutputFieldType & NOS_FIELD_TYPE_ODD) != 0);
+    const int   DeinterlaceOdd = int((InProgressive == 0) && (OutInterlaced == 0) && (InputFieldType & NOS_FIELD_TYPE_ODD) != 0);
     const ivec2 D = ivec2(gl_NumWorkGroups * gl_WorkGroupSize).xy;
     const ivec2 Q = OutputTextureSize();
-    const ivec2 N          = Q / D;
+    const ivec2 N = Q / D;
     const ivec2 LocalGroupCoord = ivec2(gl_GlobalInvocationID.xy) * N;
-    
-    for(int i = 0; i < N.x; ++i)
+
+    for (int i = 0; i < N.x; ++i)
     {
-        for(int j = 0; j < N.y; j++)
+        for (int j = 0; j < N.y; j++)
         {
             const ivec2 ij = LocalGroupCoord + ivec2(i, j);
-            // If my input is progressive or output is interlaced, we write to every pixel regardless of the field
-            // If my input is interlaced and output is progressive, we write only to relevant pixels
-            if ((ij.y % 2) == InOdd || InProgressive == 1 || OutInterlaced == 1)
-                yuv8(ij, ij * ivec2(2, 1 + OutInterlaced), OutYOffset);
+            yuv8(ij + ivec2(0, DeinterlaceOdd), ij * ivec2(2, 1 + OutInterlaced) + ivec2(0, InterlaceOdd));
         }
     }
 }
 
-void v210(const ivec2 dst, const ivec2 src, const int YOffset)
+void v210(const ivec2 dst, const ivec2 src)
 {
     uvec4 Y[3];
     for(int k = 0; k < 3; ++k)
     {
-        uvec3 Y0 = SDR_Out_10(texelFetch(Source, src + ivec2(2*k+0, YOffset), 0).xyz);
-        uvec3 Y1 = SDR_Out_10(texelFetch(Source, src + ivec2(2*k+1, YOffset), 0).xyz);
+        uvec3 Y0 = SDR_Out_10(texelFetch(Source, src + ivec2(2*k+0, 0), 0).xyz);
+        uvec3 Y1 = SDR_Out_10(texelFetch(Source, src + ivec2(2*k+1, 0), 0).xyz);
         uvec2 C  = (Y0.yz + Y1.yz) >> 1;
         Y[k] = uvec4(C.x, Y0.x, C.y, Y1.x);
     }
@@ -85,10 +82,10 @@ void v210(const ivec2 dst, const ivec2 src, const int YOffset)
 
 void main_v210()
 {
-    const int   OutInterlaced = int(IsOutputInterlaced);
-    const int   InProgressive = int((FieldType ^ NOS_INTERLACED_MASK) == 0);
-    const int   OutYOffset    = int(OutInterlaced == 0 && InProgressive == 1 && (FieldType & NOS_FIELD_TYPE_ODD) != 0);
-    const int   InOdd         = int(InProgressive == 0 && (FieldType & NOS_FIELD_TYPE_ODD) != 0);
+    const int   OutInterlaced  = int(IsOutputInterlaced); // Meaning the output buffer is half the height of the input
+    const int   InProgressive  = int(InputFieldType == NOS_FIELD_TYPE_PROGRESSIVE);
+    const int   InterlaceOdd   = int((InProgressive == 1) && (OutInterlaced == 1) && (OutputFieldType & NOS_FIELD_TYPE_ODD) != 0);
+    const int   DeinterlaceOdd = int((InProgressive == 0) && (OutInterlaced == 0) && (InputFieldType & NOS_FIELD_TYPE_ODD) != 0);
     const ivec2 N             = OutputTextureSize() / ivec2(4, 1) /  ivec2(gl_NumWorkGroups * gl_WorkGroupSize).xy;
     const ivec2 LocalGroupCoord = ivec2(gl_GlobalInvocationID.xy) * N;
     
@@ -97,8 +94,9 @@ void main_v210()
         for(int j = 0; j < N.y; ++j)
         {
             const ivec2 ij  = LocalGroupCoord + ivec2(i, j);
-            if ((ij.y % 2) == InOdd || InProgressive == 1 || OutInterlaced == 1)
-                v210(ij * ivec2(4, 1), ij * ivec2(6, 1 + OutInterlaced), OutYOffset);
+            const ivec2 src = ij * ivec2(4, 1);
+            const ivec2 dst = ij * ivec2(6, 1);
+            v210(src + ivec2(0, DeinterlaceOdd), dst * ivec2(1, 1 + OutInterlaced) + ivec2(0, InterlaceOdd));
         }
     }
 }

@@ -7,6 +7,6 @@
 
 #define NOS_FIELD_TYPE_EVEN 1
 #define NOS_FIELD_TYPE_ODD 2
-#define NOS_INTERLACED_MASK 3
+#define NOS_FIELD_TYPE_PROGRESSIVE 3
 
 #endif

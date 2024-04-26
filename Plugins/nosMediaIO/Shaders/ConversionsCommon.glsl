@@ -14,8 +14,9 @@ layout(binding = 2) uniform UBO
     uint PixelFormat;
 	uvec2 Resolution;
     // RGB2YCBCR
-    uint FieldType;
-    uint IsOutputInterlaced;
+    uint InputFieldType;
+    uint OutputFieldType;
+    bool IsOutputInterlaced;
     // YCBCR2RGB
     uint IsInterlaced;
 } ubo;
@@ -24,8 +25,9 @@ layout(binding = 2) uniform UBO
 #define YCBCR_PIXEL_FORMAT_YUV8 0
 #define YCBCR_PIXEL_FORMAT_V210 1
 
-uint FieldType = ubo.FieldType;
-uint IsOutputInterlaced = ubo.IsOutputInterlaced;
+uint InputFieldType = ubo.InputFieldType;
+uint OutputFieldType = ubo.OutputFieldType; 
+bool IsOutputInterlaced = ubo.IsOutputInterlaced;
 uint IsInterlaced = ubo.IsInterlaced;
 
 layout(binding = 3) readonly buffer SSBO
