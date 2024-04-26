@@ -28,6 +28,9 @@ struct BufferRingNodeContext : NodeContext
 					  .Alignment = 0,
 					  .Usage = nosBufferUsage(NOS_BUFFER_USAGE_TRANSFER_SRC | NOS_BUFFER_USAGE_TRANSFER_DST),
 					  .MemoryFlags = nosMemoryFlags(NOS_MEMORY_FLAGS_DOWNLOAD | NOS_MEMORY_FLAGS_HOST_VISIBLE)};
+	
+	nosTextureFieldType WantedField = NOS_TEXTURE_FIELD_TYPE_UNKNOWN;
+	
 	BufferRingNodeContext(const nosFbNode* node) : NodeContext(node)
 	{
 		Ring = std::make_unique<TRing<nosBufferInfo>>(1, SampleBuffer);
@@ -95,12 +98,14 @@ struct BufferRingNodeContext : NodeContext
 			nosEngine.LogI("Trying to push while ring is full");
 		}
 
+		if (WantedField == NOS_TEXTURE_FIELD_TYPE_UNKNOWN)
+			WantedField = input.Info.Buffer.FieldType;
+
 		auto slot = Ring->BeginPush();
-		auto wantedField = slot->Res.Info.Buffer.FieldType;
-		auto outInterlaced = vkss::IsTextureFieldTypeInterlaced(wantedField);
+		auto outInterlaced = vkss::IsTextureFieldTypeInterlaced(WantedField);
 		auto incomingField = input.Info.Buffer.FieldType;
 		auto inInterlaced = vkss::IsTextureFieldTypeInterlaced(incomingField);
-		if ((inInterlaced && outInterlaced) && incomingField != wantedField)
+		if ((inInterlaced && outInterlaced) && incomingField != WantedField)
 		{
 			nosEngine.LogW("BufferRing: Field mismatch. Waiting for a new frame.");
 			Ring->CancelPush(slot);
@@ -108,6 +113,7 @@ struct BufferRingNodeContext : NodeContext
 			return NOS_RESULT_FAILED;
 		}
 		slot->Res.Info.Buffer.FieldType = incomingField;
+		WantedField = vkss::FlippedField(WantedField);
 		slot->FrameNumber = args->FrameNumber;
 		if (slot->Params.WaitEvent)
 		{

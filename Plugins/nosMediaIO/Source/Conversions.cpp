@@ -101,9 +101,9 @@ struct RGB2YCbCrNodeContext : NodeContext
 						.Size = (uint32_t)bufSize,
 						.Usage = nosBufferUsage(NOS_BUFFER_USAGE_TRANSFER_SRC | NOS_BUFFER_USAGE_STORAGE_BUFFER),
 						.MemoryFlags = outMemoryFlags,
+						.FieldType = (nosTextureFieldType)*inputFieldType,
 					}}};
 			auto bufferDesc = vkss::ConvertBufferInfo(bufInfo);
-			bufferDesc.mutate_field_type(*inputFieldType);
 			nosEngine.SetPinValueByName(NodeId, NOS_NAME_STATIC("Output"), Buffer::From(bufferDesc));
 		}
 		auto* dispatchSize = execArgs.GetPinData<nosVec2u>(NOS_NAME_STATIC("DispatchSize"));
