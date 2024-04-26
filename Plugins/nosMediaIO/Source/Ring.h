@@ -64,7 +64,7 @@ struct TRing
 		{
             auto res = MakeShared<Resource>(Sample);
 			Resources.push_back(res);
-            Write.Pool.push(res.get());
+            Write.Pool.push_back(res.get());
         }
         Size = size;
     }
@@ -90,7 +90,7 @@ struct TRing
 
     struct
     {
-        std::queue<Resource *> Pool;
+        std::deque<Resource *> Pool;
         std::mutex Mutex;
         std::condition_variable CV;
     } Write, Read;
@@ -164,7 +164,7 @@ struct TRing
         if (Exit)
             return 0;
         Resource *res = Write.Pool.front();
-        Write.Pool.pop();
+        Write.Pool.pop_front();
         return res;
     }
 
@@ -172,14 +172,31 @@ struct TRing
     {
         {
             std::unique_lock lock(Read.Mutex);
-            Read.Pool.push(res);
+            Read.Pool.push_back(res);
 			assert(Read.Pool.size() <= Resources.size());
         }
         Read.CV.notify_one();
     }
 
-    void CancelPush(Resource* res) { EndPop(res); }
-    void CancelPop(Resource* res) { EndPush(res); }
+    void CancelPush(Resource* res)
+	{
+		{
+			std::unique_lock lock(Write.Mutex);
+			res->FrameNumber = 0;
+			Write.Pool.push_front(res);
+			assert(Write.Pool.size() <= Resources.size());
+		}
+		Write.CV.notify_one();
+	}
+	void CancelPop(Resource* res)
+	{
+		{
+			std::unique_lock lock(Read.Mutex);
+			Read.Pool.push_front(res);
+			assert(Read.Pool.size() <= Resources.size());
+		}
+		Read.CV.notify_one();
+	}
 
     Resource *BeginPop()
     {
@@ -191,7 +208,7 @@ struct TRing
         if (Exit)
             return 0;
         auto res = Read.Pool.front();
-        Read.Pool.pop();
+        Read.Pool.pop_front();
         return res;
     }
 
@@ -200,7 +217,7 @@ struct TRing
         {
             std::unique_lock lock(Write.Mutex);
             res->FrameNumber = 0;
-            Write.Pool.push(res);
+            Write.Pool.push_back(res);
 			assert(Write.Pool.size() <= Resources.size());
         }
         Write.CV.notify_one();
@@ -261,9 +278,9 @@ struct TRing
 		while (!from.Pool.empty())
 		{
 			auto* slot = from.Pool.front();
-			from.Pool.pop();
+			from.Pool.pop_front();
 			slot->Reset();
-			to.Pool.push(slot);
+			to.Pool.push_back(slot);
 		}
     }
 };
