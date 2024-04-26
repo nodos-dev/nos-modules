@@ -21,8 +21,10 @@ static std::set<u32> const& FindDivisors(const u32 N)
 	u32 p2 = 0, p3 = 0, p5 = 0;
 	std::set<u32> D;
 
+	static std::set<u32> Empty;
+
 	if (N == 0)
-		return D;
+		return Empty;
 
 	u32 n = N;
 	while(0 == n % 2) n /= 2, p2++;
