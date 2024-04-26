@@ -65,6 +65,13 @@ nosVec2u GetSuitableDispatchSize(nosVec2u dispatchSize, nosVec2u outSize, uint8_
 					 BestFit(y + .5, outSize.y / 9));
 }
 
+nosVec2u GetYCbCrBufferResolution(nosVec2u res, YCbCrPixelFormat fmt, bool interlaced)
+{
+	nosVec2u yCbCrExt((fmt == YCbCrPixelFormat::V210) ? ((res.x + (48 - res.x % 48) % 48) / 3) << 1 : res.x >> 1,
+		res.y >> int(interlaced));
+	return yCbCrExt;
+}
+
 struct RGB2YCbCrNodeContext : NodeContext
 {
 	RGB2YCbCrNodeContext(const nosFbNode* node) : NodeContext(node)
@@ -88,8 +95,8 @@ struct RGB2YCbCrNodeContext : NodeContext
 			output.mutate_field_type(sys::vulkan::FieldType::PROGRESSIVE);
 
 		nosVec2u ext = { input.Info.Texture.Width, input.Info.Texture.Height };
-		nosVec2u yCbCrExt((fmt == YCbCrPixelFormat::V210) ? ((ext.x + (48 - ext.x % 48) % 48) / 3) << 1 : ext.x >> 1, 
-						  ext.y >> int(isOutInterlaced));
+		nosVec2u yCbCrExt = GetYCbCrBufferResolution(ext, fmt, isOutInterlaced);
+
 		uint32_t bufSize = yCbCrExt.x * yCbCrExt.y * 4;
 		constexpr auto outMemoryFlags = NOS_MEMORY_FLAGS_DEVICE_MEMORY;
 		if (output.size_in_bytes() != bufSize || output.memory_flags() != (nos::sys::vulkan::MemoryFlags)(outMemoryFlags))
@@ -143,8 +150,7 @@ struct YCbCr2RGBNodeContext : NodeContext
 		nosEngine.SetPinValueByName(NodeId, NOS_NAME("IsInterlaced"), nos::Buffer::From(isInterlaced));
 
 		nosVec2u ext = { res.x(), res.y()};
-		nosVec2u yCbCrExt((fmt == YCbCrPixelFormat::V210) ? ((ext.x + (48 - ext.x % 48) % 48) / 3) << 1 : ext.x >> 1, 
-						  ext.y >> int(isInterlaced));
+		nosVec2u yCbCrExt = GetYCbCrBufferResolution(ext, fmt, isInterlaced);
 
 		sys::vulkan::TTexture texDef;
 		if (output.width() != ext.x || 
