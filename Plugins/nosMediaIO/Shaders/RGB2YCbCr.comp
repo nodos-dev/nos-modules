@@ -87,8 +87,8 @@ void main_v210()
 {
     const int   OutInterlaced = int(IsOutputInterlaced);
     const int   InProgressive = int((FieldType ^ NOS_INTERLACED_MASK) == 0);
-    const int   OutYOffset    = int((FieldType & NOS_FIELD_TYPE_ODD) != 0);
-    const int   InOdd         = int((FieldType & NOS_FIELD_TYPE_ODD) != 0);
+    const int   OutYOffset    = int(OutInterlaced == 0 && InProgressive == 1 && (FieldType & NOS_FIELD_TYPE_ODD) != 0);
+    const int   InOdd         = int(InProgressive == 0 && (FieldType & NOS_FIELD_TYPE_ODD) != 0);
     const ivec2 N             = OutputTextureSize() / ivec2(4, 1) /  ivec2(gl_NumWorkGroups * gl_WorkGroupSize).xy;
     const ivec2 LocalGroupCoord = ivec2(gl_GlobalInvocationID.xy) * N;
     
