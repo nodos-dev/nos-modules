@@ -41,8 +41,10 @@ void main_yuv8()
 {
     const int   OutInterlaced  = int(IsOutputInterlaced); // Meaning the output buffer is half the height of the input
     const int   InProgressive  = int(InputFieldType == NOS_FIELD_TYPE_PROGRESSIVE);
-    const int   InterlaceOdd   = int((InProgressive == 1) && (OutInterlaced == 1) && (OutputFieldType & NOS_FIELD_TYPE_ODD) != 0);
-    const int   DeinterlaceOdd = int((InProgressive == 0) && (OutInterlaced == 0) && (InputFieldType & NOS_FIELD_TYPE_ODD) != 0);
+    const bool  Interlace = (InProgressive == 1) && (OutInterlaced == 1);
+    const bool  Deinterlace = (InProgressive == 0) && (OutInterlaced == 0);
+    const int   InterlaceOdd   = int(Interlace && (OutputFieldType & NOS_FIELD_TYPE_ODD) != 0);
+    const int   DeinterlaceOdd = int(Deinterlace && (InputFieldType & NOS_FIELD_TYPE_ODD) != 0);
     const ivec2 D = ivec2(gl_NumWorkGroups * gl_WorkGroupSize).xy;
     const ivec2 Q = OutputTextureSize();
     const ivec2 N = Q / D;
@@ -53,7 +55,9 @@ void main_yuv8()
         for (int j = 0; j < N.y; j++)
         {
             const ivec2 ij = LocalGroupCoord + ivec2(i, j);
-            yuv8(ij + ivec2(0, DeinterlaceOdd), ij * ivec2(2, 1 + OutInterlaced) + ivec2(0, InterlaceOdd));
+            if (Deinterlace && (ij.y % 2 != DeinterlaceOdd))
+                continue;
+            yuv8(ij, ij * ivec2(2, 1 + OutInterlaced) + ivec2(0, InterlaceOdd));
         }
     }
 }
@@ -84,8 +88,10 @@ void main_v210()
 {
     const int   OutInterlaced  = int(IsOutputInterlaced); // Meaning the output buffer is half the height of the input
     const int   InProgressive  = int(InputFieldType == NOS_FIELD_TYPE_PROGRESSIVE);
-    const int   InterlaceOdd   = int((InProgressive == 1) && (OutInterlaced == 1) && (OutputFieldType & NOS_FIELD_TYPE_ODD) != 0);
-    const int   DeinterlaceOdd = int((InProgressive == 0) && (OutInterlaced == 0) && (InputFieldType & NOS_FIELD_TYPE_ODD) != 0);
+    const bool  Interlace = (InProgressive == 1) && (OutInterlaced == 1);
+    const bool  Deinterlace = (InProgressive == 0) && (OutInterlaced == 0);
+    const int   InterlaceOdd   = int(Interlace && (OutputFieldType & NOS_FIELD_TYPE_ODD) != 0);
+    const int   DeinterlaceOdd = int(Deinterlace && (InputFieldType & NOS_FIELD_TYPE_ODD) != 0);
     const ivec2 N             = OutputTextureSize() / ivec2(4, 1) /  ivec2(gl_NumWorkGroups * gl_WorkGroupSize).xy;
     const ivec2 LocalGroupCoord = ivec2(gl_GlobalInvocationID.xy) * N;
     
@@ -96,7 +102,9 @@ void main_v210()
             const ivec2 ij  = LocalGroupCoord + ivec2(i, j);
             const ivec2 src = ij * ivec2(4, 1);
             const ivec2 dst = ij * ivec2(6, 1);
-            v210(src + ivec2(0, DeinterlaceOdd), dst * ivec2(1, 1 + OutInterlaced) + ivec2(0, InterlaceOdd));
+            if (Deinterlace && (ij.y % 2 != DeinterlaceOdd))
+                continue;
+            v210(src, dst * ivec2(1, 1 + OutInterlaced) + ivec2(0, InterlaceOdd));
         }
     }
 }
