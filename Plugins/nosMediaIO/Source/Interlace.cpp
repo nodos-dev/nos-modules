@@ -56,7 +56,11 @@ struct InterlaceNode : NodeContext
 		interlacePass.Bindings = bindings.data();
 		interlacePass.BindingCount = bindings.size();
 		interlacePass.Output = outputTextureInfo;
-		nosVulkan->RunPass(0, &interlacePass);
+		nosCmd cmd;
+		nosCmdBeginParams begin{ .Name = NOS_NAME("Interlace Pass"), .AssociatedNodeId = args->NodeId, .OutCmdHandle = &cmd };
+		nosVulkan->Begin2(&begin);
+		nosVulkan->RunPass(cmd, &interlacePass);
+		nosVulkan->End(cmd, nullptr);
 		return NOS_RESULT_SUCCESS;
 	}
 
@@ -109,7 +113,11 @@ struct DeinterlaceNode : NodeContext
 		deinterlacePass.BindingCount = bindings.size();
 		deinterlacePass.Output = outputTextureInfo;
 		deinterlacePass.DoNotClear = true;
-		nosVulkan->RunPass(0, &deinterlacePass);
+		nosCmd cmd;
+		nosCmdBeginParams begin {.Name = NOS_NAME("Deinterlace Pass"), .AssociatedNodeId = args->NodeId, .OutCmdHandle = &cmd};
+		nosVulkan->Begin2(&begin);
+		nosVulkan->RunPass(cmd, &deinterlacePass);
+		nosVulkan->End(cmd, nullptr);
 		return NOS_RESULT_SUCCESS;
 	}
 
