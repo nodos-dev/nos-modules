@@ -12,19 +12,19 @@
     "plugins": {
         "nos.aja": {
             "target_name": "nosAJA",
-            "path": "nosAJA",
+            "path": "Plugins/nosAJA",
             "deps": [
-                "nosAJA/*",
-                "External/ntv2/*",
-                "External/stb/*"
+                "Plugins/nosAJA/*",
+                "Plugins/External/ntv2/*",
+                "Plugins/External/stb/*"
             ]
         },
         "nos.filters": {
             "target_name": "nosFilters",
-            "path": "nosFilters",
+            "path": "Plugins/nosFilters",
             "deps": [
-                "nosFilters/*",
-                "Shaders/*"
+                "Plugins/nosFilters/*",
+                "Plugins/Shaders/*"
             ],
             "files": [
                 "Shaders/*.frag",
@@ -35,18 +35,18 @@
         },
         "nos.math": {
             "target_name": "nosMath",
-            "path": "nosMath",
+            "path": "Plugins/nosMath",
             "deps": [
-                "nosMath/*"
+                "Plugins/nosMath/*"
             ]
         },
         "nos.utilities": {
             "target_name": "nosUtilities",
-            "path": "nosUtilities",
+            "path": "Plugins/nosUtilities",
             "deps": [
-                "nosUtilities/*",
-                "Shaders/*",
-                "External/stb/*"
+                "Plugins/nosUtilities/*",
+                "Plugins/Shaders/*",
+                "Plugins/External/stb/*"
             ],
             "files": [
                 "Shaders/*.frag",
@@ -59,17 +59,17 @@
         },
         "nos.WebRTC": {
             "target_name": "nosWebRTC",
-            "path": "nosWebRTC",
+            "path": "Plugins/nosWebRTC",
             "deps": [
-                "nosWebRTC/*"
+                "Plugins/nosWebRTC/*"
             ]
         },
         "nos.MediaIO": {
             "target_name": "nosMediaIO",
-            "path": "nosMediaIO",
+            "path": "Plugins/nosMediaIO",
             "deps": [
-                "nosMediaIO/*",
-                "Shaders/*"
+                "Plugins/nosMediaIO/*",
+                "Plugins/Shaders/*"
             ],
             "files": [
                 "Shaders/*.frag",
@@ -84,9 +84,9 @@
     "subsystems": {
         "nos.sys.vulkan": {
             "target_name": "nosVulkanSubsystem",
-            "path": "nosVulkanSubsystem",
+            "path": "Subsystems/nosVulkanSubsystem",
             "deps": [
-                "nosVulkanSubsystem/*"
+                "Subsystems/nosVulkanSubsystem/*"
             ],
             "files": [
                 "Include/**",
@@ -94,11 +94,11 @@
             ]
         },
         "nos.sys.shaderc": {
-            "path": "nosShaderCompiler",
+            "path": "Subsystems/nosShaderCompiler",
             "file_only_subsystem": true,
             "exclude_from_all": true,
             "deps": [
-                "nosShaderCompiler/*"
+                "Subsystems/nosShaderCompiler/*"
             ],
             "files": [
                 "Binaries/**"
