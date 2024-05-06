@@ -15,7 +15,7 @@ if(NOT TARGET glfw)
 	group_targets("${NOSTEST_EXTERNAL_TARGETS}" "External")
 endif()
 
-list(APPEND DEPENDENCIES glfw)
+list(APPEND DEPENDENCIES glfw ${NOS_PLUGIN_SDK_TARGET})
 list(APPEND INCLUDE_FOLDERS
 	${SUBSYSTEMS_SOURCE_DIR}/nosVulkanSubsystem/Include
 	${CMAKE_CURRENT_SOURCE_DIR}/External/glfw)

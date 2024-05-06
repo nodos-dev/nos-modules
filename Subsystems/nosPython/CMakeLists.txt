@@ -20,7 +20,7 @@ if (GENERATE_FLATBUFFERS_FILES)
     # generate_flatbuffers("${TOOLS_DIR}/flatc" "${CMAKE_CURRENT_SOURCE_DIR}/Config" "${CMAKE_CURRENT_SOURCE_DIR}/Include/nosPython" "${CMAKE_CURRENT_SOURCE_DIR}/__temp__" "python")
 endif()
 
-add_folder_as_subsystem_project("nosPython" "python3;python312;pybind11::embed" "${CMAKE_CURRENT_SOURCE_DIR}/Include")
+add_folder_as_subsystem_project("nosPython" "${NOS_SUBSYSTEM_SDK_TARGET};python3;python312;pybind11::embed" "${CMAKE_CURRENT_SOURCE_DIR}/Include")
 
 get_targets(NOSPY_EXTERNAL_TARGETS "./External/pybind11")
 group_targets("${NOSPY_EXTERNAL_TARGETS}" "External")

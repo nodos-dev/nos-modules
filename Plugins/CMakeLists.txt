@@ -5,7 +5,9 @@ project("Plugins")
 
 set(EXTERNAL_DIR ${CMAKE_CURRENT_SOURCE_DIR}/External)
 
-include(${SCRIPTS_DIR}/CMake/Plugins.cmake)
+if (NOT WITH_NODOS_WORKSPACE)
+    include(${SCRIPTS_DIR}/CMake/Plugins.cmake)
+endif()
 
 # Dependencies
 # ------------

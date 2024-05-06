@@ -31,6 +31,13 @@ macro(group_targets targets folder_name)
     endforeach()
 endmacro()
 
+if (${WITH_NODOS_WORKSPACE})
+    find_nodos("1.2.0" NOS_PLUGIN_SDK_TARGET NOS_SUBSYSTEM_SDK_TARGET)
+else()
+    set(NOS_PLUGIN_SDK_TARGET "")
+    set(NOS_SUBSYSTEM_SDK_TARGET "")
+endif()
+
 set(SCRIPTS_DIR ${CMAKE_CURRENT_SOURCE_DIR}/Scripts)
 include(${SCRIPTS_DIR}/CMake/GenerateFlatbuffers.cmake)
 set(TOOLS_DIR ${CMAKE_CURRENT_SOURCE_DIR}/Subsystems/nosShaderCompiler/Binaries/tools/${CMAKE_SYSTEM_NAME})

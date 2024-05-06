@@ -3,7 +3,9 @@
 cmake_minimum_required(VERSION 3.24.2)
 project("Subsystems")
 
-include(${SCRIPTS_DIR}/CMake/Subsystems.cmake)
+if (NOT WITH_NODOS_WORKSPACE)
+    include(${SCRIPTS_DIR}/CMake/Subsystems.cmake)
+endif()
 
 # Update subsystems.json if you add dependencies, so that CD can create releases.
 
