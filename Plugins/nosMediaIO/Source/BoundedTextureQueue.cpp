@@ -113,12 +113,17 @@ struct BoundedTextureQueueNodeContext : NodeContext
 			return NOS_RESULT_FAILED;
 		SendRingStats();
 		if (Mode == RingMode::FILL)
-			return NOS_RESULT_PENDING;
+		{
+			// Wait for 20 ms, if still Fill, return pending
+			std::this_thread::sleep_for(std::chrono::milliseconds(20));
+			if(Mode == RingMode::FILL)
+				return NOS_RESULT_PENDING;
+		}
 
 		auto outputTextureDesc = static_cast<sys::vulkan::Texture*>(cpy->PinData->Data);
 		auto output = vkss::DeserializeTextureInfo(outputTextureDesc);
 		//auto effectiveSpareCount = SpareCount.load(); // TODO: * (1 + u32(th->Interlaced()));
-		auto* slot = Ring->BeginPop();
+		auto* slot = Ring->BeginPop(20);
 		if (!slot)
 			return Ring->Exit ? NOS_RESULT_FAILED : NOS_RESULT_PENDING;
 		if (slot->Res.Info.Texture.Height != output.Info.Texture.Height || 

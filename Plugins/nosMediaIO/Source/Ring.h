@@ -198,13 +198,11 @@ struct TRing
 		Read.CV.notify_one();
 	}
 
-    Resource *BeginPop()
+    Resource *BeginPop(uint64_t timeoutMilliseconds)
     {
         std::unique_lock lock(Read.Mutex);
-        while (Read.Pool.empty() && !Exit)
-        {
-            Read.CV.wait(lock);
-        }
+        if (!Read.CV.wait_for(lock, std::chrono::milliseconds(timeoutMilliseconds), [this]() {return !Read.Pool.empty() || Exit; }))
+            return 0;
         if (Exit)
             return 0;
         auto res = Read.Pool.front();
@@ -265,7 +263,7 @@ struct TRing
     Resource *TryPop(u64& frameNumber, u32 spare = 0)
     {
         if (CanPop(frameNumber, spare))
-            return BeginPop();
+            return BeginPop(20);
         return 0;
 	}
 

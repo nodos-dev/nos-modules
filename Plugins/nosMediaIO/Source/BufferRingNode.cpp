@@ -142,12 +142,19 @@ struct BufferRingNodeContext : NodeContext
 			return NOS_RESULT_FAILED;
 		SendRingStats();
 		if (Mode == RingMode::FILL)
-			return NOS_RESULT_PENDING;
+		{
+			//Sleep for 20 ms & if still Fill, return pending
+			std::this_thread::sleep_for(std::chrono::milliseconds(20));
+			if (Mode == RingMode::FILL)
+				return NOS_RESULT_PENDING;
+		}
+
 
 		auto outputBufferDesc = *static_cast<sys::vulkan::Buffer*>(cpy->PinData->Data);
 		auto output = vkss::ConvertToResourceInfo(outputBufferDesc);
 		auto effectiveSpareCount = SpareCount.load(); // TODO: * (1 + u32(th->Interlaced()));
-		auto* slot = Ring->BeginPop();
+		auto* slot = Ring->BeginPop(20);
+		// If timeout or exit
 		if (!slot)
 			return Ring->Exit ? NOS_RESULT_FAILED : NOS_RESULT_PENDING;
 		if (slot->Res.Info.Buffer.Size != output.Info.Buffer.Size)
