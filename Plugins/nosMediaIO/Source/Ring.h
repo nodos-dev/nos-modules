@@ -71,9 +71,8 @@ struct TRing
     
     TRing(u32 ringSize, nosBufferInfo buffer) 
         requires(std::is_same_v<T, nosBufferInfo>)
-        : Sample()
+        : Sample(buffer)
     {
-		Sample = buffer;
         Resize(ringSize);
     }
     

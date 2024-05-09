@@ -21,6 +21,8 @@ struct BufferRingNodeContext : NodeContext
 	};
 	std::unique_ptr<TRing<nosBufferInfo>> Ring = nullptr;
 	uint32_t RequestedRingSize = 1;
+	nosBufferInfo RequestedTextureInfo = {};
+
 	std::atomic_uint32_t SpareCount = 0;
 	std::atomic<RingMode> Mode = RingMode::FILL;
 	nosBufferInfo SampleBuffer =
@@ -53,18 +55,16 @@ struct BufferRingNodeContext : NodeContext
 			if (SampleBuffer.Alignment == alignment)
 				return;
 			SampleBuffer.Alignment = alignment;
-			Ring = std::make_unique<TRing<nosBufferInfo>>(Ring->Size, SampleBuffer);
-			Ring->Stop();
 			SendPathRestart();
+			Ring->Stop();
 		});
 		AddPinValueWatcher(NOS_NAME("Input"), [this](nos::Buffer const& newBuf, nos::Buffer const& oldBuf, bool first) {
 			auto info = vkss::ConvertToResourceInfo(*InterpretPinValue<sys::vulkan::Buffer>(newBuf.Data()));
 			if (Ring->Sample.Size != info.Info.Buffer.Size)
 			{
 				SampleBuffer.Size = info.Info.Buffer.Size; 
-				Ring = std::make_unique<TRing<nosBufferInfo>>(Ring->Size, SampleBuffer);
-				Ring->Stop();
 				SendPathRestart();
+				Ring->Stop();
 			}
 		});
 	}
@@ -144,7 +144,7 @@ struct BufferRingNodeContext : NodeContext
 		if (Mode == RingMode::FILL)
 		{
 			//Sleep for 20 ms & if still Fill, return pending
-			std::this_thread::sleep_for(std::chrono::milliseconds(20));
+			std::this_thread::sleep_for(std::chrono::milliseconds(100));
 			if (Mode == RingMode::FILL)
 				return NOS_RESULT_PENDING;
 		}
@@ -153,7 +153,7 @@ struct BufferRingNodeContext : NodeContext
 		auto outputBufferDesc = *static_cast<sys::vulkan::Buffer*>(cpy->PinData->Data);
 		auto output = vkss::ConvertToResourceInfo(outputBufferDesc);
 		auto effectiveSpareCount = SpareCount.load(); // TODO: * (1 + u32(th->Interlaced()));
-		auto* slot = Ring->BeginPop(20);
+		auto* slot = Ring->BeginPop(100);
 		// If timeout or exit
 		if (!slot)
 			return Ring->Exit ? NOS_RESULT_FAILED : NOS_RESULT_PENDING;
@@ -229,6 +229,11 @@ struct BufferRingNodeContext : NodeContext
 		assert(RequestedRingSize != 0);
 		if (RequestedRingSize != Ring->Size)
 			Ring->Resize(RequestedRingSize);
+		if (memcmp(&Ring->Sample, &SampleBuffer, sizeof(Ring->Sample)) != 0)
+		{
+			Ring = std::make_unique<TRing<nosBufferInfo>>(Ring->Size, SampleBuffer);
+			Ring->Exit = true;
+		}
 		auto emptySlotCount = Ring->Write.Pool.size();
 		nosScheduleNodeParams schedule{.NodeId = NodeId, .AddScheduleCount = emptySlotCount};
 		nosEngine.ScheduleNode(&schedule);

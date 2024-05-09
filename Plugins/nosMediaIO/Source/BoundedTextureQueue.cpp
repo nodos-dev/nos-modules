@@ -17,6 +17,7 @@ struct BoundedTextureQueueNodeContext : NodeContext
 	};
 	std::unique_ptr<TRing<nosTextureInfo>> Ring = nullptr;
 	uint32_t RequestedRingSize = 1;
+	nosTextureInfo RequestedTextureInfo = {};
 	std::atomic_uint32_t SpareCount = 0;
 	std::atomic<RingMode> Mode = RingMode::CONSUME;
 
@@ -39,6 +40,7 @@ struct BoundedTextureQueueNodeContext : NodeContext
 				nosEngine.SendPathCommand(PinName2Id[NOS_NAME_STATIC("Input")], ringSizeChange);
 				SendPathRestart();
 				RequestedRingSize = size;
+				Ring->Stop();
 			}
 		});
 		AddPinValueWatcher(NOS_NAME_STATIC("Input"), [this](nos::Buffer const& newBuf, nos::Buffer const& oldBuf, bool first) {
@@ -47,10 +49,9 @@ struct BoundedTextureQueueNodeContext : NodeContext
 			Ring->Sample.Height != info.Info.Texture.Height ||
 			Ring->Sample.Format != info.Info.Texture.Format)
 			{
-				Ring = std::make_unique<TRing<nosTextureInfo>>(nosVec2u(info.Info.Texture.Width, info.Info.Texture.Height), Ring->Size, 
-					nosImageUsage(NOS_IMAGE_USAGE_TRANSFER_SRC | NOS_IMAGE_USAGE_TRANSFER_DST), info.Info.Texture.Format);
-				Ring->Stop();
+				RequestedTextureInfo = info.Info.Texture;
 				SendPathRestart();
+				Ring->Stop();
 			}
 		});
 	}
@@ -114,8 +115,8 @@ struct BoundedTextureQueueNodeContext : NodeContext
 		SendRingStats();
 		if (Mode == RingMode::FILL)
 		{
-			// Wait for 20 ms, if still Fill, return pending
-			std::this_thread::sleep_for(std::chrono::milliseconds(20));
+			// Wait, if still Fill, return pending
+			std::this_thread::sleep_for(std::chrono::milliseconds(100));
 			if(Mode == RingMode::FILL)
 				return NOS_RESULT_PENDING;
 		}
@@ -123,7 +124,7 @@ struct BoundedTextureQueueNodeContext : NodeContext
 		auto outputTextureDesc = static_cast<sys::vulkan::Texture*>(cpy->PinData->Data);
 		auto output = vkss::DeserializeTextureInfo(outputTextureDesc);
 		//auto effectiveSpareCount = SpareCount.load(); // TODO: * (1 + u32(th->Interlaced()));
-		auto* slot = Ring->BeginPop(20);
+		auto* slot = Ring->BeginPop(100);
 		if (!slot)
 			return Ring->Exit ? NOS_RESULT_FAILED : NOS_RESULT_PENDING;
 		if (slot->Res.Info.Texture.Height != output.Info.Texture.Height || 
@@ -202,6 +203,15 @@ struct BoundedTextureQueueNodeContext : NodeContext
 		assert(RequestedRingSize != 0);
 		if (RequestedRingSize != Ring->Size)
 			Ring->Resize(RequestedRingSize);
+
+		if (Ring->Sample.Width != RequestedTextureInfo.Width ||
+			Ring->Sample.Height != RequestedTextureInfo.Height ||
+			Ring->Sample.Format != RequestedTextureInfo.Format)
+		{
+			Ring = std::make_unique<TRing<nosTextureInfo>>(nosVec2u(RequestedTextureInfo.Width, RequestedTextureInfo.Height), Ring->Size,
+				nosImageUsage(NOS_IMAGE_USAGE_TRANSFER_SRC | NOS_IMAGE_USAGE_TRANSFER_DST), RequestedTextureInfo.Format);
+			Ring->Exit = true;
+		}
 		auto emptySlotCount = Ring->Write.Pool.size();
 		nosScheduleNodeParams schedule{.NodeId = NodeId, .AddScheduleCount = emptySlotCount};
 		nosEngine.ScheduleNode(&schedule);
