@@ -14,31 +14,31 @@
         ]
     },
     "node_definitions": [
-        "Checkerboard.nosdef",
-        "Color.nosdef",
-        "Gradient.nosdef",
-        "Merge.nosdef",
-        "Offset.nosdef",
-        "QuadMerge.nosdef",
-        "Resize.nosdef",
-        "SevenSegment.nosdef",
-        "Swizzle.nosdef",
-        "TextureSwitcher.nosdef",
-        "ChannelViewer.nosdef",
-        "Time.nosdef",
-        "ImageIO.nosdef",
-        "CPUSleep.nosdef",
-		"UploadBuffer.nosdef"
+        "Config/Checkerboard.nosdef",
+        "Config/Color.nosdef",
+        "Config/Gradient.nosdef",
+        "Config/Merge.nosdef",
+        "Config/Offset.nosdef",
+        "Config/QuadMerge.nosdef",
+        "Config/Resize.nosdef",
+        "Config/SevenSegment.nosdef",
+        "Config/Swizzle.nosdef",
+        "Config/TextureSwitcher.nosdef",
+        "Config/ChannelViewer.nosdef",
+        "Config/Time.nosdef",
+        "Config/ImageIO.nosdef",
+        "Config/CPUSleep.nosdef",
+		"Config/UploadBuffer.nosdef"
     ],
     "custom_types": [
-        "Merge.fbs",
-        "Gradient.fbs",
-        "Resize.fbs",
-        "Swizzle.fbs",
-        "TextureSwitcher.fbs",
-        "ChannelViewer.fbs"
+        "Config/Merge.fbs",
+        "Config/Gradient.fbs",
+        "Config/Resize.fbs",
+        "Config/Swizzle.fbs",
+        "Config/TextureSwitcher.fbs",
+        "Config/ChannelViewer.fbs"
     ],
-    "binary_path": "../Binaries/nosUtilities",
+    "binary_path": "Binaries/nosUtilities",
     "associated_nodes": [
         {
             "category": "Media",
@@ -130,7 +130,7 @@
         {
             "subsystem": "nos.sys.vulkan",
             "type": "nos.sys.vulkan.Resources",
-            "path": "Resources.json"
+            "path": "Config/Resources.json"
         }
     ]
 }

@@ -14,12 +14,12 @@
         ]
     },
     "node_definitions": [
-        "WebRTCStreamer.nosdef",
-        "WebRTCPlayer.nosdef",
-        "WebRTCSignalingServer.nosdef"
+        "Config/WebRTCStreamer.nosdef",
+        "Config/WebRTCPlayer.nosdef",
+        "Config/WebRTCSignalingServer.nosdef"
     ],
     "custom_types": [],
-    "binary_path": "../Binaries/nosWebRTC",
+    "binary_path": "Binaries/nosWebRTC",
     "associated_nodes": [
       {
         "category": "WebRTC|Streamer",

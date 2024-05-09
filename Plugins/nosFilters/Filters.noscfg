@@ -14,21 +14,21 @@
         ]
     },
     "node_definitions": [
-        "ColorCorrect.nosdef",
-        "Diff.nosdef",
-        "GaussianBlur.nosdef",
-        "KawaseLightStreak.nosdef",
-        "Kuwahara.nosdef",
-        "PremultiplyAlpha.nosdef",
-        "Sampler.nosdef",
-        "Sharpen.nosdef",
-        "Sobel.nosdef",
-        "Thresholder.nosdef"
+        "Config/ColorCorrect.nosdef",
+        "Config/Diff.nosdef",
+        "Config/GaussianBlur.nosdef",
+        "Config/KawaseLightStreak.nosdef",
+        "Config/Kuwahara.nosdef",
+        "Config/PremultiplyAlpha.nosdef",
+        "Config/Sampler.nosdef",
+        "Config/Sharpen.nosdef",
+        "Config/Sobel.nosdef",
+        "Config/Thresholder.nosdef"
     ],
     "custom_types": [
-        "Thresholder.fbs"
+        "Config/Thresholder.fbs"
     ],
-    "binary_path": "../Binaries/nosFilters",
+    "binary_path": "Binaries/nosFilters",
     "associated_nodes": [
         {
             "category": "Filters",

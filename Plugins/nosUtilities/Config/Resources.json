@@ -2,7 +2,7 @@
     "shaders": [
         {
             "key": "RESIZE_FRAG",
-            "path": "../Shaders/Resize.frag",
+            "path": "Shaders/Resize.frag",
             "stage": "FRAGMENT",
             "lang": "GLSL"
         }

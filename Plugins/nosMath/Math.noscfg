@@ -9,9 +9,9 @@
     },
     "custom_types": [],
     "node_definitions": [
-        "Math.nosdef"
+        "Config/Math.nosdef"
     ],
-    "binary_path": "../Binaries/nosMath",
+    "binary_path": "Binaries/nosMath",
     "associated_nodes": [
         {
             "category": "Math",

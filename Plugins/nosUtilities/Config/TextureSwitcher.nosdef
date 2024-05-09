@@ -6,7 +6,7 @@
             "contents": {
                 "type": "nos.sys.vulkan.GPUNode",
                 "options": {
-                    "shader": "../Shaders/TextureSwitcher.frag"
+                    "shader": "Shaders/TextureSwitcher.frag"
                 }
             },
             "description": "Used for switching between multiple textures",

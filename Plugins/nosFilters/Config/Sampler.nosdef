@@ -6,7 +6,7 @@
             "contents": {
                 "type": "nos.sys.vulkan.GPUNode",
                 "options": {
-                    "shader": "../Shaders/Sampler.frag"
+                    "shader": "Shaders/Sampler.frag"
                 }
             },
             "pins": [

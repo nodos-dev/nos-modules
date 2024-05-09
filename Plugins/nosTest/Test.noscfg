@@ -17,13 +17,13 @@
             }
         ]
     },
-    "custom_types": [ "Test.fbs", "FrameInterpolator.fbs" ],
+    "custom_types": [ "Config/Test.fbs", "Config/FrameInterpolator.fbs" ],
     "node_definitions": [
-        "Test.nosdef",
-        "FrameInterpolator.nosdef",
-		"Window.nosdef"
+        "Config/Test.nosdef",
+        "Config/FrameInterpolator.nosdef",
+		"Config/Window.nosdef"
     ],
-    "binary_path": "../Binaries/nosTest",
+    "binary_path": "Binaries/nosTest",
     "associated_nodes": [
         {
             "category": "Test",

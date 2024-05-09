@@ -6,7 +6,7 @@
             "contents": {
                 "type": "nos.sys.vulkan.GPUNode",
                 "options": {
-                  "shader": "../Shaders/Swizzle.frag"
+                  "shader": "Shaders/Swizzle.frag"
                 }
             },
             "description":  "Combine multiple textures (up to 4), channel by channel to a single RGBA texture",

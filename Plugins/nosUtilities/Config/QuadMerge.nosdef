@@ -6,7 +6,7 @@
             "contents": {
                 "type": "nos.sys.vulkan.GPUNode",
                 "options": {
-                  "shader": "../Shaders/QuadMerge.frag"
+                  "shader": "Shaders/QuadMerge.frag"
                 }
             },
             "description": "Creates an output texture using its 4 inputs for each quadrant.\nMay be used as a simple multi-viewer or as a combiner for quadrant image inputs",

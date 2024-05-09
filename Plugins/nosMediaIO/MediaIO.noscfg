@@ -14,15 +14,15 @@
         ]
     },
     "node_definitions": [
-        "Interlace.nosdef",
-        "Conversions.nosdef",
-		"BufferRing.nosdef",
-		"BoundedTextureQueue.nosdef"
+        "Config/Interlace.nosdef",
+        "Config/Conversions.nosdef",
+		"Config/BufferRing.nosdef",
+		"Config/BoundedTextureQueue.nosdef"
     ],
     "custom_types": [
-        "Conversion.fbs"
+        "Config/Conversion.fbs"
     ],
-    "binary_path": "../Binaries/nosMediaIO",
+    "binary_path": "Binaries/nosMediaIO",
     "associated_nodes": [
         {
             "category": "Media",
@@ -69,7 +69,7 @@
         {
             "subsystem": "nos.sys.vulkan",
             "type": "nos.sys.vulkan.Resources",
-            "path": "Resources.json"
+            "path": "Config/Resources.json"
         }
     ]
 }

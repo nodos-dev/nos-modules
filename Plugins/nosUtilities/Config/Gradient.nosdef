@@ -6,7 +6,7 @@
             "contents": {
                 "type": "nos.sys.vulkan.GPUNode",
                 "options": {
-                    "shader": "../Shaders/Gradient.frag"
+                    "shader": "Shaders/Gradient.frag"
                 }
             },
             "description": "Generates a gradient image",

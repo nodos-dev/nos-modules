@@ -7,7 +7,7 @@
       "contents": {
         "type": "nos.sys.vulkan.GPUNode",
         "options": {
-          "shader": "../Shaders/SevenSegment.frag"
+          "shader": "Shaders/SevenSegment.frag"
         }
       },
       "description": "Show a number on top of the input texture",

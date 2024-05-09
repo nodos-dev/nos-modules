@@ -6,7 +6,7 @@
             "contents": {
                 "type": "nos.sys.vulkan.GPUNode",
                 "options": {
-                    "shader": "../Shaders/Offset.frag"
+                    "shader": "Shaders/Offset.frag"
                 }
             },
             "description": "Translates the input image using a 2D offset",
