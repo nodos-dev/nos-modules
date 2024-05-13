@@ -47,7 +47,7 @@ struct TRing
         void Reset()
 		{
 			if (Params.WaitEvent)
-				nosVulkan->WaitGpuEvent(&Params.WaitEvent, 0);
+				nosVulkan->WaitGpuEvent(&Params.WaitEvent, UINT64_MAX);
             Params = {};
 			FrameNumber = 0;
         }
@@ -69,22 +69,9 @@ struct TRing
         Size = size;
     }
     
-    TRing(u32 ringSize, nosBufferInfo buffer) 
-        requires(std::is_same_v<T, nosBufferInfo>)
-        : Sample(buffer)
+    TRing(u32 ringSize, T resourceSample) : Sample(resourceSample)
     {
         Resize(ringSize);
-    }
-    
-    TRing(nosVec2u extent, u32 Size, nosImageUsage usage, nosFormat format = NOS_FORMAT_R16G16B16A16_UNORM)
-        requires(std::is_same_v<T, nosTextureInfo>)
-        : Extent(extent), Sample()
-    {
-        Sample.Width = Extent.x;
-        Sample.Height = Extent.y;
-        Sample.Format = format;
-        Sample.Usage = usage;
-        Resize(Size);
     }
 
     struct
