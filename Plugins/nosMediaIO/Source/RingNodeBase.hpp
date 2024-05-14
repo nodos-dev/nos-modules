@@ -24,21 +24,36 @@ struct RingNodeBase : NodeContext
 	};
 	std::unique_ptr<TRing<T>> Ring = nullptr;
 	
+	// If copy ring, then full copy the slot resource to output pin & wait for copy before copying from input to slot
+	// If download ring, then set the output pin to the slot resource, do not copy & wait until path execution finished to put the slot back in ring
 	enum class RingType
 	{
-		BOUNDED_QUEUE,
-		RING
+		COPY_RING,
+		DOWNLOAD_RING
 	} Type;
+
+	// If reset, then reset the ring on path stop
+	// If wait until full, do not output until ring is full & then start consuming
+	enum class OnRestartType
+	{
+		RESET,
+		WAIT_UNTIL_FULL
+	} OnRestart;
 
 	std::optional<uint32_t> RequestedRingSize = 1;
 	std::optional<T> RequestedResourceInfo = {};
 
 	std::atomic_uint32_t SpareCount = 0;
+
+	std::condition_variable ModeCV;
+	std::mutex ModeMutex;
 	std::atomic<RingMode> Mode = RingMode::CONSUME;
 
 	nosTextureFieldType WantedField = NOS_TEXTURE_FIELD_TYPE_UNKNOWN;
 
-	RingNodeBase(const nosFbNode* node, T baseInfo, RingType type) : NodeContext(node), Type(type)
+	TRing<T>::Resource* LastPopped = nullptr;
+
+	RingNodeBase(const nosFbNode* node, T baseInfo, RingType type, OnRestartType onRestart) : NodeContext(node), Type(type), OnRestart(onRestart)
 	{
 		Ring = std::make_unique<TRing<T>>(1, baseInfo);
 
@@ -109,9 +124,9 @@ struct RingNodeBase : NodeContext
 
 	void SendRingStats() const
 	{
-		nosEngine.WatchLog((GetName() + ": " + NodeName.AsString() + " Read Size").c_str(), std::to_string(Ring->Read.Pool.size()).c_str());
-		nosEngine.WatchLog((GetName() + ": " + NodeName.AsString() + " Write Size").c_str(), std::to_string(Ring->Write.Pool.size()).c_str());
-		nosEngine.WatchLog((GetName() + ": " + NodeName.AsString() + " Total Frame Count").c_str(), std::to_string(Ring->TotalFrameCount()).c_str());
+		nosEngine.WatchLog((NodeName.AsString() + " Read Size").c_str(), std::to_string(Ring->Read.Pool.size()).c_str());
+		nosEngine.WatchLog((NodeName.AsString() + " Write Size").c_str(), std::to_string(Ring->Write.Pool.size()).c_str());
+		nosEngine.WatchLog((NodeName.AsString() + " Total Frame Count").c_str(), std::to_string(Ring->TotalFrameCount()).c_str());
 	}
 
 	nosResult ExecuteNode(const nosNodeExecuteArgs* args) override
@@ -148,7 +163,12 @@ struct RingNodeBase : NodeContext
 		{
 			nosEngine.LogI("Trying to push while ring is full");
 		}
+
+
+
+		nos::util::Stopwatch sw; 
 		auto slot = Ring->BeginPush();
+		nosEngine.WatchLog((GetName() + " Begin Push").c_str(), nos::util::Stopwatch::ElapsedString(sw.Elapsed()).c_str());
 		if constexpr (CheckInterlace)
 		{
 			nosTextureFieldType incomingField;
@@ -198,21 +218,28 @@ struct RingNodeBase : NodeContext
 		nosVulkan->End(cmd, &end);
 		Ring->EndPush(slot);
 		if (Mode == RingMode::FILL && Ring->IsFull())
+		{
 			Mode = RingMode::CONSUME;
+			ModeCV.notify_all();
+		}
 		return NOS_RESULT_SUCCESS;
 	}
 
 	// Called from a different thread.
 	nosResult CopyFrom(nosCopyInfo* cpy) override
 	{
+		if (LastPopped != nullptr)
+		{
+			DEBUG_BREAK
+		}
 		if (!Ring || Ring->Exit)
 			return NOS_RESULT_FAILED;
 		SendRingStats();
 		if (Mode == RingMode::FILL)
 		{
 			//Sleep for 20 ms & if still Fill, return pending
-			std::this_thread::sleep_for(std::chrono::milliseconds(100));
-			if (Mode == RingMode::FILL)
+			std::unique_lock<std::mutex> lock(ModeMutex);
+			if(!ModeCV.wait_for(lock, std::chrono::milliseconds(100), [this] { return Mode != RingMode::FILL; }))
 				return NOS_RESULT_PENDING;
 		}
 
@@ -272,31 +299,44 @@ struct RingNodeBase : NodeContext
 			beginParams = { NOS_NAME("BoundedTextureQueue: Slot Copy To Output Texture"), NodeId, & cmd };
 		else if constexpr (std::is_same_v<T, nosBufferInfo>)
 			beginParams = { NOS_NAME("BufferRing: Ring Slot Copy To Output Buffer"), NodeId, & cmd };
-		nosVulkan->Begin2(&beginParams);
-		nosVulkan->Copy(cmd, &slot->Res, &output, 0);
-		nosCmdEndParams end{ .ForceSubmit = NOS_TRUE, .OutGPUEventHandle = &slot->Params.WaitEvent };
-		nosVulkan->End(cmd, &end);
-
-		if constexpr (std::is_same_v<T, nosBufferInfo>)
+		if (Type == RingType::COPY_RING)
 		{
-			nosTextureFieldType outFieldType = slot->Res.Info.Buffer.FieldType;
-			auto outputBufferDesc = *static_cast<sys::vulkan::Buffer*>(cpy->PinData->Data);
-			outputBufferDesc.mutate_field_type((sys::vulkan::FieldType)outFieldType);
-			nosEngine.SetPinValueDirect(cpy->ID, nos::Buffer::From(outputBufferDesc));
+			nosVulkan->Begin2(&beginParams);
+			nosVulkan->Copy(cmd, &slot->Res, &output, 0);
+			nosCmdEndParams end{ .ForceSubmit = NOS_TRUE, .OutGPUEventHandle = &slot->Params.WaitEvent };
+			nosVulkan->End(cmd, &end);
+			if constexpr (std::is_same_v<T, nosBufferInfo>)
+			{
+				nosTextureFieldType outFieldType = slot->Res.Info.Buffer.FieldType;
+				auto outputBufferDesc = *static_cast<sys::vulkan::Buffer*>(cpy->PinData->Data);
+				outputBufferDesc.mutate_field_type((sys::vulkan::FieldType)outFieldType);
+				nosEngine.SetPinValueDirect(cpy->ID, nos::Buffer::From(outputBufferDesc));
+			}
+			else if constexpr (std::is_same_v<T, nosTextureInfo>)
+			{
+				nosTextureFieldType outFieldType = slot->Res.Info.Texture.FieldType;
+				auto outputTextureDesc = static_cast<sys::vulkan::Texture*>(cpy->PinData->Data);
+				auto output = vkss::DeserializeTextureInfo(outputTextureDesc);
+				output.Info.Texture.FieldType = slot->Res.Info.Texture.FieldType;
+				sys::vulkan::TTexture texDef = vkss::ConvertTextureInfo(output);
+				texDef.unscaled = true;
+				nosEngine.SetPinValue(cpy->ID, Buffer::From(texDef));
+			}
 		}
-		else if constexpr (std::is_same_v<T, nosTextureInfo>)
+		else if (Type == RingType::DOWNLOAD_RING)
 		{
-			nosTextureFieldType outFieldType = slot->Res.Info.Texture.FieldType; 
-			auto outputTextureDesc = static_cast<sys::vulkan::Texture*>(cpy->PinData->Data);
-			auto output = vkss::DeserializeTextureInfo(outputTextureDesc); 
-			output.Info.Texture.FieldType = slot->Res.Info.Texture.FieldType;
-			sys::vulkan::TTexture texDef = vkss::ConvertTextureInfo(output);
-			texDef.unscaled = true;
-			nosEngine.SetPinValue(cpy->ID, Buffer::From(texDef));
+			nosEngine.SetPinValueDirect(cpy->ID, nos::Buffer::From(vkss::ConvertBufferInfo(slot->Res)));
 		}
 
-		Ring->EndPop(slot);
-		SendScheduleRequest(1);
+		
+
+		if (Type == RingType::DOWNLOAD_RING)
+			LastPopped = slot;
+		else if (Type == RingType::COPY_RING)
+		{
+			Ring->EndPop(slot);
+			SendScheduleRequest(1);
+		}
 		return NOS_RESULT_SUCCESS;
 	}
 
@@ -313,7 +353,7 @@ struct RingNodeBase : NodeContext
 			if (!RequestedRingSize.has_value() || *RequestedRingSize != command->RingSize)
 			{
 				RequestedRingSize = command->RingSize;
-				if(Type == RingType::RING)
+				if(Type == RingType::DOWNLOAD_RING)
 					SendPathRestart();
 			}
 			break;
@@ -334,18 +374,18 @@ struct RingNodeBase : NodeContext
 
 	void OnPathStop() override
 	{
-		if(Type == RingType::RING)
+		if(OnRestart == OnRestartType::WAIT_UNTIL_FULL)
 			Mode = RingMode::FILL;
 		if (Ring)
 		{
-			if(Type == RingType::BOUNDED_QUEUE)
-				Ring->Reset(false);
 			Ring->Stop();
 		}
 	}
 
 	void OnPathStart() override
 	{
+		if (Ring && OnRestart == OnRestartType::RESET)
+			Ring->Reset(false);
 		if (RequestedRingSize)
 		{
 			Ring->Resize(*RequestedRingSize);
@@ -363,6 +403,20 @@ struct RingNodeBase : NodeContext
 		if (emptySlotCount == 0)
 			Mode = RingMode::CONSUME;
 		Ring->Exit = false;
+	}
+
+	void OnPathExecutionFinished(nosUUID pinId, bool causedByCancel) override
+	{
+		if (Type != RingType::DOWNLOAD_RING)
+			return;
+		if (pinId == PinName2Id[NOS_NAME_STATIC("Output")])
+		{
+			if (!LastPopped)
+				return;
+			Ring->EndPop(LastPopped);
+			LastPopped = nullptr;
+			SendScheduleRequest(1);
+		}
 	}
 
 	void SendPathRestart()

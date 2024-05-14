@@ -10,7 +10,7 @@ namespace nos::MediaIO
 			.Format = NOS_FORMAT_R16G16B16A16_SFLOAT,
 			.Usage = nosImageUsage(NOS_IMAGE_USAGE_TRANSFER_SRC | NOS_IMAGE_USAGE_TRANSFER_DST),
 		};
-		BoundedTextureQueueNodeContext(nosFbNode const* node) : RingNodeBase(node, SampleTexture, RingNodeBase::RingType::BOUNDED_QUEUE)
+		BoundedTextureQueueNodeContext(nosFbNode const* node) : RingNodeBase(node, SampleTexture, RingNodeBase::RingType::COPY_RING, RingNodeBase::OnRestartType::RESET)
 		{
 		}
 		std::string GetName() const override

@@ -7,7 +7,7 @@
 
 #include <nosVulkanSubsystem/nosVulkanSubsystem.h>
 
-NOS_INIT();
+NOS_INIT_WITH_MIN_REQUIRED_MINOR(4);
 NOS_VULKAN_INIT();
 NOS_REGISTER_NAME(Input);
 NOS_REGISTER_NAME(Output);

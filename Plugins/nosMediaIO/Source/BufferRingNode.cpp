@@ -10,12 +10,12 @@ struct BufferRingNodeContext : RingNodeBase<nosBufferInfo, true>
 					  .Usage = nosBufferUsage(NOS_BUFFER_USAGE_TRANSFER_SRC | NOS_BUFFER_USAGE_TRANSFER_DST),
 					  .MemoryFlags = nosMemoryFlags(NOS_MEMORY_FLAGS_DOWNLOAD | NOS_MEMORY_FLAGS_HOST_VISIBLE) };
 	
-	BufferRingNodeContext(nosFbNode const* node) : RingNodeBase(node, SampleBuffer, RingNodeBase::RingType::RING)
+	BufferRingNodeContext(nosFbNode const* node) : RingNodeBase(node, SampleBuffer, RingNodeBase::RingType::DOWNLOAD_RING, RingNodeBase::OnRestartType::WAIT_UNTIL_FULL)
 	{
 	}
 	std::string GetName() const override
 	{
-		return "BoundedTextureQueue";
+		return "BufferRing";
 	}
 };
 
