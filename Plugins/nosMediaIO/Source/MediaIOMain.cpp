@@ -29,6 +29,7 @@ enum MediaIO : int
 	ColorSpaceMatrix,
 	BufferRing,
 	BoundedTextureQueue,
+	UploadBufferProvider,
 	Count
 };
 
@@ -40,7 +41,7 @@ nosResult RegisterGammaLUT(nosNodeFunctions*);
 nosResult RegisterColorSpaceMatrix(nosNodeFunctions*);
 nosResult RegisterBufferRing(nosNodeFunctions*);
 nosResult RegisterBoundedTextureQueue(nosNodeFunctions*);
-
+nosResult RegisterUploadBufferProvider(nosNodeFunctions*);
 extern "C"
 {
 
@@ -76,6 +77,7 @@ NOSAPI_ATTR nosResult NOSAPI_CALL nosExportNodeFunctions(size_t* outSize, nosNod
 			GEN_CASE_NODE(ColorSpaceMatrix)
 			GEN_CASE_NODE(BufferRing)
 			GEN_CASE_NODE(BoundedTextureQueue)
+			GEN_CASE_NODE(UploadBufferProvider)
 		}
 	}
 	return NOS_RESULT_SUCCESS;

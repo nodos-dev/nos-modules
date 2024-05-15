@@ -7,8 +7,14 @@
 		"description": "",
 		"pins": [
 			{
-				"name": "Input",
+				"name": "InputBuffer",
 				"type_name": "nos.sys.vulkan.Buffer",
+				"show_as": "INPUT_PIN",
+				"can_show_as": "INPUT_PIN_ONLY"
+			},
+			{
+				"name": "InputGPUEventRef",
+				"type_name": "nos.sys.vulkan.GPUEventResource",
 				"show_as": "INPUT_PIN",
 				"can_show_as": "INPUT_PIN_ONLY"
 			},

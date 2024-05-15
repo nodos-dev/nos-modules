@@ -17,7 +17,15 @@ struct UploadBufferNodeContext : NodeContext
 	{
 		auto execArgs = nos::NodeExecuteArgs(args);
 		auto& output = *InterpretPinValue<sys::vulkan::Buffer>(execArgs[NOS_NAME_STATIC("Output")].Data->Data);
-		auto& input = *InterpretPinValue<sys::vulkan::Buffer>(execArgs[NOS_NAME_STATIC("Input")].Data->Data);
+		auto& input = *InterpretPinValue<sys::vulkan::Buffer>(execArgs[NOS_NAME_STATIC("InputBuffer")].Data->Data);
+		nosGPUEventResource gpuEventRef = InterpretPinValue<sys::vulkan::GPUEventResource>(*execArgs[NOS_NAME_STATIC("InputGPUEventRef")].Data)->handle();
+		nosGPUEvent* event = nullptr;
+		if (gpuEventRef)
+		{
+			nosVulkan->GetGPUEvent(gpuEventRef, &event);
+			assert(*event == 0);
+		}
+		
 		output.mutate_field_type(input.field_type());
 
 		if (input.size_in_bytes() != output.size_in_bytes())
@@ -46,10 +54,14 @@ struct UploadBufferNodeContext : NodeContext
 		nosCmd cmd;
 		nosVulkan->Begin("UploadBuffer Staging Copy", &cmd);
 		nosVulkan->Copy(cmd, &InputBuffer, &OutputBuffer, 0);
-		nosVulkan->End(cmd, nullptr);
+		nosCmdEndParams params{.ForceSubmit = false, .OutGPUEventHandle = event};
+		nosVulkan->End(cmd, &params);
+		//nosVulkan->End(cmd, &params);
+		//nosVulkan->WaitGpuEvent(&event, UINT64_MAX);
 
 		return NOS_RESULT_SUCCESS;
 	}
+
 };
 
 nosResult RegisterUploadBuffer(nosNodeFunctions* functions)

@@ -9,16 +9,17 @@
         "dependencies": [
             {
                 "name": "nos.sys.vulkan",
-                "version": "5.0.0"
+                "version": "5.3.0"
             }
         ]
     },
-    "node_definitions": [
-        "Config/Interlace.nosdef",
-        "Config/Conversions.nosdef",
-		"Config/BufferRing.nosdef",
-		"Config/BoundedTextureQueue.nosdef"
-    ],
+  "node_definitions": [
+    "Config/Interlace.nosdef",
+    "Config/Conversions.nosdef",
+    "Config/BufferRing.nosdef",
+    "Config/BoundedTextureQueue.nosdef",
+    "Config/UploadBufferProvider.nosdef"
+  ],
     "custom_types": [
         "Config/Conversion.fbs"
     ],
@@ -59,11 +60,16 @@
             "class_name": "BufferRing",
             "display_name": "Buffer Ring"
         },
-		{
-			"category": "MediaIO",
-			"class_name": "BoundedTextureQueue",
-			"display_name": "Bounded Texture Queue"
-		}
+        {
+            "category": "MediaIO",
+            "class_name": "UploadBufferProvider",
+            "display_name": "Upload Buffer Provider"
+        },  
+		    {
+			    "category": "MediaIO",
+			    "class_name": "BoundedTextureQueue",
+			    "display_name": "Bounded Texture Queue"
+		    }
     ],
     "subsystem_options": [
         {
