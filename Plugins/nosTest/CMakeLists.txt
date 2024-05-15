@@ -1,6 +1,6 @@
 # Copyright MediaZ Teknoloji A.S. All Rights Reserved.
 
-nos_generate_flatbuffers("nosTest" "${CMAKE_CURRENT_SOURCE_DIR}/Config" "${CMAKE_CURRENT_SOURCE_DIR}/Source" "cpp" "" NOS_TEST_GENERATED)
+nos_generate_flatbuffers("${CMAKE_CURRENT_SOURCE_DIR}/Config" "${CMAKE_CURRENT_SOURCE_DIR}/Source" "cpp" "" NOS_TEST_GENERATED)
 
 if(NOT TARGET glfw)
 	set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "Build the GLFW example programs" FORCE)
