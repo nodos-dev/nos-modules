@@ -137,7 +137,7 @@ jobs:
       - name: Run Release Tool (Build Changed)
         if: ${{ github.event.inputs.build_all == null || github.event.inputs.build_all == 'false'}}
         run: |
-          $SdkDirName = Get-ChildItem -Path ./Workspace/Engine -Force -Recurse -Directory | Select-Object -First 1).Name
+          $SdkDirName = (Get-ChildItem -Path ./Workspace/Engine -Force -Recurse -Directory | Select-Object -First 1).Name
           $SdkDir = "./Workspace/Engine/$SdkDirName/SDK"
           python ./Scripts/actions.py --nodos-sdk-dir="$SdkDir" --scripts-dir="./Scripts" --cmake-build-dir="./Build" --repo-url=${{ env.GH_RELEASE_REPO_URL }} --repo-org=${{ env.GH_RELEASE_REPO_ORG }} --repo-name=${{ env.GH_RELEASE_REPO_NAME }} --build-number=${{ env.BUILD_NUMBER }} --cloned-release-repo-dir="./release-target-repo"
         working-directory: ./modules-${{ github.ref_name }}
