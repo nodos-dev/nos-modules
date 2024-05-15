@@ -31,7 +31,6 @@ else()
     message("Found python ${PYTHON_PATH}")
 endif()
 
-
 execute_process(COMMAND python  "${CMAKE_CURRENT_SOURCE_DIR}/compile_shaders.py" RESULT_VARIABLE COMPILE_SHADERS_RESULT)
 
 if (NOT ${COMPILE_SHADERS_RESULT} EQUAL "0")

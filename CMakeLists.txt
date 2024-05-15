@@ -31,17 +31,16 @@ macro(group_targets targets folder_name)
     endforeach()
 endmacro()
 
-if (${WITH_NODOS_WORKSPACE})
-    find_nodos("1.2.0" NOS_PLUGIN_SDK_TARGET NOS_SUBSYSTEM_SDK_TARGET NOS_SDK_DIR)
-    set(NODOS_BUILTIN_TYPES_DIR ${NOS_SDK_DIR}/types)
-else()
-    set(NOS_PLUGIN_SDK_TARGET "")
-    set(NOS_SUBSYSTEM_SDK_TARGET "")
+if (NOT WITH_NODOS_WORKSPACE)
+    message(FATAL_ERROR "This repo currently does not support builds without Nodos workspace. "
+    "Place this repo under nodos-workspace/Module folder and run cmake -S ./Toolchain/CMake -B Build from workspace root.")
 endif()
 
-set(SCRIPTS_DIR ${CMAKE_CURRENT_SOURCE_DIR}/Scripts)
-include(${SCRIPTS_DIR}/CMake/GenerateFlatbuffers.cmake)
+nos_find_sdk("1.2.0" NOS_PLUGIN_SDK_TARGET NOS_SUBSYSTEM_SDK_TARGET NOS_SDK_DIR)
+nos_get_module("nos.sys.vulkan" "5.2" NOS_SYS_VULKAN_TARGET)
+
 set(TOOLS_DIR ${CMAKE_CURRENT_SOURCE_DIR}/Subsystems/nosShaderCompiler/Binaries/tools/${CMAKE_SYSTEM_NAME})
+set(FLATC_EXECUTABLE ${TOOLS_DIR}/flatc)
 
 set(SUBSYSTEMS_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/Subsystems)
 add_subdirectory("Subsystems" "${CMAKE_CURRENT_BINARY_DIR}/Subsystems")

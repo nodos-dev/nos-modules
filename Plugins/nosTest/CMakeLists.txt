@@ -1,8 +1,6 @@
 # Copyright MediaZ Teknoloji A.S. All Rights Reserved.
 
-if (GENERATE_FLATBUFFERS_FILES)
-    generate_flatbuffers("${TOOLS_DIR}/flatc" "${CMAKE_CURRENT_SOURCE_DIR}/Config" "${CMAKE_CURRENT_SOURCE_DIR}/Source" "${CMAKE_CURRENT_SOURCE_DIR}/__temp__" "cpp" "")
-endif()
+nos_generate_flatbuffers("nosTest" "${CMAKE_CURRENT_SOURCE_DIR}/Config" "${CMAKE_CURRENT_SOURCE_DIR}/Source" "cpp" "" NOS_TEST_GENERATED)
 
 if(NOT TARGET glfw)
 	set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "Build the GLFW example programs" FORCE)
@@ -15,8 +13,7 @@ if(NOT TARGET glfw)
 	group_targets("${NOSTEST_EXTERNAL_TARGETS}" "External")
 endif()
 
-list(APPEND DEPENDENCIES glfw ${NOS_PLUGIN_SDK_TARGET})
-list(APPEND INCLUDE_FOLDERS
-	${SUBSYSTEMS_SOURCE_DIR}/nosVulkanSubsystem/Include
-	${CMAKE_CURRENT_SOURCE_DIR}/External/glfw)
-add_folder_as_plugin_project("nosTest" "${DEPENDENCIES}" "${INCLUDE_FOLDERS}")
+list(APPEND DEPENDENCIES glfw ${NOS_PLUGIN_SDK_TARGET} ${NOS_SYS_VULKAN_TARGET})
+list(APPEND INCLUDE_FOLDERS ${CMAKE_CURRENT_SOURCE_DIR}/External/glfw)
+nos_add_plugin("nosTest" "${DEPENDENCIES}" "${INCLUDE_FOLDERS}")
+target_sources(nosTest PUBLIC ${NOS_TEST_GENERATED})

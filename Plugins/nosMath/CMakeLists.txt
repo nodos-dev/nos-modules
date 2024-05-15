@@ -1,3 +1,3 @@
 # Copyright MediaZ Teknoloji A.S. All Rights Reserved.
 
-add_folder_as_plugin_project("nosMath" "${NOS_PLUGIN_SDK_TARGET}" "")
+nos_add_plugin("nosMath" "${NOS_PLUGIN_SDK_TARGET}" "")

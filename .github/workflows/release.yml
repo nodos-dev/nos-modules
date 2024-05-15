@@ -31,7 +31,6 @@ env:
   GH_RELEASE_REPO_ORG: "mediaz"
   GH_RELEASE_REPO_NAME: "modules-releases"
   GIT_EMAIL: "bot@mediaz.io"
-  NODOS_SDK_DIR: ${{ github.workspace }}/nosSDK
   GH_TOKEN: ${{ secrets.CI_TOKEN }}
   DIST_TARGET_DIR: "D:/Builds/Nodos-Modules"
 
@@ -81,7 +80,7 @@ jobs:
       - name: Cleanup
         run: |
           Remove-Item -Recurse -Force -ErrorAction SilentlyContinue Nodos-SDK*
-          Remove-Item -Recurse -Force -ErrorAction SilentlyContinue ${{ env.NODOS_SDK_DIR }}
+          Remove-Item -Recurse -Force -ErrorAction SilentlyContinue ./Workspace
           Remove-Item -Recurse -Force -ErrorAction SilentlyContinue ./release-target-repo
         shell: pwsh
         working-directory: ./modules-${{ github.ref_name }}
@@ -102,12 +101,12 @@ jobs:
 
       - name: Unzip Nodos SDK
         run: |
-          7z x Nodos-SDK-*.zip -o${{ env.NODOS_SDK_DIR }}
+          7z x Nodos-SDK-*.zip -oWorkspace
         working-directory: ./modules-${{ github.ref_name }}
 
       - name: Configure
         run: |
-          cmake -S . -B Build -DCMAKE_BUILD_TYPE=Release -DGENERATE_FLATBUFFERS_FILES=1
+          cmake -S ./Workspace/Toolchain/CMake -B Build -DCMAKE_BUILD_TYPE=Release -DMODULE_DIRS="../"
         working-directory: ./modules-${{ github.ref_name }}
 
   run_release_tool:

@@ -14,13 +14,10 @@ set_target_properties(python312 PROPERTIES INTERFACE_INCLUDE_DIRECTORIES ${CMAKE
 # You must install Python with debug binaries checked
 add_subdirectory(External/pybind11 EXCLUDE_FROM_ALL)
 
-if (GENERATE_FLATBUFFERS_FILES)
-    generate_flatbuffers("${TOOLS_DIR}/flatc" "${CMAKE_CURRENT_SOURCE_DIR}/Config" "${CMAKE_CURRENT_SOURCE_DIR}/Include/nosPython" "${CMAKE_CURRENT_SOURCE_DIR}/__temp__" "cpp" "")
-    # TODO: Python custom types
-    # generate_flatbuffers("${TOOLS_DIR}/flatc" "${CMAKE_CURRENT_SOURCE_DIR}/Config" "${CMAKE_CURRENT_SOURCE_DIR}/Include/nosPython" "${CMAKE_CURRENT_SOURCE_DIR}/__temp__" "python")
-endif()
+nos_generate_flatbuffers("${CMAKE_CURRENT_SOURCE_DIR}/Config" "${CMAKE_CURRENT_SOURCE_DIR}/Include/nosPython" "cpp" "" NOS_PY_GENERATED_FILES)
 
-add_folder_as_subsystem_project("nosPython" "${NOS_SUBSYSTEM_SDK_TARGET};python3;python312;pybind11::embed" "${CMAKE_CURRENT_SOURCE_DIR}/Include")
+nos_add_subsystem("nosPython" "${NOS_SUBSYSTEM_SDK_TARGET};python3;python312;pybind11::embed" "${CMAKE_CURRENT_SOURCE_DIR}/Include")
+target_sources(nosPython PUBLIC ${NOS_PY_GENERATED_FILES})
 
 get_targets(NOSPY_EXTERNAL_TARGETS "./External/pybind11")
 group_targets("${NOSPY_EXTERNAL_TARGETS}" "External")
