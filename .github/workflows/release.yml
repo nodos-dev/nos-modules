@@ -136,6 +136,7 @@ jobs:
 
       - name: Run Release Tool (Build Changed)
         if: ${{ github.event.inputs.build_all == null || github.event.inputs.build_all == 'false'}}
+        shell: pwsh
         run: |
           $SdkDirName = (Get-ChildItem -Path ./Workspace/Engine -Force -Recurse -Directory | Select-Object -First 1).Name
           $SdkDir = "./Workspace/Engine/$SdkDirName/SDK"
