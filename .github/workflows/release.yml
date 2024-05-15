@@ -106,7 +106,7 @@ jobs:
 
       - name: Configure
         run: |
-          cmake -S ./Workspace/Toolchain/CMake -B Build -DCMAKE_BUILD_TYPE=Release -DMODULE_DIRS="../"
+          cmake -S ./Workspace/Toolchain/CMake -B Build -DCMAKE_BUILD_TYPE=Release -DMODULE_DIRS="../" -DNOSMAN_WORKSPACE_DIR="./"
         working-directory: ./modules-${{ github.ref_name }}
 
   run_release_tool:
