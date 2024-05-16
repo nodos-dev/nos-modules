@@ -108,7 +108,7 @@ nosResult RegisterFrameInterpolator(nosNodeFunctions* nodeFunctions)
 
 
 		fs::path root = nosEngine.Context->RootFolderPath;
-	auto basicInterpPath = (root / ".." / "Shaders" / "BasicInterpolation.frag").generic_string();
+	auto basicInterpPath = (root / "." / "Shaders" / "BasicInterpolation.frag").generic_string();
 
 	const std::vector<std::pair<Name, std::tuple<nosShaderStage, const char*>>> shaders = {
 		{NSN_FrameInterpolator_BasicInterpolationShader, { NOS_SHADER_STAGE_FRAG, basicInterpPath.c_str()}}

@@ -307,7 +307,7 @@
 			"contents": {
 			    "type": "nos.sys.vulkan.GPUNode",
 			    "options": {
-			        "shader": "../Source/GpuStress.frag.spv"
+			        "shader": "./Source/GpuStress.frag.spv"
 			    }
 			},
 			"pins": [
@@ -376,7 +376,7 @@
 			"contents": {
 			    "type": "nos.py.PythonNode",
 			    "options": {
-			        "source": "../Source/pow.py"
+			        "source": "./Source/pow.py"
 			    }
 			},
 			"pins": [
@@ -424,7 +424,7 @@
 			"contents": {
 			    "type": "nos.sys.vulkan.GPUNode",
 			    "options": {
-			        "shader": "../Shaders/ComputeTest1.comp",
+			        "shader": "./Shaders/ComputeTest1.comp",
 					"stage": "COMPUTE"
 			    }
 			},
