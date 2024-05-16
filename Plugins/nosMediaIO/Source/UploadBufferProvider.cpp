@@ -130,6 +130,24 @@ namespace nos::MediaIO
 			}
 			CurrentIndex = 0;
 		}
+
+		void OnPathCommand(const nosPathCommand* command) override
+		{
+			switch (command->Event)
+			{
+			case NOS_RING_SIZE_CHANGE: {
+				if (command->RingSize == 0)
+				{
+					nosEngine.LogW("Buffer provider size cannot be 0");
+					return;
+				}
+				nosEngine.SetPinValue(PinName2Id[NSN_QueueSize], Buffer::From(uint32_t(command->RingSize)));
+				break;
+			}
+			default: return;
+			}
+		}
+
 	};
 
 	nosResult RegisterUploadBufferProvider(nosNodeFunctions* functions)
