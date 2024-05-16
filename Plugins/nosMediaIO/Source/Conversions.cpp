@@ -199,6 +199,31 @@ nosResult RegisterYCbCr2RGB(nosNodeFunctions* funcs)
 	return NOS_RESULT_SUCCESS;
 }
 
+struct YUVBufferSizeCalculator : NodeContext
+{
+	YUVBufferSizeCalculator(const nosFbNode* node) : NodeContext(node)
+	{
+	}
+
+	nosResult ExecuteNode(const nosNodeExecuteArgs* args) override
+	{
+		nos::NodeExecuteArgs execArgs(args);
+		auto fmt = *InterpretPinValue<YCbCrPixelFormat>(execArgs[NOS_NAME("PixelFormat")].Data->Data);
+		auto res = *InterpretPinValue<nos::fb::vec2u>(execArgs[NOS_NAME("Resolution")].Data->Data);
+		auto isInterlaced = *InterpretPinValue<bool>(execArgs[NOS_NAME("IsInterlaced")].Data->Data);
+		nosVec2u ext = { res.x(), res.y() };
+		nosVec2u yCbCrExt = GetYCbCrBufferResolution(ext, fmt, isInterlaced);
+		uint64_t bufSize = yCbCrExt.x * yCbCrExt.y * 4;
+		nosEngine.SetPinValue(execArgs[NOS_NAME("Output")].Id, Buffer::From(bufSize));
+		return NOS_RESULT_SUCCESS;
+	}
+};
+
+nosResult RegisterYUVBufferSizeCalculator(nosNodeFunctions* funcs)
+{
+	NOS_BIND_NODE_CLASS(NOS_NAME_STATIC("nos.MediaIO.YUVBufferSizeCalculator"), YUVBufferSizeCalculator, funcs);
+	return NOS_RESULT_SUCCESS;
+}
 
 struct GammaLUTNodeContext : NodeContext
 {

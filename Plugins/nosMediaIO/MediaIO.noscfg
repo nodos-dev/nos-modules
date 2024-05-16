@@ -47,6 +47,11 @@
         },
         {
             "category": "MediaIO|Conversions",
+            "class_name": "YUVBufferSizeCalculator",
+            "display_name": "YUV Buffer Size Calculator"
+        },
+        {
+            "category": "MediaIO|Conversions",
             "class_name": "GammaLUT",
             "display_name": "Gamma LUT"
         },

@@ -25,6 +25,7 @@ enum MediaIO : int
 	Deinterlace,
 	RGB2YCbCr,
 	YCbCr2RGB,
+	YUVBufferSizeCalculator,
 	GammaLUT,
 	ColorSpaceMatrix,
 	BufferRing,
@@ -37,6 +38,7 @@ nosResult RegisterInterlace(nosNodeFunctions*);
 nosResult RegisterDeinterlace(nosNodeFunctions*);
 nosResult RegisterRGB2YCbCr(nosNodeFunctions*);
 nosResult RegisterYCbCr2RGB(nosNodeFunctions*);
+nosResult RegisterYUVBufferSizeCalculator(nosNodeFunctions*);
 nosResult RegisterGammaLUT(nosNodeFunctions*);
 nosResult RegisterColorSpaceMatrix(nosNodeFunctions*);
 nosResult RegisterBufferRing(nosNodeFunctions*);
@@ -73,6 +75,7 @@ NOSAPI_ATTR nosResult NOSAPI_CALL nosExportNodeFunctions(size_t* outSize, nosNod
 			GEN_CASE_NODE(Deinterlace)
 			GEN_CASE_NODE(RGB2YCbCr)
 			GEN_CASE_NODE(YCbCr2RGB)
+			GEN_CASE_NODE(YUVBufferSizeCalculator)
 			GEN_CASE_NODE(GammaLUT)
 			GEN_CASE_NODE(ColorSpaceMatrix)
 			GEN_CASE_NODE(BufferRing)
