@@ -70,6 +70,7 @@ jobs:
         if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.clean == 'true' }}
         run: |
           git clean -ffdx
+        working-directory: ./modules-${{ github.ref_name }}
   
       - name: Install Python Prerequisites
         run: |
