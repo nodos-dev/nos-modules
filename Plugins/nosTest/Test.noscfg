@@ -84,6 +84,11 @@
             "category": "Test",
             "class_name": "PyPow",
             "display_name": "PyPow"
+        },
+        {
+            "category": "Test",
+            "class_name": "BypassTexture",
+            "display_name": "Bypass Texture"
         }
     ]
 }

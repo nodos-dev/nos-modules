@@ -121,7 +121,7 @@ extern "C"
 
 	NOSAPI_ATTR nosResult NOSAPI_CALL nosExportNodeFunctions(size_t* outCount, nosNodeFunctions** outFunctions)
 	{
-		*outCount = (size_t)(9);
+		*outCount = (size_t)(10);
 		if (!outFunctions)
 			return NOS_RESULT_SUCCESS;
 
@@ -188,8 +188,20 @@ extern "C"
 		};
 		RegisterFrameInterpolator(outFunctions[7]);
 		nos::test::RegisterWindowNode(outFunctions[8]);
+		outFunctions[9]->ClassName = NOS_NAME_STATIC("nos.test.BypassTexture");
+		outFunctions[9]->ExecuteNode = [](void* ctx, const nosNodeExecuteArgs* args)
+		{
+			auto values = nos::GetPinValues(args);
+			nos::sys::vulkan::TTexture in, out;
+			auto intex = flatbuffers::GetRoot<nos::sys::vulkan::Texture>(values[NOS_NAME_STATIC("Input")]);
+			intex->UnPackTo(&in);
+			out = in;
+			out.unmanaged = true;
+			auto ids = nos::GetPinIds(args);
+			nosEngine.SetPinValue(ids[NOS_NAME_STATIC("Output")], nos::Buffer::From(out));
+			return NOS_RESULT_SUCCESS;
+		};
 		return NOS_RESULT_SUCCESS;
-
 	}
 
 }
