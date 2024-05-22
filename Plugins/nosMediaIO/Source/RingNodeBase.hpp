@@ -58,7 +58,7 @@ struct RingNodeBase : NodeContext
 		Ring = std::make_unique<TRing<T>>(1, baseInfo);
 
 		Ring->Stop();
-		AddPinValueWatcher(NOS_NAME_STATIC("Size"), [this](nos::Buffer const& newSize, nos::Buffer const& oldSize, bool first) {
+		AddPinValueWatcher(NOS_NAME_STATIC("Size"), [this](nos::Buffer const& newSize, std::optional<nos::Buffer> oldVal) {
 			uint32_t size = *newSize.As<uint32_t>();
 			if (size == 0)
 			{
@@ -74,7 +74,7 @@ struct RingNodeBase : NodeContext
 				Ring->Stop();
 			}
 			});
-		AddPinValueWatcher(NOS_NAME_STATIC("Input"), [this](nos::Buffer const& newBuf, nos::Buffer const& oldBuf, bool first) {
+		AddPinValueWatcher(NOS_NAME_STATIC("Input"), [this](nos::Buffer const& newBuf, std::optional<nos::Buffer> oldVal) {
 			T newInfo = Ring->Sample;
 			if constexpr (std::is_same_v<T, nosTextureInfo>)
 			{
@@ -108,7 +108,7 @@ struct RingNodeBase : NodeContext
 			});
 		if constexpr (std::is_same_v<T, nosBufferInfo>)
 		{
-			AddPinValueWatcher(NOS_NAME_STATIC("Alignment"), [this](nos::Buffer const& newAlignment, nos::Buffer const& oldSize, bool first) {
+			AddPinValueWatcher(NOS_NAME_STATIC("Alignment"), [this](nos::Buffer const& newAlignment, std::optional<nos::Buffer> oldVal) {
 				uint32_t alignment = *newAlignment.As<uint32_t>();
 				if (Ring->Sample.Alignment == alignment)
 					return;

@@ -63,7 +63,7 @@ namespace nos::MediaIO
 
 		UploadBufferProviderNodeContext(const nosFbNode* node) : NodeContext(node)
 		{
-			AddPinValueWatcher(NSN_QueueSize, [this](nos::Buffer const& newVal, nos::Buffer const& oldVal, bool first) 
+			AddPinValueWatcher(NSN_QueueSize, [this](nos::Buffer const& newVal, std::optional<nos::Buffer> oldVal) 
 				{
 					QueueSize = *InterpretPinValue<uint32_t>(newVal);
 					if (QueueSize == 0)
@@ -79,7 +79,7 @@ namespace nos::MediaIO
 					}
 					CurrentIndex = 0;
 				});
-			AddPinValueWatcher(NSN_BufferSize, [this](nos::Buffer const& newVal, nos::Buffer const& oldVal, bool first)
+			AddPinValueWatcher(NSN_BufferSize, [this](nos::Buffer const& newVal, std::optional<nos::Buffer> oldVal)
 				{
 					uint64_t newSize = *InterpretPinValue<uint64_t>(newVal);
 					if (newSize == 0)
