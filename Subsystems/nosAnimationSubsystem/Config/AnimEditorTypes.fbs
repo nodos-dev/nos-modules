@@ -1,0 +1,55 @@
+include "Common.fbs";
+
+namespace nos.sys.anim.editor;
+
+table AnimatableTypes {
+	types: [string];
+}
+
+// From Animation
+union FromAnimationUnion {
+	AnimatableTypes,
+}
+
+table FromAnimation {
+	event:FromAnimationUnion;
+}
+
+
+table Constant {
+    value:[ubyte];
+}
+
+table Lerp {
+    start:[ubyte]; // If not present, will interpolate from current value
+    end:[ubyte];
+}
+
+table CubicBezier {
+    start:[ubyte]; // If not present, will interpolate from current value
+    end:[ubyte];
+    control1:nos.fb.vec2(native_inline);
+    control2:nos.fb.vec2(native_inline);
+}
+
+union Interpolation {
+    Constant,
+    Lerp,
+    CubicBezier,
+}
+
+table AnimatePin {
+    pin_path:string(required);
+    interpolate:Interpolation;
+    delay:ulong; // Milliseconds since epoch (TODO: ?)
+    duration:ulong; // Milliseconds (TODO: ?)
+}
+
+// From Editor
+union FromEditorUnion {
+	AnimatePin,
+}
+
+table FromEditor {
+	event:FromEditorUnion;
+}

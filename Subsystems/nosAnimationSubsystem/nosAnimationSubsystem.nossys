@@ -1,0 +1,12 @@
+{
+    "info": {
+        "id": {
+            "name": "nos.sys.animation",
+            "version": "1.0.0"
+        },
+        "display_name": "Animation Subsystem",
+        "description": "",
+        "dependencies": []
+    },
+    "binary_path": "./Binaries/nosAnimationSubsystem"
+}
