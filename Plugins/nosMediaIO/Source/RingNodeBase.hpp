@@ -328,6 +328,8 @@ struct RingNodeBase : NodeContext
 			nosEngine.SetPinValueDirect(cpy->ID, nos::Buffer::From(vkss::ConvertBufferInfo(slot->Res)));
 		}
 
+		cpy->CopyFromOptions.ShouldSetSourceFrameNumber = true;
+		cpy->FrameNumber = slot->FrameNumber;
 		
 
 		if (Type == RingType::DOWNLOAD_RING)
