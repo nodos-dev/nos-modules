@@ -107,6 +107,9 @@
 		"nos.sys.animation": {
             "target_name": "nosAnimationSubsystem",
             "path": "Subsystems/nosAnimationSubsystem",
+            "deps": [
+                "Subsystems/nosAnimationSubsystem/*"
+            ],
             "files": [
                 "Include/**"
             ]
