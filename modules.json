@@ -103,6 +103,13 @@
             "files": [
                 "Binaries/**"
             ]
+        },
+		"nos.sys.animation": {
+            "target_name": "nosAnimationSubsystem",
+            "path": "Subsystems/nosAnimationSubsystem",
+            "files": [
+                "Include/**"
+            ]
         }
     }
 }
