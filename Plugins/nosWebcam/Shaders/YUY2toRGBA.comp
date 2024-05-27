@@ -1,0 +1,50 @@
+// Copyright MediaZ Teknoloji A.S. All Rights Reserved.
+
+#version 450
+
+layout (local_size_x = 8, local_size_y = 8) in;
+layout (binding = 0)  readonly buffer InputYUY2Buffer
+{
+    uint Pixels[];
+} Input;
+layout (binding = 1, rgba8)  uniform writeonly  image2D Output;
+
+void main()
+{
+    ivec2 texelCoords = ivec2(gl_GlobalInvocationID.xy);
+	ivec2 imageSize = imageSize(Output);
+	if (texelCoords.x >= imageSize.x || texelCoords.y >= imageSize.y)
+	{
+		return;
+	}
+
+	uint yuy2 = Input.Pixels[texelCoords.y * imageSize.x + texelCoords.x];
+	uint y0 = (yuy2 & 0x000000FF);
+	uint u = (yuy2 & 0x0000FF00) >> 8;
+	uint y1 = (yuy2 & 0x00FF0000) >> 16;
+	uint v = (yuy2 & 0xFF000000) >> 24;
+
+	uint c = y0 - 16;
+	uint d = u - 128;
+	uint e = v - 128;
+
+	uint r0 = clamp((298 * c + 409 * e + 128) >> 8, 0, 255);
+	uint g0 = clamp((298 * c - 100 * d - 208 * e + 128) >> 8, 0, 255);
+	uint b0 = clamp((298 * c + 516 * d + 128) >> 8, 0, 255);
+
+	vec4 color0 = vec4(r0 / 255.0, g0 / 255.0, b0 / 255.0, 1.0);
+
+	imageStore(Output, texelCoords, color0);
+	if(texelCoords.x + 1 < imageSize.x)
+	{
+		c = y1 - 16;
+
+		uint r1 = clamp((298 * c + 409 * e + 128) >> 8, 0, 255);
+		uint g1 = clamp((298 * c - 100 * d - 208 * e + 128) >> 8, 0, 255);
+		uint b1 = clamp((298 * c + 516 * d + 128) >> 8, 0, 255);
+
+		vec4 color1 = vec4(r1 / 255.0, g1 / 255.0, b1 / 255.0, 1.0);
+		texelCoords.x += 1;
+		imageStore(Output, texelCoords, color1);
+	}
+}

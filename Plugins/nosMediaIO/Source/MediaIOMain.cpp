@@ -31,6 +31,7 @@ enum MediaIO : int
 	BufferRing,
 	BoundedTextureQueue,
 	UploadBufferProvider,
+	YUY2ToRGBA,
 	Count
 };
 
@@ -44,6 +45,8 @@ nosResult RegisterColorSpaceMatrix(nosNodeFunctions*);
 nosResult RegisterBufferRing(nosNodeFunctions*);
 nosResult RegisterBoundedTextureQueue(nosNodeFunctions*);
 nosResult RegisterUploadBufferProvider(nosNodeFunctions*);
+nosResult RegisterYUY2ToRGBA(nosNodeFunctions*);
+
 extern "C"
 {
 
@@ -81,6 +84,7 @@ NOSAPI_ATTR nosResult NOSAPI_CALL nosExportNodeFunctions(size_t* outSize, nosNod
 			GEN_CASE_NODE(BufferRing)
 			GEN_CASE_NODE(BoundedTextureQueue)
 			GEN_CASE_NODE(UploadBufferProvider)
+			GEN_CASE_NODE(YUY2ToRGBA)
 		}
 	}
 	return NOS_RESULT_SUCCESS;

@@ -26,71 +26,69 @@ namespace nos::test
 class TestNode : public nos::NodeContext
 {
 public:
-	TestNode(const nosFbNode* node) : nos::NodeContext(node) 
-	{ 
+	TestNode(const nosFbNode* node) : nos::NodeContext(node)
+	{
 		nosEngine.LogI("TestNode: " __FUNCTION__);
 		AddPinValueWatcher(NOS_NAME_STATIC("double_prop"), [this](nos::Buffer const& newVal, std::optional<nos::Buffer> oldVal) {
 			double optOldVal = 0.0f;
 			if (oldVal)
 				optOldVal = *oldVal->As<double>();
 			nosEngine.LogI("TestNode: double_prop changed to %f from %f", *newVal.As<double>(), optOldVal);
-		});
+			});
 	}
-	~TestNode() 
-	{ 
-		nosEngine.LogI("TestNode: " __FUNCTION__);
-	}
-	virtual void OnNodeUpdated(const nosFbNode* updatedNode) { nosEngine.LogI("TestNode: " __FUNCTION__); }
-	virtual void OnPinValueChanged(nos::Name pinName, nosUUID pinId, nosBuffer value)
+	~TestNode()
 	{
 		nosEngine.LogI("TestNode: " __FUNCTION__);
 	}
-	virtual void OnPinConnected(nos::Name pinName, nosUUID connectedPin) { nosEngine.LogI("TestNode: " __FUNCTION__); }
-	virtual void OnPinDisconnected(nos::Name pinName) { nosEngine.LogI("TestNode: " __FUNCTION__); }
-	virtual void OnPinShowAsChanged(nos::Name pinName, nos::fb::ShowAs showAs)
+	void OnNodeUpdated(const nosFbNode* updatedNode) override { nosEngine.LogI("TestNode: " __FUNCTION__); }
+	void OnPinValueChanged(nos::Name pinName, nosUUID pinId, nosBuffer value) override
 	{
 		nosEngine.LogI("TestNode: " __FUNCTION__);
 	}
-	virtual void OnPathCommand(const nosPathCommand* command) { nosEngine.LogI("TestNode: OnNodeUpdated"); }
-	virtual nosResult CanRemoveOrphanPin(nos::Name pinName, nosUUID pinId)
+	virtual void OnPinConnected(nos::Name pinName, nosUUID connectedPin) override { nosEngine.LogI("TestNode: " __FUNCTION__); }
+	virtual void OnPinDisconnected(nos::Name pinName) override { nosEngine.LogI("TestNode: " __FUNCTION__); }
+	virtual void OnPinShowAsChanged(nos::Name pinName, nos::fb::ShowAs showAs) override
+	{
+		nosEngine.LogI("TestNode: " __FUNCTION__);
+	}
+	virtual void OnPathCommand(const nosPathCommand* command) override { nosEngine.LogI("TestNode: OnNodeUpdated"); }
+	virtual nosResult CanRemoveOrphanPin(nos::Name pinName, nosUUID pinId) override
 	{
 		nosEngine.LogI("TestNode: " __FUNCTION__);
 		return NOS_RESULT_SUCCESS;
 	}
-	virtual nosResult OnOrphanPinRemoved(nos::Name pinName, nosUUID pinId)
+	virtual nosResult OnOrphanPinRemoved(nos::Name pinName, nosUUID pinId) override
 	{
 		nosEngine.LogI("TestNode: " __FUNCTION__);
 		return NOS_RESULT_SUCCESS;
 	}
 
 	// Execution
-	virtual nosResult ExecuteNode(const nosNodeExecuteArgs* args)
+	virtual nosResult ExecuteNode(const nosNodeExecuteArgs* args) override
 	{
 		nosEngine.LogI("TestNode: " __FUNCTION__);
 		return NOS_RESULT_SUCCESS;
 	}
-	virtual nosResult BeginCopyFrom(nosCopyInfo* copyInfo)
+	virtual nosResult CopyFrom(nosCopyInfo* copyInfo) override
 	{
 		nosEngine.LogI("TestNode: " __FUNCTION__);
 		return NOS_RESULT_SUCCESS;
 	}
-	virtual nosResult BeginCopyTo(nosCopyInfo* copyInfo)
+	virtual nosResult CopyTo(nosCopyInfo* copyInfo) override
 	{
 		nosEngine.LogI("TestNode: " __FUNCTION__);
 		return NOS_RESULT_SUCCESS;
 	}
-	virtual void EndCopyFrom(nosCopyInfo* copyInfo) { nosEngine.LogI("TestNode: " __FUNCTION__); }
-	virtual void EndCopyTo(nosCopyInfo* copyInfo) { nosEngine.LogI("TestNode: " __FUNCTION__); }
 
 	// Menu & key events
-	virtual void OnMenuRequested(const nosContextMenuRequest* request) { nosEngine.LogI("TestNode: " __FUNCTION__); }
-	virtual void OnMenuCommand(nosUUID itemID, uint32_t cmd) { nosEngine.LogI("TestNode: " __FUNCTION__); }
-	virtual void OnKeyEvent(const nosKeyEvent* keyEvent) { nosEngine.LogI("TestNode: " __FUNCTION__); }
+	virtual void OnMenuRequested(const nosContextMenuRequest* request) override { nosEngine.LogI("TestNode: " __FUNCTION__); }
+	virtual void OnMenuCommand(nosUUID itemID, uint32_t cmd) override { nosEngine.LogI("TestNode: " __FUNCTION__); }
+	virtual void OnKeyEvent(const nosKeyEvent* keyEvent) override { nosEngine.LogI("TestNode: " __FUNCTION__); }
 
-	virtual void OnPinDirtied(nosUUID pinID, uint64_t frameCount) { nosEngine.LogI("TestNode: " __FUNCTION__); }
-	virtual void OnPathStateChanged(nosPathState pathState) { nosEngine.LogI("TestNode: " __FUNCTION__); }
+	virtual void OnPinDirtied(nosUUID pinID, uint64_t frameCount) override { nosEngine.LogI("TestNode: " __FUNCTION__); }
+	virtual void OnPathStateChanged(nosPathState pathState) override { nosEngine.LogI("TestNode: " __FUNCTION__); }
 
-	
+
 	static void TestFunction(void* ctx, const nosNodeExecuteArgs* nodeArgs, const nosNodeExecuteArgs* functionArgs)
 	{
 		auto args = nos::GetPinValues(functionArgs);
@@ -98,7 +96,7 @@ public:
 		auto a = *GetPinValue<double>(args, NSN_in1);
 		auto b = *GetPinValue<double>(args, NSN_in2);
 		auto c = a + b;
-		nosEngine.SetPinValue(functionArgs->Pins[2].Id, {.Data = &c, .Size = sizeof(c)});
+		nosEngine.SetPinValue(functionArgs->Pins[2].Id, { .Data = &c, .Size = sizeof(c) });
 	}
 
 	static nosResult GetFunctions(size_t* outCount, nosName* pName, nosPfnNodeFunctionExecute* fns)

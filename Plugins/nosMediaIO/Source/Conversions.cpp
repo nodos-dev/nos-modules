@@ -390,4 +390,50 @@ nosResult RegisterColorSpaceMatrix(nosNodeFunctions* funcs)
 	return NOS_RESULT_SUCCESS;
 }
 
+
+struct YUY2ToRGBANodeContext : NodeContext
+{
+	YUY2ToRGBANodeContext(const nosFbNode* node) : NodeContext(node)
+	{
+		AddPinValueWatcher(NSN_Resolution, [this](const nos::Buffer& newVal, std::optional<nos::Buffer> oldVal) {
+			auto newDispatchSize = nosVec2u(120, 120);
+			nosEngine.SetPinValueByName(NodeId, NOS_NAME_STATIC("DispatchSize"), Buffer::From(newDispatchSize));
+			});
+	}
+
+	nosResult ExecuteNode(const nosNodeExecuteArgs* args) override
+	{
+		nos::NodeExecuteArgs execArgs(args);
+		auto res = *InterpretPinValue<nos::fb::vec2u>(execArgs[NOS_NAME("Resolution")].Data->Data);
+		auto* outputPinData = execArgs[NOS_NAME("Output")].Data;
+		auto& output = *InterpretPinValue<sys::vulkan::Texture>(outputPinData->Data);
+		auto& input = *InterpretPinValue<sys::vulkan::Buffer>(execArgs[NOS_NAME("Input")].Data->Data);
+
+		sys::vulkan::TTexture texDef;
+		if (output.width() != res.x() ||
+			output.height() != res.y())
+		{
+			nosResourceShareInfo tex{ .Info = {
+				.Type = NOS_RESOURCE_TYPE_TEXTURE,
+				.Texture = {
+					.Width = res.x(),
+					.Height = res.y(),
+					.Format = NOS_FORMAT_R8G8B8A8_UNORM,
+					.FieldType = (nosTextureFieldType)input.field_type(),
+				}
+			} };
+			texDef = vkss::ConvertTextureInfo(tex);
+			nosEngine.SetPinValueByName(NodeId, NOS_NAME("Output"), nos::Buffer::From(texDef));
+		}
+		nosEngine.SetPinValue(execArgs[NOS_NAME("DispatchSize")].Id, nos::Buffer::From(nosVec2u(glm::ceil(res.x()/16.0f), glm::ceil(res.y()/8.0f))));
+		return nosVulkan->ExecuteGPUNode(this, args);
+	}
+};
+
+nosResult RegisterYUY2ToRGBA(nosNodeFunctions* funcs)
+{
+	NOS_BIND_NODE_CLASS(NOS_NAME_STATIC("nos.MediaIO.YUY2ToRGBA"), YUY2ToRGBANodeContext, funcs);
+	return NOS_RESULT_SUCCESS;
+}
+
 }

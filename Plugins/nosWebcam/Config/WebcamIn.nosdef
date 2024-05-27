@@ -1,0 +1,42 @@
+{
+	"nodes": [
+		{
+			"class_name": "WebcamIn",
+			"contents_type": "Job",
+			"pins": [
+				{
+					"name": "Thread",
+					"type_name": "nos.exe",
+					"show_as": "INPUT_PIN",
+					"can_show_as": "INPUT_PIN_ONLY"
+				},
+				{
+					"name": "Continue",
+					"type_name": "nos.exe",
+					"show_as": "OUTPUT_PIN",
+					"can_show_as": "OUTPUT_PIN_ONLY"
+				},
+				{
+					"name": "Output",
+					"type_name": "nos.sys.vulkan.Buffer",
+					"show_as": "OUTPUT_PIN"
+				},
+				{
+					"name": "Resolution",
+					"type_name": "nos.fb.vec2u",
+					"show_as": "OUTPUT_PIN"
+				},
+				{
+					"name": "Format",
+					"type_name": "string",
+					"show_as": "OUTPUT_PIN"
+				},
+				{
+					"name": "DeltaSeconds",
+					"type_name": "nos.fb.vec2u",
+					"show_as": "OUTPUT_PIN"
+				}
+			]
+		}
+	]
+}

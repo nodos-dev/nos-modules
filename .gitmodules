@@ -31,3 +31,6 @@
 [submodule "Subsystems/nosPythonDeps"]
 	path = Subsystems/nosPythonDeps
 	url = https://github.com/mediaz/nosPythonDeps.git
+[submodule "Plugins/nosWebcam/External/opencv"]
+	path = Plugins/nosWebcam/External/opencv
+	url = https://github.com/opencv/opencv.git

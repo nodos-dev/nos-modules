@@ -263,6 +263,51 @@
           "can_show_as": "INPUT_PIN_OR_PROPERTY"
         }
       ]
-    }
+    },
+	{
+		"class_name": "YUY2ToRGBA",
+		"contents_type": "Job",
+		"contents": {
+		  "type": "nos.sys.vulkan.GPUNode",
+		  "options": {
+			"shader": "Shaders/YUY2ToRGBA.comp",
+			"stage": "COMPUTE"
+		  }
+		},
+		"pins": [
+		  {
+			"name": "Input",
+			"type_name": "nos.sys.vulkan.Buffer",
+			"show_as": "INPUT_PIN",
+			"can_show_as": "INPUT_PIN_ONLY"
+		  },
+		  {
+			"name": "Resolution",
+			"type_name": "nos.fb.vec2u",
+			"show_as": "INPUT_PIN",
+			"can_show_as": "INPUT_PIN_OR_PROPERTY",
+			"data": {
+			  "x": 1920,
+			  "y": 1080
+			}
+		  },
+		  {
+			"name": "Output",
+			"type_name": "nos.sys.vulkan.Texture",
+			"show_as": "OUTPUT_PIN",
+			"can_show_as": "OUTPUT_PIN_ONLY"
+		  },
+      {
+        "name": "DispatchSize",
+        "type_name": "nos.fb.vec2u",
+        "show_as": "PROPERTY",
+        "can_show_as": "PROPERTY_ONLY",
+        "data": {
+          "x": 120,
+          "y": 135
+        }
+      }
+		]
+	  }
   ]
 }

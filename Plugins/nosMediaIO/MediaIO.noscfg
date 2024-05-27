@@ -70,11 +70,16 @@
             "class_name": "UploadBufferProvider",
             "display_name": "Upload Buffer Provider"
         },  
-		    {
-			    "category": "MediaIO",
-			    "class_name": "BoundedTextureQueue",
-			    "display_name": "Bounded Texture Queue"
-		    }
+		{
+			"category": "MediaIO",
+			"class_name": "BoundedTextureQueue",
+			"display_name": "Bounded Texture Queue"
+		},
+		{
+			"category": "MediaIO",
+			"class_name": "YUY2ToRGBA",
+			"display_name": "YUY2 To RGBA Converter"
+		}
     ],
     "subsystem_options": [
         {
