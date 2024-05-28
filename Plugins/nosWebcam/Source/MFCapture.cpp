@@ -16,6 +16,11 @@
 #include <exception>
 #include <shlwapi.h>
 
+#include <strmif.h>
+
+#include <nosUtil/Stopwatch.hpp>
+
+
 #define CHECK(hr) if(FAILED(hr)) throw std::exception("fail");
 #define CHECK(hr) if(FAILED(hr)) throw std::exception("fail");
 
@@ -33,20 +38,20 @@ template <class T> void SafeRelease(T** ppT)
 	}
 }
 
-Capturor::Capturor()
+Capturer::Capturer()
 {
 	HRESULT  hr = CoInitialize(NULL);
 	hr = MFStartup(MF_VERSION, MFSTARTUP_NOSOCKET);
 	CHECK(hr);
 
 }
-Capturor::~Capturor()
+Capturer::~Capturer()
 {
 	MFShutdown();
 	CoUninitialize();
 }
 
-StreamSample Capturor::ReadSample()
+StreamSample Capturer::ReadSample()
 {
 	HRESULT hr;
 	DWORD streamIndex;
@@ -54,16 +59,20 @@ StreamSample Capturor::ReadSample()
 	LONGLONG llTimeStamp;
 	ComPtr<IMFSample> pSample = NULL;
 
-	hr = Reader->ReadSample(
-		MF_SOURCE_READER_FIRST_VIDEO_STREAM,
-		0,
-		&streamIndex,
-		&flags,
-		&llTimeStamp,
-		&pSample
-	);
-	CHECK(hr);
+	{
 
+		util::Stopwatch sw;
+		hr = Reader->ReadSample(
+			MF_SOURCE_READER_FIRST_VIDEO_STREAM,
+			0,
+			&streamIndex,
+			&flags,
+			&llTimeStamp,
+			&pSample
+		);
+		CHECK(hr);
+		nosEngine.WatchLog("ReadSample", sw.ElapsedString().c_str());
+	}
 	if (flags & MF_SOURCE_READERF_ENDOFSTREAM)
 		return StreamSample(nullptr);
 
@@ -96,19 +105,25 @@ HRESULT EnumerateTypesForStream(IMFSourceReader* pReader, DWORD dwStreamIndex)
 			UINT32 height = 0;
 			UINT32 fps = 0;
 			UINT32 bitrate = 0;
-			UINT32 frameRate = 0;
+			UINT64 frameRate = 0;
 			UINT32 frameRateDenom = 0;
 			UINT32 frameRateNum = 0;
-			UINT32 frameSize = 0;
+			UINT64 frameSize = 0;
 
 			hr = pType->GetGUID(MF_MT_MAJOR_TYPE, &guidMajorType);
 			hr = pType->GetGUID(MF_MT_SUBTYPE, &guidSubType);
-			hr = pType->GetUINT32(MF_MT_FRAME_SIZE, &frameSize);
-			hr = pType->GetUINT32(MF_MT_FRAME_RATE, &frameRate);
+			hr = pType->GetUINT64(MF_MT_FRAME_SIZE, &frameSize);
+			hr = pType->GetUINT64(MF_MT_FRAME_RATE, &frameRate);
+
+			width = frameSize >> 32;
+			height = UINT32(frameSize & 0xFFFFFFFF);
+
+			frameRateDenom = UINT32(frameRate);
+			frameRateNum = UINT32(frameRate >> 32);
 
 			std::string subTypeName = std::string(reinterpret_cast<char*>(&guidSubType.Data1), 4);
 
-			nosEngine.LogI("Stream %d, Media Type %d: %s", dwStreamIndex, dwMediaTypeIndex, subTypeName.c_str());
+			nosEngine.LogI("Stream %d, Media Type %d: %s, Resolution: (%u, %u), FrameRate: %u/%u", dwStreamIndex, dwMediaTypeIndex, subTypeName.c_str(), width, height, frameRateNum, frameRateDenom);
 
 			pType->Release();
 		}
@@ -135,7 +150,7 @@ HRESULT EnumerateMediaTypes(IMFSourceReader* pReader)
 	return hr;
 }
 
-DeviceInfo Capturor::CreateDeviceFromName(std::wstring reqname)
+DeviceInfo Capturer::CreateDeviceFromName(std::wstring reqname)
 {
 	HRESULT hr;
 	ComPtr<IMFMediaSource> pDevice = NULL;
@@ -152,6 +167,14 @@ DeviceInfo Capturor::CreateDeviceFromName(std::wstring reqname)
 	hr = MFCreateDeviceSource(pAttrDevice.Get(), &pDevice);
 	if (FAILED(hr)) return info;
 
+	ComPtr<IAMCameraControl> camControl;
+
+	hr = pDevice->QueryInterface(IID_PPV_ARGS(&camControl));
+	if (FAILED(hr)) return info;
+
+	hr = camControl->Set(CameraControl_Exposure, -10, CameraControl_Flags_Manual);
+	if (FAILED(hr)) return;
+
 	hr = MFCreateSourceReaderFromMediaSource(pDevice.Get(), NULL, &Reader);
 	if (FAILED(hr)) return info;
 
@@ -162,6 +185,9 @@ DeviceInfo Capturor::CreateDeviceFromName(std::wstring reqname)
 	if (FAILED(hr)) return info;
 	hr = pTypeFormat->SetGUID(MF_MT_MAJOR_TYPE, MFMediaType_Video);
 	hr = pTypeFormat->SetGUID(MF_MT_SUBTYPE, MFVideoFormat_YUY2);
+	hr = pTypeFormat->SetUINT64(MF_MT_FRAME_SIZE, ((UINT64)640 << 32) | 480);
+	hr = pTypeFormat->SetUINT64(MF_MT_FRAME_RATE, ((UINT64)30 << 32) | 1);
+	hr = pTypeFormat->SetUINT32(MF_MT_ALL_SAMPLES_INDEPENDENT, TRUE);
 	//// TODO:
 	//IMFMediaType* pMediaType;
 	//_reader->GetNativeMediaType(MF_SOURC
@@ -186,50 +212,64 @@ DeviceInfo Capturor::CreateDeviceFromName(std::wstring reqname)
 	return info;
 }
 
+template<typename T>
+struct RAIICoTask
+{
+	T Ptr;
+	RAIICoTask(T ptr = {}) : Ptr(ptr) {}
+	~RAIICoTask()
+	{
+		CoTaskMemFree(*this);
+	}
 
-std::map<std::wstring, std::wstring> Capturor::EnumerateDevices()
+	T& operator*() { return Ptr; }
+	T operator->() { return Ptr; }
+	operator T() { return Ptr; }
+	T* operator&() { return &Ptr; }
+
+};
+std::map<std::wstring, std::wstring> Capturer::EnumerateDevices()
 {
 	using namespace std;
 
 	UINT32 count;
-	IMFActivate** devices = 0;
+	RAIICoTask<IMFActivate**> devices = nullptr;
 	map<wstring, wstring> result;
 	ComPtr<IMFAttributes> attr = 0;
 
 	HRESULT hr;
 
 	hr = MFCreateAttributes(&attr, 1);
-	if (FAILED(hr)) goto cleanup;
+	if (FAILED(hr)) return result;
 
 	hr = attr->SetGUID(MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE, MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE_VIDCAP_GUID);
-	if (FAILED(hr)) goto cleanup;
+	if (FAILED(hr)) return result;
 
 	hr = MFEnumDeviceSources(attr.Get(), &devices, &count);
-	if (FAILED(hr)) goto cleanup;
+	if (FAILED(hr)) return result;
 
 
 	for (UINT32 i = 0; i < count; i++)
 	{
 		UINT32 length;
-		LPWSTR name;
-		LPWSTR symlink;
+		RAIICoTask<LPWSTR> name;
+		RAIICoTask<LPWSTR> symlink;
+
+		bool cont = false;
 
 		hr = devices[i]->GetAllocatedString(MF_DEVSOURCE_ATTRIBUTE_FRIENDLY_NAME, &name, &length);
-		if (FAILED(hr)) goto cleanup;
+
+		if (FAILED(hr)) continue;
 
 		hr = devices[i]->GetAllocatedString(MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE_VIDCAP_SYMBOLIC_LINK, &symlink, &length);
-		if (FAILED(hr)) goto cleanup;
-
-		result[name] = symlink;
-
-		CoTaskMemFree(name);
-		CoTaskMemFree(symlink);
+		if (FAILED(hr)) continue;
+		result[*name] = symlink;
 
 		devices[i]->Release();
+		if (!cont)
+			break;
 	}
 
-cleanup:
-	CoTaskMemFree(devices);
 	return result;
 }
 

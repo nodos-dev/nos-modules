@@ -3,6 +3,7 @@
 #include <map>
 #include <string>
 
+#define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include <wrl.h>
 
@@ -35,11 +36,11 @@ struct StreamSample
 	~StreamSample();
 };
 
-class Capturor
+class Capturer
 {
 public:
-	Capturor();
-	~Capturor();
+	Capturer();
+	~Capturer();
 
 	std::map<std::wstring, std::wstring> EnumerateDevices();
 	DeviceInfo CreateDeviceFromName(std::wstring reqname);

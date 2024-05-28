@@ -10,6 +10,7 @@
 #include <nosVulkanSubsystem/Helpers.hpp>
 
 #include "MFCapture.h"
+#include "nosUtil/Stopwatch.hpp"
 
 NOS_INIT_WITH_MIN_REQUIRED_MINOR(0) // Do not forget to remove this minimum required minor version on major version
 									// changes, or we might not be loaded.
@@ -19,7 +20,7 @@ namespace nos::webcam
 {
 struct WebcamInNode : public nos::NodeContext
 {
-	WebcamInNode(const nosFbNode* node) : nos::NodeContext(node)
+	WebcamInNode(const nosFbNode* node) : nos::NodeContext(node), Cap()
 	{
 		auto devices = Cap.EnumerateDevices();
 		auto kv = std::views::keys(devices);
@@ -47,57 +48,35 @@ struct WebcamInNode : public nos::NodeContext
 		if (sample.Size == 0)
 		{
 			sample = Cap.ReadSample();
-			if(sample.Size == 0)
+			if (sample.Size == 0)
 				return NOS_RESULT_FAILED;
 		}
 
-        nos::NodeExecuteArgs execArgs(args);
+		nos::NodeExecuteArgs execArgs(args);
 
-        auto buffer = vkss::ConvertToResourceInfo(*InterpretPinValue<nos::sys::vulkan::Buffer>(*execArgs[NOS_NAME("Output")].Data));
+		auto buffer = vkss::ConvertToResourceInfo(*InterpretPinValue<nos::sys::vulkan::Buffer>(*execArgs[NOS_NAME("Output")].Data));
 
-        if (buffer.Info.Buffer.Size != sample.Size)
-        {
-            nosResourceShareInfo bufInfo{};
-            bufInfo.Info.Type = NOS_RESOURCE_TYPE_BUFFER;
-            bufInfo.Info.Buffer.Size = sample.Size;
-            bufInfo.Info.Buffer.Usage = nosBufferUsage(NOS_BUFFER_USAGE_TRANSFER_SRC | NOS_BUFFER_USAGE_STORAGE_BUFFER);
-            bufInfo.Info.Buffer.MemoryFlags = nosMemoryFlags(NOS_MEMORY_FLAGS_HOST_VISIBLE);
-            
-            nosEngine.SetPinValue(execArgs[NOS_NAME("Output")].Id, nos::Buffer::From(vkss::ConvertBufferInfo(bufInfo)));
-		    buffer = vkss::ConvertToResourceInfo(*InterpretPinValue<nos::sys::vulkan::Buffer>(*execArgs[NOS_NAME("Output")].Data));
-        }
+		if (buffer.Info.Buffer.Size != sample.Size)
+		{
+			nosResourceShareInfo bufInfo{};
+			bufInfo.Info.Type = NOS_RESOURCE_TYPE_BUFFER;
+			bufInfo.Info.Buffer.Size = sample.Size;
+			bufInfo.Info.Buffer.Usage = nosBufferUsage(NOS_BUFFER_USAGE_TRANSFER_SRC | NOS_BUFFER_USAGE_STORAGE_BUFFER);
+			bufInfo.Info.Buffer.MemoryFlags = nosMemoryFlags(NOS_MEMORY_FLAGS_HOST_VISIBLE);
 
-        uint8_t* mapped = nosVulkan->Map(&buffer);
+			nosEngine.SetPinValue(execArgs[NOS_NAME("Output")].Id, nos::Buffer::From(vkss::ConvertBufferInfo(bufInfo)));
+			buffer = vkss::ConvertToResourceInfo(*InterpretPinValue<nos::sys::vulkan::Buffer>(*execArgs[NOS_NAME("Output")].Data));
+		}
+
+		uint8_t* mapped = nosVulkan->Map(&buffer);
 
 		memcpy(mapped, sample.Data, sample.Size);
 
-		//for (int i = 0; i < sample.Size / 4; ++i)
-		//{
-		//	int y0 = ptrIn[0];
-		//	int u0 = ptrIn[1];
-		//	int y1 = ptrIn[2];
-		//	int v0 = ptrIn[3];
-		//	ptrIn += 4;
-		//	int c = y0 - 16;
-		//	int d = u0 - 128;
-		//	int e = v0 - 128;
-		//	ptrOut[0] = std::clamp((298 * c + 409 * e + 128) >> 8, 0, 255); // red
-		//	ptrOut[1] = std::clamp((298 * c - 100 * d - 208 * e + 128) >> 8, 0, 255); // green
-		//	ptrOut[2] = std::clamp((298 * c + 516 * d + 128) >> 8, 0, 255); // blue
-		//	ptrOut[3] = 255; // alpha
-		//	c = y1 - 16;
-		//	ptrOut[4] = std::clamp((298 * c + 409 * e + 128) >> 8, 0, 255); // red
-		//	ptrOut[5] = std::clamp((298 * c - 100 * d - 208 * e + 128) >> 8, 0, 255); // green
-		//	ptrOut[6] = std::clamp((298 * c + 516 * d + 128) >> 8, 0, 255); // blue
-		//	ptrOut[7] = 255; // alpha
-		//	ptrOut += 8;
-		//}
-		
+
 		return NOS_RESULT_SUCCESS;
 	}
 
-	bool _cameraStarted = false;
-	Capturor Cap;
+	Capturer Cap;
 	DeviceInfo SelectedDeviceInfo;
 	int WebCamIndex = 0;
 
