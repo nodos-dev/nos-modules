@@ -460,6 +460,25 @@
 					"can_show_as": "OUTPUT_PIN_OR_PROPERTY"
 				}
 			]
+		},
+		{
+			"class_name": "LiveOutWithInput",
+			"contents_type": "Job",
+			"pins": [
+				{
+					"name": "Input",
+          "type_name": "float",
+          "show_as": "INPUT_PIN",
+          "can_show_as": "INPUT_PIN_ONLY"
+        },
+        {
+          "name": "Output",
+          "type_name": "float",
+          "show_as": "OUTPUT_PIN",
+					"can_show_as": "OUTPUT_PIN_ONLY",
+					"live": true
+        }
+			]
 		}
 	]
 }

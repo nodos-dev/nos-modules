@@ -119,7 +119,7 @@ extern "C"
 
 	NOSAPI_ATTR nosResult NOSAPI_CALL nosExportNodeFunctions(size_t* outCount, nosNodeFunctions** outFunctions)
 	{
-		*outCount = (size_t)(10);
+		*outCount = (size_t)(11);
 		if (!outFunctions)
 			return NOS_RESULT_SUCCESS;
 
@@ -199,6 +199,12 @@ extern "C"
 			nosEngine.SetPinValue(ids[NOS_NAME_STATIC("Output")], nos::Buffer::From(out));
 			return NOS_RESULT_SUCCESS;
 		};
+		outFunctions[10]->ClassName = NOS_NAME_STATIC("nos.test.LiveOutWithInput");
+		outFunctions[10]->CopyFrom = [](void* ctx, nosCopyInfo* copyInfo)
+			{
+				nosEngine.LogD("LiveOutWithInput: CopyFrom");
+				return NOS_RESULT_SUCCESS;
+			};
 		return NOS_RESULT_SUCCESS;
 	}
 
