@@ -173,7 +173,7 @@ DeviceInfo Capturer::CreateDeviceFromName(std::wstring reqname)
 	if (FAILED(hr)) return info;
 
 	hr = camControl->Set(CameraControl_Exposure, -10, CameraControl_Flags_Manual);
-	if (FAILED(hr)) return;
+	if (FAILED(hr)) return info;
 
 	hr = MFCreateSourceReaderFromMediaSource(pDevice.Get(), NULL, &Reader);
 	if (FAILED(hr)) return info;
