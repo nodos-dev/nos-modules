@@ -310,7 +310,7 @@ struct RingNodeBase : NodeContext
 				nosTextureFieldType outFieldType = slot->Res.Info.Buffer.FieldType;
 				auto outputBufferDesc = *static_cast<sys::vulkan::Buffer*>(cpy->PinData->Data);
 				outputBufferDesc.mutate_field_type((sys::vulkan::FieldType)outFieldType);
-				nosEngine.SetPinValueDirect(cpy->ID, nos::Buffer::From(outputBufferDesc));
+				nosEngine.SetPinValue(cpy->ID, nos::Buffer::From(outputBufferDesc));
 			}
 			else if constexpr (std::is_same_v<T, nosTextureInfo>)
 			{
@@ -325,7 +325,7 @@ struct RingNodeBase : NodeContext
 		}
 		else if (Type == RingType::DOWNLOAD_RING)
 		{
-			nosEngine.SetPinValueDirect(cpy->ID, nos::Buffer::From(vkss::ConvertBufferInfo(slot->Res)));
+			nosEngine.SetPinValue(cpy->ID, nos::Buffer::From(vkss::ConvertBufferInfo(slot->Res)));
 		}
 
 		cpy->CopyFromOptions.ShouldSetSourceFrameNumber = true;

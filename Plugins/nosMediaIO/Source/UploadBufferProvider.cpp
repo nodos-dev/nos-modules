@@ -110,7 +110,7 @@ namespace nos::MediaIO
 					nosVulkan->WaitGpuEvent(event, UINT64_MAX);
 			}
 
-			nosEngine.SetPinValueDirect(execArgs[NSN_Buffer].Id, Buffer::From(vkss::ConvertBufferInfo(nextBuf.BufferInfo)));
+			nosEngine.SetPinValue(execArgs[NSN_Buffer].Id, Buffer::From(vkss::ConvertBufferInfo(nextBuf.BufferInfo)));
 			nosEngine.SetPinValue(execArgs[NSN_GPUEventRef].Id, Buffer::From(nos::sys::vulkan::GPUEventResource(nextBuf.Event)));
 
 			return NOS_RESULT_SUCCESS;
