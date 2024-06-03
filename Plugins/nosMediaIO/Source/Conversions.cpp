@@ -238,6 +238,11 @@ struct GammaLUTNodeContext : NodeContext
 		nosVulkan->CreateResource(&StagingBuffer);
 	}
 
+	~GammaLUTNodeContext()
+	{
+		nosVulkan->DestroyResource(&StagingBuffer);
+	}
+
 	nosResult ExecuteNode(const nosNodeExecuteArgs* args) override
 	{
 		nos::NodeExecuteArgs execArgs(args);
