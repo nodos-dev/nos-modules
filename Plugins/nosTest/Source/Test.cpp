@@ -130,6 +130,29 @@ extern "C"
 		NOS_BIND_NODE_CLASS(NOS_NAME_STATIC("nos.test.NodeTest"), TestNode, outFunctions[0]);
 		outFunctions[1]->ClassName = NOS_NAME_STATIC("nos.test.NodeWithCategories");
 		outFunctions[2]->ClassName = NOS_NAME_STATIC("nos.test.NodeWithFunctions");
+		outFunctions[2]->GetFunctions = [](size_t* outCount, nosName* pName, nosPfnNodeFunctionExecute* fns)
+			{
+			*outCount = 1;
+			if (!pName || !fns)
+				return NOS_RESULT_SUCCESS;
+
+			fns[0] = [](void* ctx, const nosNodeExecuteArgs* nodeArgs, const nosNodeExecuteArgs* functionArgs)
+				{
+					NodeExecuteArgs args(functionArgs);
+
+					nosEngine.LogI("NodeWithFunctions: TestFunction executed");
+
+					double res = *InterpretPinValue<double>(args[NOS_NAME("in1")].Data->Data) + *InterpretPinValue<double>(args[NOS_NAME("in2")].Data->Data);
+
+					nosEngine.SetPinValue(args[NOS_NAME("out")].Id, nos::Buffer::From(res));
+					nosEngine.SetPinDirty(args[NOS_NAME("OutTrigger")].Id);
+				};
+			pName[0] = NOS_NAME_STATIC("TestFunction");
+			return NOS_RESULT_SUCCESS;
+		};
+
+
+
 		outFunctions[3]->ClassName = NOS_NAME_STATIC("nos.test.NodeWithCustomTypes");
 		outFunctions[4]->ClassName = NOS_NAME_STATIC("nos.test.CopyTest");
 		outFunctions[4]->ExecuteNode = [](void* ctx, const nosNodeExecuteArgs* args)
