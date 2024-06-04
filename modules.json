@@ -90,7 +90,8 @@
             ],
             "files": [
                 "Include/**",
-                "Assets/**"
+                "Assets/**",
+                "Config/**"
             ]
         },
         "nos.sys.shaderc": {
