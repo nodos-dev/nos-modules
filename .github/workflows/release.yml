@@ -56,7 +56,7 @@ jobs:
         shell: pwsh
         run: |
           if (Test-Path -Path ./workspace/Module/modules-repo) { 
-            if (-not (Test-Path -Path ./modules-${{ github.ref_name }}/modules-repo) {
+            if (-not (Test-Path -Path ./modules-${{ github.ref_name }}/modules-repo)) {
               Move-Item -Path ./workspace/Module/modules-repo -Destination ./modules-${{ github.ref_name }}
             }
           }
