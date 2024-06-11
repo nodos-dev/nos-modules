@@ -42,7 +42,7 @@ concurrency:
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
   build:
-    name: Build & Release
+    name: Module Releases
     runs-on: self-hosted
     steps:
       - name: Update Git Credentials
@@ -79,6 +79,7 @@ jobs:
         if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.clean == 'true' }}
         run: |
           git clean -ffdx
+          Remove-Item -Recurse -Force -ErrorAction SilentlyContinue ../Project
         working-directory: ./modules-${{ github.ref_name }}/modules-repo
 
       - name: Cleanup
@@ -109,12 +110,12 @@ jobs:
   
       - name: Configure
         run: |
-          cmake -S ./Toolchain/CMake -B Project -DCMAKE_BUILD_TYPE=Release
+          cmake -S ./Toolchain/CMake -B ../Project -DCMAKE_BUILD_TYPE=Release
         working-directory: ./modules-${{ github.ref_name }}/workspace
 
       - name: Build
         run: |
-          cmake --build ./Project --config Release -j 4
+          cmake --build ../Project --config Release -j 4
         working-directory: ./modules-${{ github.ref_name }}/workspace
 
       - name: Release (Changed)
