@@ -98,7 +98,7 @@ jobs:
 
       - name: Unzip Nodos SDK
         run: |
-          7z x Nodos-SDK-*.zip -o workspace
+          7z x Nodos-SDK-*.zip -oworkspace
         working-directory: ./modules-${{ github.ref_name }}
 
       - name: Move Repo Under Workspace
