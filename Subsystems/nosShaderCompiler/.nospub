@@ -1,0 +1,6 @@
+{
+    "globs": [
+        "*.nossys",
+        "Binaries/**"
+    ]
+}
