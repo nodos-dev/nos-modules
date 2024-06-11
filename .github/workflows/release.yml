@@ -42,7 +42,7 @@ concurrency:
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
   build:
-    name: Module Releases
+    name: Modules Releases
     runs-on: self-hosted
     steps:
       - name: Update Git Credentials
@@ -55,6 +55,9 @@ jobs:
       - name: Checkout
         shell: pwsh
         run: |
+          if (Test-Path -Path ./workspace/Module/modules-repo) { 
+            Move-Item -Path ./workspace/Module/modules-repo -Destination ./modules-${{ github.ref_name }}
+          }
           if (-not (Test-Path -Path ./modules-repo)) {
             git clone --branch ${{ github.ref_name }} --depth 1 https://github.com/${{ github.repository }}.git --recurse-submodule --shallow-submodules ./modules-repo
           }
@@ -82,7 +85,7 @@ jobs:
           Remove-Item -Recurse -Force -ErrorAction SilentlyContinue ../Project
         working-directory: ./modules-${{ github.ref_name }}/modules-repo
 
-      - name: Cleanup
+      - name: Cleanup Leftovers
         run: |
           Remove-Item -Recurse -Force -ErrorAction SilentlyContinue Nodos-SDK*
           Remove-Item -Recurse -Force -ErrorAction SilentlyContinue ./workspace
