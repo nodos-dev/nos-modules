@@ -42,11 +42,12 @@ concurrency:
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
   build:
-    name: Build
+    name: Build & Release
     runs-on: self-hosted
     steps:
       - name: Update Git Credentials
         continue-on-error: true
+        shell: bash
         run: |
           git credential-manager github login --username ${{ env.GH_USERNAME }} --token ${{ env.GH_TOKEN }} --force
           mkdir -p ./modules-${{ github.ref_name }}
@@ -62,7 +63,7 @@ jobs:
           git checkout ${{ github.ref_name }}
           git clean -ffd
           git restore .
-          git pull
+          git pull --force
           git submodule update --force --recursive --init
           git status
         working-directory: ./modules-${{ github.ref_name }}
@@ -118,21 +119,24 @@ jobs:
 
       - name: Release (Changed)
         if: ${{ github.event.inputs.build_all == null || github.event.inputs.build_all == 'false'}}
+        shell: bash
         run: |
-          nosman.exe publish-batch --repo-path Module/modules-repo --compare-with "build.dev-${{ env.BUILD_NUMBER }}" --vendor=Nodos --version-suffix ".b${{ env.BUILD_NUMBER }}"
-        working-directory: ./modules-${{ github.ref_name }}/workspace
+          LAST_BUILD_TAG=$(git for-each-ref --sort=-v:refname --format='%(refname:short)' 'refs/tags/build.${{ github.ref_name }}-*' | head -n 1)
+          ../../nosman.exe --workspace ../../ publish-batch --repo-path . --compare-with "$LAST_BUILD_TAG" --vendor Nodos --version-suffix ".b${{ env.BUILD_NUMBER }}"
+        working-directory: ./modules-${{ github.ref_name }}/workspace/Module/modules-repo
       
       - name: Release (All)
         if: ${{ github.event.inputs.build_all == 'true' }}
+        shell: pwsh
         run: |
-          nosman.exe publish-batch --repo-path Module/modules-repo --vendor=Nodos --version-suffix ".b${{ env.BUILD_NUMBER }}"
-        working-directory: ./modules-${{ github.ref_name }}/workspace
+          ../../nosman.exe --workspace ../../ publish-batch --repo-path . --vendor=Nodos --version-suffix ".b${{ env.BUILD_NUMBER }}"
+        working-directory: ./modules-${{ github.ref_name }}/workspace/Module/modules-repo
       
       - name: Tag
         run: |
-          git tag -a "build.dev-${{ env.BUILD_NUMBER }}" -m "Build dev-${{ env.BUILD_NUMBER }}"
-          git push origin "build.dev-${{ env.BUILD_NUMBER }}"
-        working-directory: ./modules-${{ github.ref_name }}/modules-repo
+          git tag -a "build.${{ github.ref_name }}-${{ env.BUILD_NUMBER }}" -m "Build ${{ github.ref_name }}-${{ env.BUILD_NUMBER }}"
+          git push origin "build.${{ github.ref_name }}-${{ env.BUILD_NUMBER }}"
+        working-directory: ./modules-${{ github.ref_name }}/workspace/Module/modules-repo
       
       - name: Move Back
         run: |
