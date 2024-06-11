@@ -30,7 +30,7 @@ env:
   GH_RELEASE_REPO_URL: "https://github.com/mediaz/modules-releases"
   GH_RELEASE_REPO_ORG: "mediaz"
   GH_RELEASE_REPO_NAME: "modules-releases"
-  GIT_EMAIL: "bot@mediaz.io"
+  GIT_EMAIL: "bot@nodos.dev"
   GH_TOKEN: ${{ secrets.CI_TOKEN }}
   DIST_TARGET_DIR: "D:/Builds/Nodos-Modules"
 
