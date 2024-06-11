@@ -56,7 +56,9 @@ jobs:
         shell: pwsh
         run: |
           if (Test-Path -Path ./workspace/Module/modules-repo) { 
-            Move-Item -Path ./workspace/Module/modules-repo -Destination ./modules-${{ github.ref_name }}
+            if (-not (Test-Path -Path ./modules-${{ github.ref_name }}/modules-repo) {
+              Move-Item -Path ./workspace/Module/modules-repo -Destination ./modules-${{ github.ref_name }}
+            }
           }
           if (-not (Test-Path -Path ./modules-repo)) {
             git clone --branch ${{ github.ref_name }} --depth 1 https://github.com/${{ github.repository }}.git --recurse-submodule --shallow-submodules ./modules-repo
