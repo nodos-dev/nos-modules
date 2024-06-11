@@ -22,9 +22,6 @@
 [submodule "Subsystems/nosPython/External/pybind11"]
 	path = Subsystems/nosPython/External/pybind11
 	url = https://github.com/pybind/pybind11.git
-[submodule "Scripts"]
-	path = Scripts
-	url = https://github.com/mediaz/modules-scripts.git
 [submodule "Plugins/nosAJA/External/libajantv2"]
 	path = Plugins/nosAJA/External/libajantv2
 	url = https://github.com/mediaz/libajantv2.git
