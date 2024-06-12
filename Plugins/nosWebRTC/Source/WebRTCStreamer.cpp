@@ -223,7 +223,7 @@ struct WebRTCNodeContext : nos::NodeContext {
 
 			YUVBuffers.push_back(std::move(BufY));
 			YUVPlanes.push_back(std::move(PlaneY));
-			InputBuffers.push_back({nullptr, Input});
+			InputBuffers.push_back({0, Input});
 		}
 
 		InputRing = std::make_unique<RingProxy>(InputBuffers.size(), "WebRTC Streamer Input Ring");

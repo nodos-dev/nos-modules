@@ -78,7 +78,7 @@ struct WriteImage : NodeContext {
     nosResult CopyTo(nosCopyInfo* copyInfo) override
     {
         nosCmd cmd;
-        assert(Event == nullptr);
+        assert(Event == 0);
         nosVulkan->Begin("Write Image Copy To", &cmd);
 		nosCmdEndParams endParams{.ForceSubmit = true, .OutGPUEventHandle = WriteRequested ? &Event : nullptr};
         nosVulkan->End(cmd, &endParams);

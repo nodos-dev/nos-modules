@@ -135,7 +135,11 @@ struct MergeContext : NodeContext
 			.Output = output,
 		};
 
-		nosVulkan->RunPass(nullptr, &mergePass);
+		nosCmd cmd{};
+		nosCmdBeginParams begin{  .Name = NSN_Merge_Pass, .AssociatedNodeId = NodeId, .OutCmdHandle = &cmd };
+		nosVulkan->Begin2(&begin);
+		nosVulkan->RunPass(cmd, &mergePass);
+		nosVulkan->End(cmd, nullptr);
 		return NOS_RESULT_SUCCESS;
 	}
 

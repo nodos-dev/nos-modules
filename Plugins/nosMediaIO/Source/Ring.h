@@ -19,7 +19,7 @@ struct TRing
 	    struct {
 		    nosTextureFieldType FieldType = NOS_TEXTURE_FIELD_TYPE_UNKNOWN;
 			glm::mat4 ColorspaceMatrix = {};
-			nosGPUEvent WaitEvent = nullptr;
+			nosGPUEvent WaitEvent = 0;
 	    } Params {};
 
         Resource(T r) : Res{}
