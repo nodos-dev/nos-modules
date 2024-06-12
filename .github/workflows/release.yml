@@ -33,6 +33,7 @@ env:
   GIT_EMAIL: "bot@nodos.dev"
   GH_TOKEN: ${{ secrets.CI_TOKEN }}
   DIST_TARGET_DIR: "D:/Builds/Nodos-Modules"
+  NOSMAN_EXECUTABLE: "C:/Tools/nosman.exe"
 
 # TODO: Support parallel runs
 concurrency:
@@ -52,14 +53,41 @@ jobs:
           git credential-manager github login --username ${{ env.GH_USERNAME }} --token ${{ env.GH_TOKEN }} --force
           mkdir -p ./modules-${{ github.ref_name }}
 
-      - name: Checkout
-        shell: pwsh
+      - name: Cleanup
         run: |
           if (Test-Path -Path ./workspace/Module/modules-repo) { 
             if (-not (Test-Path -Path ./modules-${{ github.ref_name }}/modules-repo)) {
               Move-Item -Path ./workspace/Module/modules-repo -Destination ./modules-${{ github.ref_name }}
             }
           }
+        shell: pwsh
+        working-directory: ./modules-${{ github.ref_name }}
+
+      - name: Setup Nodos Workspace (Latest)
+        if: ${{  github.event_name != 'workflow_dispatch' || github.event.inputs.nodos_sdk_version == '' }}
+        run: |
+          if (-not (Test-Path -Path ./workspace)) {
+            "${{ env.NOSMAN_EXECUTABLE }}" --workspace ./workspace get --path ./workspace
+          } else {
+            cd ./workspace
+            ./nosman.exe get
+            cd ..
+          }
+          echo "Updating system nosman"
+          Copy-Item -Path ./workspace/nosman.exe -Destination ${{ env.NOSMAN_EXECUTABLE }} -Force
+        shell: pwsh
+        working-directory: ./modules-${{ github.ref_name }}
+
+      - name: Setup Nodos Workspace (Specific Version)
+        if: ${{  github.event_name == 'workflow_dispatch' && github.event.inputs.nodos_sdk_version != '' }}
+        run: |
+          "${{ env.NOSMAN_EXECUTABLE }}" --workspace ./workspace get --path ./workspace --version "${{ github.event.inputs.nodos_sdk_version }}"
+        shell: pwsh
+        working-directory: ./modules-${{ github.ref_name }}
+
+      - name: Checkout
+        shell: pwsh
+        run: |
           if (-not (Test-Path -Path ./modules-repo)) {
             git clone --branch ${{ github.ref_name }} --depth 1 https://github.com/${{ github.repository }}.git --recurse-submodule --shallow-submodules ./modules-repo
           }
@@ -79,33 +107,13 @@ jobs:
           git config user.name "${{ env.GH_USERNAME }}"
         working-directory: ./modules-${{ github.ref_name }}/modules-repo
 
-      - name: Clean
+      - name: Clean Build
         shell: pwsh
         if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.clean == 'true' }}
         run: |
           git clean -ffdx
           Remove-Item -Recurse -Force -ErrorAction SilentlyContinue ../Project
         working-directory: ./modules-${{ github.ref_name }}/modules-repo
-
-      - name: Cleanup Leftovers
-        run: |
-          Remove-Item -Recurse -Force -ErrorAction SilentlyContinue Nodos-SDK*
-          Remove-Item -Recurse -Force -ErrorAction SilentlyContinue ./workspace
-        shell: pwsh
-        working-directory: ./modules-${{ github.ref_name }}
-
-      - name: Download Nodos SDK (Latest dev)
-        shell: pwsh
-        if: ${{  github.event_name != 'workflow_dispatch' || github.event.inputs.nodos_sdk_version == '' }}
-        run: |
-          $ReleaseTag = (gh release list --repo mediaz/nodos | Select-String -Pattern 'dev' | Select-Object -First 1).Line.Split()[0]
-          gh release download $ReleaseTag --repo mediaz/nodos --pattern "Nodos-SDK-*.zip"
-        working-directory: ./modules-${{ github.ref_name }}
-
-      - name: Unzip Nodos SDK
-        run: |
-          7z x Nodos-SDK-*.zip -oworkspace
-        working-directory: ./modules-${{ github.ref_name }}
 
       - name: Move Repo Under Workspace
         run: |
@@ -120,7 +128,7 @@ jobs:
 
       - name: Build
         run: |
-          cmake --build ../Project --config Release -j 4
+          cmake --build ../Project --config Release -j 8
         working-directory: ./modules-${{ github.ref_name }}/workspace
 
       - name: Release (Changed)
