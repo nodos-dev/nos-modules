@@ -67,7 +67,7 @@ jobs:
         if: ${{  github.event_name != 'workflow_dispatch' || github.event.inputs.nodos_sdk_version == '' }}
         run: |
           if (-not (Test-Path -Path ./workspace)) {
-            ${{ env.NOSMAN_EXECUTABLE }} --workspace ./workspace get --path ./workspace
+            ${{ env.NOSMAN_EXECUTABLE }} --workspace ./workspace get
           } else {
             cd ./workspace
             ./nosman.exe get
