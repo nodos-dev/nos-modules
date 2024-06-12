@@ -34,6 +34,7 @@ env:
   GH_TOKEN: ${{ secrets.CI_TOKEN }}
   DIST_TARGET_DIR: "D:/Builds/Nodos-Modules"
   NOSMAN_EXECUTABLE: "C:/Tools/nosman.exe"
+  RUST_BACKTRACE: 1
 
 # TODO: Support parallel runs
 concurrency:
@@ -56,8 +57,8 @@ jobs:
       - name: Cleanup
         run: |
           if (Test-Path -Path ./workspace/Module/modules-repo) { 
-            if (-not (Test-Path -Path ./modules-${{ github.ref_name }}/modules-repo)) {
-              Move-Item -Path ./workspace/Module/modules-repo -Destination ./modules-${{ github.ref_name }}
+            if (-not (Test-Path -Path ./modules-repo)) {
+              Move-Item -Path ./workspace/Module/modules-repo -Destination .
             }
           }
         shell: pwsh
