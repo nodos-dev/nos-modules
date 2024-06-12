@@ -67,7 +67,7 @@ jobs:
         if: ${{  github.event_name != 'workflow_dispatch' || github.event.inputs.nodos_sdk_version == '' }}
         run: |
           if (-not (Test-Path -Path ./workspace)) {
-            "${{ env.NOSMAN_EXECUTABLE }}" --workspace ./workspace get --path ./workspace
+            ${{ env.NOSMAN_EXECUTABLE }} --workspace ./workspace get --path ./workspace
           } else {
             cd ./workspace
             ./nosman.exe get
@@ -81,7 +81,7 @@ jobs:
       - name: Setup Nodos Workspace (Specific Version)
         if: ${{  github.event_name == 'workflow_dispatch' && github.event.inputs.nodos_sdk_version != '' }}
         run: |
-          "${{ env.NOSMAN_EXECUTABLE }}" --workspace ./workspace get --path ./workspace --version "${{ github.event.inputs.nodos_sdk_version }}"
+          ${{ env.NOSMAN_EXECUTABLE }} --workspace ./workspace get --version "${{ github.event.inputs.nodos_sdk_version }}"
         shell: pwsh
         working-directory: ./modules-${{ github.ref_name }}
 
