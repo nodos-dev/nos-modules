@@ -122,6 +122,12 @@ jobs:
         shell: pwsh
         working-directory: ./modules-${{ github.ref_name }}
   
+      - name: Update Nosman Cache
+        shell: pwsh
+        run: |
+          ./nosman.exe rescan --fetch-index
+        working-directory: ./modules-${{ github.ref_name }}/workspace
+
       - name: Configure
         run: |
           cmake -S ./Toolchain/CMake -B ../Project -DCMAKE_BUILD_TYPE=Release
