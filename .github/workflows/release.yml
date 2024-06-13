@@ -140,10 +140,10 @@ jobs:
 
       - name: Release (Changed)
         if: ${{ github.event.inputs.build_all == null || github.event.inputs.build_all == 'false'}}
-        shell: bash
+        shell: pwsh
         run: |
-          LAST_BUILD_TAG=$(git for-each-ref --sort=-v:refname --format='%(refname:short)' 'refs/tags/build.${{ github.ref_name }}-*' | head -n 1)
-          ../../nosman.exe --workspace ../../ publish-batch --repo-path . --compare-with "$LAST_BUILD_TAG" --vendor Nodos --version-suffix ".b${{ env.BUILD_NUMBER }}" --verbose --publisher-name "mediaz-bot" --publisher-email "bot@nodos.dev"
+          $LastBuildTag = git for-each-ref --sort=-v:refname --format='%(refname:short)' 'refs/tags/build.${{ github.ref_name }}-*' | Select-Object -First 1
+          ../../nosman.exe --workspace ../../ publish-batch --repo-path . --compare-with "$LastBuildTag" --vendor Nodos --version-suffix ".b${{ env.BUILD_NUMBER }}" --verbose --publisher-name "mediaz-bot" --publisher-email "bot@nodos.dev"
         working-directory: ./modules-${{ github.ref_name }}/workspace/Module/modules-repo
       
       - name: Release (All)
