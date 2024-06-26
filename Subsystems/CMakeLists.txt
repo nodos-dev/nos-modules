@@ -9,7 +9,6 @@ endif()
 
 # Update subsystems.json if you add dependencies, so that CD can create releases.
 
-add_subdirectory(nosVulkanSubsystem) # Subsystem prefix is only for distinguishing between nosVulkan repo and this.
 add_subdirectory(nosTestSubsystem)
 add_subdirectory(nosPython)
 add_subdirectory(nosAnimationSubsystem)
