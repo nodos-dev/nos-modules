@@ -5,7 +5,10 @@ This folder contains the Nodos modules that are distributed with Nodos.
 ## Build Instructions
 1. Download latest Nodos release from [nodos.dev](https://nodos.dev)
 2. Clone the repository under Nodos workspace Module directory
-3. Generate project files:
+```bash
+git clone https://github.com/mediaz/nos-modules.git --recurse-submodules Module/nos-modules
+```
+3. Generate project files from workspace root directory using CMake:
 ```bash
 cmake -S ./Toolchain/CMake -B Build
 ```
