@@ -52,7 +52,6 @@ jobs:
         shell: bash
         run: |
           git credential-manager github login --username ${{ env.GH_USERNAME }} --token ${{ env.GH_TOKEN }} --force
-          mkdir -p ./modules-${{ github.ref_name }}
 
       - name: Offset Build Number
         id: build_number
@@ -63,15 +62,22 @@ jobs:
         shell: bash
         run: echo "Build number is $BUILD_NUMBER"
 
+      - name: Clean Build
+        shell: pwsh
+        if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.clean == 'true' }}
+        run: |
+          if (Test-Path -Path ./modules-${{ github.ref_name }}) { Remove-Item -Path ./modules-${{ github.ref_name }} -Recurse -Force }
+
       - name: Cleanup
         run: |
+          New-Item -ItemType Directory -Path ./modules-${{ github.ref_name }} -ErrorAction SilentlyContinue
+          cd ./modules-${{ github.ref_name }}
           if (Test-Path -Path ./workspace/Module/modules-repo) { 
             if (-not (Test-Path -Path ./modules-repo)) {
               Move-Item -Path ./workspace/Module/modules-repo -Destination .
             }
           }
         shell: pwsh
-        working-directory: ./modules-${{ github.ref_name }}
 
       - name: Setup Nodos Workspace (Latest)
         if: ${{  github.event_name != 'workflow_dispatch' || github.event.inputs.nodos_sdk_version == '' }}
@@ -115,14 +121,6 @@ jobs:
         run: |
           git config user.email "${{ env.GIT_EMAIL }}"
           git config user.name "${{ env.GH_USERNAME }}"
-        working-directory: ./modules-${{ github.ref_name }}/modules-repo
-
-      - name: Clean Build
-        shell: pwsh
-        if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.clean == 'true' }}
-        run: |
-          git clean -ffdx
-          Remove-Item -Recurse -Force -ErrorAction SilentlyContinue ../Project
         working-directory: ./modules-${{ github.ref_name }}/modules-repo
 
       - name: Move Repo Under Workspace
