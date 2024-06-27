@@ -114,6 +114,7 @@ jobs:
           git restore .
           git pull --force
           git submodule update --force --recursive --init
+          git fetch --tags
           git status
         working-directory: ./modules-${{ github.ref_name }}
 
