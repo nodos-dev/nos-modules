@@ -22,7 +22,7 @@ struct CubicBezierEasing
 			return x; // linear
 		return Bezier(GetPercent(x), P1.y, P2.y);
 	}
-
+   
 protected:
 	glm::vec2 P1, P2; // Control points
 
