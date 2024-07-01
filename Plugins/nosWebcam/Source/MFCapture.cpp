@@ -7,8 +7,9 @@
 #include <mfreadwrite.h>
 #include <mferror.h>
 #include <mfcaptureengine.h>
-
 #include "MFCapture.h"
+#include <locale>
+#include <codecvt>
 
 #include <map>
 #include <string>
@@ -38,6 +39,19 @@ template <class T> void SafeRelease(T** ppT)
 	}
 }
 
+std::string GetLastErrorAsString(HRESULT err)
+{
+	if (err == 0) {
+		return std::string();
+	}
+	LPSTR messageBuffer = nullptr;
+	size_t size = FormatMessageA(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
+		NULL, err, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPSTR)&messageBuffer, 0, NULL);
+	std::string message(messageBuffer, size);
+	LocalFree(messageBuffer);
+	return message;
+}
+
 Capturer::Capturer()
 {
 	HRESULT  hr = CoInitialize(NULL);
@@ -53,6 +67,8 @@ Capturer::~Capturer()
 
 StreamSample Capturer::ReadSample()
 {
+	if(!Reader)
+		return StreamSample(nullptr);
 	HRESULT hr;
 	DWORD streamIndex;
 	DWORD flags;
@@ -82,7 +98,14 @@ StreamSample Capturer::ReadSample()
 	return StreamSample(pSample);
 }
 
-HRESULT EnumerateTypesForStream(IMFSourceReader* pReader, DWORD dwStreamIndex)
+void Capturer::CloseStream()
+{
+	if (Reader)
+		Reader->Flush(MF_SOURCE_READER_FIRST_VIDEO_STREAM);
+	Reader.Reset();
+}
+
+HRESULT EnumerateTypesForStream(IMFSourceReader* pReader, DWORD dwStreamIndex, std::vector<FormatInfo>& types)
 {
 	HRESULT hr = S_OK;
 	DWORD dwMediaTypeIndex = 0;
@@ -98,33 +121,20 @@ HRESULT EnumerateTypesForStream(IMFSourceReader* pReader, DWORD dwStreamIndex)
 		}
 		else if (SUCCEEDED(hr))
 		{
-			// Get type's name etc.
-			GUID guidMajorType;
-			GUID guidSubType;
-			UINT32 width = 0;
-			UINT32 height = 0;
-			UINT32 fps = 0;
-			UINT32 bitrate = 0;
-			UINT64 frameRate = 0;
-			UINT32 frameRateDenom = 0;
-			UINT32 frameRateNum = 0;
+			FormatInfo mediaInfo = {};
+			mediaInfo.StreamIndex = dwStreamIndex;
+			hr = pType->GetGUID(MF_MT_MAJOR_TYPE, &mediaInfo.MajorType);
+			hr = pType->GetGUID(MF_MT_SUBTYPE, &mediaInfo.SubType);
 			UINT64 frameSize = 0;
-
-			hr = pType->GetGUID(MF_MT_MAJOR_TYPE, &guidMajorType);
-			hr = pType->GetGUID(MF_MT_SUBTYPE, &guidSubType);
 			hr = pType->GetUINT64(MF_MT_FRAME_SIZE, &frameSize);
+			UINT64 frameRate = 0;
 			hr = pType->GetUINT64(MF_MT_FRAME_RATE, &frameRate);
 
-			width = frameSize >> 32;
-			height = UINT32(frameSize & 0xFFFFFFFF);
+			mediaInfo.Resolution = nos::fb::vec2u(frameSize >> 32, frameSize & 0xFFFFFFFF);
+			mediaInfo.FrameRate = nos::fb::vec2u(UINT32(frameRate), UINT32(frameRate >> 32));
 
-			frameRateDenom = UINT32(frameRate);
-			frameRateNum = UINT32(frameRate >> 32);
-
-			std::string subTypeName = std::string(reinterpret_cast<char*>(&guidSubType.Data1), 4);
-
-			nosEngine.LogI("Stream %d, Media Type %d: %s, Resolution: (%u, %u), FrameRate: %u/%u", dwStreamIndex, dwMediaTypeIndex, subTypeName.c_str(), width, height, frameRateNum, frameRateDenom);
-
+			if(mediaInfo.SubType == MFVideoFormat_YUY2)
+				types.push_back(mediaInfo);
 			pType->Release();
 		}
 		++dwMediaTypeIndex;
@@ -132,84 +142,85 @@ HRESULT EnumerateTypesForStream(IMFSourceReader* pReader, DWORD dwStreamIndex)
 	return hr;
 }
 
-HRESULT EnumerateMediaTypes(IMFSourceReader* pReader)
+std::vector<FormatInfo> EnumerateMediaTypes(IMFSourceReader* pReader)
 {
+	std::vector<FormatInfo> types;
 	HRESULT hr = S_OK;
 	DWORD dwStreamIndex = 0;
 
 	while (SUCCEEDED(hr))
 	{
-		hr = EnumerateTypesForStream(pReader, dwStreamIndex);
+		hr = EnumerateTypesForStream(pReader, dwStreamIndex, types);
 		if (hr == MF_E_INVALIDSTREAMNUMBER)
 		{
-			hr = S_OK;
 			break;
 		}
 		++dwStreamIndex;
 	}
-	return hr;
+	return types;
 }
 
-DeviceInfo Capturer::CreateDeviceFromName(std::wstring reqname)
+std::vector<FormatInfo> Capturer::EnumerateFormats(std::wstring const& deviceId)
 {
 	HRESULT hr;
 	ComPtr<IMFMediaSource> pDevice = NULL;
 	ComPtr<IMFAttributes> pAttrDevice = NULL;
 	ComPtr<IMFAttributes> pAttrReader = NULL;
-	DeviceInfo info{};
+	std::vector<FormatInfo> formats;
 
 	hr = MFCreateAttributes(&pAttrDevice, 1);
-	if (FAILED(hr)) return info;
+	if (FAILED(hr)) return formats;
 
 	pAttrDevice->SetGUID(MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE, MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE_VIDCAP_GUID);
-	pAttrDevice->SetString(MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE_VIDCAP_SYMBOLIC_LINK, reqname.c_str());
+	pAttrDevice->SetString(MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE_VIDCAP_SYMBOLIC_LINK, deviceId.c_str());
 
 	hr = MFCreateDeviceSource(pAttrDevice.Get(), &pDevice);
-	if (FAILED(hr)) return info;
+	if (FAILED(hr)) return formats;
 
-	ComPtr<IAMCameraControl> camControl;
+	ComPtr<IMFSourceReader> reader = NULL;
 
-	hr = pDevice->QueryInterface(IID_PPV_ARGS(&camControl));
-	if (FAILED(hr)) return info;
+	hr = MFCreateSourceReaderFromMediaSource(pDevice.Get(), NULL, &reader);
+	if (FAILED(hr)) return formats;
 
-	hr = camControl->Set(CameraControl_Exposure, -10, CameraControl_Flags_Manual);
-	if (FAILED(hr)) return info;
+	formats = EnumerateMediaTypes(reader.Get());
+
+	return formats;
+}
+
+std::optional<std::string> Capturer::CreateStreamFromFormat(std::wstring const& deviceId, FormatInfo const& formatInfo)
+{
+	HRESULT hr;
+	ComPtr<IMFMediaSource> pDevice = NULL;
+	ComPtr<IMFAttributes> pAttrDevice = NULL;
+	ComPtr<IMFAttributes> pAttrReader = NULL;
+
+	hr = MFCreateAttributes(&pAttrDevice, 1);
+	if (FAILED(hr)) return GetLastErrorAsString(hr);
+
+	pAttrDevice->SetGUID(MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE, MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE_VIDCAP_GUID);
+	pAttrDevice->SetString(MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE_VIDCAP_SYMBOLIC_LINK, deviceId.c_str());
+
+	hr = MFCreateDeviceSource(pAttrDevice.Get(), &pDevice);
+	if (FAILED(hr)) return GetLastErrorAsString(hr);
 
 	hr = MFCreateSourceReaderFromMediaSource(pDevice.Get(), NULL, &Reader);
-	if (FAILED(hr)) return info;
-
-	EnumerateMediaTypes(Reader.Get());
+	if (FAILED(hr)) return GetLastErrorAsString(hr);
 
 	ComPtr<IMFMediaType> pTypeFormat;
 	hr = MFCreateMediaType(&pTypeFormat);
-	if (FAILED(hr)) return info;
-	hr = pTypeFormat->SetGUID(MF_MT_MAJOR_TYPE, MFMediaType_Video);
-	hr = pTypeFormat->SetGUID(MF_MT_SUBTYPE, MFVideoFormat_YUY2);
-	hr = pTypeFormat->SetUINT64(MF_MT_FRAME_SIZE, ((UINT64)640 << 32) | 480);
-	hr = pTypeFormat->SetUINT64(MF_MT_FRAME_RATE, ((UINT64)30 << 32) | 1);
+	if (FAILED(hr)) return GetLastErrorAsString(hr);
+	hr = pTypeFormat->SetGUID(MF_MT_MAJOR_TYPE, formatInfo.MajorType);
+	hr = pTypeFormat->SetGUID(MF_MT_SUBTYPE, formatInfo.SubType);
+	hr = pTypeFormat->SetUINT64(MF_MT_FRAME_SIZE, ((UINT64)formatInfo.Resolution.x() << 32) | formatInfo.Resolution.y());
+	hr = pTypeFormat->SetUINT64(MF_MT_FRAME_RATE, ((UINT64)formatInfo.FrameRate.x() << 32) | formatInfo.FrameRate.y());
 	hr = pTypeFormat->SetUINT32(MF_MT_ALL_SAMPLES_INDEPENDENT, TRUE);
-	//// TODO:
-	//IMFMediaType* pMediaType;
-	//_reader->GetNativeMediaType(MF_SOURC
-	// E_READER_FIRST_VIDEO_STREAM, MF_SOURCE_READER_CURRENT_TYPE_INDEX, &pMediaType);
-	// you can also set desired width/height here
-	hr = Reader->SetCurrentMediaType(MF_SOURCE_READER_FIRST_VIDEO_STREAM, NULL, pTypeFormat.Get());
-	if (FAILED(hr)) return info;
-
-	ComPtr<IMFMediaType> pType;
-	hr = Reader->GetCurrentMediaType(MF_SOURCE_READER_FIRST_VIDEO_STREAM, &pType);
-	if (FAILED(hr)) return info;
-	UINT64 tmp;
-	hr = pType->GetUINT64(MF_MT_FRAME_SIZE, &tmp);
-	info.Resolution = nos::fb::vec2u((UINT32)(tmp >> 32), (UINT32)(tmp));
-	hr = pType->GetUINT64(MF_MT_FRAME_RATE, &tmp);
-	info.DeltaSeconds = nos::fb::vec2u((UINT32)(tmp), (UINT32)(tmp >> 32));
 	
-	GUID guidSubType;
-	hr = pType->GetGUID(MF_MT_SUBTYPE, &guidSubType);
-	if(FAILED(hr)) return info;
-	info.Format = std::string(reinterpret_cast<char*>(&guidSubType.Data1), 4);
-	return info;
+
+
+	hr = Reader->SetCurrentMediaType(formatInfo.StreamIndex, NULL, pTypeFormat.Get());\
+	if (FAILED(hr)) return GetLastErrorAsString(hr);
+
+	return std::nullopt;
 }
 
 template<typename T>
@@ -228,13 +239,13 @@ struct RAIICoTask
 	T* operator&() { return &Ptr; }
 
 };
-std::map<std::wstring, std::wstring> Capturer::EnumerateDevices()
+std::vector<std::pair<std::string, std::wstring>> Capturer::EnumerateDevices()
 {
 	using namespace std;
 
 	UINT32 count;
 	RAIICoTask<IMFActivate**> devices = nullptr;
-	map<wstring, wstring> result;
+	std::vector<std::pair<string, wstring>> result;
 	ComPtr<IMFAttributes> attr = 0;
 
 	HRESULT hr;
@@ -255,19 +266,18 @@ std::map<std::wstring, std::wstring> Capturer::EnumerateDevices()
 		RAIICoTask<LPWSTR> name;
 		RAIICoTask<LPWSTR> symlink;
 
-		bool cont = false;
-
 		hr = devices[i]->GetAllocatedString(MF_DEVSOURCE_ATTRIBUTE_FRIENDLY_NAME, &name, &length);
 
 		if (FAILED(hr)) continue;
 
+		std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
+		std::string nameNarrow = converter.to_bytes(*name);
+
 		hr = devices[i]->GetAllocatedString(MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE_VIDCAP_SYMBOLIC_LINK, &symlink, &length);
 		if (FAILED(hr)) continue;
-		result[*name] = symlink;
+		result.emplace_back(nameNarrow, symlink);
 
 		devices[i]->Release();
-		if (!cont)
-			break;
 	}
 
 	return result;
@@ -292,6 +302,17 @@ StreamSample::~StreamSample()
 	{
 		Buffer->Unlock();
 	}
+}
+
+std::optional<GUID> GetSubTypeFromFormatName(std::string const& formatName)
+{
+	if (formatName.size() != 4 || formatName == "NONE")
+	{
+		return std::nullopt;
+	}
+	GUID base = MFVideoFormat_Base;
+	base.Data1 = *reinterpret_cast<const DWORD*>(formatName.c_str());
+	return base;
 }
 
 }

@@ -22,17 +22,31 @@
 					"show_as": "OUTPUT_PIN"
 				},
 				{
-					"name": "Resolution",
-					"type_name": "nos.fb.vec2u",
-					"show_as": "OUTPUT_PIN"
-				},
-				{
-					"name": "Format",
+					"name": "Device",
 					"type_name": "string",
-					"show_as": "OUTPUT_PIN"
+					"show_as": "PROPERTY",
+					"default": "NONE"
+				},
+        {
+          "name": "Format",
+          "type_name": "string",
+          "show_as": "PROPERTY",
+          "default": "NONE"
+        },
+				{
+					"name": "Resolution",
+					"type_name": "string",
+					"show_as": "PROPERTY",
+					"default": "NONE"
 				},
 				{
-					"name": "DeltaSeconds",
+					"name": "FrameRate",
+					"type_name": "string",
+					"show_as": "PROPERTY",
+				  "default": "NONE"
+				},
+				{
+					"name": "OutResolution",
 					"type_name": "nos.fb.vec2u",
 					"show_as": "OUTPUT_PIN"
 				}
