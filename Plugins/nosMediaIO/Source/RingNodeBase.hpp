@@ -41,7 +41,7 @@ struct RingNodeBase : NodeContext
 	} OnRestart;
 
 	std::optional<uint32_t> RequestedRingSize = 1;
-	std::optional<T> RequestedResourceInfo = {};
+	bool NeedsRecreation = false;
 
 	std::atomic_uint32_t SpareCount = 0;
 
@@ -75,7 +75,6 @@ struct RingNodeBase : NodeContext
 			}
 			});
 		AddPinValueWatcher(NOS_NAME_STATIC("Input"), [this](nos::Buffer const& newBuf, std::optional<nos::Buffer> oldVal) {
-			T newInfo = Ring->Sample;
 			if constexpr (std::is_same_v<T, nosTextureInfo>)
 			{
 				auto info = vkss::DeserializeTextureInfo(newBuf.Data());
@@ -83,10 +82,10 @@ struct RingNodeBase : NodeContext
 					Ring->Sample.Height != info.Info.Texture.Height ||
 					Ring->Sample.Format != info.Info.Texture.Format)
 				{
-					newInfo.Format = info.Info.Texture.Format;
-					newInfo.Width = info.Info.Texture.Width;
-					newInfo.Height = info.Info.Texture.Height;
-					RequestedResourceInfo = newInfo;
+					Ring->Sample.Format = info.Info.Texture.Format;
+					Ring->Sample.Width = info.Info.Texture.Width;
+					Ring->Sample.Height = info.Info.Texture.Height;
+					NeedsRecreation = true;
 				}
 			}
 			else if (std::is_same_v<T, nosBufferInfo>)
@@ -94,12 +93,12 @@ struct RingNodeBase : NodeContext
 				auto info = vkss::ConvertToResourceInfo(*InterpretPinValue<sys::vulkan::Buffer>(newBuf.Data()));
 				if (Ring->Sample.Size != info.Info.Buffer.Size)
 				{
-					newInfo.Size = info.Info.Buffer.Size;
-					RequestedResourceInfo = newInfo;
+					Ring->Sample.Size = info.Info.Buffer.Size;
+					NeedsRecreation = true;
 				}
 			}
 
-			if (RequestedResourceInfo)
+			if (NeedsRecreation)
 			{
 				SendPathRestart();
 				Ring->Stop();
@@ -112,11 +111,11 @@ struct RingNodeBase : NodeContext
 				uint32_t alignment = *newAlignment.As<uint32_t>();
 				if (Ring->Sample.Alignment == alignment)
 					return;
-				RequestedResourceInfo = Ring->Sample;
-				RequestedResourceInfo->Alignment = alignment;
+				Ring->Sample.Alignment = alignment;
+				NeedsRecreation = true;
 				SendPathRestart();
 				Ring->Stop();
-				});
+			});
 		}
 	}
 
@@ -393,11 +392,11 @@ struct RingNodeBase : NodeContext
 			Ring->Resize(*RequestedRingSize);
 			RequestedRingSize = std::nullopt;
 		}
-		if (RequestedResourceInfo)
+		if (NeedsRecreation)
 		{
-			Ring = std::make_unique<TRing<T>>(Ring->Size, *RequestedResourceInfo);
+			Ring = std::make_unique<TRing<T>>(Ring->Size, Ring->Sample);
 			Ring->Exit = true;
-			RequestedResourceInfo = std::nullopt;
+			NeedsRecreation = false;
 		}
 		auto emptySlotCount = Ring->Write.Pool.size();
 		nosScheduleNodeParams schedule{ .NodeId = NodeId, .AddScheduleCount = emptySlotCount };

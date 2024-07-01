@@ -38,6 +38,14 @@
 				"data": 2
 			},
 			{
+				"name": "Alignment",
+				"description": "Used for creating memory-aligned buffers in memory",
+				"type_name": "uint",
+				"def": 0,
+				"show_as": "PROPERTY",
+				"can_show_as": "INPUT_PIN_OR_PROPERTY"
+			},
+			{
 				"name": "BufferSize",
 				"type_name": "ulong",
 				"show_as": "INPUT_PIN",

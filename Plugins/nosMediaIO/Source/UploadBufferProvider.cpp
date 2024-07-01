@@ -7,6 +7,7 @@ NOS_REGISTER_NAME(Buffer);
 NOS_REGISTER_NAME(GPUEventRef);
 NOS_REGISTER_NAME(QueueSize);
 NOS_REGISTER_NAME(BufferSize);
+NOS_REGISTER_NAME(Alignment);
 
 
 namespace nos::MediaIO
@@ -87,6 +88,18 @@ namespace nos::MediaIO
 					if (SampleBuffer.Info.Buffer.Size == newSize)
 						return;
 					SampleBuffer.Info.Buffer.Size = newSize;
+					Buffers.clear();
+					for (size_t i = 0; i < QueueSize; i++)
+					{
+						Buffers.emplace_back(SampleBuffer);
+					}
+				});
+			AddPinValueWatcher(NSN_Alignment, [this](nos::Buffer const& newVal, std::optional<nos::Buffer> oldVal)
+				{
+					uint64_t newAlignment = *InterpretPinValue<uint64_t>(newVal);
+					if (SampleBuffer.Info.Buffer.Alignment == newAlignment)
+						return;
+					SampleBuffer.Info.Buffer.Alignment = newAlignment;
 					Buffers.clear();
 					for (size_t i = 0; i < QueueSize; i++)
 					{
