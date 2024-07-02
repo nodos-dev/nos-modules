@@ -86,7 +86,8 @@ StreamSample Capturer::ReadSample()
 			&llTimeStamp,
 			&pSample
 		);
-		CHECK(hr);
+		if (FAILED(hr))
+			return StreamSample(nullptr);
 		nosEngine.WatchLog("ReadSample", sw.ElapsedString().c_str());
 	}
 	if (flags & MF_SOURCE_READERF_ENDOFSTREAM)
