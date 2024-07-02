@@ -47,6 +47,82 @@ struct WebcamInNode : public nos::NodeContext
 		SetPinVisualizer(NSN_Format, { .type = nos::fb::VisualizerType::COMBO_BOX, .name = GetFormatStringListName() });
 		SetPinVisualizer(NSN_Resolution, { .type = nos::fb::VisualizerType::COMBO_BOX, .name = GetResolutionStringListName() });
 		SetPinVisualizer(NSN_FrameRate, { .type = nos::fb::VisualizerType::COMBO_BOX, .name = GetFrameRateStringListName() });
+
+
+		AddPinValueWatcher(NSN_Device, [this](nos::Buffer const& newVal, std::optional<nos::Buffer> oldValue)
+			{
+				DevicePin = InterpretPinValue<char>(newVal);
+				SelectedDeviceId = std::nullopt;
+				CurDeviceFormats.clear();
+				if (DevicePin != "NONE")
+				{
+					for (auto const& [name, id] : DeviceList)
+						if (name == DevicePin)
+						{
+							SelectedDeviceId = id;
+							break;
+						}
+					if (SelectedDeviceId)
+						CurDeviceFormats = Cap.EnumerateFormats(*SelectedDeviceId);
+					else
+					{
+						SetPinValue(NSN_Device, nosBuffer{ .Data = (void*)"NONE", .Size = 5 });
+					}
+				}
+				if (!SelectedDeviceId)
+					if (AutoSelectIfSingle(NSN_Device, GetDeviceList()))
+						return;
+
+				UpdateAfter(WebcamChangedPinType::Device, !oldValue);
+			});
+
+		AddPinValueWatcher(NSN_Format, [this](nos::Buffer const& newVal, std::optional<nos::Buffer> oldValue)
+			{
+				FormatPin = InterpretPinValue<char>(newVal);
+				SelectedFormatGuid = std::nullopt;
+				if (FormatPin != "NONE")
+				{
+					SelectedFormatGuid = GetSubTypeFromFormatName(FormatPin);
+					if (!SelectedFormatGuid)
+					{
+						SetPinValue(NSN_Format, nosBuffer{ .Data = (void*)"NONE", .Size = 5 });
+						return;
+					}
+				}
+				UpdateAfter(WebcamChangedPinType::FormatName, !oldValue);
+			});
+
+		AddPinValueWatcher(NSN_Resolution, [this](nos::Buffer const& newVal, std::optional<nos::Buffer> oldValue)
+			{
+				ResolutionPin = InterpretPinValue<char>(newVal);
+				SelectedResolution = std::nullopt;
+				if (ResolutionPin != "NONE")
+				{
+					SelectedResolution = GetResolutionFromString(ResolutionPin);
+					if (!SelectedResolution)
+					{
+						SetPinValue(NSN_Resolution, nosBuffer{ .Data = (void*)"NONE", .Size = 5 });
+						return;
+					}
+				}
+				UpdateAfter(WebcamChangedPinType::Resolution, !oldValue);
+			});
+
+		AddPinValueWatcher(NSN_FrameRate, [this](nos::Buffer const& newVal, std::optional<nos::Buffer> oldValue)
+			{
+				FrameRatePin = InterpretPinValue<char>(newVal);
+				SelectedFrameRate = std::nullopt;
+				if (FrameRatePin != "NONE")
+				{
+					SelectedFrameRate = GetFrameRateFromString(FrameRatePin);
+					if (!SelectedFrameRate)
+					{
+						SetPinValue(NSN_FrameRate, nosBuffer{ .Data = (void*)"NONE", .Size = 5 });
+						return;
+					}
+				}
+				UpdateAfter(WebcamChangedPinType::FrameRate, !oldValue);
+			});
 	}
 
 	bool TryOpenDevice()
@@ -96,56 +172,38 @@ struct WebcamInNode : public nos::NodeContext
 		{
 		case WebcamChangedPinType::Device:
 		{
-			SelectedDeviceId = std::nullopt;
-			if (DevicePin == "NONE")
-				break;
-			for (auto const& [name, id] : DeviceList)
-				if (name == DevicePin)
-				{
-					SelectedDeviceId = id;
-					break;
-				}
-			CurDeviceFormats.clear();
-			if (SelectedDeviceId)
-				CurDeviceFormats = Cap.EnumerateFormats(*SelectedDeviceId);
-			else if (DevicePin != "NONE")
-				SetPinValue(NSN_Device, nosBuffer{ .Data = (void*)"NONE", .Size = 5 });
-			UpdateStringList(GetFormatStringListName(), GetFormatList());
-			if(!SelectedDeviceId || !first)
+			auto formatList = GetFormatList();
+			UpdateStringList(GetFormatStringListName(), formatList);
+			if (!SelectedDeviceId)
 				SetPinValue(NSN_Format, nosBuffer{ .Data = (void*)"NONE", .Size = 5 });
+			else
+				AutoSelectIfSingle(NSN_Format, formatList);
 			break;
 		}
 		case WebcamChangedPinType::FormatName:
 		{
-			SelectedFormatGuid = GetSubTypeFromFormatName(FormatPin);
-			if(!SelectedFormatGuid && FormatPin != "NONE")
-				SetPinValue(NSN_Format, nosBuffer{ .Data = (void*)"NONE", .Size = 5 });
 			UpdateStringList(GetResolutionStringListName(), GetResolutionList());
-			if(!SelectedFormatGuid || !first)
-			SetPinValue(NSN_Resolution, nosBuffer{ .Data = (void*)"NONE", .Size = 5 });
+			if (!SelectedFormatGuid)
+				SetPinValue(NSN_Resolution, nosBuffer{ .Data = (void*)"NONE", .Size = 5 });
+			else
+				AutoSelectIfSingle(NSN_Resolution, GetResolutionList());
 			break;
 		}
 		case WebcamChangedPinType::Resolution:
 		{
-			SelectedResolution = GetResolutionFromString(ResolutionPin);
-			if (!SelectedResolution && ResolutionPin != "NONE")
-				SetPinValue(NSN_Resolution, nosBuffer{ .Data = (void*)"NONE", .Size = 5 });
 			UpdateStringList(GetFrameRateStringListName(), GetFrameRateList());
-			if (!SelectedResolution || !first)
+			if(!SelectedResolution)
 				SetPinValue(NSN_FrameRate, nosBuffer{ .Data = (void*)"NONE", .Size = 5 });
+			else
+				AutoSelectIfSingle(NSN_FrameRate, GetFrameRateList());
 			break;
 		}
 		case WebcamChangedPinType::FrameRate:
 		{
-			SelectedFrameRate = GetFrameRateFromString(FrameRatePin);
 			if (SelectedFrameRate)
 				TryOpenDevice();
 			else
-			{
 				CloseStream();
-				if (FrameRatePin != "NONE")
-					SetPinValue(NSN_FrameRate, nosBuffer{ .Data = (void*)"NONE", .Size = 5 });
-			}
 			break;
 		}
 		}
@@ -201,33 +259,15 @@ struct WebcamInNode : public nos::NodeContext
 	std::string GetResolutionStringListName() { return "webcam.ResolutionList." + UUID2STR(NodeId); }
 	std::string GetFrameRateStringListName() { return "webcam.FrameRateList." + UUID2STR(NodeId); }
 
-	void OnPinValueChanged(nos::Name pinName, nosUUID pinId, nosBuffer value) override
+	bool AutoSelectIfSingle(nosName pinName, std::vector<std::string> const& list)
 	{
-		if (pinName == NSN_Device)
+		if (list.size() == 2)
 		{
-			DevicePin = InterpretPinValue<char>(value);
-			UpdateAfter(WebcamChangedPinType::Device, false);
-			UpdateStringList(GetFormatStringListName(), GetFormatList());
+			SetPinValue(pinName, nosBuffer{ .Data = (void*)list[1].c_str(), .Size = list[1].size() + 1 });
+			return true;
 		}
-		else if (pinName == NSN_Format)
-		{
-			FormatPin = InterpretPinValue<char>(value);
-			UpdateAfter(WebcamChangedPinType::FormatName, false);
-			UpdateStringList(GetResolutionStringListName(), GetResolutionList());
-		}
-		else if (pinName == NSN_Resolution)
-		{
-			ResolutionPin = InterpretPinValue<char>(value);
-			UpdateAfter(WebcamChangedPinType::Resolution, false);
-			UpdateStringList(GetFrameRateStringListName(), GetFrameRateList());
-		}
-		else if (pinName == NSN_FrameRate)
-		{
-			FrameRatePin = InterpretPinValue<char>(value);
-			UpdateAfter(WebcamChangedPinType::FrameRate, false);
-		}
+		return false;
 	}
-
 
 	// Execution
 	virtual nosResult ExecuteNode(const nosNodeExecuteArgs* args)
