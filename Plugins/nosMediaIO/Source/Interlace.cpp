@@ -133,9 +133,11 @@ struct DeinterlaceNode : NodeContext
 nosResult RegisterInterlace(nosNodeFunctions* nodeFunctions)
 {
 	NOS_BIND_NODE_CLASS(NSN_TypeName_MediaIO_Interlace, InterlaceNode, nodeFunctions);
-	nosShaderInfo shader = {.Key = NSN_MediaIO_Interlace_Fragment_Shader,
-	                        .Source = {.SpirvBlob = {(void*)Interlace_frag_spv, sizeof(Interlace_frag_spv)}}};
-	auto ret = nosVulkan->RegisterShaders(1, &shader);
+	fs::path root = nosEngine.Context->RootFolderPath;
+	auto interlacePath = (root / "Shaders" / "Interlace.frag").generic_string();
+	nosShaderInfo2 shader = {.Key = NSN_MediaIO_Interlace_Fragment_Shader,
+	                        .Source = {.Stage = NOS_SHADER_STAGE_FRAG, .GLSLPath = interlacePath.c_str()}, .AssociatedNodeClassName = NSN_TypeName_MediaIO_Interlace};
+	auto ret = nosVulkan->RegisterShaders2(1, &shader);
 	if (NOS_RESULT_SUCCESS != ret)
 		return ret;
 	nosPassInfo pass = {.Key = NSN_MediaIO_Interlace_Pass,
@@ -148,9 +150,11 @@ nosResult RegisterDeinterlace(nosNodeFunctions* nodeFunctions)
 {
 	NOS_BIND_NODE_CLASS(NSN_TypeName_MediaIO_Deinterlace, DeinterlaceNode, nodeFunctions);
 
-	nosShaderInfo shader = {.Key = NSN_MediaIO_Deinterlace_Fragment_Shader,
-	                        .Source = {.SpirvBlob = {(void*)Deinterlace_frag_spv, sizeof(Deinterlace_frag_spv)}}};
-	auto ret = nosVulkan->RegisterShaders(1, &shader);
+	fs::path root = nosEngine.Context->RootFolderPath;
+	auto deinterlacePath = (root / "Shaders" / "Deinterlace.frag").generic_string();
+	nosShaderInfo2 shader = {.Key = NSN_MediaIO_Deinterlace_Fragment_Shader,
+							.Source = {.Stage = NOS_SHADER_STAGE_FRAG, .GLSLPath = deinterlacePath.c_str()}, .AssociatedNodeClassName = NSN_TypeName_MediaIO_Deinterlace};
+	auto ret = nosVulkan->RegisterShaders2(1, &shader);
 	if (NOS_RESULT_SUCCESS != ret)
 		return ret;
 	nosPassInfo pass = {

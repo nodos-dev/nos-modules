@@ -1,7 +1,6 @@
 // Copyright MediaZ Teknoloji A.S. All Rights Reserved.
 
 #include "GaussianBlur.hpp"
-#include "../Shaders/GaussianBlur.frag.spv.dat"
 
 #include <nosVulkanSubsystem/nosVulkanSubsystem.h>
 #include <nosVulkanSubsystem/Helpers.hpp>
@@ -128,9 +127,11 @@ void RegisterGaussianBlur(nosNodeFunctions* out)
 	auto ret = RequestVulkanSubsystem();
 	if (ret != NOS_RESULT_SUCCESS)
 		return;
-	
-	nosShaderInfo shader =  {.Key=NSN_Gaussian_Blur_Shader, .Source = {.SpirvBlob  = {(void*)GaussianBlur_frag_spv, sizeof(GaussianBlur_frag_spv)}}};
-	ret = nosVulkan->RegisterShaders(1, &shader);
+
+	fs::path root = nosEngine.Context->RootFolderPath;
+	auto shaderPath = (root / "Shaders" / "GaussianBlur.frag").generic_string();
+	nosShaderInfo2 shader =  {.Key = NSN_Gaussian_Blur_Shader, .Source = {.Stage = NOS_SHADER_STAGE_FRAG, .GLSLPath = shaderPath.c_str()}, .AssociatedNodeClassName = out->ClassName};
+	ret = nosVulkan->RegisterShaders2(1, &shader);
 	if (ret != NOS_RESULT_SUCCESS)
 		return;
 	nosPassInfo pass = {

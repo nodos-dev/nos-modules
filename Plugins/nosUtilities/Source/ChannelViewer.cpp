@@ -2,7 +2,6 @@
 #include <Nodos/PluginHelpers.hpp>
 
 #include <nosVulkanSubsystem/Helpers.hpp>
-#include "../Shaders/ChannelViewer.frag.spv.dat"
 #include <glm/glm.hpp>
 #include "Names.h"
 
