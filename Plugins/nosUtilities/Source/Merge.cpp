@@ -4,7 +4,6 @@
 
 #include <nosVulkanSubsystem/nosVulkanSubsystem.h>
 #include <nosVulkanSubsystem/Helpers.hpp>
-#include "../Shaders/Merge.frag.spv.dat"
 
 #include <random>
 
@@ -258,11 +257,12 @@ nosResult RegisterMerge(nosNodeFunctions* out)
 {
 	NOS_BIND_NODE_CLASS(NSN_Merge, MergeContext, out);
 
-	static nosShaderSource MergeSource = { .SpirvBlob = {(void*)Merge_frag_spv, sizeof(Merge_frag_spv) } };
+	fs::path root = nosEngine.Context->RootFolderPath;
+	auto mergePath = (root / "Shaders" / "Merge.frag").generic_string();
 
 	// Register shaders
-	nosShaderInfo shader = {.Key = NSN_Merge_Shader, .Source = MergeSource };
-	auto ret = nosVulkan->RegisterShaders(1, &shader);
+	nosShaderInfo2 shader = {.Key = NSN_Merge_Shader, .Source = {.Stage = NOS_SHADER_STAGE_FRAG, .GLSLPath = mergePath.c_str() }, .AssociatedNodeClassName = NSN_Merge};
+	auto ret = nosVulkan->RegisterShaders2(1, &shader);
 	if (NOS_RESULT_SUCCESS != ret)
 		return ret;
 

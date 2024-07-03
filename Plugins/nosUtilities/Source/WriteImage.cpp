@@ -157,8 +157,12 @@ nosResult RegisterWriteImage(nosNodeFunctions* fn)
 {
     NOS_BIND_NODE_CLASS(NSN_Nos_Utilities_WriteImage, WriteImage, fn);
 
-	nosShaderInfo shader = {.Key = NSN_Linear2SRGB_Shader, .Source = {.SpirvBlob = {(void*)Linear2SRGB_frag_spv, sizeof(Linear2SRGB_frag_spv) }}};
-	auto ret = nosVulkan->RegisterShaders(1, &shader);
+    nosShaderInfo2 shader = {
+	    .Key = NSN_Linear2SRGB_Shader,
+	    .Source = {.SpirvBlob = {(void*)Linear2SRGB_frag_spv, sizeof(Linear2SRGB_frag_spv)}},
+	    .AssociatedNodeClassName = NSN_Nos_Utilities_WriteImage
+    };
+	auto ret = nosVulkan->RegisterShaders2(1, &shader);
 	if (NOS_RESULT_SUCCESS != ret)
 		return ret;
 
