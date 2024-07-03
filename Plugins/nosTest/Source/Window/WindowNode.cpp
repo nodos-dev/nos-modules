@@ -1,3 +1,5 @@
+// Copyright MediaZ Teknoloji A.S. All Rights Reserved.
+
 #include "WindowNode.h"
 #include "GLFW/glfw3.h"
 #define GLFW_EXPOSE_NATIVE_WIN32

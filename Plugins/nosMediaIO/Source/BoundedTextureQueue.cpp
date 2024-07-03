@@ -1,4 +1,6 @@
-﻿#include "RingNodeBase.hpp"
+// Copyright MediaZ Teknoloji A.S. All Rights Reserved.
+
+#include "RingNodeBase.hpp"
 
 namespace nos::MediaIO
 {

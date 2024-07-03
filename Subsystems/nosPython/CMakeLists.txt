@@ -1,3 +1,5 @@
+# Copyright MediaZ Teknoloji A.S. All Rights Reserved.
+
 
 set(PYBIND11_NOPYTHON ON CACHE BOOL "" FORCE)
 

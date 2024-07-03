@@ -1,3 +1,5 @@
+// Copyright MediaZ Teknoloji A.S. All Rights Reserved.
+
 
 #define COBJMACROS 1
 #define WIN32_LEAN_AND_MEAN

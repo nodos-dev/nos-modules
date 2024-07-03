@@ -1,3 +1,5 @@
+# Copyright MediaZ Teknoloji A.S. All Rights Reserved.
+
 import nodos as nos
 import struct
 
