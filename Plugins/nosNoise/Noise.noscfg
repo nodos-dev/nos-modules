@@ -1,0 +1,42 @@
+{
+    "info": {
+        "id": {
+            "name": "nos.noise",
+            "version": "0.1.0"
+        },
+        "display_name": "nos.noise",
+        "description": "Noise utilities for Nodos.",
+        "dependencies": [
+            {
+                "name": "nos.sys.vulkan",
+                "version": "5.6"
+            }
+        ]
+    },
+    "binary_path": "./Binaries/nosNoise",
+    "node_definitions": [
+        "Config/SimplexNoise.nosdef",
+        "Config/WorleyNoise.nosdef",
+        "Config/Fraction.nosdef"
+    ],
+    "defaults": [],
+    "custom_types": [],
+    "associated_nodes": [
+        {
+            "category": "Noise",
+            "class_name": "SimplexNoise",
+            "display_name": "Simplex Noise"
+        },
+        {
+            "category": "Noise",
+            "class_name": "WorleyNoise",
+            "display_name": "Worley Noise"
+        },
+        {
+            "category": "Noise",
+            "class_name": "Fraction",
+            "display_name": "Fraction"
+        }
+    ],
+    "third_party_software": ["./Config/Licenses.json"]
+}

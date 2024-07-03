@@ -1,0 +1,35 @@
+{
+    "nodes": [
+        {
+            "class_name": "Fraction",
+            "contents_type": "Job",
+            "contents": {
+                "type": "nos.sys.vulkan.GPUNode",
+                "options": {
+                    "shader": "Shaders/Fraction.frag"
+                }
+            },
+            "pins": [
+                {
+                    "name": "Input",
+                    "type_name": "nos.sys.vulkan.Texture",
+                    "show_as": "INPUT_PIN",
+                    "can_show_as": "INPUT_PIN_OR_PROPERTY"
+                },
+                {
+                    "name": "BypassAlpha",
+                    "type_name": "bool",
+                    "show_as": "PROPERTY",
+                    "can_show_as": "INPUT_PIN_OR_PROPERTY",
+                    "data": true
+                },
+                {
+                    "name": "Output",
+                    "type_name": "nos.sys.vulkan.Texture",
+                    "show_as": "OUTPUT_PIN",
+                    "can_show_as": "OUTPUT_PIN_OR_PROPERTY"
+                }
+            ]
+        }
+    ]
+}
