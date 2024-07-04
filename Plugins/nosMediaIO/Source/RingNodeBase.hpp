@@ -14,7 +14,6 @@
 namespace nos::MediaIO
 {
 
-
 template<typename T, bool CheckInterlace>
 requires std::is_same_v<T, nosBufferInfo> || std::is_same_v<T, nosTextureInfo>
 struct RingNodeBase : NodeContext
@@ -42,7 +41,7 @@ struct RingNodeBase : NodeContext
 		WAIT_UNTIL_FULL
 	} OnRestart;
 
-	std::optional<uint32_t> RequestedRingSize = 1;
+	std::optional<uint32_t> RequestedRingSize = std::nullopt;
 	bool NeedsRecreation = false;
 
 	std::atomic_uint32_t SpareCount = 0;
@@ -164,8 +163,6 @@ struct RingNodeBase : NodeContext
 		{
 			nosEngine.LogI("Trying to push while ring is full");
 		}
-
-
 
 		nos::util::Stopwatch sw; 
 		auto slot = Ring->BeginPush();
@@ -348,17 +345,8 @@ struct RingNodeBase : NodeContext
 		switch (command->Event)
 		{
 		case NOS_RING_SIZE_CHANGE: {
-			if (command->RingSize == 0)
-			{
-				nosEngine.LogW("Ring size cannot be 0");
-				return;
-			}
-			if (!RequestedRingSize.has_value() || *RequestedRingSize != command->RingSize)
-			{
-				RequestedRingSize = command->RingSize;
-				if(Type == RingType::DOWNLOAD_RING)
-					SendPathRestart();
-			}
+			RequestedRingSize = command->RingSize;
+			nosEngine.SetPinValue(*GetPinId(NOS_NAME("Size")), nos::Buffer::From(command->RingSize));
 			break;
 		}
 		default: return;
