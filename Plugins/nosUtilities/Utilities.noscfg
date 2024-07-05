@@ -28,7 +28,9 @@
         "Config/Time.nosdef",
         "Config/ImageIO.nosdef",
         "Config/CPUSleep.nosdef",
-		"Config/UploadBuffer.nosdef"
+        "Config/UploadBuffer.nosdef",
+        "Config/Buffer2Texture.nosdef",
+        "Config/Texture2Buffer.nosdef"
     ],
     "custom_types": [
         "Config/Merge.fbs",
@@ -123,7 +125,12 @@
         {
             "category": "Utilities",
             "class_name": "Buffer2Texture",
-            "display_name": "Buffer 2 Texture"
+            "display_name": "Buffer To Texture"
+        },
+        {
+            "category": "Utilities",
+            "class_name": "Texture2Buffer",
+            "display_name": "Texture To Buffer"
         }
     ],
     "subsystem_options": [
