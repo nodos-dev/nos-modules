@@ -2,14 +2,14 @@
     "info": {
         "id": {
             "name": "nos.MediaIO",
-            "version": "1.1.0"
+            "version": "1.2.0"
         },
         "description": "MediaIO nodes.",
         "display_name": "MediaIO",
         "dependencies": [
             {
                 "name": "nos.sys.vulkan",
-                "version": "5.5.0"
+                "version": "5.7.0"
             }
         ]
     },
@@ -18,7 +18,8 @@
     "Config/Conversions.nosdef",
     "Config/BufferRing.nosdef",
     "Config/BoundedTextureQueue.nosdef",
-    "Config/UploadBufferProvider.nosdef"
+    "Config/UploadBufferProvider.nosdef",
+    "Config/TextureFormatConverter.nosdef"
   ],
     "custom_types": [
         "Config/Conversion.fbs"
@@ -26,60 +27,65 @@
     "binary_path": "Binaries/nosMediaIO",
     "associated_nodes": [
         {
-            "category": "Media",
+            "category": "Media IO",
             "class_name": "Interlace",
             "display_name": "Interlace"
         },
         {
-            "category": "Media",
+            "category": "Media IO",
             "class_name": "Deinterlace",
             "display_name": "Deinterlace"
         },
         {
-            "category": "MediaIO|Conversions",
+            "category": "Media IO|Conversions",
             "class_name": "RGB2YCbCr",
             "display_name": "RGB to YCbCr Converter"
         },
         {
-            "category": "MediaIO|Conversions",
+            "category": "Media IO|Conversions",
             "class_name": "YCbCr2RGB",
             "display_name": "YCbCr to RGB Converter"
         },
         {
-            "category": "MediaIO|Conversions",
+            "category": "Media IO|Conversions",
             "class_name": "YUVBufferSizeCalculator",
             "display_name": "YUV Buffer Size Calculator"
         },
         {
-            "category": "MediaIO|Conversions",
+            "category": "Media IO|Conversions",
             "class_name": "GammaLUT",
             "display_name": "Gamma LUT"
         },
         {
-            "category": "MediaIO|Conversions",
+            "category": "Media IO|Conversions",
             "class_name": "ColorSpaceMatrix",
             "display_name": "Color Space"
         },
         {
-            "category": "MediaIO",
+            "category": "Media IO",
             "class_name": "BufferRing",
             "display_name": "Buffer Ring"
         },
         {
-            "category": "MediaIO",
+            "category": "Media IO",
             "class_name": "UploadBufferProvider",
             "display_name": "Upload Buffer Provider"
         },  
 		{
-			"category": "MediaIO",
+			"category": "Media IO",
 			"class_name": "BoundedTextureQueue",
 			"display_name": "Bounded Texture Queue"
 		},
-		{
-			"category": "MediaIO",
-			"class_name": "YUY2ToRGBA",
-			"display_name": "YUY2 To RGBA Converter"
-		}
+        {
+            "category": "Media IO",
+            "class_name": "YUY2ToRGBA",
+            "display_name": "YUY2 To RGBA Converter"
+        },
+        {
+            "category": "Media IO|Conversions",
+            "class_name": "TextureFormatConverter",
+            "display_name": "Texture Format Converter"
+        }
     ],
     "subsystem_options": [
         {

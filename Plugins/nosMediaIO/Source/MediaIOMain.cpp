@@ -19,7 +19,7 @@ NOS_REGISTER_NAME(sRGB);
 namespace nos::MediaIO
 {
 
-enum MediaIO : int
+enum Nodes : int
 {	// CPU nodes
 	Interlace,
 	Deinterlace,
@@ -32,6 +32,7 @@ enum MediaIO : int
 	BoundedTextureQueue,
 	UploadBufferProvider,
 	YUY2ToRGBA,
+	TextureFormatConverter,
 	Count
 };
 
@@ -46,13 +47,14 @@ nosResult RegisterBufferRing(nosNodeFunctions*);
 nosResult RegisterBoundedTextureQueue(nosNodeFunctions*);
 nosResult RegisterUploadBufferProvider(nosNodeFunctions*);
 nosResult RegisterYUY2ToRGBA(nosNodeFunctions*);
+nosResult RegisterTextureFormatConverter(nosNodeFunctions* fn);
 
 extern "C"
 {
 
 NOSAPI_ATTR nosResult NOSAPI_CALL nosExportNodeFunctions(size_t* outSize, nosNodeFunctions** outList)
 {
-    *outSize = MediaIO::Count;
+    *outSize = Nodes::Count;
 	if (!outList)
 		return NOS_RESULT_SUCCESS;
 
@@ -68,10 +70,10 @@ NOSAPI_ATTR nosResult NOSAPI_CALL nosExportNodeFunctions(size_t* outSize, nosNod
 		break;								\
 	}
 
-	for (int i = 0; i < MediaIO::Count; ++i)
+	for (int i = 0; i < Nodes::Count; ++i)
 	{
 		auto node = outList[i];
-		switch ((MediaIO)i) {
+		switch ((Nodes)i) {
 			default:
 				break;
 			GEN_CASE_NODE(Interlace)
@@ -85,6 +87,7 @@ NOSAPI_ATTR nosResult NOSAPI_CALL nosExportNodeFunctions(size_t* outSize, nosNod
 			GEN_CASE_NODE(BoundedTextureQueue)
 			GEN_CASE_NODE(UploadBufferProvider)
 			GEN_CASE_NODE(YUY2ToRGBA)
+			GEN_CASE_NODE(TextureFormatConverter)
 		}
 	}
 	return NOS_RESULT_SUCCESS;

@@ -41,6 +41,7 @@ nos_get_module("nos.sys.vulkan" "5.2" NOS_SYS_VULKAN_TARGET)
 nos_get_module("nos.sys.vulkan" "5.3" NOS_SYS_VULKAN_TARGET_5_3)
 nos_get_module("nos.sys.vulkan" "5.5" NOS_SYS_VULKAN_TARGET_5_5)
 nos_get_module("nos.sys.vulkan" "5.6" NOS_SYS_VULKAN_TARGET_5_6)
+nos_get_module("nos.sys.vulkan" "5.7" NOS_SYS_VULKAN_TARGET_5_7)
 
 set(TOOLS_DIR ${CMAKE_CURRENT_SOURCE_DIR}/Subsystems/nosShaderCompiler/Binaries/tools/${CMAKE_SYSTEM_NAME})
 set(FLATC_EXECUTABLE ${TOOLS_DIR}/flatc)

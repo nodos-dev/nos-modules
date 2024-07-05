@@ -2,8 +2,6 @@
 #include <Nodos/PluginHelpers.hpp>
 
 #include <nosVulkanSubsystem/Helpers.hpp>
-#include "Interlace.frag.spv.dat"
-#include "Deinterlace.frag.spv.dat"
 
 #include "Names.h"
 
