@@ -1,4 +1,4 @@
-// Copyright MediaZ Teknoloji A.S. All Rights Reserved.
+// Copyright Nodos AS. All Rights Reserved.
 #include <Nodos/SubsystemAPI.h>
 #include <Nodos/Helpers.hpp>
 
@@ -24,13 +24,18 @@ public:
 		pyb::gil_scoped_acquire gil;
 		auto sysInfo = pyb::module::import("sys").attr("version").cast<std::string>();
 		nosEngine.LogI("%s", sysInfo.c_str());
-		NodosModule = std::make_unique<pyb::module>(pyb::module::import("nodos"));
+		try {
+			__nodos_internal__Module = std::make_unique<pyb::module>(pyb::module::import("__nodos_internal__"));
+		}
+		catch (std::exception& e)
+		{
+			nosEngine.LogE(e.what(), "Failed to import __nodos_internal__ with error %s", e.what());
+		}
 	}
 
 	~Interpreter()
 	{
-		pyb::gil_scoped_acquire gil;
-		Modules.clear();
+		ModuleInstances.clear();
 		NodosModule.reset();
 	}
 
@@ -40,37 +45,75 @@ public:
 		pyb::module::import("sys").attr("path").attr("append")(path);
 	}
 
-	void Import(nos::Name nodeClassName, std::filesystem::path pySourcePath)
-	{
-		pyb::gil_scoped_acquire gil;
-		if (auto m = GetPyModule(nodeClassName))
-		{
-			nosEngine.LogI("Reloading %s source", nodeClassName.AsCStr());
-			m->reload();
-			return;
+	nosResult ImportModule(nos::Name name, std::filesystem::path pySourcePath) {
+		if (ModuleClasses.contains(name)) {
+			try {
+				pyb::gil_scoped_acquire gil;
+				ModuleClasses[name]->reload();
+			}
+			catch (std::exception& e)
+			{
+				nosEngine.LogE(e.what(), "Failed to reload module %s with error %s", name.AsCStr(), e.what());
+				return NOS_RESULT_FAILED;
+			}
+			return NOS_RESULT_SUCCESS;
 		}
-		nosEngine.LogI("Importing %s source from %s", nodeClassName.AsCStr(), pySourcePath.generic_string().c_str());
-		AddPath(pySourcePath.parent_path().generic_string());
-		auto imported = pyb::module::import(pySourcePath.filename().stem().generic_string().c_str());
-		Modules[nodeClassName] = std::make_unique<pyb::module>(std::move(imported));
+		try {
+			pyb::gil_scoped_acquire gil;
+			AddPath(pySourcePath.parent_path().generic_string());
+			pyb::module python_module = pyb::module::import(pySourcePath.filename().stem().generic_string().c_str());
+			ModuleClasses[name] = std::make_unique<pyb::module>(std::move(python_module));
+		}
+		catch (std::exception& e)
+		{
+			nosEngine.LogE(e.what(), "Failed to import module %s with error %s", name.AsCStr(), e.what());
+			return NOS_RESULT_FAILED;
+		}
+		return NOS_RESULT_SUCCESS;
 	}
 
-	pyb::module* GetPyModule(nosName nodeClassName)
+	void CreateInstance(nos::fb::UUID id, nos::Name className,nos::Name name)
 	{
-		auto it = Modules.find(nodeClassName);
-		if (it == Modules.end())
+		try {
+			pyb::gil_scoped_acquire gil;
+			pyb::object python_object = ModuleClasses[className]->attr(name.AsCStr());
+
+			pyb::object instance = python_object();
+			ModuleInstances[id] = std::make_unique<pyb::object>(std::move(instance));
+		}
+		catch (std::exception& e)
+		{
+			nosEngine.LogE(e.what(), "Failed to create instance of %s with error %s", name.AsCStr(), e.what());
+		}
+	}
+
+	void RemoveInstance(nos::fb::UUID id)
+	{
+		if (ModuleInstances.contains(id)) {
+			pyb::gil_scoped_acquire gil;
+			ModuleInstances.erase(id);
+		}
+	}
+
+	std::shared_ptr<pyb::object> GetPyObject(nos::fb::UUID id)
+	{
+		auto it = ModuleInstances.find(id);
+		if (it == ModuleInstances.end())
 			return nullptr;
-		return it->second.get();
+		return it->second;
 	}
 
 protected:
 	pyb::scoped_interpreter ScopedInterpreter;
 	pyb::gil_scoped_release Release;
-	std::unordered_map<nos::Name, std::unique_ptr<pyb::module>> Modules;
+	std::unordered_map<nos::fb::UUID, std::shared_ptr<pyb::object>> ModuleInstances;
+	std::unordered_map<nos::Name, std::unique_ptr<pyb::module>> ModuleClasses;
 	std::unique_ptr<pyb::module> NodosModule;
+	std::unique_ptr<pyb::module> __nodos_internal__Module;
 };
 
 static Interpreter* GInterpreter = nullptr;
+static std::vector<std::unique_ptr<nos::fb::UUID>> NodeUUIDs;
 
 // Classes with prefix 'PyNative' are only constructed from C++ side, with 'Py' are for Python-constructible.
 class PyNativeNodeExecuteArgs : public nos::NodeExecuteArgs
@@ -95,7 +138,35 @@ public:
 	}
 };
 
-PYBIND11_EMBEDDED_MODULE(nodos, m)
+class PyNativeOnPinValueChangedArgs {
+public:
+	PyNativeOnPinValueChangedArgs() : pinName(), value() {}
+	nos::Name pinName = {};
+	nosBuffer value = {};
+
+	pyb::memoryview GetPinValue() const
+	{
+		return pyb::memoryview::from_memory(value.Data, value.Size);
+	}
+	nos::Name GetPinName() const
+	{
+		return pinName;
+	}
+};
+
+class PyNativeOnPinConnectedArgs {
+public:
+	PyNativeOnPinConnectedArgs() : pinName() {}
+	nos::Name pinName = {};
+};
+
+class PyNativeOnPinDisconnectedArgs {
+public:
+	PyNativeOnPinDisconnectedArgs() : pinName() {}
+	nos::Name pinName = {};
+};
+
+PYBIND11_EMBEDDED_MODULE(__nodos_internal__, m)
 {
 	// Enums
 	pyb::class_<nosResult>(m, "result")
@@ -103,11 +174,21 @@ PYBIND11_EMBEDDED_MODULE(nodos, m)
 		.def_property_readonly_static("FAILED", [](const pyb::object&) {return NOS_RESULT_FAILED; });
 
 	// Structs
-	pyb::class_<PyNativeNodeExecuteArgs>(m, "NodeExecuteArgs")
+	pyb::class_<PyNativeNodeExecuteArgs>(m, "__internal__NodeExecuteArgs")
 		.def_property_readonly("node_class_name", [](const PyNativeNodeExecuteArgs& args) -> std::string_view { return args.NodeClassName.AsCStr(); })
 		.def_property_readonly("node_name", [](const PyNativeNodeExecuteArgs& args) -> std::string_view { return args.NodeName.AsCStr(); })
-		.def("pin_value", &PyNativeNodeExecuteArgs::GetPinValue, "Access the memory of the pin specified by 'pin_name'", "pin_name"_a)
-		.def("pin_id", &PyNativeNodeExecuteArgs::GetPinId, "Get the unique identifier of the pin specified by 'pin_name'", "pin_name"_a);
+		.def("get_pin_value", &PyNativeNodeExecuteArgs::GetPinValue, "Access the memory of the pin specified by 'pin_name'", "pin_name"_a)
+		.def("get_pin_id", &PyNativeNodeExecuteArgs::GetPinId, "Get the unique identifier of the pin specified by 'pin_name'", "pin_name"_a);
+
+	pyb::class_<PyNativeOnPinValueChangedArgs>(m, "__internal__PinValueChangedArgs")
+		.def_property_readonly("pin_value", [](const PyNativeOnPinValueChangedArgs& args) -> pyb::memoryview { return args.GetPinValue(); })
+		.def_property_readonly("pin_name", [](const PyNativeOnPinValueChangedArgs& args) -> std::string_view { return args.pinName.AsCStr(); });
+
+	pyb::class_<PyNativeOnPinConnectedArgs>(m, "__internal__PinConnectedArgs")
+		.def_property_readonly("pin_value", [](const PyNativeOnPinConnectedArgs& args) -> std::string_view { return args.pinName.AsCStr(); });
+	
+	pyb::class_<PyNativeOnPinDisconnectedArgs>(m, "__internal__PinDisconnectedArgs")
+		.def_property_readonly("pin_value", [](const PyNativeOnPinDisconnectedArgs& args) -> std::string_view { return args.pinName.AsCStr(); });
 
 	pyb::class_<nosUUID>(m, "uuid")
 		.def(pyb::init<>())
@@ -120,6 +201,22 @@ PYBIND11_EMBEDDED_MODULE(nodos, m)
 		[](const nosUUID& id, const pyb::buffer& buf) {
 			auto info = buf.request();
 			nosEngine.SetPinValue(id, nosBuffer{.Data = info.ptr, .Size = info.size < 0 ? 0ull : (size_t(info.size) * info.itemsize)});
+		});
+	
+	// Engine Services
+	m.def("log_info",
+		[](const std::string& log) {
+			nosEngine.LogI(log.c_str());
+		});
+
+	m.def("log_warning",
+		[](const std::string& log) {
+			nosEngine.LogW(log.c_str());
+		});
+
+	m.def("log_error",
+		[](const std::string& log) {
+			nosEngine.LogE(log.c_str());
 		});
 }
 
@@ -134,6 +231,7 @@ void Deinit()
 	delete GInterpreter;
 }
 
+
 nosResult NOSAPI_CALL OnPyNodeRegistered(nosModuleIdentifier pluginId, nosName className, nosBuffer options)
 {
 	char path[2048];
@@ -147,25 +245,55 @@ nosResult NOSAPI_CALL OnPyNodeRegistered(nosModuleIdentifier pluginId, nosName c
 
 	fs::path relSourcePath = pyNodeOptions->source()->str();
 	std::string sourcePathStr = (moduleRoot / relSourcePath).generic_string();
-	
-	try
-	{
-		GInterpreter->Import(className, std::filesystem::canonical(sourcePathStr));
-	}
-	catch (std::exception& e)
-	{
-		nosEngine.LogDE(e.what(), "Failed to import module %s. See details.", sourcePathStr.c_str());
-		return NOS_RESULT_FAILED;
-	}
-	return NOS_RESULT_SUCCESS;
+
+
+	return GInterpreter->ImportModule(className, std::filesystem::canonical(sourcePathStr));
+}
+
+void NOSAPI_CALL OnNodeCreated(const nosFbNode* node, void** outCtxPtr) {
+	GInterpreter->CreateInstance(*node->id(), nos::Name(node->class_name()->str()),nos::Name(node->name()->str()));
+	NodeUUIDs.push_back(std::make_unique<nos::fb::UUID>(*node->id()));
+	(*outCtxPtr) = NodeUUIDs[NodeUUIDs.size() - 1].get();
+}
+
+void NOSAPI_CALL OnNodeDeleted(void* ctx, nosUUID nodeId) {
+
+	GInterpreter->RemoveInstance(nodeId);
+}
+
+void NOSAPI_CALL OnPinValueChanged(void* ctx, nosName pinName, nosUUID pinId, nosBuffer value)
+{
+	pyb::gil_scoped_acquire gil;
+	nos::fb::UUID id = *static_cast<nos::fb::UUID*>(ctx);
+	PyNativeOnPinValueChangedArgs args;
+	args.pinName = nos::Name(pinName);
+	args.value = value;
+	GInterpreter->GetPyObject(id)->attr("on_pin_value_changed")(args);
+}
+void NOSAPI_CALL OnPinConnected(void* ctx, nosName pinName, nosUUID connectedPin, nosUUID nodeId)
+{
+	pyb::gil_scoped_acquire gil;
+	nos::fb::UUID id = *static_cast<nos::fb::UUID*>(ctx);
+	PyNativeOnPinConnectedArgs args;
+	args.pinName = nos::Name(pinName);
+	GInterpreter->GetPyObject(id)->attr("on_pin_connected")(args);
+}
+
+void NOSAPI_CALL OnPinDisconnected(void* ctx, nosName pinName)
+{
+	pyb::gil_scoped_acquire gil;
+	nos::fb::UUID id = *static_cast<nos::fb::UUID*>(ctx);
+	PyNativeOnPinDisconnectedArgs args;
+	args.pinName = nos::Name(pinName);
+	GInterpreter->GetPyObject(id)->attr("on_pin_disconnected")(args);
 }
 
 nosResult NOSAPI_CALL ExecutePyNode(void* ctx, const nosNodeExecuteArgs* args)
 {
-	auto m = GInterpreter->GetPyModule(args->NodeClassName);
+	auto m = GInterpreter->GetPyObject(args->NodeId);
 	if (!m)
 		return NOS_RESULT_NOT_FOUND;
-	
+
 	try {
 		pyb::gil_scoped_acquire gil;
 		PyNativeNodeExecuteArgs pyNativeArgs(args);
@@ -179,7 +307,6 @@ nosResult NOSAPI_CALL ExecutePyNode(void* ctx, const nosNodeExecuteArgs* args)
 	}
 	return NOS_RESULT_SUCCESS;
 }
-
 } // namespace nos::py
 
 extern "C"
@@ -188,6 +315,7 @@ extern "C"
 NOSAPI_ATTR nosResult NOSAPI_CALL nosExportSubsystem(nosSubsystemFunctions* subsystemFunctions)
 {
 	nos::py::Init();
+	
 	return NOS_RESULT_SUCCESS;
 }
 
@@ -214,9 +342,15 @@ NOSAPI_ATTR nosResult NOSAPI_CALL nosExportSubsystemNodeFunctions(size_t* outSiz
 	if (!outList)
 		return NOS_RESULT_SUCCESS;
 	auto pyNodeFunctions = outList[0];
-	pyNodeFunctions->NodeType = NOS_NAME_STATIC("nos.py.PythonNode");
 	pyNodeFunctions->OnNodeClassRegistered = nos::py::OnPyNodeRegistered;
-	pyNodeFunctions->ExecuteNode = nos::py::ExecutePyNode;
+	pyNodeFunctions->NodeType = NOS_NAME_STATIC("nos.py.PythonNode");
+	pyNodeFunctions->NodeFunctions.OnNodeCreated = nos::py::OnNodeCreated;
+	pyNodeFunctions->NodeFunctions.OnNodeDeleted = nos::py::OnNodeDeleted;
+	pyNodeFunctions->NodeFunctions.ExecuteNode = nos::py::ExecutePyNode;
+	pyNodeFunctions->NodeFunctions.OnPinValueChanged = nos::py::OnPinValueChanged;
+	pyNodeFunctions->NodeFunctions.OnPinConnected = nos::py::OnPinConnected;
+	pyNodeFunctions->NodeFunctions.OnPinDisconnected = nos::py::OnPinDisconnected;
+	
 	return NOS_RESULT_SUCCESS;
 }
 
