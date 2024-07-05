@@ -55,14 +55,10 @@ struct Texture2BufferNodeContext : nos::NodeContext
 		
 		if (currentSize == Buffer.Memory.Size) {
 			nosCmd cmd = {};
-			nosGPUEvent waitTexToBuf = {};
-			nosCmdEndParams endParams = { .ForceSubmit = true, .OutGPUEventHandle = &waitTexToBuf };
 			nosCmdBeginParams beginParams = {.Name = NOS_NAME("Texture2Buffer Copy"), .AssociatedNodeId = NodeId, .OutCmdHandle = &cmd};
 			nosVulkan->Begin2(&beginParams);
 			nosVulkan->Copy(cmd, &in, &Buffer, 0);
-			nosVulkan->End(cmd, &endParams);
-			nosVulkan->WaitGpuEvent(&waitTexToBuf, UINT64_MAX);
-			uint8_t* b = nosVulkan->Map(&Buffer);
+			nosVulkan->End(cmd, nullptr);
 			return;
 		}
 
