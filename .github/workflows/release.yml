@@ -26,9 +26,6 @@ on:
 
 env:
   GH_USERNAME: "mediaz-bot"
-  GH_RELEASE_REPO_URL: "https://github.com/mediaz/modules-releases"
-  GH_RELEASE_REPO_ORG: "mediaz"
-  GH_RELEASE_REPO_NAME: "modules-releases"
   GIT_EMAIL: "bot@nodos.dev"
   GH_TOKEN: ${{ secrets.CI_TOKEN }}
   DIST_TARGET_DIR: "D:/Builds/Nodos-Modules"
@@ -152,14 +149,14 @@ jobs:
         run: |
           $LastBuildTag = git for-each-ref --sort=-v:refname --format='%(refname:short)' 'refs/tags/build.${{ github.ref_name }}-*' | Select-Object -First 1
           echo "Last build tag is $LastBuildTag"
-          ../../nosman.exe --workspace ../../ publish-batch --repo-path . --compare-with "$LastBuildTag" --vendor Nodos --version-suffix ".b${{ env.BUILD_NUMBER }}" --verbose --publisher-name "mediaz-bot" --publisher-email "bot@nodos.dev"
+          ../../nosman.exe --workspace ../../ publish-batch --repo-path . --compare-with="$LastBuildTag" --vendor Nodos --version-suffix ".b${{ env.BUILD_NUMBER }}" --verbose --publisher-name "${{ env.GH_USERNAME }}" --publisher-email "${{ env.GIT_EMAIL }}"
         working-directory: ./modules-${{ github.ref_name }}/workspace/Module/modules-repo
       
       - name: Release (All)
         if: ${{ github.event.inputs.build_all == 'true' }}
         shell: pwsh
         run: |
-          ../../nosman.exe --workspace ../../ publish-batch --repo-path . --vendor=Nodos --version-suffix ".b${{ env.BUILD_NUMBER }}" --verbose --publisher-name "mediaz-bot" --publisher-email "bot@nodos.dev"
+          ../../nosman.exe --workspace ../../ publish-batch --repo-path . --vendor=Nodos --version-suffix ".b${{ env.BUILD_NUMBER }}" --verbose --publisher-name "${{ env.GH_USERNAME }}" --publisher-email "${{ env.GIT_EMAIL }}"
         working-directory: ./modules-${{ github.ref_name }}/workspace/Module/modules-repo
       
       - name: Tag
