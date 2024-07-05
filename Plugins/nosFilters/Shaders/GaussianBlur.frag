@@ -16,7 +16,7 @@ Params;
 layout(location = 0) out vec4 rt;
 layout(location = 0) in vec2 uv;
 
-#include "../../Shaders/ShaderCommon.glsl"
+const float PI_FLOAT = 3.1415926535897932384626433832795;
 
 float GaussCoeff1D(int i, float Sigma)
 {
