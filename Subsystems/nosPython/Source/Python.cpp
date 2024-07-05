@@ -231,7 +231,6 @@ void Deinit()
 	delete GInterpreter;
 }
 
-
 nosResult NOSAPI_CALL OnPyNodeRegistered(nosModuleIdentifier pluginId, nosName className, nosBuffer options)
 {
 	char path[2048];
@@ -246,6 +245,11 @@ nosResult NOSAPI_CALL OnPyNodeRegistered(nosModuleIdentifier pluginId, nosName c
 	fs::path relSourcePath = pyNodeOptions->source()->str();
 	std::string sourcePathStr = (moduleRoot / relSourcePath).generic_string();
 
+	if (!fs::exists(sourcePathStr))
+	{
+		nosEngine.LogE("Python Subsystem: Source file %s does not exist.", sourcePathStr.c_str());
+		return NOS_RESULT_INVALID_ARGUMENT;
+	}
 
 	return GInterpreter->ImportModule(className, std::filesystem::canonical(sourcePathStr));
 }
@@ -270,6 +274,7 @@ void NOSAPI_CALL OnPinValueChanged(void* ctx, nosName pinName, nosUUID pinId, no
 	args.value = value;
 	GInterpreter->GetPyObject(id)->attr("on_pin_value_changed")(args);
 }
+
 void NOSAPI_CALL OnPinConnected(void* ctx, nosName pinName, nosUUID connectedPin, nosUUID nodeId)
 {
 	pyb::gil_scoped_acquire gil;
@@ -303,7 +308,7 @@ nosResult NOSAPI_CALL ExecutePyNode(void* ctx, const nosNodeExecuteArgs* args)
 	catch (std::exception& exp)
 	{
 		nosEngine.LogDE(exp.what(), "%s execution failed. See details.", nos::Name(args->NodeClassName).AsCStr());
-		return NOS_RESULT_SUCCESS;
+		return NOS_RESULT_FAILED;
 	}
 	return NOS_RESULT_SUCCESS;
 }

@@ -389,7 +389,7 @@
 			"contents": {
 			    "type": "nos.py.PythonNode",
 			    "options": {
-			        "source": "./Source/pow.py"
+			        "source": "./Source/PowNode.py"
 			    }
 			},
 			"pins": [
