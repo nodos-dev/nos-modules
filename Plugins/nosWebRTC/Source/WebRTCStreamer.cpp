@@ -316,7 +316,7 @@ struct WebRTCNodeContext : nos::NodeContext {
 			auto time = std::chrono::duration<float>(1.0f / FPS);
 			timeLimit = std::chrono::round<std::chrono::microseconds>(time);
 		}
-		if (pinName == NSN_TargetBitrate) {
+		if (pinName == NSN_TargetBitrate && p_nosWebRTC != nullptr) {
 			int targetKbps = *(static_cast<int*>(value.Data));
 			p_nosWebRTC->SetTargetBitrate(targetKbps);
 		}
