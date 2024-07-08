@@ -119,7 +119,7 @@ vec4  SDR_In_N (in uvec3 c, float N)
 
 uvec3 SDR_Out_N(in vec3 c, float N)  
 { 
-    return uvec3(round((ubo.Colorspace * vec4(IDXff(c), 1)).xyz * N)); 
+    return uvec3(round(clamp(ubo.Colorspace * vec4(IDXff(c), 1), 0.0, 1.0).xyz * N)); 
 }
 
 vec4  SDR_In_10 (in uvec3 c) { return SDR_In_N (c, N10); }
