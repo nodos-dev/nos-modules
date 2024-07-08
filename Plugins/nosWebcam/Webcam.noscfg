@@ -5,7 +5,7 @@
             "version": "1.0.0"
         },
         "display_name": "Webcam",
-        "description": "Webcam plugin using OpenCV.",
+        "description": "Webcam plugin.",
         "dependencies": [
             {
                 "name": "nos.sys.vulkan",
@@ -14,14 +14,29 @@
         ]
     },
     "node_definitions": [
-        "Config/WebcamIn.nosdef"
+        "Config/WebcamReader.nosdef", 
+		"Config/WebcamStream.nosdef",
+		"Config/WebcamIn.nosdef"
+    ],
+    "custom_types" :[
+      "Config/Webcam.fbs"
     ],
     "binary_path": "Binaries/nosWebcam",
     "associated_nodes": [
-        {
+		{
             "category": "Device|Webcam",
             "class_name": "WebcamIn",
             "display_name": "WebcamIn"
+        },
+		{
+            "category": "Device|Webcam",
+            "class_name": "WebcamStream",
+            "display_name": "WebcamStream"
+        },
+        {
+            "category": "Device|Webcam",
+            "class_name": "WebcamReader",
+            "display_name": "WebcamReader"
         }
     ]
 }
