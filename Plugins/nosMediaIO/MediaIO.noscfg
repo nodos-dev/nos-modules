@@ -1,11 +1,11 @@
 {
     "info": {
         "id": {
-            "name": "nos.MediaIO",
+            "name": "nos.mediaio",
             "version": "1.2.0"
         },
-        "description": "MediaIO nodes.",
-        "display_name": "MediaIO",
+        "description": "Media I/O nodes.",
+        "display_name": "mediaio",
         "dependencies": [
             {
                 "name": "nos.sys.vulkan",
@@ -24,7 +24,7 @@
     "custom_types": [
         "Config/Conversion.fbs"
     ],
-    "binary_path": "Binaries/nosMediaIO",
+    "binary_path": "Binaries/nosmediaio",
     "associated_nodes": [
         {
             "category": "Media IO",

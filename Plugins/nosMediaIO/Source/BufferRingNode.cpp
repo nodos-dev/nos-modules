@@ -2,7 +2,7 @@
 
 #include "RingNodeBase.hpp"
 
-namespace nos::MediaIO
+namespace nos::mediaio
 {
 struct BufferRingNodeContext : RingNodeBase<nosBufferInfo, true>
 {

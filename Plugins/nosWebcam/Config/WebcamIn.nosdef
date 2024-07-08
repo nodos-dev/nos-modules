@@ -926,7 +926,7 @@
           {
             "id": "11744ed1-a283-4d23-b9d1-c9361fc7f234",
             "name": "YUY2ToRGBA",
-            "class_name": "nos.MediaIO.YUY2ToRGBA",
+            "class_name": "nos.mediaio.YUY2ToRGBA",
             "pins": [
               {
                 "id": "f3ddb588-0229-4287-ab01-48f107b2b530",
@@ -1197,7 +1197,7 @@
           {
             "id": "34ec2114-a5f9-4128-89df-45f0a91db8d3",
             "name": "UploadBufferProvider",
-            "class_name": "nos.MediaIO.UploadBufferProvider",
+            "class_name": "nos.mediaio.UploadBufferProvider",
             "pins": [
               {
                 "id": "6330e91d-7fa2-44b1-a447-be2ddfbefae0",
@@ -1492,7 +1492,7 @@
           {
             "id": "6810f76b-86e3-464f-a78b-3e078781e05f",
             "name": "BoundedTextureQueue",
-            "class_name": "nos.MediaIO.BoundedTextureQueue",
+            "class_name": "nos.mediaio.BoundedTextureQueue",
             "pins": [
               {
                 "id": "694b92ed-1ba5-4e9e-bf13-9d0dba4de966",

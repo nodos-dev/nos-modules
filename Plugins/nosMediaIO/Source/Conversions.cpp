@@ -9,7 +9,7 @@
 #include <stb_image.h>
 #include <stb_image_write.h>
 
-namespace nos::MediaIO
+namespace nos::mediaio
 {
 
 static std::set<u32> const& FindDivisors(const u32 N)
@@ -136,7 +136,7 @@ struct RGB2YCbCrNodeContext : NodeContext
 
 nosResult RegisterRGB2YCbCr(nosNodeFunctions* funcs)
 {
-	NOS_BIND_NODE_CLASS(NOS_NAME_STATIC("nos.MediaIO.RGB2YCbCr"), RGB2YCbCrNodeContext, funcs);
+	NOS_BIND_NODE_CLASS(NOS_NAME_STATIC("nos.mediaio.RGB2YCbCr"), RGB2YCbCrNodeContext, funcs);
 	return NOS_RESULT_SUCCESS;
 }
 
@@ -197,7 +197,7 @@ struct YCbCr2RGBNodeContext : NodeContext
 
 nosResult RegisterYCbCr2RGB(nosNodeFunctions* funcs)
 {
-	NOS_BIND_NODE_CLASS(NOS_NAME_STATIC("nos.MediaIO.YCbCr2RGB"), YCbCr2RGBNodeContext, funcs);
+	NOS_BIND_NODE_CLASS(NOS_NAME_STATIC("nos.mediaio.YCbCr2RGB"), YCbCr2RGBNodeContext, funcs);
 	return NOS_RESULT_SUCCESS;
 }
 
@@ -223,7 +223,7 @@ struct YUVBufferSizeCalculator : NodeContext
 
 nosResult RegisterYUVBufferSizeCalculator(nosNodeFunctions* funcs)
 {
-	NOS_BIND_NODE_CLASS(NOS_NAME_STATIC("nos.MediaIO.YUVBufferSizeCalculator"), YUVBufferSizeCalculator, funcs);
+	NOS_BIND_NODE_CLASS(NOS_NAME_STATIC("nos.mediaio.YUVBufferSizeCalculator"), YUVBufferSizeCalculator, funcs);
 	return NOS_RESULT_SUCCESS;
 }
 
@@ -318,7 +318,7 @@ struct GammaLUTNodeContext : NodeContext
 
 nosResult RegisterGammaLUT(nosNodeFunctions* funcs)
 {
-	NOS_BIND_NODE_CLASS(NOS_NAME_STATIC("nos.MediaIO.GammaLUT"), GammaLUTNodeContext, funcs);
+	NOS_BIND_NODE_CLASS(NOS_NAME_STATIC("nos.mediaio.GammaLUT"), GammaLUTNodeContext, funcs);
 	return NOS_RESULT_SUCCESS;
 }
 
@@ -393,7 +393,7 @@ struct ColorSpaceMatrixNodeContext : NodeContext
 
 nosResult RegisterColorSpaceMatrix(nosNodeFunctions* funcs)
 {
-	NOS_BIND_NODE_CLASS(NOS_NAME_STATIC("nos.MediaIO.ColorSpaceMatrix"), ColorSpaceMatrixNodeContext, funcs);
+	NOS_BIND_NODE_CLASS(NOS_NAME_STATIC("nos.mediaio.ColorSpaceMatrix"), ColorSpaceMatrixNodeContext, funcs);
 	return NOS_RESULT_SUCCESS;
 }
 
@@ -439,7 +439,7 @@ struct YUY2ToRGBANodeContext : NodeContext
 
 nosResult RegisterYUY2ToRGBA(nosNodeFunctions* funcs)
 {
-	NOS_BIND_NODE_CLASS(NOS_NAME_STATIC("nos.MediaIO.YUY2ToRGBA"), YUY2ToRGBANodeContext, funcs);
+	NOS_BIND_NODE_CLASS(NOS_NAME_STATIC("nos.mediaio.YUY2ToRGBA"), YUY2ToRGBANodeContext, funcs);
 	return NOS_RESULT_SUCCESS;
 }
 

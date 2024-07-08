@@ -16,7 +16,7 @@ NOS_REGISTER_NAME(Out);
 NOS_REGISTER_NAME(Path);
 NOS_REGISTER_NAME(sRGB);
 
-namespace nos::MediaIO
+namespace nos::mediaio
 {
 
 enum Nodes : int
@@ -63,7 +63,7 @@ NOSAPI_ATTR nosResult NOSAPI_CALL nosExportNodeFunctions(size_t* outSize, nosNod
 		return ret;
 
 #define GEN_CASE_NODE(name)				\
-	case MediaIO::name: {					\
+	case Nodes::name: {					\
 		auto ret = Register##name(node);	\
 		if (NOS_RESULT_SUCCESS != ret)		\
 			return ret;						\

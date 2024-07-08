@@ -12,7 +12,7 @@ NOS_REGISTER_NAME(BufferSize);
 NOS_REGISTER_NAME(Alignment);
 
 
-namespace nos::MediaIO
+namespace nos::mediaio
 {
 	struct UploadBuffer
 	{

@@ -1,4 +1,4 @@
-namespace nos.MediaIO;
+namespace nos.mediaio;
 
 enum ColorSpace : uint {
     REC709  = 0,

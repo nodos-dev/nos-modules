@@ -52,7 +52,7 @@
         {
           "name": "PixelFormat",
           "display_name": "Pixel Format",
-          "type_name": "nos.MediaIO.YCbCrPixelFormat",
+          "type_name": "nos.mediaio.YCbCrPixelFormat",
           "show_as": "INPUT_PIN",
           "can_show_as": "INPUT_PIN_OR_PROPERTY"
         },
@@ -116,7 +116,7 @@
         {
           "name": "PixelFormat",
           "display_name": "Pixel Format",
-          "type_name": "nos.MediaIO.YCbCrPixelFormat",
+          "type_name": "nos.mediaio.YCbCrPixelFormat",
           "show_as": "INPUT_PIN",
           "can_show_as": "INPUT_PIN_OR_PROPERTY"
         },
@@ -170,14 +170,14 @@
         },
         {
           "name": "Type",
-          "type_name": "nos.MediaIO.GammaConversionType",
+          "type_name": "nos.mediaio.GammaConversionType",
           "show_as": "PROPERTY",
           "can_show_as": "INPUT_PIN_OR_PROPERTY"
         },
         {
           "name": "GammaCurve",
           "display name": "Gamma Curve",
-          "type_name": "nos.MediaIO.GammaCurve",
+          "type_name": "nos.mediaio.GammaCurve",
           "show_as": "PROPERTY",
           "can_show_as": "INPUT_PIN_OR_PROPERTY"
         }
@@ -198,20 +198,20 @@
         {
           "name": "ColorSpace",
           "display_name": "Color Space",
-          "type_name": "nos.MediaIO.ColorSpace",
+          "type_name": "nos.mediaio.ColorSpace",
           "show_as": "PROPERTY",
           "can_show_as": "INPUT_PIN_OR_PROPERTY"
         },
         {
           "name": "PixelFormat",
           "display_name": "Pixel Format",
-          "type_name": "nos.MediaIO.YCbCrPixelFormat",
+          "type_name": "nos.mediaio.YCbCrPixelFormat",
           "show_as": "INPUT_PIN",
           "can_show_as": "INPUT_PIN_OR_PROPERTY"
         },
         {
           "name": "Type",
-          "type_name": "nos.MediaIO.GammaConversionType",
+          "type_name": "nos.mediaio.GammaConversionType",
           "show_as": "PROPERTY",
           "can_show_as": "INPUT_PIN_OR_PROPERTY"
         },
@@ -251,7 +251,7 @@
         {
           "name": "PixelFormat",
           "display_name": "Pixel Format",
-          "type_name": "nos.MediaIO.YCbCrPixelFormat",
+          "type_name": "nos.mediaio.YCbCrPixelFormat",
           "show_as": "INPUT_PIN",
           "can_show_as": "INPUT_PIN_OR_PROPERTY"
         },

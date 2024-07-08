@@ -11,7 +11,7 @@
 #include "Ring.h"
 #include "nosUtil/Stopwatch.hpp"
 
-namespace nos::MediaIO
+namespace nos::mediaio
 {
 
 template<typename T, bool CheckInterlace>

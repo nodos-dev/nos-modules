@@ -2,7 +2,7 @@
 #include <nosVulkanSubsystem/Helpers.hpp>
 #include <nosVulkanSubsystem/Types_generated.h>
 
-namespace nos::MediaIO
+namespace nos::mediaio
 {
 NOS_REGISTER_NAME(Input)
 NOS_REGISTER_NAME(Output)
@@ -276,7 +276,7 @@ nosResult RegisterTextureFormatConverter(nosNodeFunctions* fn)
 	nosShaderInfo2 FloatToIntShaderInfo = {
 		.Key = NSN_FloatToIntFormat,
 		.Source = {.Stage = NOS_SHADER_STAGE_COMP, .GLSLPath = shaderPath.c_str()},
-		.AssociatedNodeClassName = NOS_NAME("nos.MediaIO.TextureFormatConverter")
+		.AssociatedNodeClassName = NOS_NAME("nos.mediaio.TextureFormatConverter")
 	};
 	nosResult ret = nosVulkan->RegisterShaders2(1, &FloatToIntShaderInfo);
 	if (NOS_RESULT_SUCCESS != ret)
