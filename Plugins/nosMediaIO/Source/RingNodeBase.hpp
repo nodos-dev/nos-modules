@@ -255,6 +255,7 @@ struct RingNodeBase : NodeContext
 			output = vkss::ConvertToResourceInfo(outputBufferDesc);
 			if (slot->Res.Info.Buffer.Size != output.Info.Buffer.Size)
 			{
+				output.Memory = {};
 				output.Info.Type = NOS_RESOURCE_TYPE_BUFFER;
 				output.Info.Buffer = slot->Res.Info.Buffer;
 				nosEngine.SetPinValueByName(NodeId, NOS_NAME_STATIC("Output"), Buffer::From(vkss::ConvertBufferInfo(output)));
@@ -270,6 +271,7 @@ struct RingNodeBase : NodeContext
 				slot->Res.Info.Texture.Width != output.Info.Texture.Width ||
 				slot->Res.Info.Texture.Format != output.Info.Texture.Format)
 			{
+				output.Memory = {};
 				output.Info.Type = NOS_RESOURCE_TYPE_TEXTURE;
 				output.Info.Texture = slot->Res.Info.Texture;
 				output.Info.Texture.Usage = nosImageUsage(NOS_IMAGE_USAGE_TRANSFER_SRC | NOS_IMAGE_USAGE_TRANSFER_DST | NOS_IMAGE_USAGE_SAMPLED);
