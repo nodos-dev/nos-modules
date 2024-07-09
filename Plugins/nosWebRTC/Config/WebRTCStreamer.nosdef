@@ -15,6 +15,12 @@
               }
             },
             {
+              "name": "Thread",
+              "type_name": "nos.exe",
+              "show_as": "INPUT_PIN",
+              "can_show_as": "INPUT_PIN_ONLY"
+            },
+            {
               "name": "ServerIP",
               "type_name": "string",
               "show_as": "PROPERTY",

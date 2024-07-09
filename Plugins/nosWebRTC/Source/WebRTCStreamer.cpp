@@ -179,6 +179,9 @@ struct WebRTCNodeContext : nos::NodeContext {
 	std::atomic_int PeerCount = 0;
 	std::string server;
 	uint32_t LastFrameID = 0;
+
+	nosUUID OutputPinUUID;
+
 	//On Node Created
 	WebRTCNodeContext(nos::fb::Node const* node) :NodeContext(node), currentState(EWebRTCPlayerStates::eNONE), encodeLogger("WebRTC Streamer Encode"), copyToLogger("WebRTC Stramer BeginCopyTo") {
 		InputRGBA8.Info.Texture.Format = NOS_FORMAT_B8G8R8A8_SRGB;
@@ -200,17 +203,18 @@ struct WebRTCNodeContext : nos::NodeContext {
 
 		for (int i = 0; i < buffers.size(); i++) {
 			nosResourceShareInfo PlaneY = {};
-			PlaneY.Info.Texture.Format = NOS_FORMAT_R8_SRGB;
 			PlaneY.Info.Type = NOS_RESOURCE_TYPE_TEXTURE;
 			PlaneY.Info.Buffer.Usage = nosBufferUsage(NOS_BUFFER_USAGE_TRANSFER_SRC | NOS_BUFFER_USAGE_TRANSFER_DST);
 			PlaneY.Info.Texture.Width = InputRGBA8.Info.Texture.Width;
 			PlaneY.Info.Texture.Height = InputRGBA8.Info.Texture.Height + InputRGBA8.Info.Texture.Height / 2;
+			PlaneY.Info.Texture.Format = NOS_FORMAT_R8_SRGB;
 			nosVulkan->CreateResource(&PlaneY);
 			
 			nosResourceShareInfo BufY  = {};
 			BufY.Info.Type = NOS_RESOURCE_TYPE_BUFFER;
 			BufY.Info.Buffer.Size = PlaneY.Info.Texture.Width * PlaneY.Info.Texture.Height * sizeof(uint8_t);
 			BufY.Info.Buffer.Usage = nosBufferUsage(NOS_BUFFER_USAGE_TRANSFER_SRC | NOS_BUFFER_USAGE_TRANSFER_DST);
+			BufY.Info.Buffer.MemoryFlags = nosMemoryFlags(NOS_MEMORY_FLAGS_HOST_VISIBLE);
 			nosVulkan->CreateResource(&BufY);
 
 			nosResourceShareInfo Input = {};
@@ -236,11 +240,14 @@ struct WebRTCNodeContext : nos::NodeContext {
 			if (pin->show_as() == nos::fb::ShowAs::INPUT_PIN) {
 				InputPinUUID = *pin->id();
 			}
-			if (NSN_MaxFPS.Compare(pin->name()->c_str()) == 0)
+			else if (NSN_MaxFPS.Compare(pin->name()->c_str()) == 0)
 			{
 				FPS = *(float*)pin->data()->data();
 				auto time = std::chrono::duration<float>(1.0f / FPS);
 				timeLimit = std::chrono::round<std::chrono::microseconds>(time);
+			}
+			else if (pin->show_as() == nos::fb::ShowAs::OUTPUT_PIN) {
+				OutputPinUUID = *pin->id();
 			}
 		}
 		for (auto func : *node->functions()) {
@@ -304,6 +311,24 @@ struct WebRTCNodeContext : nos::NodeContext {
 
 		p_nosWebRTC.reset();
 
+	}
+
+	void GetScheduleInfo(nosScheduleInfo* out) override
+	{
+		*out = nosScheduleInfo{
+			.Importance = 0,
+			.DeltaSeconds = {10'000u, (uint32_t)std::floor(FPS * 10'000)},
+			.Type = NOS_SCHEDULE_TYPE_ON_DEMAND,
+		};
+	}
+
+	void OnPathStart() override {
+		nosVec2u deltaSec{ 10'000u, (uint32_t)std::floor(FPS * 10'000) };
+		nosScheduleNodeParams scheduleParams
+		{
+			NodeID, 1, false
+		};
+		nosEngine.ScheduleNode(&scheduleParams);
 	}
 
 	void OnPinValueChanged(nos::Name pinName, nosUUID pinId, nosBuffer value) override
@@ -383,24 +408,24 @@ struct WebRTCNodeContext : nos::NodeContext {
 		return NOS_RESULT_SUCCESS;
 	}
 
-	nosResult CopyTo(nosCopyInfo* cpy) override {
+	nosResult ExecuteNode(const nosNodeExecuteArgs* args) 
+	{
 		copyToLogger.LogStats();
 		int writeIndex = 0;
 		{
 			std::unique_lock lock(SendFrameMutex);
 			if (!InputRing->IsWriteable()) {
-				//nosEngine.LogW("WebRTC Streamer frame drop!");
-				return NOS_RESULT_FAILED;
+				nosEngine.LogW("WebRTC Streamer frame drop!");
+				return NOS_RESULT_SUCCESS;
 			}
 			writeIndex = InputRing->GetNextWritable();
 		}
-		LastFrameID = cpy->FrameNumber;
 		nosCmd cmd;
 		nosVulkan->Begin("WebRTC Out Copy", &cmd);
 		auto& toCopy = InputBuffers[writeIndex];
 		nosVulkan->Copy(cmd, &DummyInput, &toCopy.second, 0);
 		assert(toCopy.first == 0);
-		nosCmdEndParams endParams{.ForceSubmit = true, .OutGPUEventHandle = &toCopy.first};
+		nosCmdEndParams endParams{ .ForceSubmit = true, .OutGPUEventHandle = &toCopy.first };
 		nosVulkan->End(cmd, &endParams);
 		{
 			std::unique_lock lock(SendFrameMutex);
@@ -408,7 +433,7 @@ struct WebRTCNodeContext : nos::NodeContext {
 			SendFrameCV.notify_one();
 		}
 
-		return NOS_RESULT_SUCCESS;
+		return NOS_RESULT_SUCCESS; 
 	}
 
 	void OnEncodeCompleted() {
@@ -425,7 +450,7 @@ struct WebRTCNodeContext : nos::NodeContext {
 		std::chrono::microseconds passedTime;
 
 		nosVec2u deltaSec{10'000u, (uint32_t)std::floor(FPS * 10'000)};
-		nosScheduleNodeParams scheduleParams{NodeId, InputBuffers.size(), true};
+		nosScheduleNodeParams scheduleParams{NodeId, InputBuffers.size() - 1, true};
 		nosEngine.ScheduleNode(&scheduleParams);
 
 		while (shouldSendFrame && p_nosWebRTC)
@@ -466,6 +491,7 @@ struct WebRTCNodeContext : nos::NodeContext {
 			inputs.emplace_back(nos::vkss::ShaderBinding(NSN_PlaneY, YUVPlanes[nextBufferToCopyIndex]));
 			if (buf.first)
 				nosVulkan->WaitGpuEvent(&buf.first, UINT64_MAX);
+
 			nosCmd cmdRunPass; 
 			nosVulkan->Begin("WebRTCStreamer.YUVConversion", &cmdRunPass);
 			auto t0 = std::chrono::high_resolution_clock::now();
@@ -487,8 +513,12 @@ struct WebRTCNodeContext : nos::NodeContext {
 				nosResourceShareInfo tempBuf = {};
 
 				nosVulkan->Copy(cmdRunPass, &YUVPlanes[nextBufferToCopyIndex], &YUVBuffers[nextBufferToCopyIndex], 0);
+				nosGPUEvent tex2bufEvent{};
+				nosCmdEndParams endParams{ .ForceSubmit = true, .OutGPUEventHandle = &tex2bufEvent };
 
-				nosVulkan->End(cmdRunPass, NOS_FALSE);
+				nosVulkan->End(cmdRunPass, &endParams);
+
+				nosVulkan->WaitGpuEvent(&tex2bufEvent, UINT64_MAX);
 
 				//nosVec2u deltaSec{ 10'000u, (uint32_t)std::floor(FPS * 10'000) };
 				//nosEngine.SchedulePin(InputPinUUID, deltaSec);
@@ -503,14 +533,12 @@ struct WebRTCNodeContext : nos::NodeContext {
 				bool isY = (dataY != nullptr);
 
 				auto dataU = dataY + InputRGBA8.Info.Texture.Width * InputRGBA8.Info.Texture.Height;
-				bool isU = (dataU != nullptr);
 
 				auto dataV = dataU + InputRGBA8.Info.Texture.Width / 2 * InputRGBA8.Info.Texture.Height / 2;
-				bool isV = (dataV != nullptr);
 
-				if (!(isY && isU && isV)) {
+				if ( !isY) {
 					nosEngine.LogE("YUV420 Frame can not be built!");
-					return;
+					continue;
 				}
 
 				auto yuvBuffer = buffers[nextBufferToCopyIndex++];
@@ -541,13 +569,14 @@ struct WebRTCNodeContext : nos::NodeContext {
 				}
 			}
 
-			
-			nosVec2u deltaSec{10'000u, (uint32_t)std::floor(FPS * 10'000)};
-			nosScheduleNodeParams scheduleParams
-			{
-				InputPinUUID, 1, false
-			};
-			nosEngine.ScheduleNode(&scheduleParams);
+			if (InputRing->IsWriteable()) {
+				nosVec2u deltaSec{10'000u, (uint32_t)std::floor(FPS * 10'000)};
+				nosScheduleNodeParams scheduleParams
+				{
+					NodeID, 1, false
+				};
+				nosEngine.ScheduleNode(&scheduleParams);
+			}
 
 
 			auto t_end = std::chrono::high_resolution_clock::now();
