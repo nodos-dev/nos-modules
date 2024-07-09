@@ -347,6 +347,11 @@ struct RingNodeBase : NodeContext
 		switch (command->Event)
 		{
 		case NOS_RING_SIZE_CHANGE: {
+			if (command->RingSize == 0)
+			{
+				nosEngine.LogW((GetName() + " size cannot be 0.").c_str());
+				return;
+			}
 			RequestedRingSize = command->RingSize;
 			nosEngine.SetPinValue(*GetPinId(NOS_NAME("Size")), nos::Buffer::From(command->RingSize));
 			break;
