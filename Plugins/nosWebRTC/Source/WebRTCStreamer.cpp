@@ -203,11 +203,11 @@ struct WebRTCNodeContext : nos::NodeContext {
 
 		for (int i = 0; i < buffers.size(); i++) {
 			nosResourceShareInfo PlaneY = {};
+			PlaneY.Info.Texture.Format = NOS_FORMAT_R8_SRGB;
 			PlaneY.Info.Type = NOS_RESOURCE_TYPE_TEXTURE;
-			PlaneY.Info.Buffer.Usage = nosBufferUsage(NOS_BUFFER_USAGE_TRANSFER_SRC | NOS_BUFFER_USAGE_TRANSFER_DST);
+			PlaneY.Info.Texture.Usage = nosImageUsage(NOS_IMAGE_USAGE_TRANSFER_SRC | NOS_IMAGE_USAGE_TRANSFER_DST);
 			PlaneY.Info.Texture.Width = InputRGBA8.Info.Texture.Width;
 			PlaneY.Info.Texture.Height = InputRGBA8.Info.Texture.Height + InputRGBA8.Info.Texture.Height / 2;
-			PlaneY.Info.Texture.Format = NOS_FORMAT_R8_SRGB;
 			nosVulkan->CreateResource(&PlaneY);
 			
 			nosResourceShareInfo BufY  = {};
