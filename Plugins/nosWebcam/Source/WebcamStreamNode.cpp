@@ -114,6 +114,11 @@ struct WebcamStreamNode : public nos::NodeContext
 			});
 	}
 
+	~WebcamStreamNode()
+	{
+		CloseStream();
+	}
+
 	bool TryOpenDevice()
 	{
 		CloseStream();
