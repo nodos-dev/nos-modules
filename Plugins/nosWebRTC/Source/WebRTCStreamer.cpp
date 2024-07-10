@@ -506,7 +506,6 @@ struct WebRTCNodeContext : nos::NodeContext {
 				nosVulkan->RunComputePass(cmdRunPass, &pass);
 			}
 			auto t1 = std::chrono::high_resolution_clock::now();
-			nosEngine.WatchLog("WebRTC Streamer-Compute Pass Time(us)", std::to_string(std::chrono::duration_cast<std::chrono::microseconds>(t1 - t0).count()).c_str());
 
 			t0 = std::chrono::high_resolution_clock::now();
 			{
@@ -530,13 +529,12 @@ struct WebRTCNodeContext : nos::NodeContext {
 
 
 				auto dataY = nosVulkan->Map(&YUVBuffers[nextBufferToCopyIndex]);
-				bool isY = (dataY != nullptr);
 
 				auto dataU = dataY + InputRGBA8.Info.Texture.Width * InputRGBA8.Info.Texture.Height;
 
 				auto dataV = dataU + InputRGBA8.Info.Texture.Width / 2 * InputRGBA8.Info.Texture.Height / 2;
 
-				if ( !isY) {
+				if (dataY == nullptr) {
 					nosEngine.LogE("YUV420 Frame can not be built!");
 					continue;
 				}
