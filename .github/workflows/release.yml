@@ -65,6 +65,11 @@ jobs:
         run: |
           if (Test-Path -Path ./modules-${{ github.ref_name }}) { Remove-Item -Path ./modules-${{ github.ref_name }} -Recurse -Force }
 
+      - name: Setup Work Folder
+        shell: pwsh
+        run: |
+          if (-not (Test-Path -Path ./modules-${{ github.ref_name }})) { New-Item -Path ./modules-${{ github.ref_name }} -ItemType Directory -Force }
+
       - name: Setup Nodos Workspace (Latest)
         if: ${{  github.event_name != 'workflow_dispatch' || github.event.inputs.nodos_sdk_version == '' }}
         run: |
@@ -78,14 +83,14 @@ jobs:
           echo "Updating system nosman"
           Copy-Item -Path ./workspace/nosman.exe -Destination ${{ env.NOSMAN_EXECUTABLE }} -Force
         shell: pwsh
-        working-directory: ./modules-${{ github.ref_name }}
+        working-directory: modules-${{ github.ref_name }}
 
       - name: Setup Nodos Workspace (Specific Version)
         if: ${{  github.event_name == 'workflow_dispatch' && github.event.inputs.nodos_sdk_version != '' }}
         run: |
           ${{ env.NOSMAN_EXECUTABLE }} --workspace ./workspace get --version "${{ github.event.inputs.nodos_sdk_version }}"
         shell: pwsh
-        working-directory: ./modules-${{ github.ref_name }}
+        working-directory: modules-${{ github.ref_name }}
 
       - name: Checkout
         shell: pwsh
@@ -102,29 +107,29 @@ jobs:
           git submodule update --force --recursive --init
           git fetch --tags
           git status
-        working-directory: ./modules-${{ github.ref_name }}/workspace/Module
+        working-directory: modules-${{ github.ref_name }}/workspace/Module
 
       - name: Setup Git
         run: |
           git config user.email "${{ env.GIT_EMAIL }}"
           git config user.name "${{ env.GH_USERNAME }}"
-        working-directory: ./modules-${{ github.ref_name }}/workspace/Module/modules-repo
+        working-directory: modules-${{ github.ref_name }}/workspace/Module/modules-repo
   
       - name: Update Nosman Cache
         shell: pwsh
         run: |
           ./nosman.exe rescan --fetch-index
-        working-directory: ./modules-${{ github.ref_name }}/workspace
+        working-directory: modules-${{ github.ref_name }}/workspace
 
       - name: Configure
         run: |
           cmake -S ./Toolchain/CMake -B ../Project -DCMAKE_BUILD_TYPE=Release
-        working-directory: ./modules-${{ github.ref_name }}/workspace
+        working-directory: modules-${{ github.ref_name }}/workspace
 
       - name: Build
         run: |
           cmake --build ../Project --config Release -j 8
-        working-directory: ./modules-${{ github.ref_name }}/workspace
+        working-directory: modules-${{ github.ref_name }}/workspace
 
       - name: Release (Changed)
         if: ${{ github.event.inputs.build_all == null || github.event.inputs.build_all == 'false'}}
@@ -133,17 +138,17 @@ jobs:
           $LastBuildTag = git for-each-ref --sort=-v:refname --format='%(refname:short)' 'refs/tags/build.${{ github.ref_name }}-*' | Select-Object -First 1
           echo "Last build tag is $LastBuildTag"
           ../../nosman.exe --workspace ../../ publish-batch --repo-path . --compare-with="$LastBuildTag" --vendor Nodos --version-suffix ".b${{ env.BUILD_NUMBER }}" --verbose --publisher-name "${{ env.GH_USERNAME }}" --publisher-email "${{ env.GIT_EMAIL }}"
-        working-directory: ./modules-${{ github.ref_name }}/workspace/Module/modules-repo
+        working-directory: modules-${{ github.ref_name }}/workspace/Module/modules-repo
       
       - name: Release (All)
         if: ${{ github.event.inputs.build_all == 'true' }}
         shell: pwsh
         run: |
           ../../nosman.exe --workspace ../../ publish-batch --repo-path . --vendor=Nodos --version-suffix ".b${{ env.BUILD_NUMBER }}" --verbose --publisher-name "${{ env.GH_USERNAME }}" --publisher-email "${{ env.GIT_EMAIL }}"
-        working-directory: ./modules-${{ github.ref_name }}/workspace/Module/modules-repo
+        working-directory: modules-${{ github.ref_name }}/workspace/Module/modules-repo
       
       - name: Tag
         run: |
           git tag -a "build.${{ github.ref_name }}-${{ env.BUILD_NUMBER }}" -m "Build ${{ github.ref_name }}-${{ env.BUILD_NUMBER }}"
           git push origin "build.${{ github.ref_name }}-${{ env.BUILD_NUMBER }}"
-        working-directory: ./modules-${{ github.ref_name }}/workspace/Module/modules-repo
+        working-directory: modules-${{ github.ref_name }}/workspace/Module/modules-repo
