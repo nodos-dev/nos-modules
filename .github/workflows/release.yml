@@ -65,17 +65,6 @@ jobs:
         run: |
           if (Test-Path -Path ./modules-${{ github.ref_name }}) { Remove-Item -Path ./modules-${{ github.ref_name }} -Recurse -Force }
 
-      - name: Cleanup
-        run: |
-          New-Item -ItemType Directory -Path ./modules-${{ github.ref_name }} -ErrorAction SilentlyContinue
-          cd ./modules-${{ github.ref_name }}
-          if (Test-Path -Path ./workspace/Module/modules-repo) { 
-            if (-not (Test-Path -Path ./modules-repo)) {
-              Move-Item -Path ./workspace/Module/modules-repo -Destination .
-            }
-          }
-        shell: pwsh
-
       - name: Setup Nodos Workspace (Latest)
         if: ${{  github.event_name != 'workflow_dispatch' || github.event.inputs.nodos_sdk_version == '' }}
         run: |
@@ -113,19 +102,13 @@ jobs:
           git submodule update --force --recursive --init
           git fetch --tags
           git status
-        working-directory: ./modules-${{ github.ref_name }}
+        working-directory: ./modules-${{ github.ref_name }}/workspace/Module
 
       - name: Setup Git
         run: |
           git config user.email "${{ env.GIT_EMAIL }}"
           git config user.name "${{ env.GH_USERNAME }}"
-        working-directory: ./modules-${{ github.ref_name }}/modules-repo
-
-      - name: Move Repo Under Workspace
-        run: |
-          Move-Item -Path ./modules-repo -Destination ./workspace/Module/modules-repo
-        shell: pwsh
-        working-directory: ./modules-${{ github.ref_name }}
+        working-directory: ./modules-${{ github.ref_name }}/workspace/Module/modules-repo
   
       - name: Update Nosman Cache
         shell: pwsh
@@ -164,9 +147,3 @@ jobs:
           git tag -a "build.${{ github.ref_name }}-${{ env.BUILD_NUMBER }}" -m "Build ${{ github.ref_name }}-${{ env.BUILD_NUMBER }}"
           git push origin "build.${{ github.ref_name }}-${{ env.BUILD_NUMBER }}"
         working-directory: ./modules-${{ github.ref_name }}/workspace/Module/modules-repo
-      
-      - name: Move Back
-        run: |
-          Move-Item -Path ./workspace/Module/modules-repo -Destination .
-        shell: pwsh
-        working-directory: ./modules-${{ github.ref_name }}
