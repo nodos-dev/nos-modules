@@ -14,7 +14,7 @@
 namespace nos::mediaio
 {
 
-template<typename T, bool CheckInterlace>
+template<typename T, bool RejectFieldMismatch>
 requires std::is_same_v<T, nosBufferInfo> || std::is_same_v<T, nosTextureInfo>
 struct RingNodeBase : NodeContext
 {
@@ -167,14 +167,13 @@ struct RingNodeBase : NodeContext
 		nos::util::Stopwatch sw; 
 		auto slot = Ring->BeginPush();
 		nosEngine.WatchLog((GetName() + " Begin Push").c_str(), nos::util::Stopwatch::ElapsedString(sw.Elapsed()).c_str());
-		if constexpr (CheckInterlace)
+		nosTextureFieldType incomingField;
+		if constexpr (std::is_same_v<T, nosBufferInfo>)
+			incomingField = input.Info.Buffer.FieldType;
+		else if constexpr (std::is_same_v<T, nosTextureInfo>)
+			incomingField = input.Info.Texture.FieldType;
+		if constexpr (RejectFieldMismatch)
 		{
-			nosTextureFieldType incomingField;
-			if constexpr (std::is_same_v<T, nosBufferInfo>)
-				incomingField = input.Info.Buffer.FieldType;
-			else if constexpr (std::is_same_v<T, nosTextureInfo>)
-				incomingField = input.Info.Texture.FieldType;
-
 			if (WantedField == NOS_TEXTURE_FIELD_TYPE_UNKNOWN)
 				WantedField = incomingField;
 			
@@ -187,13 +186,12 @@ struct RingNodeBase : NodeContext
 				SendScheduleRequest(0);
 				return NOS_RESULT_FAILED;
 			}
-			if constexpr (std::is_same_v<T, nosBufferInfo>)
-				slot->Res.Info.Buffer.FieldType = incomingField;
-			else if constexpr (std::is_same_v<T, nosTextureInfo>)
-				slot->Res.Info.Texture.FieldType = incomingField;
-
 			WantedField = vkss::FlippedField(WantedField);
 		}
+		if constexpr (std::is_same_v<T, nosBufferInfo>)
+			slot->Res.Info.Buffer.FieldType = incomingField;
+		else if constexpr (std::is_same_v<T, nosTextureInfo>)
+			slot->Res.Info.Texture.FieldType = incomingField;
 		slot->FrameNumber = args->FrameNumber;
 		if (slot->Params.WaitEvent)
 		{
