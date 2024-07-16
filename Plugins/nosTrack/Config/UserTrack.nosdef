@@ -1,0 +1,35 @@
+{
+	"nodes": [
+		{
+			"class_name": "UserTrack",
+			"contents_type": "Job",
+			"always_execute": true,
+			"description": "Creates a simulated camera tracking data for testing purposes",
+			"pins": [
+				{
+					"name": "Track",
+					"type_name": "nos.fb.Track",
+					"show_as": "OUTPUT_PIN"
+				},
+				{
+					"name": "Input",
+					"type_name": "nos.fb.Track",
+					"show_as": "PROPERTY"
+				},
+				{
+					"name": "Impulse",
+					"type_name": "float",
+					"show_as": "PROPERTY",
+					"data": 1
+				},
+				{
+					"name": "Decay",
+					"type_name": "float",
+					"show_as": "PROPERTY",
+					"data": 1,
+					"min": 0
+				}
+			]
+		}
+	]
+}

@@ -1,0 +1,212 @@
+{
+  "nodes": [
+    {
+      "class_name": "FreeD",
+      "contents_type": "Job",
+      "description": "Receives tracking data from a UDP port and parses FreeD protocol",
+      "pins": [
+        {
+          "name": "Enable",
+          "type_name": "bool",
+          "show_as": "PROPERTY",
+          "can_show_as": "INPUT_PIN_OR_PROPERTY"
+        },
+        {
+          "name": "UDP_Port",
+          "type_name": "uint",
+          "show_as": "PROPERTY",
+          "can_show_as": "INPUT_PIN_OR_PROPERTY",
+          "data": 8868,
+          "description": "Default UDP port to listen"
+        },
+        {
+          "name": "Track",
+          "type_name": "nos.fb.Track",
+          "show_as": "OUTPUT_PIN",
+          "can_show_as": "OUTPUT_PIN_ONLY"
+        },
+        {
+          "name": "Sync",
+          "type_name": "nos.sys.vulkan.Texture",
+          "show_as": "INPUT_PIN",
+          "can_show_as": "INPUT_PIN_OR_PROPERTY",
+          "description": "Connect a genlocked video stream using the same sync source as your tracking device.\nConnecting this sync ensures that, tracking data is synchronized to your video stream even after frame drops."
+        },
+        {
+          "name": "Spare Count",
+          "type_name": "uint",
+          "show_as": "PROPERTY",
+          "can_show_as": "INPUT_PIN_OR_PROPERTY",
+          "data": 1,
+          "description": "Amount of track data frames to buffer, in order to compensate for network jitter.\nIf you have a tracking network with a lot of timing jitter, this value can be increased by a few frames.\nUsually it is suggested that you have a seperate network (preferably physically seperate).\nThis will help to minimize jitter and makes it easier to manage UDP broadcast port overlaps."
+        },
+        {
+          "name": "AutoSpare",
+          "display_name": "Auto Spare",
+          "type_name": "bool",
+          "show_as": "PROPERTY",
+          "can_show_as": "INPUT_PIN_OR_PROPERTY",
+          "data": true
+        },
+        {
+          "name": "AutoSpareMaxJitter",
+          "display_name": "Auto Spare Max Jitter",
+          "type_name": "float",
+          "show_as": "PROPERTY",
+          "can_show_as": "INPUT_PIN_OR_PROPERTY",
+          "data": 0.4,
+          "min": 0.0,
+          "max": 0.5
+        },
+        {
+          "name": "NegateX",
+          "type_name": "bool",
+          "show_as": "PROPERTY",
+          "can_show_as": "INPUT_PIN_OR_PROPERTY",
+          "pin_category": "Transform Mapping"
+        },
+        {
+          "name": "NegateY",
+          "type_name": "bool",
+          "show_as": "PROPERTY",
+          "can_show_as": "INPUT_PIN_OR_PROPERTY",
+          "pin_category": "Transform Mapping"
+        },
+        {
+          "name": "NegateZ",
+          "type_name": "bool",
+          "show_as": "PROPERTY",
+          "can_show_as": "INPUT_PIN_OR_PROPERTY",
+          "pin_category": "Transform Mapping"
+        },
+        {
+          "name": "CoordinateSystem",
+          "type_name": "nos.fb.CoordinateSystem",
+          "show_as": "PROPERTY",
+          "can_show_as": "INPUT_PIN_OR_PROPERTY",
+          "pin_category": "Transform Mapping",
+          "data": "XYZ"
+        },
+        {
+          "name": "NegateRoll",
+          "type_name": "bool",
+          "show_as": "PROPERTY",
+          "can_show_as": "INPUT_PIN_OR_PROPERTY",
+          "pin_category": "Transform Mapping"
+        },
+        {
+          "name": "NegatePan",
+          "type_name": "bool",
+          "show_as": "PROPERTY",
+          "can_show_as": "INPUT_PIN_OR_PROPERTY",
+          "pin_category": "Transform Mapping"
+        },
+        {
+          "name": "NegateTilt",
+          "type_name": "bool",
+          "show_as": "PROPERTY",
+          "can_show_as": "INPUT_PIN_OR_PROPERTY",
+          "pin_category": "Transform Mapping"
+        },
+        {
+          "name": "Pan_Tilt_Roll",
+          "type_name": "nos.fb.RotationSystem",
+          "show_as": "PROPERTY",
+          "can_show_as": "INPUT_PIN_OR_PROPERTY",
+          "pin_category": "Transform Mapping",
+          "data": "PTR"
+        },
+        {
+          "name": "TransformScale",
+          "type_name": "float",
+          "show_as": "PROPERTY",
+          "can_show_as": "INPUT_PIN_OR_PROPERTY",
+          "pin_category": "Transform Mapping",
+          "data": 1.0,
+          "min": 0.0,
+          "max": 100.0
+        },
+        {
+          "name": "EnableEffectiveFOV",
+          "type_name": "bool",
+          "show_as": "PROPERTY",
+          "can_show_as": "INPUT_PIN_OR_PROPERTY",
+          "pin_category": "FOV"
+        },
+        {
+          "name": "DevicePosition",
+          "type_name": "nos.fb.vec3",
+          "show_as": "PROPERTY",
+          "can_show_as": "INPUT_PIN_OR_PROPERTY",
+          "pin_category": "Tracking Offsets"
+        },
+        {
+          "name": "DeviceRotation",
+          "type_name": "nos.fb.vec3",
+          "show_as": "PROPERTY",
+          "can_show_as": "INPUT_PIN_OR_PROPERTY",
+          "pin_category": "Tracking Offsets"
+        },
+        {
+          "name": "CameraPosition",
+          "type_name": "nos.fb.vec3",
+          "show_as": "PROPERTY",
+          "can_show_as": "INPUT_PIN_OR_PROPERTY",
+          "pin_category": "Tracking Offsets"
+        },
+        {
+          "name": "CameraRotation",
+          "type_name": "nos.fb.vec3",
+          "show_as": "PROPERTY",
+          "can_show_as": "INPUT_PIN_OR_PROPERTY",
+          "pin_category": "Tracking Offsets"
+        },
+        {
+          "name": "ZoomRange",
+          "type_name": "nos.fb.vec2",
+          "show_as": "PROPERTY",
+          "can_show_as": "INPUT_PIN_OR_PROPERTY",
+          "pin_category": "Tracking Offsets",
+          "data": {
+            "x": 0,
+            "y": 60000
+          }
+        },
+        {
+          "name": "InvertZoom",
+          "type_name": "bool",
+          "show_as": "PROPERTY",
+          "can_show_as": "INPUT_PIN_OR_PROPERTY",
+          "pin_category": "Tracking Offsets",
+          "data": false
+        },
+        {
+          "name": "FocusRange",
+          "type_name": "nos.fb.vec2",
+          "show_as": "PROPERTY",
+          "can_show_as": "INPUT_PIN_OR_PROPERTY",
+          "pin_category": "Tracking Offsets",
+          "data": {
+            "x": 0,
+            "y": 60000
+          }
+        },
+        {
+          "name": "InvertFocus",
+          "type_name": "bool",
+          "show_as": "PROPERTY",
+          "can_show_as": "INPUT_PIN_OR_PROPERTY",
+          "pin_category": "Tracking Offsets",
+          "data": false
+        },
+        {
+          "name": "NeverStarve",
+          "type_name": "bool",
+          "show_as": "PROPERTY",
+          "can_show_as": "INPUT_PIN_OR_PROPERTY",
+          "data": false
+        }
+      ]
+    }
+  ]
+}

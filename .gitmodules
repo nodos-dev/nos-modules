@@ -28,3 +28,6 @@
 [submodule "Subsystems/nosPythonDeps"]
 	path = Subsystems/nosPythonDeps
 	url = https://github.com/mediaz/nosPythonDeps.git
+[submodule "Plugins/nosTrack/External/asio"]
+	path = Plugins/nosTrack/External/asio
+	url = https://github.com/chriskohlhoff/asio.git

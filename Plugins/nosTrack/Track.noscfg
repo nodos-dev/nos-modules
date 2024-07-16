@@ -1,0 +1,27 @@
+{
+	"info": {
+		"id": {
+			"name": "nos.track",
+			"version": "1.5"
+		},
+		"display_name": "Track"
+	},
+	"node_definitions": [
+		"Config/FreeD.nosdef",
+		"Config/UserTrack.nosdef"
+	],
+	"custom_types": [],
+	"binary_path": "Binaries/nosTrack",
+	"associated_nodes": [
+		{
+			"category": "nosTrack",
+			"class_name": "FreeD",
+			"display_name": "FreeD"
+		},
+		{
+			"category": "nosTrack",
+			"class_name": "UserTrack",
+			"display_name": "User Track"
+		}
+	]
+}
