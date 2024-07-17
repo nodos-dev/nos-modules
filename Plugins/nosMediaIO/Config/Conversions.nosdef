@@ -133,6 +133,10 @@
           "type_name": "nos.fb.vec2u",
           "show_as": "INPUT_PIN",
           "can_show_as": "INPUT_PIN_OR_PROPERTY",
+          "visualizer": {
+            "type": "NAMED_VALUE",
+            "name": "nos.mediaio.ResolutionVisualizer"
+          },
           "data": {
             "x": 1920,
             "y": 1080

@@ -1,0 +1,25 @@
+{
+    "name": "nos.mediaio.ResolutionVisualizer",
+    "values": [
+        {
+            "type_name": "nos.fb.vec2u",
+            "pin_value": {
+                "x": 1920,
+                "y": 1080
+            },
+            "value_name": "HD"
+        },
+        {
+            "type_name": "nos.fb.vec2u",
+            "pin_value": {
+                "x": 3840,
+                "y": 2160
+            },
+            "value_name": "UHD"
+        },
+        {
+            "type_name": "nos.fb.vec2u",
+            "value_name": "CUSTOM"
+        }
+    ]
+}
