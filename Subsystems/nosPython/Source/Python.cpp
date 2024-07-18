@@ -1,8 +1,9 @@
 // Copyright MediaZ Teknoloji A.S. All Rights Reserved.
 #include <Nodos/SubsystemAPI.h>
-#include <Nodos/Helpers.hpp>
+#include <Nodos/NodeHelpers.hpp>
 
 #include <nosPython/Python_generated.h>
+#include <nosPython/nosPython.h>
 
 // External
 #define PYBIND11_SIMPLE_GIL_MANAGEMENT
@@ -35,7 +36,9 @@ public:
 
 	~Interpreter()
 	{
+		pyb::gil_scoped_acquire gil;
 		NodeInstances.clear();
+		Modules.clear();
 		NodosInternalModule.reset();
 	}
 
@@ -112,7 +115,6 @@ protected:
 };
 
 static Interpreter* GInterpreter = nullptr;
-static std::vector<std::unique_ptr<nos::fb::UUID>> NodeUUIDs;
 
 // Classes with prefix 'PyNative' are only constructed from C++ side, with 'Py' are for Python-constructible.
 class PyNativeNodeExecuteArgs : public nos::NodeExecuteArgs
@@ -137,9 +139,7 @@ public:
 	}
 };
 
-class PyNativeOnPinValueChangedArgs {
-public:
-	PyNativeOnPinValueChangedArgs() : PinName(), Value() {}
+struct PyNativeOnPinValueChangedArgs {
 	nos::Name PinName = {};
 	nosBuffer Value = {};
 
@@ -153,16 +153,25 @@ public:
 	}
 };
 
-class PyNativeOnPinConnectedArgs {
-public:
-	PyNativeOnPinConnectedArgs() : PinName() {}
+struct PyNativeOnPinConnectedArgs {
 	nos::Name PinName = {};
 };
 
-class PyNativeOnPinDisconnectedArgs {
-public:
-	PyNativeOnPinDisconnectedArgs() : PinName() {}
+struct PyNativeOnPinDisconnectedArgs {
 	nos::Name PinName = {};
+};
+
+struct PyNativeContextMenuRequestInstigator
+{
+	uint32_t EditorId;
+	uint32_t RequestId;
+};
+	
+struct PyNativeContextMenuRequest
+{
+	nosUUID ItemId {};
+	nos::fb::vec2 Pos {};
+	PyNativeContextMenuRequestInstigator Instigator = {};
 };
 
 PYBIND11_EMBEDDED_MODULE(__nodos_internal__, m)
@@ -189,6 +198,15 @@ PYBIND11_EMBEDDED_MODULE(__nodos_internal__, m)
 	pyb::class_<PyNativeOnPinDisconnectedArgs>(m, "PinDisconnectedArgs")
 		.def_property_readonly("pin_value", [](const PyNativeOnPinDisconnectedArgs& args) -> std::string_view { return args.PinName.AsCStr(); });
 
+	pyb::class_<PyNativeContextMenuRequest>(m, "ContextMenuRequest")
+		.def_property("item_id", [](const PyNativeContextMenuRequest& req) -> nosUUID { return req.ItemId; }, [](PyNativeContextMenuRequest& req, nosUUID id) { req.ItemId = id; })
+		.def_property("position", [](const PyNativeContextMenuRequest& req) -> nos::fb::vec2 { return req.Pos; }, [](PyNativeContextMenuRequest& req, nos::fb::vec2 pos) { req.Pos = pos; })
+		.def_property("instigator", [](const PyNativeContextMenuRequest& req) -> PyNativeContextMenuRequestInstigator { return req.Instigator; }, [](PyNativeContextMenuRequest& req, PyNativeContextMenuRequestInstigator instigator) { req.Instigator = instigator; });
+
+	pyb::class_<PyNativeContextMenuRequestInstigator>(m, "ContextMenuRequestInstigator")
+		.def_property("editor_id", [](const PyNativeContextMenuRequestInstigator& instigator) -> uint32_t { return instigator.EditorId; }, [](PyNativeContextMenuRequestInstigator& instigator, uint32_t id) { instigator.EditorId = id; })
+		.def_property("request_id", [](const PyNativeContextMenuRequestInstigator& instigator) -> uint32_t { return instigator.RequestId; }, [](PyNativeContextMenuRequestInstigator& instigator, uint32_t id) { instigator.RequestId = id; });
+
 	pyb::class_<nosUUID>(m, "uuid")
 		.def(pyb::init<>())
 		.def("__str__", [](const nosUUID& id) -> std::string { return nos::UUID2STR(id); })
@@ -212,6 +230,14 @@ PYBIND11_EMBEDDED_MODULE(__nodos_internal__, m)
 	m.def("log_error",
 		[](const std::string& log) {
 			nosEngine.LogE(log.c_str());
+		});
+	m.def("check_compat",
+		[](int major, int minor) -> bool {
+			if (major != NOS_PY_MAJOR_VERSION)
+				return false;
+			if (minor > NOS_PY_MINOR_VERSION)
+				return false;
+			return true;
 		});
 }
 
@@ -249,64 +275,84 @@ nosResult NOSAPI_CALL OnPyNodeRegistered(nosModuleIdentifier pluginId, nosName c
 	return GInterpreter->ImportModule(className, std::filesystem::canonical(sourcePathStr));
 }
 
-void NOSAPI_CALL OnNodeCreated(const nosFbNode* node, void** outCtxPtr) {
-	GInterpreter->CreateNodeInstance(*node->id(), nos::Name(node->class_name()->str()),nos::Name(node->name()->str()));
-	NodeUUIDs.push_back(std::make_unique<nos::fb::UUID>(*node->id()));
-	(*outCtxPtr) = NodeUUIDs[NodeUUIDs.size() - 1].get();
-}
-
-void NOSAPI_CALL OnNodeDeleted(void* ctx, nosUUID nodeId) {
-
-	GInterpreter->RemoveNodeInstance(nodeId);
-}
-
-void NOSAPI_CALL OnPinValueChanged(void* ctx, nosName pinName, nosUUID pinId, nosBuffer value)
+class PyNode : public nos::NodeContext
 {
-	pyb::gil_scoped_acquire gil;
-	nos::fb::UUID id = *static_cast<nos::fb::UUID*>(ctx);
-	PyNativeOnPinValueChangedArgs args;
-	args.PinName = nos::Name(pinName);
-	args.Value = value;
-	GInterpreter->GetNodeInstance(id)->attr("on_pin_value_changed")(args);
-}
-
-void NOSAPI_CALL OnPinConnected(void* ctx, nosName pinName, nosUUID connectedPin, nosUUID nodeId)
-{
-	pyb::gil_scoped_acquire gil;
-	nos::fb::UUID id = *static_cast<nos::fb::UUID*>(ctx);
-	PyNativeOnPinConnectedArgs args;
-	args.PinName = nos::Name(pinName);
-	GInterpreter->GetNodeInstance(id)->attr("on_pin_connected")(args);
-}
-
-void NOSAPI_CALL OnPinDisconnected(void* ctx, nosName pinName)
-{
-	pyb::gil_scoped_acquire gil;
-	nos::fb::UUID id = *static_cast<nos::fb::UUID*>(ctx);
-	PyNativeOnPinDisconnectedArgs args;
-	args.PinName = nos::Name(pinName);
-	GInterpreter->GetNodeInstance(id)->attr("on_pin_disconnected")(args);
-}
-
-nosResult NOSAPI_CALL ExecutePyNode(void* ctx, const nosNodeExecuteArgs* args)
-{
-	auto m = GInterpreter->GetNodeInstance(args->NodeId);
-	if (!m)
-		return NOS_RESULT_NOT_FOUND;
-
-	try {
-		pyb::gil_scoped_acquire gil;
-		PyNativeNodeExecuteArgs pyNativeArgs(args);
-		auto ret = static_cast<nosResult>(m->attr("execute_node")(pyNativeArgs).cast<int>());
-		return ret;
-	}
-	catch (std::exception& exp)
+public:
+	PyNode(const nosFbNode* node) : NodeContext(node)
 	{
-		nosEngine.LogDE(exp.what(), "%s execution failed. See details.", nos::Name(args->NodeClassName).AsCStr());
-		return NOS_RESULT_FAILED;
+		GInterpreter->CreateNodeInstance(NodeId, nos::Name(node->class_name()->str()), nos::Name(node->name()->str()));
 	}
-	return NOS_RESULT_SUCCESS;
-}
+
+	~PyNode()
+	{
+		GInterpreter->RemoveNodeInstance(NodeId);
+	}
+
+	std::shared_ptr<pyb::object> GetPyObject() const
+	{
+		return GInterpreter->GetNodeInstance(NodeId);
+	}
+
+	nosResult ExecuteNode(const nosNodeExecuteArgs* args) override
+	{
+		auto m = GetPyObject();
+		if (!m)
+			return NOS_RESULT_NOT_FOUND;
+
+		try {
+			pyb::gil_scoped_acquire gil;
+			PyNativeNodeExecuteArgs pyNativeArgs(args);
+			auto ret = static_cast<nosResult>(m->attr("execute_node")(pyNativeArgs).cast<int>());
+			return ret;
+		}
+		catch (std::exception& exp)
+		{
+			nosEngine.LogDE(exp.what(), "%s execution failed. See details.", nos::Name(args->NodeClassName).AsCStr());
+			return NOS_RESULT_FAILED;
+		}
+	}
+
+	void OnPinValueChanged(nos::Name pinName, nosUUID pinId, nosBuffer value) override
+	{
+		pyb::gil_scoped_acquire gil;
+		PyNativeOnPinValueChangedArgs args;
+		args.PinName = nos::Name(pinName);
+		args.Value = value;
+		GetPyObject()->attr("on_pin_value_changed")(args);
+	}
+
+	void OnNodeMenuRequested(const nosContextMenuRequest* request) override
+	{
+		pyb::gil_scoped_acquire gil;
+		PyNativeContextMenuRequest args;
+		args.Instigator.EditorId = request->instigator()->client_id();
+		args.Instigator.RequestId = request->instigator()->request_id();
+		args.ItemId = *request->item_id();
+		args.Pos = *request->pos();
+		GetPyObject()->attr("on_node_menu_requested")(args);
+	}
+	
+	void OnPinMenuRequested(nos::Name pinName, const nosContextMenuRequest* request) override
+	{
+	}
+
+	void OnPinConnected(nos::Name pinName, nosUUID connectedPin) override
+	{
+		pyb::gil_scoped_acquire gil;
+		PyNativeOnPinConnectedArgs args;
+		args.PinName = nos::Name(pinName);
+		GetPyObject()->attr("on_pin_connected")(args);
+	}
+	
+	void OnPinDisconnected(nos::Name pinName) override
+	{
+		pyb::gil_scoped_acquire gil;
+		PyNativeOnPinDisconnectedArgs args;
+		args.PinName = nos::Name(pinName);
+		GetPyObject()->attr("on_pin_disconnected")(args);
+	}
+};
+
 } // namespace nos::py
 
 extern "C"
@@ -344,13 +390,8 @@ NOSAPI_ATTR nosResult NOSAPI_CALL nosExportSubsystemNodeFunctions(size_t* outSiz
 	auto pyNodeFunctions = outList[0];
 	pyNodeFunctions->OnNodeClassRegistered = nos::py::OnPyNodeRegistered;
 	pyNodeFunctions->NodeType = NOS_NAME_STATIC("nos.py.PythonNode");
-	pyNodeFunctions->NodeFunctions.OnNodeCreated = nos::py::OnNodeCreated;
-	pyNodeFunctions->NodeFunctions.OnNodeDeleted = nos::py::OnNodeDeleted;
-	pyNodeFunctions->NodeFunctions.ExecuteNode = nos::py::ExecutePyNode;
-	pyNodeFunctions->NodeFunctions.OnPinValueChanged = nos::py::OnPinValueChanged;
-	pyNodeFunctions->NodeFunctions.OnPinConnected = nos::py::OnPinConnected;
-	pyNodeFunctions->NodeFunctions.OnPinDisconnected = nos::py::OnPinDisconnected;
-	
+	auto* functions = &pyNodeFunctions->NodeFunctions;
+	NOS_BIND_NODE_CLASS(0, nos::py::PyNode, functions);
 	return NOS_RESULT_SUCCESS;
 }
 
