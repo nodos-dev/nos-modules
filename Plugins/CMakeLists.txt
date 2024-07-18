@@ -47,6 +47,7 @@ add_subdirectory(nosMediaIO)
 add_subdirectory(nosWebcam)
 add_subdirectory(nosNoise)
 add_subdirectory(nosTrack)
+add_subdirectory(nosPyUtils)
 
 get_targets(PLUGINS_COMMON_EXTERNAL_TARGETS "./External")
 group_targets("${PLUGINS_COMMON_EXTERNAL_TARGETS}" "External")

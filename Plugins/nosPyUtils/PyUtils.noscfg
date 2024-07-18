@@ -1,0 +1,29 @@
+{
+    "info": {
+        "id": {
+            "name": "nos.pyutils",
+            "version": "0.1.0"
+        },
+        "display_name": "nos.pyutils",
+        "description": "",
+        "dependencies": [
+            {
+                "name": "nos.py",
+                "version": "0.1"
+            }
+        ]
+    },
+    "binary_path": "./Binaries/nosPyUtils",
+    "node_definitions": [
+        "Config/Nodes.nosdef"
+    ],
+    "defaults": [],
+    "custom_types": [],
+    "associated_nodes": [
+        {
+            "category": "Python",
+            "class_name": "Eval",
+            "display_name": "Eval"
+        }
+    ]
+}
