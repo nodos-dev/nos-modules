@@ -123,6 +123,13 @@ extern "C"
 		if (!outFunctions)
 			return NOS_RESULT_SUCCESS;
 
+		nosModuleStatusMessage msg;
+		msg.ModuleId = nosEngine.Context->Id;
+		msg.Message = "Test module loaded";
+		msg.MessageType = NOS_MODULE_STATUS_MESSAGE_TYPE_INFO;
+		msg.UpdateType = NOS_MODULE_STATUS_MESSAGE_UPDATE_TYPE_REPLACE;
+		nosEngine.SendModuleStatusMessageUpdate(&msg);
+
 		auto ret = RequestVulkanSubsystem();
 		if (ret != NOS_RESULT_SUCCESS)
 			return ret;

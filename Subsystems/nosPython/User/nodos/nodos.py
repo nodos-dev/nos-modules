@@ -1,4 +1,4 @@
-import __nodos_internal__ as nos_engine
+import __nodos_internal__ as nos
 from typing import Any
 from abc import ABC, abstractmethod
 
@@ -18,7 +18,7 @@ def log_info(message: str):
 
     :param message: The message to log
     """
-    nos_engine.log_info(message)
+    nos.log_info(message)
 
 def log_warning(message: str):
     """
@@ -26,7 +26,7 @@ def log_warning(message: str):
 
     :param message: The message to log
     """
-    nos_engine.log_warning(message)
+    nos.log_warning(message)
 
 def log_error(message: str):
     """
@@ -34,7 +34,7 @@ def log_error(message: str):
 
     :param message: The message to log
     """
-    nos_engine.log_error(message)
+    nos.log_error(message)
 
 def set_pin_value(pin_id: Any, value: Any):
     """
@@ -43,7 +43,7 @@ def set_pin_value(pin_id: Any, value: Any):
     :param pin_id: The unique identifier of the pin
     :param value: The value to set
     """
-    nos_engine.set_pin_value(pin_id, value)
+    nos.set_pin_value(pin_id, value)
 
 class NodeExecuteArgs(ABC):
     """
@@ -124,22 +124,17 @@ class PinValueChangedArgs(ABC):
         """
         return self.pin_value
 
-class nosNode(ABC):
+class Node(ABC):
     """
     Nodos Node class
     """
-    @abstractmethod
     def on_node_created(self, args:Any):
         pass
-    @abstractmethod
     def on_pin_value_changed(self, args: NodeExecuteArgs):
         pass
-    @abstractmethod
     def on_pin_connected(self, args: PinConnectedArgs):
         pass
-    @abstractmethod
     def on_pin_disconnected(self, args: PinDisconnectedArgs):
         pass
-    @abstractmethod
     def execute_node(self, args: NodeExecuteArgs):
         pass
