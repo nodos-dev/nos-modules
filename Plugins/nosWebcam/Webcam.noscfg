@@ -18,6 +18,10 @@
         {
           "name": "nos.utilities",
           "version": "2.0.0"
+        },
+        {
+          "name": "nos.math",
+          "version": "1.0.0"
         }
       ]
     },

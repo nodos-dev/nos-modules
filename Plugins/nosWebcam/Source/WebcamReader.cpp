@@ -39,6 +39,11 @@ struct WebcamReaderNode : public NodeContext
 			return NOS_RESULT_FAILED;
 		
 		uint8_t* mapped = nosVulkan->Map(&bufToWrite);
+		if (mapped == nullptr) 
+		{
+			nosEngine.LogE("Failed to map buffer!");
+			return NOS_RESULT_FAILED;
+		}
 		memcpy(mapped, sample.Data, sample.Size);
 		nosEngine.SetPinValue(execArgs[NSN_Output].Id, nos::Buffer::From(vkss::ConvertBufferInfo(bufToWrite)));
 		return NOS_RESULT_SUCCESS;
