@@ -1,5 +1,5 @@
 import __nodos_internal__ as nos_py
-from typing import Any
+from typing import Any, List, Self
 from abc import ABC, abstractmethod
 
 NODOS_PYTHON_API_VERSION_MAJOR = 0
@@ -21,6 +21,41 @@ class uuid:
 
     def __init__(self):
         pass
+
+
+class Name:
+    """
+    Nodos name class
+    """
+
+    def __init__(self, name_str: str):
+        self.id = nos_py.get_name(name_str)
+
+    def __init__(self, name_id: int):
+        self.id = name_id
+
+    def __str__(self) -> str:
+        get_string(self)
+
+
+def get_string(name: Name) -> str:
+    """
+    Get the string representation of a name
+
+    :param name: The name
+    :return: The string representation of the name
+    """
+    return nos_py.get_string(name.id)
+
+
+def get_name(name_str: str) -> Name:
+    """
+    Get the name from a string
+
+    :param name_str: The string
+    :return: The name
+    """
+    return Name(nos_py.get_name(name_str))
 
 
 def log_info(message: str):
@@ -113,7 +148,6 @@ class PinConnectedArgs(ABC):
     def pin_name(self) -> str:
         """
         :return: The name of the pin connected to your node
-
         """
         pass
 
@@ -192,6 +226,58 @@ class ContextMenuRequest:
         return self.instigator
 
 
+class ContextMenuItem:
+    def __init__(self, text: str):
+        self.text = text
+        self.command_id = None
+        self.sub_items = None
+
+    @classmethod
+    def command(cls, text: str, id: int) -> 'ContextMenuItem':
+        cmd = cls(text)
+        return cmd.set_command_id(id)
+    
+    @classmethod
+    def sub_menu(cls, text: str) -> 'ContextMenuItem':
+        cmd = cls(text)
+        cmd.command_id = None
+        cmd.sub_items = []
+        return cmd
+
+    def set_command_id(self, id: int) -> 'ContextMenuItem':
+        if self.sub_items is not None:
+            raise Exception("Cannot set command id on a sub menu")
+        self.command_id = id
+        return self
+
+    def add_item(self, item: 'ContextMenuItem') -> 'ContextMenuItem':
+        if self.command_id is not None:
+            raise Exception("Cannot add items to a command item")
+        self.sub_items.append(item)
+        return self
+
+    def __str__(self) -> str:
+        """
+        Recursively convert the menu item to a string reprentation
+        """
+        ret = ""
+        if self.command_id is not None:
+            ret += f"{self.text} ({self.command_id})"
+        else:
+            ret += f"{self.text} -> [{', '.join([str(item) for item in self.sub_items])}]"
+        return ret
+
+
+def send_context_menu_update(menu_items: List[ContextMenuItem], request: ContextMenuRequest):
+    """
+    Send a context menu update
+
+    :param menu_items: The items to display in the context menu
+    :param request: The request that triggered the context menu
+    """
+    nos_py.send_context_menu_update(menu_items, request)
+
+
 class Node(ABC):
     """
     Nodos Node class
@@ -216,4 +302,7 @@ class Node(ABC):
         pass
 
     def on_pin_menu_requested(self, request: ContextMenuRequest):
+        pass
+
+    def on_menu_command(self, item_id: uuid, command_id: int):
         pass

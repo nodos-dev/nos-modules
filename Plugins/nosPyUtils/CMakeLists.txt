@@ -12,3 +12,7 @@ endforeach()
 
 set(INCLUDE_FOLDERS "")
 nos_add_plugin("nosPyUtils" "${MODULE_DEPENDENCIES_TARGETS}" "${INCLUDE_FOLDERS}")
+
+# Collect .py files
+file(GLOB_RECURSE PY_FILES "${CMAKE_CURRENT_SOURCE_DIR}/Source/*.py")
+target_sources("nosPyUtils" PRIVATE ${PY_FILES})
