@@ -194,6 +194,7 @@ enum class MathNodeTypes : int {
 	AddTrack,
 	AddTransform,
 	PerspectiveView,
+	Eval,
 	Count
 };
 
@@ -286,6 +287,8 @@ struct SineWaveNodeContext : NodeContext
 	uint64_t frameCount = 0;
 };
 
+void RegisterEval(nosNodeFunctions*);
+
 extern "C"
 {
 
@@ -374,6 +377,10 @@ NOSAPI_ATTR nosResult NOSAPI_CALL nosExportNodeFunctions(size_t* outCount, nosNo
 				out = perspective * view;
 				return NOS_RESULT_SUCCESS;
 			};
+			break;
+		}
+		case MathNodeTypes::Eval: {
+			RegisterEval(node);
 			break;
 		}
 		default:

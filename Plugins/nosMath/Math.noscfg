@@ -2,16 +2,20 @@
     "info": {
         "id": {
             "name": "nos.math",
-            "version": "1.0.0"
+            "version": "1.1.0"
         },
         "description": "Nodes for math operations.",
         "display_name": "Math"
     },
     "custom_types": [],
     "node_definitions": [
-        "Config/Math.nosdef"
+        "Config/Math.nosdef",
+        "Config/Eval.nosdef"
     ],
     "binary_path": "Binaries/nosMath",
+    "third_party_software": [
+        "Config/Licenses.json"
+    ],
     "associated_nodes": [
         {
             "category": "Math",
@@ -22,6 +26,11 @@
             "category": "Math",
             "class_name": "PerspectiveView",
             "display_name": "Perspective View"
+        },
+        {
+            "category": "Math",
+            "class_name": "Eval",
+            "display_name": "Eval"
         },
         {
             "category": "Math|Wave",

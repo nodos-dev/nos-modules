@@ -31,3 +31,6 @@
 [submodule "Plugins/nosTrack/External/asio"]
 	path = Plugins/nosTrack/External/asio
 	url = https://github.com/chriskohlhoff/asio.git
+[submodule "Plugins/nosMath/External/tinyexpr-cpp"]
+	path = Plugins/nosMath/External/tinyexpr-cpp
+	url = https://github.com/Blake-Madden/tinyexpr-plusplus.git

@@ -1,0 +1,29 @@
+{
+	"nodes": [
+		{
+			"class_name": "Eval",
+			"contents_type": "Job",
+			"description": "Evaluates a string expression",
+			"pins": [
+				{
+					"name": "Expression",
+					"type_name": "string",
+					"show_as": "PROPERTY",
+					"can_show_as": "INPUT_PIN_OR_PROPERTY"
+				},
+				{
+					"name": "In_0",
+					"type_name": "double",
+					"show_as": "INPUT_PIN",
+					"can_show_as": "INPUT_PIN_OR_PROPERTY"
+				},
+				{
+					"name": "Result",
+					"type_name": "double",
+					"show_as": "OUTPUT_PIN",
+					"can_show_as": "OUTPUT_PIN_ONLY"
+				}
+			]
+		}
+	]
+}
