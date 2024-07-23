@@ -173,7 +173,10 @@ nosResult TrackNodeContext::ExecuteNode(nosNodeExecuteArgs const* args)
 			}
 
 			if (IsRunning())
+			{
 				nosEngine.LogI("Thread active but no data in track queue");
+				return NOS_RESULT_PENDING;
+			}
 			return NOS_RESULT_FAILED;
 		}
 		track = DataQueue.front().first;
