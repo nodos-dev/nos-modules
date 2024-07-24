@@ -24,20 +24,36 @@ struct EvalNodeContext : NodeContext
 	void Resolve(const nosFbNode* node)
 	{
 		auto pinCount = node->pins()->size();
-		Variables.clear();
+		auto prevDisplayNames = std::move(DisplayNames);
+		decltype(Variables) newVariables;
 		for (auto i = 0; i < pinCount; i++)
 		{
 			auto pin = node->pins()->Get(i);
 			if (pin->show_as() == fb::ShowAs::INPUT_PIN)
 			{
-				// If pin name starts with "In" then use its display name as variable name.
 				if (strncmp(pin->name()->c_str(), "In", 2) == 0)
 				{
 					auto uniqueName = pin->name()->str();
-					Variables.insert(uniqueName);
+					auto displayName = pin->display_name() ? pin->display_name()->str() : "In" + uniqueName.substr(2);
+					auto value = InterpretPinValue<double>((void*)pin->data()->Data());
+					newVariables[nos::Name(uniqueName)] = *value;
+					DisplayNames[nos::Name(uniqueName)] = displayName;
 				}
 			}
 		}
+		for (auto const& [uniqueName, value] : newVariables)
+		{
+			Variables.try_emplace(uniqueName, value);
+		}
+		for (auto it = Variables.begin(); it != Variables.end();)
+		{
+			if (newVariables.find(it->first) == newVariables.end())
+				it = Variables.erase(it);
+			else
+				++it;
+		}
+		if (prevDisplayNames != DisplayNames)
+			Compile();
 	}
 	
 	void OnNodeMenuRequested(const nosContextMenuRequest* request) override
@@ -66,17 +82,43 @@ struct EvalNodeContext : NodeContext
 		HandleEvent(CreateAppEvent(fbb, CreatePartialNodeUpdateDirect(fbb, &NodeId, ClearFlags::NONE, 0, &pins)));
 	}
 
+	bool Compile()
+	{
+		if (Expression.empty())
+			return true;
+		std::set<te_variable> vars;
+		std::unordered_set<std::string> displayNames;
+		for (auto const& [uniqueName, value] : Variables)
+		{
+			auto displayName = DisplayNames[uniqueName];
+			te_variable var(displayName.c_str(), &value);
+			vars.insert(std::move(var));
+			if (!displayNames.insert(displayName).second)
+			{
+				SetNodeStatusMessage("Duplicate name: " + displayName, fb::NodeStatusMessageType::FAILURE);
+				return false;
+			}
+		}
+		try
+		{
+			Parser.set_variables_and_functions(vars);
+			if (!Parser.compile(Expression.c_str()))
+			{
+				SetNodeStatusMessage("Failed to compile expression", fb::NodeStatusMessageType::FAILURE);
+				return false;
+			}
+		} catch (std::runtime_error& err) {
+			SetNodeStatusMessage(err.what(), fb::NodeStatusMessageType::FAILURE);
+			return false;
+		}
+		SetNodeStatusMessage(Expression, fb::NodeStatusMessageType::INFO);
+		return true;
+	}
+
 	nosResult ExecuteNode(const nosNodeExecuteArgs* args) override
 	{
 		nos::NodeExecuteArgs pins(args);
 
-		std::set<te_variable> vars;
-		for (auto const& uniqueName : Variables)
-		{
-			te_variable var(uniqueName.c_str(), (double*)pins[nos::Name(uniqueName)].Data->Data);
-			vars.insert(std::move(var));
-		}
-		Parser.set_variables_and_functions(vars);
 		auto exprStr = InterpretPinValue<const char>(pins[NOS_NAME("Expression")].Data->Data);
 		if (strlen(exprStr) == 0)
 		{
@@ -84,19 +126,36 @@ struct EvalNodeContext : NodeContext
 			return NOS_RESULT_SUCCESS;
 		}
 
-		auto res = Parser.evaluate(exprStr);
-		if (!Parser.success())
+		if (strcmp(Expression.c_str(), exprStr) != 0)
 		{
-			SetNodeStatusMessage("Error in expression: " + std::string(exprStr), fb::NodeStatusMessageType::FAILURE);
+			Expression = exprStr;
+			if (!Compile())
+				return NOS_RESULT_FAILED;
+		}
+
+		for (auto const& [uniqueName, value] : Variables)
+		{
+			auto pinValue = *InterpretPinValue<double>(pins[uniqueName].Data->Data);
+			Variables[uniqueName] = pinValue;
+		}
+
+		try
+		{
+			auto res = Parser.evaluate();
+			SetPinValue(NOS_NAME("Result"), nos::Buffer::From(res));
+			return NOS_RESULT_SUCCESS;
+		}
+		catch (std::runtime_error& err)
+		{
+			SetNodeStatusMessage(err.what(), fb::NodeStatusMessageType::FAILURE);
 			return NOS_RESULT_FAILED;
 		}
-		SetNodeStatusMessage(std::string(exprStr) + " = " + std::to_string(res), fb::NodeStatusMessageType::INFO);
-		SetPinValue(NOS_NAME("Result"), nos::Buffer::From(res));
-		return NOS_RESULT_SUCCESS;
 	}
 
 	te_parser Parser;
-	std::unordered_set<std::string> Variables; // unique name to display name
+	std::string Expression;
+	std::unordered_map<nos::Name, double> Variables;
+	std::unordered_map<nos::Name, std::string> DisplayNames;
 };
 
 void RegisterEval(nosNodeFunctions* fn)
