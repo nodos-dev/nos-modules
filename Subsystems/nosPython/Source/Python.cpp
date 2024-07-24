@@ -75,11 +75,16 @@ public:
 		return NOS_RESULT_SUCCESS;
 	}
 
-	void CreateNodeInstance(nos::fb::UUID id, nos::Name className,nos::Name name)
+	void CreateNodeInstance(const nosFbNode* node)
 	{
+		auto name = nos::Name(node->name()->str());
+		auto classNameStr = node->class_name()->str();
+		auto namespacedClassName = nos::Name(classNameStr);
+		auto className = classNameStr.substr(classNameStr.find_last_of('.') + 1);
+		auto id = *node->id();
 		try {
 			pyb::gil_scoped_acquire gil;
-			pyb::object pyObject = Modules[className]->attr(name.AsCStr());
+			pyb::object pyObject = Modules[namespacedClassName]->attr(className.c_str());
 			pyb::object instance = pyObject();
 			NodeInstances[id] = std::make_unique<pyb::object>(std::move(instance));
 		}
@@ -270,7 +275,7 @@ PYBIND11_EMBEDDED_MODULE(__nodos_internal__, m)
 			return true;
 		});
 	m.def("get_name", [](const std::string& name) -> nos::Name { return nos::Name(name); });
-	m.def("get_string", [](uint64_t nameId) -> const std::string& { return nos::Name(nameId).AsString(); });
+	m.def("get_string", [](uint64_t nameId) -> std::string { return nos::Name(nameId).AsString(); });
 	m.def("send_context_menu_update", [](std::vector<pyb::object> const& items, PyNativeContextMenuRequest const& req) { 
 		app::TAppContextMenuUpdate update;
 		update.item_id = req.ItemId;
@@ -320,7 +325,7 @@ class PyNativeNode : public nos::NodeContext
 public:
 	PyNativeNode(const nosFbNode* node) : NodeContext(node)
 	{
-		GInterpreter->CreateNodeInstance(NodeId, nos::Name(node->class_name()->str()), nos::Name(node->name()->str()));
+		GInterpreter->CreateNodeInstance(node);
 	}
 
 	~PyNativeNode()
