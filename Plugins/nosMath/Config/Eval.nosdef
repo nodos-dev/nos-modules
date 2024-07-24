@@ -12,16 +12,22 @@
 					"can_show_as": "INPUT_PIN_OR_PROPERTY"
 				},
 				{
-					"name": "In_0",
+					"name": "Result",
+					"type_name": "double",
+					"show_as": "OUTPUT_PIN",
+					"can_show_as": "OUTPUT_PIN_ONLY"
+				},
+				{
+					"name": "A",
 					"type_name": "double",
 					"show_as": "INPUT_PIN",
 					"can_show_as": "INPUT_PIN_OR_PROPERTY"
 				},
 				{
-					"name": "Result",
+					"name": "B",
 					"type_name": "double",
-					"show_as": "OUTPUT_PIN",
-					"can_show_as": "OUTPUT_PIN_ONLY"
+					"show_as": "INPUT_PIN",
+					"can_show_as": "INPUT_PIN_OR_PROPERTY"
 				}
 			]
 		}

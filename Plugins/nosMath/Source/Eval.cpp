@@ -26,18 +26,20 @@ struct EvalNodeContext : NodeContext
 		auto pinCount = node->pins()->size();
 		auto prevDisplayNames = std::move(DisplayNames);
 		decltype(Variables) newVariables;
-		for (auto i = 0; i < pinCount; i++)
+		std::list<nosUUID> pinsToUnorphan;
+		for (auto i = 2; i < pinCount; i++)
 		{
 			auto pin = node->pins()->Get(i);
 			if (pin->show_as() == fb::ShowAs::INPUT_PIN)
 			{
-				if (strncmp(pin->name()->c_str(), "In", 2) == 0)
-				{
-					auto uniqueName = pin->name()->str();
-					auto displayName = pin->display_name() ? pin->display_name()->str() : "In" + uniqueName.substr(2);
-					auto value = InterpretPinValue<double>((void*)pin->data()->Data());
-					newVariables[nos::Name(uniqueName)] = *value;
-					DisplayNames[nos::Name(uniqueName)] = displayName;
+				auto uniqueName = pin->name()->str();
+				auto displayName = pin->display_name() ? pin->display_name()->str() : uniqueName;
+				auto value = InterpretPinValue<double>((void*)pin->data()->Data());
+				newVariables[nos::Name(uniqueName)] = *value;
+				DisplayNames[nos::Name(uniqueName)] = displayName;
+				if (auto orphanState = pin->orphan_state()) {
+					if (orphanState->is_orphan())
+						pinsToUnorphan.push_back(*pin->id());
 				}
 			}
 		}
@@ -54,6 +56,11 @@ struct EvalNodeContext : NodeContext
 		}
 		if (prevDisplayNames != DisplayNames)
 			Compile();
+		for (auto const& pinId : pinsToUnorphan)
+		{
+			flatbuffers::FlatBufferBuilder fbb;
+			HandleEvent(CreateAppEvent(fbb, CreatePartialPinUpdateDirect(fbb, &pinId, 0, fb::CreateOrphanStateDirect(fbb, false))));
+		}
 	}
 	
 	void OnNodeMenuRequested(const nosContextMenuRequest* request) override
@@ -75,7 +82,13 @@ struct EvalNodeContext : NodeContext
 		flatbuffers::FlatBufferBuilder fbb;
 		nosUUID pinId{};
 		nosEngine.GenerateID(&pinId);
-		std::string pinName = "In_" + std::to_string(Variables.size());
+		constexpr std::string_view VARIABLE_NAMES = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+		if (Variables.size() >= VARIABLE_NAMES.size())
+		{
+			SetNodeStatusMessage("Maximum number of inputs reached", fb::NodeStatusMessageType::WARNING);
+			return;
+		}
+		std::string pinName = std::string(std::string_view(&VARIABLE_NAMES[Variables.size()], 1));
 		std::vector pins = {
 			fb::CreatePinDirect(fbb, &pinId, pinName.c_str(), "double", fb::ShowAs::INPUT_PIN, fb::CanShowAs::INPUT_PIN_OR_PROPERTY)
 		};
