@@ -22,6 +22,8 @@ struct EvalNodeContext : NodeContext
 	}
 
 	void OnPinUpdated(const nosPinUpdate* update) override {
+		if (update->UpdatedField != NOS_PIN_FIELD_DISPLAY_NAME)
+			return;
 		DisplayNames[nos::Name(update->PinName)] = nos::Name(update->DisplayName).AsString();
 		Compile();
 	}
