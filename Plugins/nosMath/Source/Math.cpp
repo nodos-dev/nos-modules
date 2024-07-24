@@ -9,7 +9,7 @@
 #include <chrono>
 #include <Nodos/PluginHelpers.hpp>
 
-NOS_INIT();
+NOS_INIT_WITH_MIN_REQUIRED_MINOR(11);
 
 NOS_REGISTER_NAME(X);
 NOS_REGISTER_NAME(Y);

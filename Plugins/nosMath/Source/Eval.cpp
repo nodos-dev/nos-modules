@@ -21,6 +21,11 @@ struct EvalNodeContext : NodeContext
 		Resolve(updatedNode);
 	}
 
+	void OnPinUpdated(const nosPinUpdate* update) override {
+		DisplayNames[nos::Name(update->PinName)] = nos::Name(update->DisplayName).AsString();
+		Compile();
+	}
+
 	void Resolve(const nosFbNode* node)
 	{
 		auto pinCount = node->pins()->size();
