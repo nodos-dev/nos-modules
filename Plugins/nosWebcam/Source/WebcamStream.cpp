@@ -67,7 +67,7 @@ TWebcamStreamInfo WebcamStream::GetStreamInfo() const
 	FormatInfo formatInfo = FormatInfo::FromMediaType(MediaType.Get(), StreamIndex);
 	streamInfo.format_name = std::string(formatInfo.GetFormatName().data(), 4);
 	streamInfo.resolution = std::make_unique<fb::vec2u>(formatInfo.Resolution);
-	streamInfo.frame_rate = std::make_unique<fb::vec2u>(formatInfo.FrameRate);
+	streamInfo.frame_rate = std::make_unique<fb::vec2u>(GetFrameRateVec2(formatInfo.FrameRate));
 	streamInfo.stream_index = StreamIndex;
 	return streamInfo;
 }
@@ -84,7 +84,14 @@ FormatInfo FormatInfo::FromMediaType(IMFMediaType* mediaType, uint32_t streamInd
 	mediaType->GetUINT64(MF_MT_FRAME_RATE, &frameRate);
 
 	info.Resolution = nos::fb::vec2u(frameSize >> 32, frameSize & 0xFFFFFFFF);
-	info.FrameRate = nos::fb::vec2u(UINT32(frameRate), UINT32(frameRate >> 32));
+	auto frameRateVec2 = nos::fb::vec2u(frameRate >> 32, frameRate & 0xFFFFFFFF);
+	for(uint32_t i = std::to_underlying(WebcamFrameRate::WEBCAM_FRAMERATE_1); i < std::to_underlying(WebcamFrameRate::COUNT); i++)
+		if (frameRateVec2 == GetFrameRateVec2(WebcamFrameRate(i)))
+		{
+			info.FrameRate = WebcamFrameRate(i);
+			break;
+		}
+
 	return info;
 }
 
@@ -151,6 +158,7 @@ void WebcamStreamManager::Stop()
 		{
 			stream.second->CloseStream();
 		}
+		Instance->OpenStreams.clear();
 		Instance.reset();
 	}
 	MFShutdown();
@@ -224,9 +232,7 @@ HRESULT EnumerateTypesForStream(IMFSourceReader* pReader, DWORD dwStreamIndex, s
 		else if (SUCCEEDED(hr))
 		{
 			FormatInfo mediaInfo = FormatInfo::FromMediaType(pType, dwStreamIndex);
-#ifdef NDEBUG
-			if (mediaInfo.SubType == MFVideoFormat_YUY2)
-#endif
+			if (mediaInfo.SubType == MFVideoFormat_YUY2 || mediaInfo.SubType == MFVideoFormat_NV12)
 				types.push_back(mediaInfo);
 			pType->Release();
 		}
@@ -250,6 +256,20 @@ std::vector<FormatInfo> EnumerateMediaTypes(IMFSourceReader* pReader)
 		}
 		++dwStreamIndex;
 	}
+
+	// Order formats based on NV12 > YUY2, then resolution, then frame rate
+	std::sort(types.begin(), types.end(), [](FormatInfo const& a, FormatInfo const& b) {
+		if (a.SubType != b.SubType)
+			return a.SubType == MFVideoFormat_NV12;
+		if (a.Resolution.x() != b.Resolution.x())
+			return a.Resolution.x() > b.Resolution.x();
+		if (a.Resolution.y() != b.Resolution.y())
+			return a.Resolution.y() > b.Resolution.y();
+		if (std::to_underlying(a.FrameRate) != std::to_underlying(b.FrameRate))
+			return std::to_underlying(a.FrameRate) > std::to_underlying(b.FrameRate);
+		return false;
+		});
+
 	return types;
 }
 
@@ -320,11 +340,16 @@ std::expected<std::shared_ptr<WebcamStream>, std::string> WebcamStreamManager::O
 	hr = pTypeFormat->SetGUID(MF_MT_MAJOR_TYPE, formatInfo.MajorType);
 	hr = pTypeFormat->SetGUID(MF_MT_SUBTYPE, formatInfo.SubType);
 	hr = pTypeFormat->SetUINT64(MF_MT_FRAME_SIZE, ((UINT64)formatInfo.Resolution.x() << 32) | formatInfo.Resolution.y());
-	hr = pTypeFormat->SetUINT64(MF_MT_FRAME_RATE, ((UINT64)formatInfo.FrameRate.x() << 32) | formatInfo.FrameRate.y());
+	nos::fb::vec2u frameRate = GetFrameRateVec2(formatInfo.FrameRate);
+	hr = pTypeFormat->SetUINT64(MF_MT_FRAME_RATE, ((UINT64)frameRate.x() << 32) | frameRate.y());
 	hr = pTypeFormat->SetUINT32(MF_MT_ALL_SAMPLES_INDEPENDENT, TRUE);
 
-	hr = reader->SetCurrentMediaType(formatInfo.StreamIndex, NULL, pTypeFormat.Get()); \
-		if (FAILED(hr)) return std::unexpected(GetLastErrorAsString(hr));
+	hr = reader->SetCurrentMediaType(formatInfo.StreamIndex, NULL, pTypeFormat.Get());
+	if (FAILED(hr)) return std::unexpected(GetLastErrorAsString(hr));
+
+	ComPtr<IMFMediaType> pGetMediaType;
+	hr = reader->GetCurrentMediaType(formatInfo.StreamIndex, &pGetMediaType);
+	FormatInfo info = FormatInfo::FromMediaType(pGetMediaType.Get(), formatInfo.StreamIndex);
 
 	std::shared_ptr<WebcamStream> stream = std::make_shared<WebcamStream>(device, reader, formatInfo.StreamIndex);
 	std::unique_lock lock(OpenStreamsMutex);

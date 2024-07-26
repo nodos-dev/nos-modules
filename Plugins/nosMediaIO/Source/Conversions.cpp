@@ -397,16 +397,9 @@ nosResult RegisterColorSpaceMatrix(nosNodeFunctions* funcs)
 	return NOS_RESULT_SUCCESS;
 }
 
-
 struct YUY2ToRGBANodeContext : NodeContext
 {
-	YUY2ToRGBANodeContext(const nosFbNode* node) : NodeContext(node)
-	{
-		AddPinValueWatcher(NSN_Resolution, [this](const nos::Buffer& newVal, std::optional<nos::Buffer> oldVal) {
-			auto newDispatchSize = nosVec2u(120, 120);
-			nosEngine.SetPinValueByName(NodeId, NOS_NAME_STATIC("DispatchSize"), Buffer::From(newDispatchSize));
-			});
-	}
+	using NodeContext::NodeContext;
 
 	nosResult ExecuteNode(const nosNodeExecuteArgs* args) override
 	{
@@ -416,16 +409,19 @@ struct YUY2ToRGBANodeContext : NodeContext
 		auto& output = *InterpretPinValue<sys::vulkan::Texture>(outputPinData->Data);
 		auto& input = *InterpretPinValue<sys::vulkan::Buffer>(execArgs[NOS_NAME("Input")].Data->Data);
 
+		constexpr auto reqFormat = NOS_FORMAT_R8G8B8A8_UNORM;
+
 		sys::vulkan::TTexture texDef;
 		if (output.width() != res.x() ||
-			output.height() != res.y())
+			output.height() != res.y() ||
+			(nosFormat)output.format() != reqFormat)
 		{
 			nosResourceShareInfo tex{ .Info = {
 				.Type = NOS_RESOURCE_TYPE_TEXTURE,
 				.Texture = {
 					.Width = res.x(),
 					.Height = res.y(),
-					.Format = NOS_FORMAT_R8G8B8A8_UNORM,
+					.Format = reqFormat,
 					.FieldType = (nosTextureFieldType)input.field_type(),
 				}
 			} };
@@ -440,6 +436,49 @@ struct YUY2ToRGBANodeContext : NodeContext
 nosResult RegisterYUY2ToRGBA(nosNodeFunctions* funcs)
 {
 	NOS_BIND_NODE_CLASS(NOS_NAME_STATIC("nos.mediaio.YUY2ToRGBA"), YUY2ToRGBANodeContext, funcs);
+	return NOS_RESULT_SUCCESS;
+}
+
+struct NV12ToRGBANodeContext : NodeContext
+{
+	using NodeContext::NodeContext;
+
+	nosResult ExecuteNode(const nosNodeExecuteArgs* args) override
+	{
+		nos::NodeExecuteArgs execArgs(args);
+		auto res = *InterpretPinValue<nos::fb::vec2u>(execArgs[NOS_NAME("Resolution")].Data->Data);
+		auto* outputPinData = execArgs[NOS_NAME("Output")].Data;
+		auto& output = *InterpretPinValue<sys::vulkan::Texture>(outputPinData->Data);
+		auto& input = *InterpretPinValue<sys::vulkan::Buffer>(execArgs[NOS_NAME("Input")].Data->Data);
+
+		constexpr auto reqFormat = NOS_FORMAT_R16G16B16A16_UNORM;
+
+		sys::vulkan::TTexture texDef;
+		if (output.width() != res.x() ||
+			output.height() != res.y() ||
+			(nosFormat)output.format() != reqFormat)
+		{
+			nosResourceShareInfo tex{ .Info = {
+				.Type = NOS_RESOURCE_TYPE_TEXTURE,
+				.Texture = {
+					.Width = res.x(),
+					.Height = res.y(),
+					.Format = reqFormat,
+					.FieldType = (nosTextureFieldType)input.field_type(),
+				}
+			} };
+			texDef = vkss::ConvertTextureInfo(tex);
+			nosEngine.SetPinValueByName(NodeId, NOS_NAME("Output"), nos::Buffer::From(texDef));
+		}
+		// Work group size is 16x16, each thread processes 4x2 pixels
+		nosEngine.SetPinValue(execArgs[NOS_NAME("DispatchSize")].Id, nos::Buffer::From(nosVec2u(glm::ceil(res.x()/32.0f), glm::ceil(res.y()/16.0f))));
+		return nosVulkan->ExecuteGPUNode(this, args);
+	}
+};
+
+nosResult RegisterNV12ToRGBA(nosNodeFunctions* funcs)
+{
+	NOS_BIND_NODE_CLASS(NOS_NAME_STATIC("nos.mediaio.NV12ToRGBA"), NV12ToRGBANodeContext, funcs);
 	return NOS_RESULT_SUCCESS;
 }
 

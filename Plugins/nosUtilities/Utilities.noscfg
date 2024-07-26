@@ -2,7 +2,7 @@
     "info": {
         "id": {
             "name": "nos.utilities",
-            "version": "2.1.1"
+            "version": "2.2.0"
         },
         "description": "Various utility nodes.",
         "display_name": "Utilities",
@@ -30,7 +30,8 @@
         "Config/CPUSleep.nosdef",
         "Config/UploadBuffer.nosdef",
         "Config/Buffer2Texture.nosdef",
-        "Config/Texture2Buffer.nosdef"
+        "Config/Texture2Buffer.nosdef",
+		"Config/IsSameStringNode.nosdef"
     ],
     "custom_types": [
         "Config/Merge.fbs",
@@ -131,7 +132,12 @@
             "category": "Utilities",
             "class_name": "Texture2Buffer",
             "display_name": "Texture To Buffer"
-        }
+        },
+		{
+            "category": "Utilities",
+            "class_name": "IsSameString",
+            "display_name": "Is Same String"
+		}
     ],
     "subsystem_options": [
         {

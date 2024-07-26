@@ -36,7 +36,7 @@ struct WebcamReaderNode : public NodeContext
 		}
 		nosResourceShareInfo bufToWrite = vkss::ConvertToResourceInfo(*execArgs.GetPinData<nos::sys::vulkan::Buffer>(NSN_BufferToWrite));
 		if (bufToWrite.Info.Buffer.Size != sample.Size)
-			return NOS_RESULT_FAILED;
+			nosEngine.LogE("Buffer size mismatch!");
 		
 		uint8_t* mapped = nosVulkan->Map(&bufToWrite);
 		if (mapped == nullptr) 
@@ -44,7 +44,8 @@ struct WebcamReaderNode : public NodeContext
 			nosEngine.LogE("Failed to map buffer!");
 			return NOS_RESULT_FAILED;
 		}
-		memcpy(mapped, sample.Data, sample.Size);
+		
+		memcpy(mapped, sample.Data, std::min(uint32_t(sample.Size), bufToWrite.Info.Buffer.Size));
 		nosEngine.SetPinValue(execArgs[NSN_Output].Id, nos::Buffer::From(vkss::ConvertBufferInfo(bufToWrite)));
 		return NOS_RESULT_SUCCESS;
 	}

@@ -47,13 +47,37 @@ struct WebcamDevice
 	std::wstring SymLink;
 };
 
+enum class WebcamFrameRate : uint32_t
+{
+	WEBCAM_FRAMERATE_1 = 0,
+	WEBCAM_FRAMERATE_5,
+	WEBCAM_FRAMERATE_7_5,
+	WEBCAM_FRAMERATE_10,
+	WEBCAM_FRAMERATE_14_98,
+	WEBCAM_FRAMERATE_15,
+	WEBCAM_FRAMERATE_20,
+	WEBCAM_FRAMERATE_23_98,
+	WEBCAM_FRAMERATE_24,
+	WEBCAM_FRAMERATE_25,
+	WEBCAM_FRAMERATE_29_97,
+	WEBCAM_FRAMERATE_30,
+	WEBCAM_FRAMERATE_47_95,
+	WEBCAM_FRAMERATE_48,
+	WEBCAM_FRAMERATE_50,
+	WEBCAM_FRAMERATE_59_94,
+	WEBCAM_FRAMERATE_60,
+	WEBCAM_FRAMERATE_119_88,
+	WEBCAM_FRAMERATE_120,
+	COUNT
+};
+
 struct FormatInfo
 {
 	uint32_t StreamIndex;
 	GUID MajorType;
 	GUID SubType;
 	nos::fb::vec2u Resolution;
-	nos::fb::vec2u FrameRate;
+	WebcamFrameRate FrameRate = WebcamFrameRate::WEBCAM_FRAMERATE_30;
 	static FormatInfo FromMediaType(IMFMediaType* mediaType, uint32_t streamIndex);
 	std::array<char, 4> GetFormatName() const
 	{
@@ -84,9 +108,31 @@ inline std::string GetResolutionString(nos::fb::vec2u const& resolution)
 {
 	return std::to_string(resolution.x()) + "x" + std::to_string(resolution.y());
 }
-inline std::string GetFrameRateString(nos::fb::vec2u const& frameRate)
+inline const char* GetFrameRateString(WebcamFrameRate frameRate)
 {
-	return std::to_string(frameRate.x()) + "/" + std::to_string(frameRate.y());
+	switch (frameRate)
+	{
+		case WebcamFrameRate::WEBCAM_FRAMERATE_1:	    return "1";
+		case WebcamFrameRate::WEBCAM_FRAMERATE_5:	    return "5";
+		case WebcamFrameRate::WEBCAM_FRAMERATE_7_5:    return "7.5";
+		case WebcamFrameRate::WEBCAM_FRAMERATE_10:	    return "10";
+		case WebcamFrameRate::WEBCAM_FRAMERATE_14_98:  return "14.98";
+		case WebcamFrameRate::WEBCAM_FRAMERATE_15:     return "15";
+		case WebcamFrameRate::WEBCAM_FRAMERATE_20:     return "20";
+		case WebcamFrameRate::WEBCAM_FRAMERATE_23_98:  return "23.98";
+		case WebcamFrameRate::WEBCAM_FRAMERATE_24:     return "24";
+		case WebcamFrameRate::WEBCAM_FRAMERATE_25:     return "25";
+		case WebcamFrameRate::WEBCAM_FRAMERATE_29_97:  return "29.97";
+		case WebcamFrameRate::WEBCAM_FRAMERATE_30:     return "30";
+		case WebcamFrameRate::WEBCAM_FRAMERATE_47_95:  return "47.95";
+		case WebcamFrameRate::WEBCAM_FRAMERATE_48:		return "48";
+		case WebcamFrameRate::WEBCAM_FRAMERATE_50:     return "50";
+		case WebcamFrameRate::WEBCAM_FRAMERATE_59_94:  return "59.94";
+		case WebcamFrameRate::WEBCAM_FRAMERATE_60:     return "60";
+		case WebcamFrameRate::WEBCAM_FRAMERATE_119_88: return "119.88";
+		case WebcamFrameRate::WEBCAM_FRAMERATE_120:    return "120";
+		default: DEBUG_BREAK;					        return "CUSTOM";
+	}
 }
 std::optional<GUID> GetSubTypeFromFormatName(std::string const& formatName);
 inline std::optional<nos::fb::vec2u> GetResolutionFromString(std::string const& resolution)
@@ -97,12 +143,40 @@ inline std::optional<nos::fb::vec2u> GetResolutionFromString(std::string const& 
 	return nos::fb::vec2u{ std::stoul(resolution.substr(0, pos)), std::stoul(resolution.substr(pos + 1)) };
 
 }
-inline std::optional<nos::fb::vec2u> GetFrameRateFromString(std::string const& frameRate)
+
+inline nos::fb::vec2u GetFrameRateVec2(WebcamFrameRate const& frameRate)
 {
-	auto pos = frameRate.find('/');
-	if (pos == std::string::npos)
-		return std::nullopt;;
-	return nos::fb::vec2u{ std::stoul(frameRate.substr(0, pos)), std::stoul(frameRate.substr(pos + 1)) };
+	switch (frameRate)
+	{
+		case WebcamFrameRate::WEBCAM_FRAMERATE_1:	    return { 1, 1 };
+		case WebcamFrameRate::WEBCAM_FRAMERATE_5:	    return { 5, 1 };
+		case WebcamFrameRate::WEBCAM_FRAMERATE_7_5:    return { 10000000, 1333333 };
+		case WebcamFrameRate::WEBCAM_FRAMERATE_10:	    return { 10, 1 };
+		case WebcamFrameRate::WEBCAM_FRAMERATE_14_98:  return { 5000, 1001 };
+		case WebcamFrameRate::WEBCAM_FRAMERATE_15:     return { 15, 1 };
+		case WebcamFrameRate::WEBCAM_FRAMERATE_20:     return { 20, 1 };
+		case WebcamFrameRate::WEBCAM_FRAMERATE_23_98:  return { 24000, 1001 };
+		case WebcamFrameRate::WEBCAM_FRAMERATE_24:     return { 24, 1 };
+		case WebcamFrameRate::WEBCAM_FRAMERATE_25:     return { 25, 1 };
+		case WebcamFrameRate::WEBCAM_FRAMERATE_29_97:  return { 30000, 1001 };
+		case WebcamFrameRate::WEBCAM_FRAMERATE_30:     return { 30, 1 };
+		case WebcamFrameRate::WEBCAM_FRAMERATE_47_95:  return { 48000, 1001 };
+		case WebcamFrameRate::WEBCAM_FRAMERATE_48:		return { 48, 1 };
+		case WebcamFrameRate::WEBCAM_FRAMERATE_50:     return { 50, 1 };
+		case WebcamFrameRate::WEBCAM_FRAMERATE_59_94:  return { 60000, 1001 };
+		case WebcamFrameRate::WEBCAM_FRAMERATE_60:     return { 60, 1 };
+		case WebcamFrameRate::WEBCAM_FRAMERATE_119_88: return { 120000, 1001 };
+		case WebcamFrameRate::WEBCAM_FRAMERATE_120:    return { 120, 1 };
+		default: DEBUG_BREAK;					        return { 1, 50 }; break;
+	}
+}
+
+inline std::optional<WebcamFrameRate> GetFrameRateFromString(std::string const& frameRate)
+{
+	for(uint32_t i = std::to_underlying(WebcamFrameRate::WEBCAM_FRAMERATE_1); i < std::to_underlying(WebcamFrameRate::COUNT); i++)
+		if (frameRate == GetFrameRateString((WebcamFrameRate)i))
+			return (WebcamFrameRate)i;
+	return std::nullopt;
 }
 
 struct WebcamStreamManager

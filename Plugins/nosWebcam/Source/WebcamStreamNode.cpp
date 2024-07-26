@@ -49,19 +49,23 @@ struct WebcamStreamNode : public nos::NodeContext
 						if (device.Name == DevicePin)
 						{
 							SelectedDevice = device;
+							CurDeviceFormats = WebcamStreamManager::EnumerateFormats(*SelectedDevice);
 							break;
 						}
-					if (SelectedDevice)
-						CurDeviceFormats = WebcamStreamManager::EnumerateFormats(*SelectedDevice);
-					else
+				}
+				if (!SelectedDevice && !oldValue)
+				{
+					if (!DeviceList.empty())
+					{
+						AutoSelectIfPossible(NSN_Device, GetDeviceList());
+						return;
+					}
+					else if(DevicePin != "NONE")
 					{
 						SetPinValue(NSN_Device, nosBuffer{ .Data = (void*)"NONE", .Size = 5 });
+						return;
 					}
 				}
-				if (!SelectedDevice)
-					if (AutoSelectIfSingle(NSN_Device, GetDeviceList()))
-						return;
-
 				UpdateAfter(ChangedPinType::Device, !oldValue);
 			});
 
@@ -72,7 +76,15 @@ struct WebcamStreamNode : public nos::NodeContext
 				if (FormatPin != "NONE")
 				{
 					SelectedFormatGuid = GetSubTypeFromFormatName(FormatPin);
-					if (!SelectedFormatGuid)
+				}
+				if (!SelectedFormatGuid)
+				{
+					if (auto formatList = GetFormatList(); formatList.size() > 1)
+					{
+						AutoSelectIfPossible(NSN_Format, formatList);
+						return;
+					}
+					else if(FormatPin != "NONE")
 					{
 						SetPinValue(NSN_Format, nosBuffer{ .Data = (void*)"NONE", .Size = 5 });
 						return;
@@ -88,7 +100,15 @@ struct WebcamStreamNode : public nos::NodeContext
 				if (ResolutionPin != "NONE")
 				{
 					SelectedResolution = GetResolutionFromString(ResolutionPin);
-					if (!SelectedResolution)
+				}
+				if (!SelectedResolution)
+				{
+					if (auto resolutionList = GetResolutionList(); resolutionList.size() > 1)
+					{
+						AutoSelectIfPossible(NSN_Resolution, resolutionList);
+						return;
+					}
+					else if (ResolutionPin != "NONE")
 					{
 						SetPinValue(NSN_Resolution, nosBuffer{ .Data = (void*)"NONE", .Size = 5 });
 						return;
@@ -104,7 +124,15 @@ struct WebcamStreamNode : public nos::NodeContext
 				if (FrameRatePin != "NONE")
 				{
 					SelectedFrameRate = GetFrameRateFromString(FrameRatePin);
-					if (!SelectedFrameRate)
+				}
+				if (!SelectedFrameRate)
+				{
+					if (auto frameRateList = GetFrameRateList(); frameRateList.size() > 1)
+					{
+						AutoSelectIfPossible(NSN_FrameRate, frameRateList);
+						return;
+					}
+					else if(FrameRatePin != "NONE")
 					{
 						SetPinValue(NSN_FrameRate, nosBuffer{ .Data = (void*)"NONE", .Size = 5 });
 						return;
@@ -175,26 +203,29 @@ struct WebcamStreamNode : public nos::NodeContext
 			UpdateStringList(GetFormatStringListName(), formatList);
 			if (!SelectedDevice)
 				SetPinValue(NSN_Format, nosBuffer{ .Data = (void*)"NONE", .Size = 5 });
-			else
-				AutoSelectIfSingle(NSN_Format, formatList);
+			else if(!first)
+				AutoSelectIfPossible(NSN_Format, formatList);
 			break;
 		}
 		case ChangedPinType::FormatName:
 		{
-			UpdateStringList(GetResolutionStringListName(), GetResolutionList());
+			auto resolutionList = GetResolutionList();
+			UpdateStringList(GetResolutionStringListName(), resolutionList);
 			if (!SelectedFormatGuid)
 				SetPinValue(NSN_Resolution, nosBuffer{ .Data = (void*)"NONE", .Size = 5 });
-			else
-				AutoSelectIfSingle(NSN_Resolution, GetResolutionList());
+			else if(!first)
+				AutoSelectIfPossible(NSN_Resolution, resolutionList);
+
 			break;
 		}
 		case ChangedPinType::Resolution:
 		{
-			UpdateStringList(GetFrameRateStringListName(), GetFrameRateList());
+			auto frameRateList = GetFrameRateList();
+			UpdateStringList(GetFrameRateStringListName(), frameRateList);
 			if (!SelectedResolution)
 				SetPinValue(NSN_FrameRate, nosBuffer{ .Data = (void*)"NONE", .Size = 5 });
-			else
-				AutoSelectIfSingle(NSN_FrameRate, GetFrameRateList());
+			else if(!first)
+				AutoSelectIfPossible(NSN_FrameRate, frameRateList);
 			break;
 		}
 		case ChangedPinType::FrameRate:
@@ -258,14 +289,10 @@ struct WebcamStreamNode : public nos::NodeContext
 	std::string GetResolutionStringListName() { return "webcam.ResolutionList." + UUID2STR(NodeId); }
 	std::string GetFrameRateStringListName() { return "webcam.FrameRateList." + UUID2STR(NodeId); }
 
-	bool AutoSelectIfSingle(nosName pinName, std::vector<std::string> const& list)
+	void AutoSelectIfPossible(nosName pinName, std::vector<std::string> const& list)
 	{
-		if (list.size() == 2)
-		{
-			SetPinValue(pinName, nosBuffer{ .Data = (void*)list[1].c_str(), .Size = list[1].size() + 1 });
-			return true;
-		}
-		return false;
+		assert(list.size() > 1);
+		SetPinValue(pinName, nosBuffer{ .Data = (void*)list[1].c_str(), .Size = list[1].size() + 1 });
 	}
 
 	std::optional<nosUUID> StreamId;
@@ -275,7 +302,7 @@ struct WebcamStreamNode : public nos::NodeContext
 	std::optional<WebcamDevice> SelectedDevice;
 	std::optional<GUID> SelectedFormatGuid;
 	std::optional<nos::fb::vec2u> SelectedResolution;
-	std::optional<nos::fb::vec2u > SelectedFrameRate;
+	std::optional<WebcamFrameRate> SelectedFrameRate;
 
 	std::string DevicePin = "NONE";
 	std::string FormatPin = "NONE";

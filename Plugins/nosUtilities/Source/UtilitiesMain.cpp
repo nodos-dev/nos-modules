@@ -31,6 +31,7 @@ enum Utilities : int
 	UploadBuffer,
 	Buffer2Texture,
 	Texture2Buffer,
+	IsSameStringNode,
 	Count
 };
 
@@ -44,6 +45,7 @@ nosResult RegisterCPUSleep(nosNodeFunctions*);
 nosResult RegisterUploadBuffer(nosNodeFunctions*);
 nosResult RegisterBuffer2Texture(nosNodeFunctions*);
 nosResult RegisterTexture2Buffer(nosNodeFunctions*);
+nosResult RegisterIsSameStringNode(nosNodeFunctions*);
 
 extern "C"
 {
@@ -82,6 +84,7 @@ NOSAPI_ATTR nosResult NOSAPI_CALL nosExportNodeFunctions(size_t* outSize, nosNod
 			GEN_CASE_NODE(UploadBuffer)
 			GEN_CASE_NODE(Buffer2Texture)
 			GEN_CASE_NODE(Texture2Buffer)
+			GEN_CASE_NODE(IsSameStringNode)
 		}
 	}
 	return NOS_RESULT_SUCCESS;

@@ -1,0 +1,29 @@
+{
+  "nodes": [
+    {
+      "class_name": "IsSameString",
+      "contents_type": "Job",
+      "description": "Checks if two strings are the same",
+      "pins": [
+        {
+          "name": "First",
+          "type_name": "string",
+          "show_as": "INPUT_PIN",
+          "can_show_as": "INPUT_PIN_OR_PROPERTY"
+        },
+        {
+          "name": "Second",
+          "type_name": "string",
+          "show_as": "INPUT_PIN",
+          "can_show_as": "INPUT_PIN_OR_PROPERTY"
+        },
+        {
+          "name": "IsSame",
+          "type_name": "bool",
+          "show_as": "OUTPUT_PIN",
+          "can_show_as": "OUTPUT_PIN_ONLY"
+        }
+      ]
+    }
+  ]
+}

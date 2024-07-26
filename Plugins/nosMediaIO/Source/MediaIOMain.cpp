@@ -33,6 +33,7 @@ enum Nodes : int
 	UploadBufferProvider,
 	YUY2ToRGBA,
 	TextureFormatConverter,
+	NV12ToRGBA,
 	Count
 };
 
@@ -48,6 +49,7 @@ nosResult RegisterBoundedTextureQueue(nosNodeFunctions*);
 nosResult RegisterUploadBufferProvider(nosNodeFunctions*);
 nosResult RegisterYUY2ToRGBA(nosNodeFunctions*);
 nosResult RegisterTextureFormatConverter(nosNodeFunctions* fn);
+nosResult RegisterNV12ToRGBA(nosNodeFunctions*);
 
 extern "C"
 {
@@ -88,6 +90,7 @@ NOSAPI_ATTR nosResult NOSAPI_CALL nosExportNodeFunctions(size_t* outSize, nosNod
 			GEN_CASE_NODE(UploadBufferProvider)
 			GEN_CASE_NODE(YUY2ToRGBA)
 			GEN_CASE_NODE(TextureFormatConverter)
+			GEN_CASE_NODE(NV12ToRGBA)
 		}
 	}
 	return NOS_RESULT_SUCCESS;
