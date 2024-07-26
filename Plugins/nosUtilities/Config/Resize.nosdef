@@ -27,7 +27,6 @@
           "can_show_as": "INPUT_OUTPUT_PROPERTY",
           "description": "Scaling filter algorithm. Supported algorithms:\nNearest, bilinear, bicubic, directional blur, lanczos3, gaussian unsharp mask",
           "data": "BILINEAR"
-
         },
         {
           "name": "Size",
@@ -38,7 +37,11 @@
             "x": 1920,
             "y": 1080
           },
-          "description": "Output size which the input image is scaled to"
+          "description": "Output size which the input image is scaled to",
+          "visualizer": {
+            "type": "NAMED_VALUE",
+            "name": "nos.mediaio.ResolutionVisualizer"
+          }
         }
       ]
     }

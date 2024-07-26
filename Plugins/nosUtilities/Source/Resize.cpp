@@ -19,7 +19,7 @@ static nosResult ExecuteNode(void* ctx, const nosNodeExecuteArgs* args)
 	nos::NodeExecuteArgs nodeArgs(args);
 	auto inputTex = vkss::DeserializeTextureInfo(nodeArgs[NSN_Input].Data->Data);
 	auto method = *reinterpret_cast<uint32_t*>(nodeArgs[NSN_Method].Data->Data);
-		
+
 	auto tex = vkss::DeserializeTextureInfo(nodeArgs[NSN_Output].Data->Data);
 	auto& size = *reinterpret_cast<nosVec2u*>(nodeArgs[NSN_Size].Data->Data);
 		
