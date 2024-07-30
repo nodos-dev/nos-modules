@@ -11,7 +11,8 @@
 				"name": "nos.py.deps",
 				"version": "1.0.0"
 			}
-        ]
+        ],
+        "category": "Scripting"
     },
     "binary_path": "./Binaries/nosPython",
     "custom_types": [

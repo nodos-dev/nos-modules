@@ -11,7 +11,9 @@
                 "name": "nos.sys.vulkan",
                 "version": "5.0.0"
             }
-        ]
+        ],
+        "category": "Media I/O",
+        "tags": ["streaming"]
     },
     "node_definitions": [
         "Config/WebRTCStreamer.nosdef",

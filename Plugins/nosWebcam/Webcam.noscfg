@@ -23,7 +23,8 @@
           "name": "nos.math",
           "version": "1.1.0"
         }
-      ]
+      ],
+      "category": "Media I/O"
     },
     "node_definitions": [
         "Config/WebcamReader.nosdef", 

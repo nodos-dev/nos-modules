@@ -5,6 +5,7 @@
             "version": "1.0.0"
         },
         "display_name": "Shader Compiler",
-        "description": "Binaries required for shader compilation"
+        "description": "Binaries required for shader compilation",
+        "category": "Tools"
     }
 }

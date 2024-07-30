@@ -15,7 +15,8 @@
                 "name": "nos.py",
                 "version": "0.1.0"
             }
-        ]
+        ],
+        "category": "Test"
     },
     "custom_types": [ "Config/Test.fbs", "Config/FrameInterpolator.fbs" ],
     "node_definitions": [

@@ -4,7 +4,8 @@
 			"name": "nos.track",
 			"version": "1.5"
 		},
-		"display_name": "Track"
+		"display_name": "Track",
+		"category": "Virtual Studio"
 	},
 	"node_definitions": [
 		"Config/FreeD.nosdef",

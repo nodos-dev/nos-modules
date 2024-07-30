@@ -6,7 +6,8 @@
         },
         "display_name": "Animation Subsystem",
         "description": "",
-        "dependencies": []
+        "dependencies": [],
+        "category": "Animation"
     },
     "binary_path": "./Binaries/nosAnimationSubsystem"
 }
