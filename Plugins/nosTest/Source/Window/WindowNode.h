@@ -28,6 +28,9 @@ public:
 	void OnPathStop() override;
 	void OnPathStart() override;
 
+	void OnEnterRunner(std::optional<nosUUID> runnerId) override;
+	void OnExitRunner(std::optional<nosUUID> runnerId) override;
+
 private:
 	void WindowThread();
 

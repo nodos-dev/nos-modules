@@ -135,13 +135,17 @@ nosResult WindowNode::ExecuteNode(const nosNodeExecuteArgs* args)
 	return NOS_RESULT_SUCCESS;
 }
 
-void WindowNode::OnPathStop() 
+void WindowNode::OnExitRunner(std::optional<nosUUID> runnerId) 
 { 
+	if (!runnerId)
+		return;
 	Clear(); 
 }
 
-void WindowNode::OnPathStart() 
+void WindowNode::OnEnterRunner(std::optional<nosUUID> runnerId)
 {
+	if (!runnerId)
+		return;
 	glfwInit();
 	glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 	glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
@@ -158,6 +162,21 @@ void WindowNode::OnPathStart()
 		return;
 	}
 
+}
+
+void WindowNode::OnPathStop() 
+{
+	nosCmd cmd;
+	nosCmdBeginParams beginParams = { .Name = NOS_NAME("Window node flush cmd"), .AssociatedNodeId = NodeId, .OutCmdHandle = &cmd };
+	nosVulkan->Begin2(&beginParams);
+	nosGPUEvent wait;
+	nosCmdEndParams endParams = { .ForceSubmit = true, .OutGPUEventHandle = &wait };
+	nosVulkan->End(cmd, &endParams);
+	nosVulkan->WaitGpuEvent(&wait, UINT64_MAX);
+}
+
+void WindowNode::OnPathStart()
+{
 	nosScheduleNodeParams params = {};
 	params.NodeId = NodeId;
 	params.Reset = false;
@@ -165,4 +184,5 @@ void WindowNode::OnPathStart()
 
 	nosEngine.ScheduleNode(&params);
 }
+
 }
