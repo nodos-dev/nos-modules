@@ -21,10 +21,47 @@ struct EvalNodeContext : NodeContext
 		Resolve(updatedNode);
 	}
 
+	void SetPinOrphan(const nosUUID& pinId, bool orphan, const char* message = nullptr)
+	{
+		flatbuffers::FlatBufferBuilder fbb;
+		HandleEvent(CreateAppEvent(fbb, CreatePartialPinUpdateDirect(fbb, &pinId, 0, fb::CreateOrphanStateDirect(fbb, orphan, message))));
+	}
+
+	void SetPinOrphan(nos::Name pinName, bool orphan, const char* message = nullptr)
+	{
+		auto pinId = *GetPinId(pinName);
+		SetPinOrphan(pinId, orphan, message);
+	}
+
+	void SetStatus(const std::string& message, fb::NodeStatusMessageType type)
+	{
+		if (message == LastStatus.Message && type == LastStatus.Type)
+			return;
+		flatbuffers::FlatBufferBuilder fbb;
+		auto pinId = *GetPinId(NOS_NAME("Result"));
+		if (type == fb::NodeStatusMessageType::FAILURE)
+			SetPinOrphan(pinId, true, message.c_str());
+		else 
+			SetPinOrphan(pinId, false);
+		SetNodeStatusMessage(message, type);
+		LastStatus = { message, type };
+	}
+
 	void OnPinUpdated(const nosPinUpdate* update) override {
 		if (update->UpdatedField != NOS_PIN_FIELD_DISPLAY_NAME)
 			return;
-		DisplayNames[nos::Name(update->PinName)] = nos::Name(update->DisplayName).AsString();
+		std::string newDisplayName = nos::Name(update->DisplayName).AsString();
+		for (auto [uniqueName, displayName] : DisplayNames)
+		{
+			if (displayName == newDisplayName)
+			{
+				SetStatus("Duplicate name: " + displayName, fb::NodeStatusMessageType::FAILURE);
+				return;
+			}
+		}
+		ClearNodeStatusMessages();
+		SetPinOrphan(NOS_NAME("Result"), false);
+		DisplayNames[nos::Name(update->PinName)] = newDisplayName;
 		Compile();
 	}
 
@@ -64,10 +101,7 @@ struct EvalNodeContext : NodeContext
 		if (prevDisplayNames != DisplayNames)
 			Compile();
 		for (auto const& pinId : pinsToUnorphan)
-		{
-			flatbuffers::FlatBufferBuilder fbb;
-			HandleEvent(CreateAppEvent(fbb, CreatePartialPinUpdateDirect(fbb, &pinId, 0, fb::CreateOrphanStateDirect(fbb, false))));
-		}
+			SetPinOrphan(pinId, false);
 	}
 	
 	void OnNodeMenuRequested(const nosContextMenuRequest* request) override
@@ -92,7 +126,7 @@ struct EvalNodeContext : NodeContext
 		constexpr std::string_view VARIABLE_NAMES = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 		if (Variables.size() >= VARIABLE_NAMES.size())
 		{
-			SetNodeStatusMessage("Maximum number of inputs reached", fb::NodeStatusMessageType::WARNING);
+			SetStatus("Maximum number of inputs reached", fb::NodeStatusMessageType::WARNING);
 			return;
 		}
 		std::string pinName = std::string(std::string_view(&VARIABLE_NAMES[Variables.size()], 1));
@@ -115,7 +149,7 @@ struct EvalNodeContext : NodeContext
 			vars.insert(std::move(var));
 			if (!displayNames.insert(displayName).second)
 			{
-				SetNodeStatusMessage("Duplicate name: " + displayName, fb::NodeStatusMessageType::FAILURE);
+				SetStatus("Duplicate name: " + displayName, fb::NodeStatusMessageType::FAILURE);
 				return false;
 			}
 		}
@@ -124,14 +158,14 @@ struct EvalNodeContext : NodeContext
 			Parser.set_variables_and_functions(vars);
 			if (!Parser.compile(Expression.c_str()))
 			{
-				SetNodeStatusMessage("Failed to compile expression", fb::NodeStatusMessageType::FAILURE);
+				SetStatus("Failed to compile expression", fb::NodeStatusMessageType::FAILURE);
 				return false;
 			}
 		} catch (std::runtime_error& err) {
-			SetNodeStatusMessage(err.what(), fb::NodeStatusMessageType::FAILURE);
+			SetStatus(err.what(), fb::NodeStatusMessageType::FAILURE);
 			return false;
 		}
-		SetNodeStatusMessage(Expression, fb::NodeStatusMessageType::INFO);
+		SetStatus(Expression, fb::NodeStatusMessageType::INFO);
 		return true;
 	}
 
@@ -142,7 +176,7 @@ struct EvalNodeContext : NodeContext
 		auto exprStr = InterpretPinValue<const char>(pins[NOS_NAME("Expression")].Data->Data);
 		if (strlen(exprStr) == 0)
 		{
-			SetNodeStatusMessage("No math expression is provided", fb::NodeStatusMessageType::WARNING);
+			SetStatus("No math expression is provided", fb::NodeStatusMessageType::WARNING);
 			return NOS_RESULT_SUCCESS;
 		}
 
@@ -167,7 +201,7 @@ struct EvalNodeContext : NodeContext
 		}
 		catch (std::runtime_error& err)
 		{
-			SetNodeStatusMessage(err.what(), fb::NodeStatusMessageType::FAILURE);
+			SetStatus(err.what(), fb::NodeStatusMessageType::FAILURE);
 			return NOS_RESULT_FAILED;
 		}
 	}
@@ -176,6 +210,11 @@ struct EvalNodeContext : NodeContext
 	std::string Expression;
 	std::unordered_map<nos::Name, double> Variables;
 	std::unordered_map<nos::Name, std::string> DisplayNames;
+
+	struct {
+		std::string Message;
+		fb::NodeStatusMessageType Type;
+	} LastStatus;
 };
 
 void RegisterEval(nosNodeFunctions* fn)
