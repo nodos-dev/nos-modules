@@ -7,10 +7,29 @@ namespace nos::math
 {
 struct EvalNodeContext : NodeContext
 {
-	enum MenuCommand
+	enum MenuCommandType : uint8_t
 	{
-		ADD_INPUT = 1
+		ADD_INPUT = 0,
+		REMOVE_INPUT = 1,
 	};
+
+	struct MenuCommand
+	{
+		MenuCommandType Type;
+		uint8_t InputIndex;
+		MenuCommand(uint32_t cmd) {
+			Type = static_cast<MenuCommandType>(cmd & 0xFF);
+			InputIndex = static_cast<uint8_t>((cmd >> 8) & 0xFF);
+ 		}
+		MenuCommand(MenuCommandType type, uint8_t inputIndex) : Type(type), InputIndex(inputIndex) {}
+		operator uint32_t() const
+		{
+			return (InputIndex << 8) | Type;
+		}
+	};
+
+	std::vector<nosUUID> Inputs;
+	
 	EvalNodeContext(nosFbNode const* node) : NodeContext(node)
 	{
 		Resolve(node);
@@ -92,6 +111,7 @@ struct EvalNodeContext : NodeContext
 		auto prevDisplayNames = std::move(DisplayNames);
 		decltype(Variables) newVariables;
 		std::list<nosUUID> pinsToUnorphan;
+		Inputs.clear();
 		for (auto i = 2; i < pinCount; i++)
 		{
 			auto pin = node->pins()->Get(i);
@@ -104,6 +124,7 @@ struct EvalNodeContext : NodeContext
 				auto value = InterpretPinValue<double>((void*)pin->data()->Data());
 				newVariables[nos::Name(uniqueName)] = *value;
 				DisplayNames[nos::Name(uniqueName)] = displayName;
+				Inputs.push_back(*pin->id());
 				if (auto orphanState = pin->orphan_state()) {
 					if (orphanState->is_orphan())
 						pinsToUnorphan.push_back(*pin->id());
@@ -129,9 +150,27 @@ struct EvalNodeContext : NodeContext
 	
 	void OnNodeMenuRequested(const nosContextMenuRequest* request) override
 	{
+		uint32_t cmd = MenuCommand(ADD_INPUT, 0);
+		
 		flatbuffers::FlatBufferBuilder fbb;
 		std::vector items = {
-			nos::CreateContextMenuItemDirect(fbb, "Add Input", ADD_INPUT, nullptr)
+			nos::CreateContextMenuItemDirect(fbb, "Add Input", cmd, nullptr)
+		};
+		HandleEvent(CreateAppEvent(fbb, app::CreateAppContextMenuUpdateDirect(
+			                           fbb, request->item_id(), request->pos(), request->instigator(),
+			                           &items
+		                           )));
+	}
+
+	void OnPinMenuRequested(nos::Name pinName, const nosContextMenuRequest* request) override
+	{
+		flatbuffers::FlatBufferBuilder fbb;
+		if (pinName == NOS_NAME("Result") || pinName == NOS_NAME("Show_Expression") || pinName == NOS_NAME("Expression"))
+			return;
+		auto index = std::distance(Inputs.begin(), std::find(Inputs.begin(), Inputs.end(), *GetPinId(pinName)));
+		uint32_t cmd = MenuCommand(REMOVE_INPUT, index);
+		std::vector items = {
+			nos::CreateContextMenuItemDirect(fbb, "Remove Input", cmd, nullptr)
 		};
 		HandleEvent(CreateAppEvent(fbb, app::CreateAppContextMenuUpdateDirect(
 			                           fbb, request->item_id(), request->pos(), request->instigator(),
@@ -141,22 +180,55 @@ struct EvalNodeContext : NodeContext
 	
 	void OnMenuCommand(nosUUID itemID, uint32_t cmd) override
 	{
-		if (cmd != ADD_INPUT)
-			return;
-		flatbuffers::FlatBufferBuilder fbb;
-		nosUUID pinId{};
-		nosEngine.GenerateID(&pinId);
-		constexpr std::string_view VARIABLE_NAMES = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-		if (Variables.size() >= VARIABLE_NAMES.size())
+		auto command = MenuCommand(cmd);
+
+		switch (command.Type)
 		{
-			SetStatus("Maximum number of inputs reached", fb::NodeStatusMessageType::WARNING);
-			return;
+		case ADD_INPUT:
+		{
+			flatbuffers::FlatBufferBuilder fbb;
+			nosUUID pinId{};
+			nosEngine.GenerateID(&pinId);
+			constexpr std::string_view VARIABLE_NAMES = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+			if (Variables.size() >= VARIABLE_NAMES.size())
+			{
+				SetStatus("Maximum number of inputs reached", fb::NodeStatusMessageType::WARNING);
+				return;
+			}
+			// Find the first available variable name
+			std::string pinName;
+			for (size_t i = 0; i < VARIABLE_NAMES.size(); i++)
+			{
+				if (Variables.find(nos::Name(std::string(1, VARIABLE_NAMES[i]))) == Variables.end())
+				{
+					pinName = std::string(1, VARIABLE_NAMES[i]);
+					break;
+				}
+			}
+			if (pinName.empty())
+			{
+				SetStatus("Failed to add input", fb::NodeStatusMessageType::FAILURE);
+				return;
+			}
+			std::vector pins = {
+				fb::CreatePinDirect(fbb, &pinId, pinName.c_str(), "double", fb::ShowAs::INPUT_PIN, fb::CanShowAs::INPUT_PIN_OR_PROPERTY)
+			};
+			HandleEvent(CreateAppEvent(fbb, CreatePartialNodeUpdateDirect(fbb, &NodeId, ClearFlags::NONE, 0, &pins)));
+			break;
 		}
-		std::string pinName = std::string(std::string_view(&VARIABLE_NAMES[Variables.size()], 1));
-		std::vector pins = {
-			fb::CreatePinDirect(fbb, &pinId, pinName.c_str(), "double", fb::ShowAs::INPUT_PIN, fb::CanShowAs::INPUT_PIN_OR_PROPERTY)
-		};
-		HandleEvent(CreateAppEvent(fbb, CreatePartialNodeUpdateDirect(fbb, &NodeId, ClearFlags::NONE, 0, &pins)));
+		case REMOVE_INPUT:
+		{
+			auto pinId = Inputs[command.InputIndex];
+			flatbuffers::FlatBufferBuilder fbb;
+			std::vector pinsToRemove {
+				fb::UUID(pinId),
+			};
+			HandleEvent(CreateAppEvent(fbb, CreatePartialNodeUpdateDirect(fbb, &NodeId, ClearFlags::NONE, &pinsToRemove)));
+			break;
+		}
+
+		}
+
 	}
 
 	bool Compile()
