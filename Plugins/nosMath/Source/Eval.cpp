@@ -21,6 +21,27 @@ struct EvalNodeContext : NodeContext
 		Resolve(updatedNode);
 	}
 
+	void OnPinValueChanged(nos::Name pinName, nosUUID pinId, nosBuffer value) override
+	{
+		if (pinName == NOS_NAME("Show_Expression"))
+		{
+			auto newVal = *InterpretPinValue<bool>(value.Data);
+			if (ShowExpressionInNode != newVal)
+			{
+				ShowExpressionInNode = newVal;
+				if (Status.Type == fb::NodeStatusMessageType::INFO)
+				{
+					if (!ShowExpressionInNode)
+						ClearNodeStatusMessages();
+					else
+						SetNodeStatusMessage(Status.Message, Status.Type);
+				}
+			}
+		}
+	}
+
+	bool ShowExpressionInNode = false;
+
 	void SetPinOrphan(const nosUUID& pinId, bool orphan, const char* message = nullptr)
 	{
 		flatbuffers::FlatBufferBuilder fbb;
@@ -35,7 +56,7 @@ struct EvalNodeContext : NodeContext
 
 	void SetStatus(const std::string& message, fb::NodeStatusMessageType type)
 	{
-		if (message == LastStatus.Message && type == LastStatus.Type)
+		if (message == Status.Message && type == Status.Type)
 			return;
 		flatbuffers::FlatBufferBuilder fbb;
 		auto pinId = *GetPinId(NOS_NAME("Result"));
@@ -44,7 +65,7 @@ struct EvalNodeContext : NodeContext
 		else 
 			SetPinOrphan(pinId, false);
 		SetNodeStatusMessage(message, type);
-		LastStatus = { message, type };
+		Status = { message, type };
 	}
 
 	void OnPinUpdated(const nosPinUpdate* update) override {
@@ -74,7 +95,9 @@ struct EvalNodeContext : NodeContext
 		for (auto i = 2; i < pinCount; i++)
 		{
 			auto pin = node->pins()->Get(i);
-			if (pin->show_as() == fb::ShowAs::INPUT_PIN)
+			if (pin->show_as() == fb::ShowAs::INPUT_PIN
+				// Flag pins
+				&& pin->name()->string_view() != "Show_Expression")
 			{
 				auto uniqueName = pin->name()->str();
 				auto displayName = pin->display_name() ? pin->display_name()->str() : uniqueName;
@@ -165,7 +188,8 @@ struct EvalNodeContext : NodeContext
 			SetStatus(err.what(), fb::NodeStatusMessageType::FAILURE);
 			return false;
 		}
-		SetStatus(Expression, fb::NodeStatusMessageType::INFO);
+		if (ShowExpressionInNode)
+			SetStatus(Expression, fb::NodeStatusMessageType::INFO);
 		return true;
 	}
 
@@ -214,7 +238,7 @@ struct EvalNodeContext : NodeContext
 	struct {
 		std::string Message;
 		fb::NodeStatusMessageType Type;
-	} LastStatus;
+	} Status = {};
 };
 
 void RegisterEval(nosNodeFunctions* fn)

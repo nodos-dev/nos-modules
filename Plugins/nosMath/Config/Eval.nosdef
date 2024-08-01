@@ -18,6 +18,14 @@
 					"can_show_as": "OUTPUT_PIN_ONLY"
 				},
 				{
+					"name": "Show_Expression",
+					"display_name": "Show Expression In Node",
+					"type_name": "bool",
+					"show_as": "PROPERTY",
+					"can_show_as": "INPUT_PIN_OR_PROPERTY",
+					"data": true
+				},
+				{
 					"name": "A",
 					"type_name": "double",
 					"show_as": "INPUT_PIN",
