@@ -4,6 +4,7 @@
 
 // External
 #include <nosVulkanSubsystem/Helpers.hpp>
+#include <nosUtil/Stopwatch.hpp>
 
 NOS_REGISTER_NAME(Buffer);
 NOS_REGISTER_NAME(GPUEventRef);
@@ -119,10 +120,12 @@ namespace nos::mediaio
 			CurrentIndex = (CurrentIndex + 1) % QueueSize;
 			if (nextBuf.Event)
 			{
+				util::Stopwatch sw;
 				nosGPUEvent* event;
 				nosVulkan->GetGPUEvent(nextBuf.Event, &event);
 				if (*event)
 					nosVulkan->WaitGpuEvent(event, UINT64_MAX);
+				nosEngine.WatchLog("UploadBufferProvider Wait", sw.ElapsedString().c_str());
 			}
 
 			nosEngine.SetPinValue(execArgs[NSN_Buffer].Id, Buffer::From(vkss::ConvertBufferInfo(nextBuf.BufferInfo)));
