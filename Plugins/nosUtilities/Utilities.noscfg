@@ -33,7 +33,8 @@
         "Config/Buffer2Texture.nosdef",
         "Config/Texture2Buffer.nosdef",
         "Config/IsSameStringNode.nosdef",
-        "Config/ShowStatusNode.nosdef"
+        "Config/ShowStatusNode.nosdef",
+		"Config/SinkGraph.nosdef"
     ],
     "custom_types": [
         "Config/Merge.fbs",
@@ -144,7 +145,12 @@
           "category": "Utilities",
           "class_name": "ShowStatus",
           "display_name": "Show Status"
-        }
+        },
+		{
+            "category": "Utilities",
+            "class_name": "SinkGraph",
+            "display_name": "Sink"
+		}
     ],
     "subsystem_options": [
         {
