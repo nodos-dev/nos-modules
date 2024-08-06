@@ -1,0 +1,36 @@
+{
+  "nodes": [
+    {
+      "class_name": "ShowStatus",
+      "contents_type": "Job",
+      "description": "Displays value in status as node status.",
+      "pins": [
+        {
+          "name": "Run",
+          "type_name": "nos.exe",
+          "show_as": "INPUT_PIN",
+          "can_show_as": "INPUT_PIN_ONLY"
+        },
+        {
+          "name": "Continue",
+          "type_name": "nos.exe",
+          "show_as": "OUTPUT_PIN",
+          "can_show_as": "OUTPUT_PIN_ONLY"
+        },
+        {
+          "name": "Status",
+          "type_name": "string",
+          "show_as": "INPUT_PIN",
+          "can_show_as": "INPUT_PIN_OR_PROPERTY"
+        },
+        {
+          "name": "StatusType",
+          "type_name": "nos.fb.NodeStatusMessageType",
+          "data":  "INFO",
+          "show_as": "INPUT_PIN",
+          "can_show_as": "INPUT_PIN_OR_PROPERTY"
+        }
+      ]
+    }
+  ]
+}
