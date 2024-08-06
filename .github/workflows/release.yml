@@ -25,7 +25,7 @@ on:
         default: "false"
 
 env:
-  GH_USERNAME: "mediaz-bot"
+  GH_USERNAME: "nodos-bot"
   GIT_EMAIL: "bot@nodos.dev"
   GH_TOKEN: ${{ secrets.CI_TOKEN }}
   DIST_TARGET_DIR: "D:/Builds/Nodos-Modules"
