@@ -122,11 +122,13 @@ jobs:
         working-directory: modules-${{ github.ref_name }}/workspace
 
       - name: Configure
+        shell: pwsh
         run: |
           cmake -S ./Toolchain/CMake -B ../Project -DCMAKE_BUILD_TYPE=Release
         working-directory: modules-${{ github.ref_name }}/workspace
 
       - name: Build
+        shell: pwsh
         run: |
           cmake --build ../Project --config Release -j 8
         working-directory: modules-${{ github.ref_name }}/workspace
