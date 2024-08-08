@@ -27,7 +27,6 @@ if (NOT ${COMPILE_SHADERS_RESULT} EQUAL "0")
 endif()
 
 add_subdirectory(nosMath)
-add_subdirectory(nosAJA)
 add_subdirectory(nosFilters)
 add_subdirectory(nosUtilities)
 add_subdirectory(nosTest)
