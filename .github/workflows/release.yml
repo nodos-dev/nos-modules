@@ -8,15 +8,18 @@ on:
       build_all:
         description: 'Build all modules'
         required: false
-        default: 'false'
+        default: false
+        type: boolean
       nodos_sdk_version:
         description: 'Nodos SDK Version'
         required: false
         default: ''
+        type: string
       clean:
         description: 'Clean build'
         required: false
-        default: "false"
+        default: false
+        type: boolean
 
 jobs:
   set-build-number:
@@ -35,7 +38,7 @@ jobs:
     uses: nodos-dev/actions/.github/workflows/release-modules.yml@main
     with:
       ref_name: ${{ github.ref_name }}
-      build_all: ${{ github.event.inputs.build_all }}
-      nodos_sdk_version: ${{ github.event.inputs.nodos_sdk_version }}
-      clean: ${{ github.event.inputs.clean }}
+      build_all: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.build_all || 'false' }}
+      nodos_sdk_version: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.nodos_sdk_version || '' }}
+      clean: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.clean || 'false' }}
       build_number: ${{ needs.set-build-number.outputs.build_number }}
