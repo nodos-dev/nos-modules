@@ -28,17 +28,33 @@ jobs:
     outputs:
       build_number: ${{ steps.offset-build-number.outputs.build_number }}
     steps:
-      - name: Set build number with offset
+      - name: Offset Build Number
         id: offset-build-number
-        run: echo "::set-output name=build_number::$(( ${{ github.run_number }} + 451 ))"
+        shell: bash
+        run: |
+          set BUILD_NUMBER=$(( ${{ github.run_number }} + 451 ))
+          echo "build_number=$BUILD_NUMBER" >> $GITHUB_OUTPUT
 
-  call-release-modules:
+  call-release-modules-wd:
     name: Release Modules
     needs: set-build-number
     uses: nodos-dev/actions/.github/workflows/release-modules.yml@main
+    if: ${{ github.event_name == 'workflow_dispatch' }}
     with:
       ref_name: ${{ github.ref_name }}
-      build_all: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.build_all || 'false' }}
-      nodos_sdk_version: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.nodos_sdk_version || '' }}
-      clean: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.clean || 'false' }}
+      build_all: ${{ github.event.inputs.build_all }}
+      nodos_sdk_version: ${{ github.event.inputs.nodos_sdk_version }}
+      clean: ${{ github.event.inputs.clean }}
+      build_number: ${{ needs.set-build-number.outputs.build_number }}
+  
+  call-release-modules-push:
+    name: Release Modules
+    needs: set-build-number
+    uses: nodos-dev/actions/.github/workflows/release-modules.yml@main
+    if: ${{ github.event_name == 'push' }}
+    with:
+      ref_name: ${{ github.ref_name }}
+      build_all: false
+      nodos_sdk_version: ""
+      clean: false
       build_number: ${{ needs.set-build-number.outputs.build_number }}
