@@ -21,6 +21,10 @@ on:
         default: false
         type: boolean
 
+concurrency:
+  group: single
+  cancel-in-progress: false
+        
 jobs:
   set-build-number:
     name: Set Build Number
