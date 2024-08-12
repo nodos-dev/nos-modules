@@ -46,6 +46,6 @@ jobs:
     with:
       ref_name: ${{ github.ref_name }}
       build_all: ${{ github.event_name == 'workflow_dispatch' && fromJson(github.event.inputs.build_all) || false }}
-      nodos_sdk_version: ${{ github.event_name == 'workflow_dispatch' && fromJson(github.event.inputs.nodos_sdk_version) || '' }}
+      nodos_sdk_version: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.nodos_sdk_version || '' }}
       clean: ${{ github.event_name == 'workflow_dispatch' && fromJson(github.event.inputs.clean) || false }}
       build_number: ${{ needs.set-build-number.outputs.build_number }}
