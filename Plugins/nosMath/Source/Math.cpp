@@ -195,6 +195,10 @@ enum class MathNodeTypes : int {
 	AddTransform,
 	PerspectiveView,
 	Eval,
+	Transform,
+	ToTransformMatrix,
+	Inverse,
+	Transpose,
 	Count
 };
 
@@ -288,6 +292,10 @@ struct SineWaveNodeContext : NodeContext
 };
 
 void RegisterEval(nosNodeFunctions*);
+void RegisterTransform(nosNodeFunctions*);
+void RegisterToTransformMatrix(nosNodeFunctions*);
+void RegisterInverse(nosNodeFunctions*);
+void RegisterTranspose(nosNodeFunctions*);
 
 extern "C"
 {
@@ -381,6 +389,22 @@ NOSAPI_ATTR nosResult NOSAPI_CALL nosExportNodeFunctions(size_t* outCount, nosNo
 		}
 		case MathNodeTypes::Eval: {
 			RegisterEval(node);
+			break;
+		}
+		case MathNodeTypes::Transform: {
+			RegisterTransform(node);
+			break;
+		}
+		case MathNodeTypes::ToTransformMatrix: {
+			RegisterToTransformMatrix(node);
+			break;
+		}
+		case MathNodeTypes::Inverse: {
+			RegisterInverse(node);
+			break;
+		}
+		case MathNodeTypes::Transpose: {
+			RegisterTranspose(node);
 			break;
 		}
 		default:

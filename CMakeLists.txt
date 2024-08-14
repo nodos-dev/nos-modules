@@ -12,14 +12,12 @@ if (NOT WITH_NODOS_WORKSPACE)
 endif()
 
 nos_find_sdk("1.2.0" NOS_PLUGIN_SDK_TARGET NOS_SUBSYSTEM_SDK_TARGET NOS_SDK_DIR)
-nos_get_module("nos.sys.vulkan" "5.2" NOS_SYS_VULKAN_TARGET)
-nos_get_module("nos.sys.vulkan" "5.3" NOS_SYS_VULKAN_TARGET_5_3)
-nos_get_module("nos.sys.vulkan" "5.5" NOS_SYS_VULKAN_TARGET_5_5)
+nos_get_module("nos.sys.vulkan" "5.2" NOS_SYS_VULKAN_TARGET_5_2)
 nos_get_module("nos.sys.vulkan" "5.6" NOS_SYS_VULKAN_TARGET_5_6)
 nos_get_module("nos.sys.vulkan" "5.7" NOS_SYS_VULKAN_TARGET_5_7)
+cmake_path(SET FLATC_EXECUTABLE "${NOS_SDK_DIR}/bin/flatc")
 
 set(TOOLS_DIR ${CMAKE_CURRENT_SOURCE_DIR}/Subsystems/nosShaderCompiler/Binaries/tools/${CMAKE_SYSTEM_NAME})
-set(FLATC_EXECUTABLE ${TOOLS_DIR}/flatc)
 
 set(SUBSYSTEMS_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/Subsystems)
 add_subdirectory("Subsystems" "${CMAKE_CURRENT_BINARY_DIR}/Subsystems")

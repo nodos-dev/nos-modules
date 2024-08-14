@@ -2,7 +2,7 @@
     "info": {
         "id": {
             "name": "nos.math",
-            "version": "1.1.0"
+            "version": "1.2.0"
         },
         "description": "Nodes for math operations.",
         "display_name": "Math",
@@ -11,7 +11,8 @@
     "custom_types": [],
     "node_definitions": [
         "Config/Math.nosdef",
-        "Config/Eval.nosdef"
+        "Config/Eval.nosdef",
+        "Config/Matrix.nosdef"
     ],
     "binary_path": "Binaries/nosMath",
     "third_party_software": [
@@ -32,6 +33,26 @@
             "category": "Math",
             "class_name": "Eval",
             "display_name": "Eval"
+        },
+        {
+            "category": "Math|Linear Algebra",
+            "class_name": "Transform",
+            "display_name": "Transform"
+        },
+        {
+            "category": "Math|Linear Algebra",
+            "class_name": "ToTransformMatrix",
+            "display_name": "To Transform Matrix"
+        },
+        {
+            "category": "Math|Linear Algebra",
+            "class_name": "Inverse",
+            "display_name": "Inverse"
+        },
+        {
+            "category": "Math|Linear Algebra",
+            "class_name": "Transpose",
+            "display_name": "Transpose"
         },
         {
             "category": "Math|Wave",

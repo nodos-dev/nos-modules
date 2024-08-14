@@ -1,0 +1,86 @@
+{
+    "nodes": [
+        {
+            "class_name": "Transform",
+            "contents_type": "Job",
+            "description": "",
+            "pins": [
+                {
+                    "name": "A",
+                    "type_name": "nos.fb.mat4",
+                    "show_as": "INPUT_PIN",
+                    "can_show_as": "INPUT_PIN_OR_PROPERTY"
+                },
+                {
+                    "name": "B",
+                    "type_name": "nos.fb.mat4",
+                    "show_as": "INPUT_PIN",
+                    "can_show_as": "INPUT_PIN_OR_PROPERTY"
+                },
+                {
+                    "name": "Result",
+                    "type_name": "nos.fb.mat4",
+                    "show_as": "OUTPUT_PIN",
+                    "can_show_as": "OUTPUT_PIN_ONLY"
+                }
+            ]
+        },
+        {
+            "class_name": "ToTransformMatrix",
+            "contents_type": "Job",
+            "description": "",
+            "pins": [
+                {
+                    "name": "Transform",
+                    "type_name": "nos.fb.Transform",
+                    "show_as": "INPUT_PIN",
+                    "can_show_as": "INPUT_PIN_OR_PROPERTY"
+                },
+                {
+                    "name": "Matrix",
+                    "type_name": "nos.fb.mat4",
+                    "show_as": "OUTPUT_PIN",
+                    "can_show_as": "OUTPUT_PIN_ONLY"
+                }
+            ]
+        },
+        {
+            "class_name": "Inverse",
+            "contents_type": "Job",
+            "description": "",
+            "pins": [
+                {
+                    "name": "In",
+                    "type_name": "nos.fb.Void",
+                    "show_as": "INPUT_PIN",
+                    "can_show_as": "INPUT_PIN_OR_PROPERTY"
+                },
+                {
+                    "name": "Out",
+                    "type_name": "nos.fb.Void",
+                    "show_as": "OUTPUT_PIN",
+                    "can_show_as": "OUTPUT_PIN_ONLY"
+                }
+            ]
+        },
+        {
+            "class_name": "Transpose",
+            "contents_type": "Job",
+            "description": "",
+            "pins": [
+                {
+                    "name": "In",
+                    "type_name": "nos.fb.Void",
+                    "show_as": "INPUT_PIN",
+                    "can_show_as": "INPUT_PIN_OR_PROPERTY"
+                },
+                {
+                    "name": "Out",
+                    "type_name": "nos.fb.Void",
+                    "show_as": "OUTPUT_PIN",
+                    "can_show_as": "OUTPUT_PIN_ONLY"
+                }
+            ]
+        }
+    ]
+}
