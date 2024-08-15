@@ -33,6 +33,7 @@ enum Utilities : int
 	Texture2Buffer,
 	IsSameStringNode,
 	ShowStatusNode,
+	Sink,
 	Count
 };
 
@@ -48,6 +49,7 @@ nosResult RegisterBuffer2Texture(nosNodeFunctions*);
 nosResult RegisterTexture2Buffer(nosNodeFunctions*);
 nosResult RegisterIsSameStringNode(nosNodeFunctions*);
 nosResult RegisterShowStatusNode(nosNodeFunctions*);
+nosResult RegisterSink(nosNodeFunctions*);
 
 extern "C"
 {
@@ -88,6 +90,7 @@ NOSAPI_ATTR nosResult NOSAPI_CALL nosExportNodeFunctions(size_t* outSize, nosNod
 			GEN_CASE_NODE(Texture2Buffer)
 			GEN_CASE_NODE(IsSameStringNode)
 			GEN_CASE_NODE(ShowStatusNode)
+			GEN_CASE_NODE(Sink)
 		}
 	}
 	return NOS_RESULT_SUCCESS;

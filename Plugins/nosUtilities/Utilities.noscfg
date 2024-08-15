@@ -2,7 +2,7 @@
     "info": {
         "id": {
             "name": "nos.utilities",
-            "version": "2.3.0"
+            "version": "2.4.0"
         },
         "description": "Various utility nodes.",
         "display_name": "Utilities",
@@ -34,7 +34,8 @@
         "Config/Texture2Buffer.nosdef",
         "Config/IsSameStringNode.nosdef",
         "Config/ShowStatusNode.nosdef",
-		"Config/SinkGraph.nosdef"
+        "Config/SinkGraph.nosdef",
+        "Config/Sink.nosdef"
     ],
     "custom_types": [
         "Config/Merge.fbs",
@@ -146,11 +147,16 @@
           "class_name": "ShowStatus",
           "display_name": "Show Status"
         },
-		{
+        {
             "category": "Utilities",
             "class_name": "SinkGraph",
+            "display_name": "Threaded Sink"
+        },
+        {
+            "category": "Utilities",
+            "class_name": "Sink",
             "display_name": "Sink"
-		}
+        }
     ],
     "subsystem_options": [
         {
