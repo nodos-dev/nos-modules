@@ -9,6 +9,7 @@ NOS_REGISTER_NAME(Break)
 struct BreakNode : NodeContext
 {
 	std::optional<nosTypeInfo> Type = std::nullopt;
+	size_t ArraySize = 0;
 
 	BreakNode(const nosFbNode* node) : NodeContext(node)
 	{
@@ -24,6 +25,19 @@ struct BreakNode : NodeContext
 			LoadPins(false);
             break;
         }
+	}
+
+	void OnPinValueChanged(nos::Name pinName, nosUUID pinId, nosBuffer value) override
+	{ 
+		if (!Type || Type->BaseType != NOS_BASE_TYPE_ARRAY || pinName != NSN_Input)
+			return;
+		auto pin = GetPin(pinName);
+		flatbuffers::Vector<u8>* vec = (flatbuffers::Vector<u8>*)value.Data;
+		if (vec->size() != ArraySize)
+		{
+			ArraySize = vec->size();
+			SetOutputCount();
+		}
 	}
 
     void OnPinUpdated(const nosPinUpdate* update) override
@@ -108,6 +122,20 @@ struct BreakNode : NodeContext
 				}
 			}
 		}
+        else if (Type->BaseType == NOS_BASE_TYPE_ARRAY)
+        {
+        	size_t i = 0;
+        	while (auto pin = GetPin(nos::Name("Output " + std::to_string(i))))
+        	{
+        		acceptedPins.insert(pin->Name);
+        		i++;
+        		if (pin->IsOrphan)
+        		{
+        			pinsToUpdate.push_back(CreatePartialPinUpdate(fbb, &pin->Id, 0, fb::CreateOrphanState(fbb, false)));
+        		}
+        	}
+        	ArraySize = i;
+        }
 		auto type = "Break " + nos::Name(Type->TypeName).AsString();
 		for (auto& [id, pin] : Pins)
 			if (!acceptedPins.contains(pin.Name))
@@ -116,6 +144,57 @@ struct BreakNode : NodeContext
         HandleEvent(CreateAppEvent(
 			fbb, CreatePartialNodeUpdateDirect(fbb, &NodeId, ClearFlags::NONE, &pinsToDelete, &pinsToCreate, 0, 0, 0, 0, 0, &pinsToUpdate, 0, 0, 0, setDisplayName ? type.c_str() : 0)));
     }
+
+	void SetOutputCount()
+    { 
+    	size_t i = 0;
+    	std::vector<fb::UUID> pinsToDelete;
+    	std::vector<::flatbuffers::Offset<nos::fb::Pin>> pinsToCreate;
+    	while (true)
+    	{
+    		auto inputName = nos::Name("Output " + std::to_string(i));
+    		auto input = GetPin(inputName);
+    		if (!input)
+    			break;
+    		if (i >= ArraySize)
+    			pinsToDelete.push_back(input->Id);
+    		i++;
+    	}
+    	flatbuffers::FlatBufferBuilder fbb;
+    	if (ArraySize > i)
+    	{
+    		for (size_t a = 0; a < ArraySize - i; a++)
+    		{
+    			nosUUID newPinId;
+    			nosEngine.GenerateID(&newPinId);
+    			std::vector<u8> vec{};
+    			nosBuffer defVal{};
+    			if (nosEngine.GetDefaultValueOfType(Type->ElementType->TypeName, &defVal) == NOS_RESULT_SUCCESS)
+    			{
+    				vec = std::vector((const u8*)defVal.Data, (const u8*)defVal.Data + defVal.Size);
+    			}
+
+    			std::vector<uint8_t> data = std::vector<uint8_t>(Type->ByteSize);
+    			pinsToCreate.push_back(fb::CreatePinDirect(fbb,
+															&newPinId,
+															nos::Name("Output " + std::to_string(i + a)).AsCStr(),
+															nos::Name(Type->ElementType->TypeName).AsCStr(),
+															fb::ShowAs::OUTPUT_PIN,
+															fb::CanShowAs::OUTPUT_PIN_OR_PROPERTY,
+															0,
+															0,
+															&data,
+															0,
+															0,
+															0,
+															&data));
+    		}
+    	}
+    	if (!pinsToDelete.empty() || !pinsToCreate.empty())
+    		HandleEvent(CreateAppEvent(
+				fbb, CreatePartialNodeUpdateDirect(fbb, &NodeId, ClearFlags::NONE, &pinsToDelete, &pinsToCreate)));
+    }
+
 
 	std::unordered_map<nosUUID, nos::Buffer> LastServedPinValues;
 
@@ -137,33 +216,31 @@ struct BreakNode : NodeContext
         
         switch (Type->BaseType)
         {
-        //case NOS_BASE_TYPE_ARRAY:
-        //{
-        //    const flatbuffers::Vector<u8>* vec = (flatbuffers::Vector<u8>*)(data);
-        //    const flatbuffers::Vector<flatbuffers::Offset<flatbuffers::Table>>* vect = (const flatbuffers::Vector<flatbuffers::Offset<flatbuffers::Table>>*)vec;
-        //    SetOutputs(vec->size());
-        //    for (int i = 0; i < vec->size(); ++i)
-        //    {
-        //        auto pin = pins.find(&PinInfo::name, nos::Name("Output " + std::to_string(i)));
-        //        if(!pin) 
-        //            continue;
-        //        auto pinId  = pin->id;
-        //        if (info.ElementType->ByteSize)
-        //        {
-        //            auto data = vec->data() + i * info.ElementType->ByteSize;
-        //            SetPinValueCached(pinId, { (void*)data, info.ElementType->ByteSize });
-        //        }
-        //        else
-        //        {
-        //        	//TODO: Strings
-        //            flatbuffers::FlatBufferBuilder fbb;
-        //            fbb.Finish(flatbuffers::Offset<flatbuffers::Table>(CopyTable(fbb, info.ElementType, vect->Get(i))));
-        //            nos::Buffer buf = fbb.Release();
-        //            SetPinValueCached(pinId, { (void*)buf.Data(), buf.Size() });
-        //        }
-        //    }
-        //    break;
-        //}
+        case NOS_BASE_TYPE_ARRAY: {
+        	const flatbuffers::Vector<u8>* vec = (flatbuffers::Vector<u8>*)(data);
+        	auto tableVec = (const flatbuffers::Vector<flatbuffers::Offset<flatbuffers::Table>>*)vec;
+        	for (int i = 0; i < vec->size(); ++i)
+        	{
+        		auto pinId = GetPinId(nos::Name("Output " + std::to_string(i)));
+        		if (!pinId)
+        			continue;
+        		if (Type->ElementType->ByteSize)
+        		{
+        			auto data = vec->data() + i * Type->ElementType->ByteSize;
+        			SetPinValueCached(*pinId, {(void*)data, Type->ElementType->ByteSize});
+        		}
+        		else
+        		{
+        			// TODO: Strings
+        			flatbuffers::FlatBufferBuilder fbb;
+        			fbb.Finish(
+						flatbuffers::Offset<flatbuffers::Table>(CopyTable(fbb, Type->ElementType, tableVec->Get(i))));
+        			nos::Buffer buf = fbb.Release();
+        			SetPinValueCached(*pinId, {(void*)buf.Data(), buf.Size()});
+        		}
+        	}
+        	break;
+        }
         case NOS_BASE_TYPE_STRUCT:
         {
             auto root = Type->ByteSize ? (flatbuffers::Table*)data : flatbuffers::GetRoot<flatbuffers::Table>(data);
