@@ -22,6 +22,7 @@ struct ArrayNode : NodeContext
 			{
 				Type = nosTypeInfo{};
 				nosEngine.GetTypeInfo(pin.TypeName, &Type.value());
+				nosEngine.GetTypeInfo(Type->ElementType->TypeName, &Type.value());
 				LoadPins();
 			}
 		}
