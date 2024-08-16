@@ -386,7 +386,7 @@ nosResult RegisterMake(nosNodeFunctions* fn)
 		nos::Buffer buf = fbb.Release();
 		nodeInfos.push_back(std::move(buf));
 	}
-	std::vector<nosFbNodeInfo*> fbNodeInfos;
+	std::vector<const nosFbNodeInfo*> fbNodeInfos;
 	for (auto& buf : nodeInfos)
 		fbNodeInfos.push_back(flatbuffers::GetMutableRoot<nosFbNodeInfo>(buf.Data()));
 	nosEngine.RegisterNodeInfos(nosEngine.Context->Id, fbNodeInfos.size(), fbNodeInfos.data());
