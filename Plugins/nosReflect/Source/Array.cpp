@@ -63,13 +63,17 @@ struct ArrayNode : NodeContext
 		CreateOutput();
 	}
 
-	std::vector<NodePin*> GetInputs()
+	std::vector<const NodePin*> GetInputs()
 	{
-		std::vector<NodePin*> inputs;
-		for (auto& [id, p] : Pins)
+		std::vector<const NodePin*> inputs;
+		size_t i = 0;
+		while (true)
 		{
-			if (p.ShowAs == fb::ShowAs::INPUT_PIN)
-				inputs.push_back(&p);
+			auto pin = GetPin(nos::Name("Input " + std::to_string(i)));
+			if (!pin)
+				break;
+			inputs.push_back(pin);
+			i++;
 		}
 		return inputs;
 	}
