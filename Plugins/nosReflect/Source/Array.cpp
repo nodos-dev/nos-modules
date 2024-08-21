@@ -8,7 +8,7 @@ NOS_REGISTER_NAME(Array)
 
 struct ArrayNode : NodeContext
 {
-	std::optional<nosTypeInfo> Type = std::nullopt;
+	std::optional<nos::TypeInfo> Type = std::nullopt;
 	size_t PinCount = 0;
 	ArrayNode(const nosFbNode* inNode) : NodeContext(inNode)
 	{
@@ -20,9 +20,9 @@ struct ArrayNode : NodeContext
 			}
 			if (pin.ShowAs == fb::ShowAs::OUTPUT_PIN)
 			{
-				Type = nosTypeInfo{};
-				nosEngine.GetTypeInfo(pin.TypeName, &Type.value());
-				nosEngine.GetTypeInfo(Type->ElementType->TypeName, &Type.value());
+				nos::TypeInfo arrayType = nos::TypeInfo(pin.TypeName);
+				auto elementTypeName = arrayType->ElementType->TypeName;
+				Type = nos::TypeInfo(elementTypeName);
 				LoadPins();
 			}
 		}
@@ -38,14 +38,14 @@ struct ArrayNode : NodeContext
 		for (auto* pin : *inNode->pins())
 			if (pin->show_as() == fb::ShowAs::INPUT_PIN)
 				values.push_back((void*)pin->data()->data());
-		SetOutput(values, true);
+		SetOutput(values);
 	}
 
 	nosResult OnResolvePinDataTypes(nosResolvePinDataTypesParams* params) override
 	{
-		nosTypeInfo info = {};
+		nosTypeInfo* info = nullptr;
 		nosEngine.GetTypeInfo(params->IncomingTypeName, &info);
-		if (info.BaseType == NOS_BASE_TYPE_ARRAY)
+		if (info->BaseType == NOS_BASE_TYPE_ARRAY)
 		{
 			strcpy(params->OutErrorMessage, "Input pin must not be an array type");
 			return NOS_RESULT_FAILED;
@@ -58,8 +58,7 @@ struct ArrayNode : NodeContext
 		if (Type || update->UpdatedField != NOS_PIN_FIELD_TYPE_NAME)
 			return;
 		auto newTypeName = Name(update->TypeName);
-		Type = nosTypeInfo{};
-		nosEngine.GetTypeInfo(newTypeName, &Type.value());
+		Type = nos::TypeInfo(newTypeName);
 		CreateOutput();
 	}
 
@@ -78,26 +77,17 @@ struct ArrayNode : NodeContext
 		return inputs;
 	}
 
-	bool SetOutput(std::vector<const void*> const& values, bool sendResize)
+	bool SetOutput(std::vector<const void*> const& values)
 	{
 		auto outPin = GetPin(NSN_Output);
 		if (!outPin)
 			return false;
 		
-		auto outval = GenerateVector(&*Type, values);
+		auto outval = GenerateVector(*Type, values);
 
 		auto vec = (flatbuffers::Vector<flatbuffers::Offset<flatbuffers::Table>>*)(outval.data());
 		assert(GetInputs().size() == vec->size());
 		nosEngine.SetPinValue(outPin->Id, {outval.data(), outval.size()});
-
-		if (sendResize)
-		{
-			flatbuffers::FlatBufferBuilder fbb;
-			HandleEvent(CreateAppEvent(
-				fbb,
-							   app::CreateExecutePathCommand(fbb, app::PathEvent::ARRAY_RESIZE, &outPin->Id
-															 , 0, values.size(), &outPin->Id)));
-		}
 		return true;
 	}
 
@@ -132,13 +122,12 @@ struct ArrayNode : NodeContext
 		if (NOS_RESULT_SUCCESS == nosEngine.GetDefaultValueOfType(Type->TypeName, &value))
 		{
 			data = std::vector<u8>{(u8*)value.Data, (u8*)value.Data + value.Size};
-			outData = GenerateVector(&*Type, {data.data()});
+			outData = GenerateVector(*Type, {data.data()});
 		}
 
 		flatbuffers::FlatBufferBuilder fbb;
 
-		nosUUID id{};
-		nosEngine.GenerateID(&id);
+		nosUUID id = nosEngine.GenerateID();
 
 		std::vector<::flatbuffers::Offset<nos::fb::Pin>> pins = {
 			fb::CreatePinDirect(fbb,
@@ -156,18 +145,18 @@ struct ArrayNode : NodeContext
 			fbb, nos::CreatePartialNodeUpdateDirect(fbb, &NodeId, ClearFlags::NONE, 0, &pins)));
 	}
 
-	nosResult ExecuteNode(const nosNodeExecuteArgs* args) override
+	nosResult ExecuteNode(nosNodeExecuteParams* params) override
 	{
 		if (!Type)
 			return NOS_RESULT_FAILED;
 		std::vector<const void*> values;
-		for (size_t i = 0; i < args->PinCount; ++i)
+		for (size_t i = 0; i < params->PinCount; ++i)
 		{
-			if (args->Pins[i].Name == NSN_Output)
+			if (params->Pins[i].Name == NSN_Output)
 				continue;
-			values.push_back(args->Pins[i].Data->Data);
+			values.push_back(params->Pins[i].Data->Data);
 		}
-		return SetOutput(values, false) ? NOS_RESULT_SUCCESS : NOS_RESULT_FAILED;
+		return SetOutput(values) ? NOS_RESULT_SUCCESS : NOS_RESULT_FAILED;
 	}
 
 	void OnMenuRequested(const nosContextMenuRequest* request) override
@@ -204,8 +193,7 @@ struct ArrayNode : NodeContext
 
 			auto outputType = "[" + typeName.AsString() + "]";
 			auto name = "Input " + std::to_string(inputs.size());
-			nosUUID id{};
-			nosEngine.GenerateID(&id);
+			nosUUID id = nosEngine.GenerateID();
 
 			std::vector pins = {
 				nos::fb::CreatePinDirect(fbb,

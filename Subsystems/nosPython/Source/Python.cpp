@@ -14,6 +14,8 @@ namespace pyb = pybind11;
 using namespace pyb::literals;
 
 NOS_INIT()
+NOS_BEGIN_IMPORT_DEPS()
+NOS_END_IMPORT_DEPS()
 
 namespace nos::py
 {
@@ -121,10 +123,10 @@ protected:
 static Interpreter* GInterpreter = nullptr;
 
 // Classes with prefix 'PyNative' are only constructed from C++ side, with 'Py' are for Python-constructible.
-class PyNativeNodeExecuteArgs : public nos::NodeExecuteArgs
+class PyNativeNodeExecuteParams : public nos::NodeExecuteParams
 {
 public:
-	using nos::NodeExecuteArgs::NodeExecuteArgs;
+	using nos::NodeExecuteParams::NodeExecuteParams;
 
 	std::optional<pyb::memoryview> GetPinValue(std::string pinName) const
 	{
@@ -223,11 +225,11 @@ PYBIND11_EMBEDDED_MODULE(__nodos_internal__, m)
 		.def("__hash__", [](const nos::Name& name) -> size_t { return name.ID; })
 		.def("__eq__", [](const nos::Name& self, const nos::Name& other) -> bool { return self == other; });
 
-	pyb::class_<PyNativeNodeExecuteArgs>(m, "NodeExecuteArgs")
-		.def_property_readonly("node_class_name", [](const PyNativeNodeExecuteArgs& args) -> std::string_view { return args.NodeClassName.AsCStr(); })
-		.def_property_readonly("node_name", [](const PyNativeNodeExecuteArgs& args) -> std::string_view { return args.NodeName.AsCStr(); })
-		.def("get_pin_value", &PyNativeNodeExecuteArgs::GetPinValue, "Access the memory of the pin specified by 'pin_name'", "pin_name"_a)
-		.def("get_pin_id", &PyNativeNodeExecuteArgs::GetPinId, "Get the unique identifier of the pin specified by 'pin_name'", "pin_name"_a);
+	pyb::class_<PyNativeNodeExecuteParams>(m, "NodeExecuteArgs")
+		.def_property_readonly("node_class_name", [](const PyNativeNodeExecuteParams& args) -> std::string_view { return args.NodeClassName.AsCStr(); })
+		.def_property_readonly("node_name", [](const PyNativeNodeExecuteParams& args) -> std::string_view { return args.NodeName.AsCStr(); })
+		.def("get_pin_value", &PyNativeNodeExecuteParams::GetPinValue, "Access the memory of the pin specified by 'pin_name'", "pin_name"_a)
+		.def("get_pin_id", &PyNativeNodeExecuteParams::GetPinId, "Get the unique identifier of the pin specified by 'pin_name'", "pin_name"_a);
 
 	pyb::class_<PyNativeOnPinValueChangedArgs>(m, "PinValueChangedArgs")
 		.def_property_readonly("pin_value", [](const PyNativeOnPinValueChangedArgs& args) -> pyb::memoryview { return args.GetPinValue(); })
@@ -365,13 +367,13 @@ public:
 		}
 	}
 
-	nosResult ExecuteNode(const nosNodeExecuteArgs* args) override
+	nosResult ExecuteNode(nosNodeExecuteParams* params) override
 	{
 		auto m = GetPyObject();
 		if (!m)
 			return NOS_RESULT_NOT_FOUND;
 
-		return CallMethod<nosResult>("execute_node", NOS_RESULT_FAILED, PyNativeNodeExecuteArgs(args));
+		return CallMethod<nosResult>("execute_node", NOS_RESULT_FAILED, PyNativeNodeExecuteParams(params));
 	}
 
 	void OnPinValueChanged(nos::Name pinName, nosUUID pinId, nosBuffer value) override
@@ -405,19 +407,20 @@ public:
 	}
 };
 
-} // namespace nos::py
-
-extern "C"
+nosResult NOSAPI_CALL ExportSubsystemNodeFunctions(size_t* outSize, nosSubsystemNodeFunctions** outList)
 {
-
-NOSAPI_ATTR nosResult NOSAPI_CALL nosExportSubsystem(nosSubsystemFunctions* subsystemFunctions)
-{
-	nos::py::Init();
-	
+	*outSize = 1;
+	if (!outList)
+		return NOS_RESULT_SUCCESS;
+	auto pyFuncs = outList[0];
+	pyFuncs->OnNodeClassRegistered = nos::py::OnPyNodeRegistered;
+	pyFuncs->NodeType = NOS_NAME_STATIC("nos.py.PythonNode");
+	auto* functions = &pyFuncs->NodeFunctions;
+	NOS_BIND_NODE_CLASS(0, nos::py::PyNativeNode, functions);
 	return NOS_RESULT_SUCCESS;
 }
 
-NOSAPI_ATTR nosResult NOSAPI_CALL nosUnloadSubsystem()
+nosResult NOSAPI_CALL OnPreUnloadSubsystem()
 {
 	nos::py::Deinit();
 	// Python DLL might not be released when nos.py is unloaded, due to some third party python module (like numpy).
@@ -434,17 +437,18 @@ NOSAPI_ATTR nosResult NOSAPI_CALL nosUnloadSubsystem()
 	return NOS_RESULT_SUCCESS;
 }
 
-NOSAPI_ATTR nosResult NOSAPI_CALL nosExportSubsystemNodeFunctions(size_t* outSize, nosSubsystemNodeFunctions** outList)
+} // namespace nos::py
+
+extern "C"
 {
-	*outSize = 1;
-	if (!outList)
-		return NOS_RESULT_SUCCESS;
-	auto pyFuncs = outList[0];
-	pyFuncs->OnNodeClassRegistered = nos::py::OnPyNodeRegistered;
-	pyFuncs->NodeType = NOS_NAME_STATIC("nos.py.PythonNode");
-	auto* functions = &pyFuncs->NodeFunctions;
-	NOS_BIND_NODE_CLASS(0, nos::py::PyNativeNode, functions);
+
+NOSAPI_ATTR nosResult NOSAPI_CALL nosExportSubsystem(nosSubsystemFunctions* subsystemFunctions)
+{
+	nos::py::Init();
+	subsystemFunctions->OnPreUnloadSubsystem = nos::py::OnPreUnloadSubsystem;
+	subsystemFunctions->ExportSubsystemNodeFunctions = nos::py::ExportSubsystemNodeFunctions;
 	return NOS_RESULT_SUCCESS;
 }
+
 
 }
