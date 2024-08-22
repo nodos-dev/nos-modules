@@ -70,6 +70,21 @@ struct MergeContext : NodeContext
 				}
 			}
 
+			// Refill AddedPins
+			for (int i = 2; i < TextureCount; ++i)
+			{
+				std::string count = std::to_string(i);
+				std::string texPinName = "Texture_" + count;
+				std::string opacityPinName = "Opacity_" + count;
+				std::string blendPinName = "Blend_Mode_" + count;
+
+				auto texId = *GetPinId(nos::Name(texPinName));
+				auto opacityId = *GetPinId(nos::Name(opacityPinName));
+				auto blendId = *GetPinId(nos::Name(blendPinName));
+
+				AddedPins.push_back(MergePin{texId, opacityId, blendId});
+			}
+
 			HandleEvent(
 				CreateAppEvent(fbb,
 					nos::CreatePartialNodeUpdateDirect(fbb,
@@ -175,17 +190,17 @@ struct MergeContext : NodeContext
 			nosEngine.GetDefaultValueOfType(NOS_NAME_STATIC("nos.sys.vulkan.Texture"), &buffer);
 
 			std::string texPinName = "Texture_" + count;
-			nosUUID texId = *(nosUUID*)nos::generator().as_bytes().data();
+			nosUUID texId = nosEngine.GenerateID();
 			std::vector<uint8_t> texData((u8*)buffer.Data, (u8*)buffer.Data + buffer.Size);
 
 			std::string opacityPinName = "Opacity_" + count;
-			nosUUID opacityId = *(nosUUID*)nos::generator().as_bytes().data();
+			nosUUID opacityId = nosEngine.GenerateID();
 			std::vector<uint8_t> opacityData = nos::Buffer::From(1.f);
 			std::vector<uint8_t> opacityMinData = nos::Buffer::From(0.f);
 			std::vector<uint8_t> opacityMaxData = nos::Buffer::From(1.f);
 
 			std::string blendPinName = "Blend_Mode_" + count;
-			nosUUID blendId = *(nosUUID*)nos::generator().as_bytes().data();
+			nosUUID blendId = nosEngine.GenerateID();
 			std::vector<uint8_t> blendModeData = nos::Buffer::From(0u);
 
 			std::string pinCategory = "Layer (" + count + ")";
