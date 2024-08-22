@@ -12,7 +12,7 @@ NOS_INIT()
 NOS_VULKAN_INIT()
 
 NOS_BEGIN_IMPORT_DEPS()
-	NOS_VULKAN_INIT()
+	NOS_VULKAN_IMPORT()
 NOS_END_IMPORT_DEPS()
 
 nosResult RegisterWebRTCPlayer(nosNodeFunctions* outFunctions);
