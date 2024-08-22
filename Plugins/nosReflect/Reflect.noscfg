@@ -27,7 +27,7 @@
 			"category": "Type",
 			"class_name": "Make",
 			"display_name": "Make",
-			"hide_in_menu": true
+			"hide_in_context_menu": true
 		},
 		{
 			"category": "Type",
