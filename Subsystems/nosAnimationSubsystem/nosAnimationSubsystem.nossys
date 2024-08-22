@@ -9,5 +9,6 @@
         "dependencies": [],
         "category": "Animation"
     },
-    "binary_path": "./Binaries/nosAnimationSubsystem"
+    "binary_path": "./Binaries/nosAnimationSubsystem",
+    "custom_types": [ "Config/AnimEditorTypes.fbs" ]
 }
