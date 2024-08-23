@@ -1,0 +1,6 @@
+namespace nos.utilities;
+
+enum SinkMode : uint {
+  Periodic = 0,
+  FreeRun = 1,
+}

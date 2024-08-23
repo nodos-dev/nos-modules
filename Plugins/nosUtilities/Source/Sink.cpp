@@ -7,6 +7,8 @@
 #include <chrono>
 #include <nosUtil/Stopwatch.hpp>
 
+#include "Sink_generated.h"
+
 namespace nos::utilities
 {
 using clock = std::chrono::high_resolution_clock;
@@ -20,18 +22,15 @@ struct SinkNode : NodeContext
 	std::thread Thread;
 	bool AcceptRepeat = false;
 	clock::time_point LastCopy = clock::now();
+	utilities::SinkMode Mode = utilities::SinkMode::Periodic;
 
 	SinkNode(const nosFbNode* inNode) : NodeContext(inNode)
 	{
-		flatbuffers::FlatBufferBuilder fbb;
-		Thread = std::thread([this]() { SinkThread(); });
-		HandleEvent(CreateAppEvent(fbb, nos::app::CreateSetThreadNameDirect(fbb, (u64)Thread.native_handle(), "Sink Thread")));
 	}
 
-	~SinkNode() 
-	{ 
-		ShouldStop = true;
-		Thread.join();
+	~SinkNode() override
+	{
+		StopThread();
 	}
 
 	nosResult ExecuteNode(nosNodeExecuteParams* params) override
@@ -56,26 +55,91 @@ struct SinkNode : NodeContext
 
 		lastCopy = clock::now();
 
+		if (!IsPeriodic())
+			ScheduleNode();
+
 		return NOS_RESULT_SUCCESS;
-	};
+	}
 
 	void OnPinValueChanged(nos::Name pinName, nosUUID pinId, nosBuffer value) override
 	{
-		if (NOS_NAME_STATIC("Sink FPS") == pinName)
+		if (NOS_NAME("Sink FPS") == pinName)
 		{
-			Fps = *(float*)value.Data;
+			Fps = *static_cast<float*>(value.Data);
 			nosEngine.RecompilePath(NodeId);
 		}
-		if (NOS_NAME_STATIC("Wait") == pinName)
+		if (NOS_NAME("Wait") == pinName)
 		{
-			Wait = *(bool*)value.Data;
+			Wait = *static_cast<bool*>(value.Data);
 		}
-		if (NOS_NAME_STATIC("AcceptRepeat") == pinName)
+		if (NOS_NAME("AcceptRepeat") == pinName)
 		{
-			AcceptRepeat = *(bool*)value.Data;
+			AcceptRepeat = *static_cast<bool*>(value.Data);
 			nosEngine.RecompilePath(NodeId);
 		}
-	};
+		if (NOS_NAME("SinkMode") == pinName)
+		{
+			SetMode(*static_cast<utilities::SinkMode*>(value.Data));
+		}
+	}
+
+	void SetMode(utilities::SinkMode mode)
+	{
+		Mode = mode;
+		nosEngine.RecompilePath(NodeId);
+		auto fpsPinId = *GetPinId(NOS_NAME("Sink FPS"));
+		nosOrphanState orphanState{
+			.IsOrphan = !IsPeriodic(),
+			.Message = !IsPeriodic() ? "Periodic mode is disabled" : ""
+		};
+		nosEngine.SetItemOrphanState(fpsPinId, &orphanState);
+	}
+
+	bool IsPeriodic()
+	{
+		return Mode == utilities::SinkMode::Periodic;
+	}
+
+	void StopThread() {
+		ShouldStop = true;
+		if (Thread.joinable())
+			Thread.join();
+	}
+
+	void StartThread() {
+		StopThread();
+		ShouldStop = false;
+		Thread = std::thread([this]() { SinkThread(); });
+		flatbuffers::FlatBufferBuilder fbb;
+		HandleEvent(CreateAppEvent(fbb, nos::app::CreateSetThreadNameDirect(fbb, (u64)Thread.native_handle(), "Sink Thread")));
+	}
+
+	void OnPathStart() override 
+	{
+		if (!IsPeriodic())
+		{
+			StopThread();
+			ScheduleNode();
+		}
+		else if (!Thread.joinable())
+			StartThread();
+	}
+
+	void ScheduleNode()
+	{
+		nosScheduleNodeParams schedule {
+			.NodeId = NodeId,
+			.AddScheduleCount = 1,
+			.Reset = NOS_FALSE,
+		};
+		nosEngine.ScheduleNode(&schedule);
+	}
+
+	void OnPathStop() override
+	{
+		if (IsPeriodic())
+			StartThread();
+	}
 
 	void SinkThread()
 	{
@@ -106,7 +170,11 @@ struct SinkNode : NodeContext
 	void GetScheduleInfo(nosScheduleInfo* info) override
 	{
 		info->Type = NOS_SCHEDULE_TYPE_ON_DEMAND;
-		info->DeltaSeconds = {10000u, (uint32_t)std::floor(Fps * 10000)};
+		if (IsPeriodic())
+			info->DeltaSeconds = {10000u, (uint32_t)std::floor(Fps * 10000)};
+		else
+			info->DeltaSeconds = {0, 1};
+		nosEngine.LogI("Sink Node delta seconds: %d/%d", info->DeltaSeconds.x, info->DeltaSeconds.y);
 		info->Importance = 0;
 		for (int i = 0; i < info->PinInfosCount; i++)
 			info->PinInfos[i].NeedsRepeat = AcceptRepeat;

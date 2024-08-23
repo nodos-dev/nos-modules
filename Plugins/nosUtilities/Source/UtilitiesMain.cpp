@@ -61,12 +61,8 @@ nosResult NOSAPI_CALL ExportNodeFunctions(size_t* outSize, nosNodeFunctions** ou
 	*outSize = Utilities::Count;
 	if (!outList)
 		return NOS_RESULT_SUCCESS;
-	//
-	// auto ret = RequestVulkanSubsystem();
-	// if (ret != NOS_RESULT_SUCCESS)
-	// 	return ret;
 
-#define GEN_CASE_NODE(name)				\
+#define GEN_CASE_NODE(name)					\
 	case Utilities::name: {					\
 		auto ret = Register##name(node);	\
 		if (NOS_RESULT_SUCCESS != ret)		\

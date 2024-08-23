@@ -22,7 +22,7 @@
           "show_as": "PROPERTY",
           "can_show_as": "PROPERTY_ONLY",
           "data": 60.0,
-          "default": 60.0,
+          "def": 60.0,
           "min": 0.01,
           "max": 1000.0
         },
@@ -31,8 +31,26 @@
           "type_name": "bool",
           "show_as": "PROPERTY",
           "can_show_as": "PROPERTY_ONLY",
-          "data": "true",
-          "description": "Wait until gpu tasks(gpu nodes etc.) are completed."
+          "data": true,
+          "description": "Wait until GPU tasks are completed."
+        },
+        {
+          "name": "AcceptsRepeat",
+          "display_name": "Accepts Repeat",
+          "type_name": "bool",
+          "show_as": "PROPERTY",
+          "can_show_as": "PROPERTY_ONLY",
+          "data": false,
+          "description": "Wait until GPU tasks are completed."
+        },
+        {
+          "name": "SinkMode",
+          "display_name": "Mode",
+          "type_name": "nos.utilities.SinkMode",
+          "show_as": "PROPERTY",
+          "can_show_as": "PROPERTY_ONLY",
+          "description": "Whether to schedule nodes at an unlimited or fixed rate",
+          "data": "Periodic"
         }
       ]
     }

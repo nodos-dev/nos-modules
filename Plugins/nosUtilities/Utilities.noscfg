@@ -2,7 +2,7 @@
     "info": {
         "id": {
             "name": "nos.utilities",
-            "version": "2.6.0"
+            "version": "2.7.0"
         },
         "description": "Various utility nodes.",
         "display_name": "Utilities",
@@ -43,7 +43,8 @@
         "Config/Resize.fbs",
         "Config/Swizzle.fbs",
         "Config/TextureSwitcher.fbs",
-        "Config/ChannelViewer.fbs"
+        "Config/ChannelViewer.fbs",
+        "Config/Sink.fbs"
     ],
     "binary_path": "Binaries/nosUtilities",
     "associated_nodes": [
