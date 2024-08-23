@@ -23,7 +23,7 @@
                     "name": "Radius",
                     "type_name": "float",
                     "show_as": "PROPERTY",
-                    "can_show_as": "PROPERTY_ONLY",
+                    "can_show_as": "INPUT_PIN_OR_PROPERTY",
                     "data": 1.0,
                     "min": 0.0,
                     "max": 4.0
@@ -32,7 +32,7 @@
                     "name": "Sharpness",
                     "type_name": "float",
                     "show_as": "PROPERTY",
-                    "can_show_as": "PROPERTY_ONLY",
+                    "can_show_as": "INPUT_PIN_OR_PROPERTY",
                     "data": 1.0,
                     "min": 0.0,
                     "max": 4.0
@@ -41,7 +41,7 @@
                     "name": "PreMultiplyAlpha",
                     "type_name": "bool",
                     "show_as": "PROPERTY",
-                    "can_show_as": "PROPERTY_ONLY",
+                    "can_show_as": "INPUT_PIN_OR_PROPERTY",
                     "data": 0
                 },
                 {
