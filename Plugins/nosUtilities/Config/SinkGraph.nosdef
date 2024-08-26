@@ -1,11 +1,11 @@
 { "nodes": [
     {
-      "id": "b728034a-b0b0-41a6-9bd3-4c3dd9a8fe79",
+      "id": "962a7371-a9f4-44f0-8727-5fe5142fb2d8",
       "name": "Sink",
       "class_name": "nos.utilities.SinkGraph",
       "pins": [
         {
-          "id": "f11ef145-e24f-4de4-8148-431e7bdebcf6",
+          "id": "4c75ff3d-45a2-49fd-a48d-da6e9813bb98",
           "name": "Sink Input",
           "type_name": "nos.fb.Void",
           "show_as": "INPUT_PIN",
@@ -17,12 +17,12 @@
           "def": { },
           "meta_data_map": [],
           "contents_type": "PortalPin",
-          "contents": { "source_id": "eee0d1fd-c705-43c3-83a9-1eccad020446" },
+          "contents": { "source_id": "b2e60afd-48ab-4f80-89dc-4c7c4323d326" },
           "orphan_state": { },
           "description": ""
         },
         {
-          "id": "a0b23e50-2cee-4a4d-99c5-9d7156893fc9",
+          "id": "44bbedd2-ea31-45c6-a979-bc6b6b16e678",
           "name": "Sink FPS",
           "display_name": "FPS",
           "type_name": "float",
@@ -38,12 +38,12 @@
           "step": 9.9999,
           "meta_data_map": [],
           "contents_type": "PortalPin",
-          "contents": { "source_id": "66e949dd-9c65-4319-82ff-ecabebd9f081" },
+          "contents": { "source_id": "b6712155-4b78-4220-81f9-4c23231ee688" },
           "orphan_state": { },
           "description": ""
         },
         {
-          "id": "ca25f24e-6d9c-4ab9-8895-bc074322434b",
+          "id": "6a7812ed-8e0c-46de-a4c3-b5118397d73a",
           "name": "Wait",
           "display_name": "Wait",
           "type_name": "bool",
@@ -56,22 +56,58 @@
           "def": true,
           "meta_data_map": [],
           "contents_type": "PortalPin",
-          "contents": { "source_id": "134580ee-79ca-4bba-b1b2-85ada67ee1a4" },
+          "contents": { "source_id": "7a587325-e432-4be7-9461-9a15ae128b36" },
           "orphan_state": { },
           "description": "Wait until gpu tasks(gpu nodes etc.) are completed."
+        },
+        {
+          "id": "8bdd8685-8d98-4feb-b10c-52e173c948d3",
+          "name": "AcceptsRepeat",
+          "display_name": "Accept Repeat",
+          "type_name": "bool",
+          "show_as": "PROPERTY",
+          "can_show_as": "PROPERTY_ONLY",
+          "pin_category": "",
+          "visualizer": { },
+          "data": false,
+          "referred_by": [],
+          "def": false,
+          "meta_data_map": [],
+          "contents_type": "PortalPin",
+          "contents": { "source_id": "48f150e3-ce1e-4143-9faf-a160d42f4fa2" },
+          "orphan_state": { },
+          "description": "Wait until GPU tasks are completed."
+        },
+        {
+          "id": "4100a156-de8c-4ede-81ff-58a76e11a147",
+          "name": "SinkMode",
+          "display_name": "Mode",
+          "type_name": "nos.utilities.SinkMode",
+          "show_as": "PROPERTY",
+          "can_show_as": "PROPERTY_ONLY",
+          "pin_category": "",
+          "visualizer": { },
+          "data": "Periodic",
+          "referred_by": [],
+          "def": "Periodic",
+          "meta_data_map": [],
+          "contents_type": "PortalPin",
+          "contents": { "source_id": "9ee5e170-ce7a-4b3d-b86a-3e3bf5a81aae" },
+          "orphan_state": { },
+          "description": "Whether to schedule nodes at an unlimited or fixed rate"
         }
       ],
       "pos": { "x": 0.0, "y": 0.0 },
       "contents_type": "Graph",
       "contents": { "nodes": [
           {
-            "id": "c56f1547-5bf2-462f-afef-6c3337b25bdf",
+            "id": "d1b0c5bd-7e81-44cc-b8dd-77a9e581b9a5",
             "name": "Thread",
             "class_name": "nos.Thread",
             "always_execute": true,
             "pins": [
               {
-                "id": "387a4181-b5fd-49b7-bc92-d23ae328c90d",
+                "id": "09e6d1f5-8fd5-44c8-a41a-154487a46e99",
                 "name": "Run",
                 "type_name": "nos.exe",
                 "show_as": "OUTPUT_PIN",
@@ -89,7 +125,7 @@
                 "description": ""
               },
               {
-                "id": "b64425c1-d7c7-409e-94be-17ea62b153d5",
+                "id": "f87b680c-132f-4c7f-9a28-22eae1018fee",
                 "name": "Importance",
                 "type_name": "ulong",
                 "show_as": "PROPERTY",
@@ -119,12 +155,12 @@
             "template_parameters": []
           },
           {
-            "id": "78995a16-fccb-4cc0-a5ad-9d0bffbaf364",
+            "id": "54ebe1ba-e5b1-464a-9a44-2444894d1aff",
             "name": "Sink",
             "class_name": "nos.utilities.Sink",
             "pins": [
               {
-                "id": "5892ea45-a542-47f9-b6a0-d318fab817b9",
+                "id": "47062421-7f2a-48a8-80b1-4720f49b6d14",
                 "name": "InExe",
                 "type_name": "nos.exe",
                 "show_as": "INPUT_PIN",
@@ -141,7 +177,7 @@
                 "description": ""
               },
               {
-                "id": "72a7f550-d32a-44db-a8dd-f73865b63257",
+                "id": "f762c472-cb25-4fb2-adcf-047cdd19d3b6",
                 "name": "Sink Input",
                 "type_name": "nos.fb.Void",
                 "show_as": "INPUT_PIN",
@@ -159,7 +195,7 @@
                 "display_name": "Output"
               },
               {
-                "id": "66e949dd-9c65-4319-82ff-ecabebd9f081",
+                "id": "b6712155-4b78-4220-81f9-4c23231ee688",
                 "name": "Sink FPS",
                 "type_name": "float",
                 "show_as": "PROPERTY",
@@ -168,7 +204,7 @@
                 "visualizer": { },
                 "data": 60.0,
                 "referred_by": [
-                  "a0b23e50-2cee-4a4d-99c5-9d7156893fc9"
+                  "44bbedd2-ea31-45c6-a979-bc6b6b16e678"
                 ],
                 "min": 0.01,
                 "max": 1000.0,
@@ -181,7 +217,7 @@
                 "description": ""
               },
               {
-                "id": "134580ee-79ca-4bba-b1b2-85ada67ee1a4",
+                "id": "7a587325-e432-4be7-9461-9a15ae128b36",
                 "name": "Wait",
                 "type_name": "bool",
                 "show_as": "PROPERTY",
@@ -190,7 +226,7 @@
                 "visualizer": { },
                 "data": true,
                 "referred_by": [
-                  "ca25f24e-6d9c-4ab9-8895-bc074322434b"
+                  "6a7812ed-8e0c-46de-a4c3-b5118397d73a"
                 ],
                 "def": true,
                 "meta_data_map": [],
@@ -198,6 +234,46 @@
                 "contents": { },
                 "orphan_state": { },
                 "description": "Wait until gpu tasks(gpu nodes etc.) are completed."
+              },
+              {
+                "id": "48f150e3-ce1e-4143-9faf-a160d42f4fa2",
+                "name": "AcceptsRepeat",
+                "type_name": "bool",
+                "show_as": "PROPERTY",
+                "can_show_as": "PROPERTY_ONLY",
+                "pin_category": "",
+                "visualizer": { },
+                "data": false,
+                "referred_by": [
+                  "8bdd8685-8d98-4feb-b10c-52e173c948d3"
+                ],
+                "def": false,
+                "meta_data_map": [],
+                "contents_type": "JobPin",
+                "contents": { },
+                "orphan_state": { },
+                "description": "Wait until GPU tasks are completed.",
+                "display_name": "Accepts Repeat"
+              },
+              {
+                "id": "9ee5e170-ce7a-4b3d-b86a-3e3bf5a81aae",
+                "name": "SinkMode",
+                "type_name": "nos.utilities.SinkMode",
+                "show_as": "PROPERTY",
+                "can_show_as": "PROPERTY_ONLY",
+                "pin_category": "",
+                "visualizer": { },
+                "data": "Periodic",
+                "referred_by": [
+                  "4100a156-de8c-4ede-81ff-58a76e11a147"
+                ],
+                "def": "Periodic",
+                "meta_data_map": [],
+                "contents_type": "JobPin",
+                "contents": { },
+                "orphan_state": { },
+                "description": "Whether to schedule nodes at an unlimited or fixed rate",
+                "display_name": "Mode"
               }
             ],
             "pos": { "x": -554.0, "y": 128.0 },
@@ -208,19 +284,19 @@
             "function_category": "Default Node",
             "status_messages": [],
             "meta_data_map": [
-              { "key": "PluginVersion", "value": "2.6.0" }
+              { "key": "PluginVersion", "value": "2.7.0" }
             ],
             "orphan_state": { },
             "description": "",
             "template_parameters": []
           },
           {
-            "id": "3e788fc8-8978-4363-8021-ad353194696c",
+            "id": "af033893-0867-4707-9560-d945c5fe7d5c",
             "name": "Sink Input",
             "class_name": "nos.internal.GraphInput",
             "pins": [
               {
-                "id": "3569e874-26d9-4dfa-b290-98c51a6c5e59",
+                "id": "0256925e-33d3-4d28-897f-64eabb6c23cb",
                 "name": "Output",
                 "type_name": "nos.fb.Void",
                 "show_as": "OUTPUT_PIN",
@@ -237,7 +313,7 @@
                 "description": ""
               },
               {
-                "id": "eee0d1fd-c705-43c3-83a9-1eccad020446",
+                "id": "b2e60afd-48ab-4f80-89dc-4c7c4323d326",
                 "name": "Input",
                 "type_name": "nos.fb.Void",
                 "show_as": "INPUT_PIN",
@@ -246,7 +322,7 @@
                 "visualizer": { },
                 "data": { },
                 "referred_by": [
-                  "f11ef145-e24f-4de4-8148-431e7bdebcf6"
+                  "4c75ff3d-45a2-49fd-a48d-da6e9813bb98"
                 ],
                 "def": { },
                 "meta_data_map": [
@@ -271,15 +347,15 @@
             "template_parameters": []
           }
         ], "comments": [], "connections": [
-          { "from": "387a4181-b5fd-49b7-bc92-d23ae328c90d", "to": "5892ea45-a542-47f9-b6a0-d318fab817b9", "id": "390777ec-f825-458f-a4c3-fdeef549d174" },
-          { "from": "3569e874-26d9-4dfa-b290-98c51a6c5e59", "to": "72a7f550-d32a-44db-a8dd-f73865b63257", "id": "467d73eb-1bfc-4f97-b4de-30fa17924cd8" }
+          { "from": "09e6d1f5-8fd5-44c8-a41a-154487a46e99", "to": "47062421-7f2a-48a8-80b1-4720f49b6d14", "id": "3419e78b-36a1-48b3-bca9-b4f9eafc44c5" },
+          { "from": "0256925e-33d3-4d28-897f-64eabb6c23cb", "to": "f762c472-cb25-4fb2-adcf-047cdd19d3b6", "id": "8608ea00-f581-4950-93f4-71023b49cf9a" }
         ] },
       "app_key": "",
       "functions": [],
       "function_category": "Default Node",
       "status_messages": [],
       "meta_data_map": [
-        { "key": "PluginVersion", "value": "2.6.0" }
+        { "key": "PluginVersion", "value": "2.7.0" }
       ],
       "orphan_state": { },
       "description": "",
