@@ -19,11 +19,13 @@ namespace nos::utilities
 NOS_REGISTER_NAME(Linear2SRGB_Pass);
 NOS_REGISTER_NAME(Linear2SRGB_Shader);
 NOS_REGISTER_NAME(In);
+NOS_REGISTER_NAME(IncludeAlpha);
 NOS_REGISTER_NAME_SPACED(Nos_Utilities_WriteImage, "nos.utilities.WriteImage")
 
 struct WriteImage : NodeContext {
     std::filesystem::path Path;
     nosResourceShareInfo TempSrgbCopy;
+    bool IncludeAlpha = false;
     nosGPUEvent Event = 0;
     std::atomic_bool WriteRequested = false;
     std::condition_variable CV;
@@ -68,13 +70,13 @@ struct WriteImage : NodeContext {
         
         std::unique_lock<std::mutex> lock(Mutex);
         Path = std::string((const char*)execParams[NSN_Path].Data->Data, execParams[NSN_Path].Data->Size);
+        IncludeAlpha = *(bool*)execParams[NSN_IncludeAlpha].Data->Data;
         nosCmd cmd;
         assert(Event == 0);
         nosVulkan->Begin("Write Image Copy To", &cmd);
         auto inputTex = vkss::DeserializeTextureInfo(execParams[NSN_In].Data->Data);
         TempSrgbCopy = {};
         TempSrgbCopy.Info = inputTex.Info;
-
         TempSrgbCopy.Info.Texture.Format = NOS_FORMAT_R8G8B8A8_SRGB;
         TempSrgbCopy.Info.Texture.Usage = nosImageUsage(NOS_IMAGE_USAGE_TRANSFER_SRC | NOS_IMAGE_USAGE_TRANSFER_DST);
 
@@ -103,10 +105,16 @@ struct WriteImage : NodeContext {
         nosVulkan->Download(0, &TempSrgbCopy, &buf);
 
         if (auto buf2write = nosVulkan->Map(&buf))
+        {
+            if(!IncludeAlpha)
+                for (size_t i = 3; i < buf.Info.Buffer.Size; i += 4)
+                    buf2write[i] = 0xff;
+
             if (!stbi_write_png(Path.string().c_str(), TempSrgbCopy.Info.Texture.Width, TempSrgbCopy.Info.Texture.Height, 4, buf2write, TempSrgbCopy.Info.Texture.Width * 4))
                 nosEngine.LogE("WriteImage: Unable to write frame to file", "");
             else
                 nosEngine.LogI("WriteImage: Wrote frame to file %s", Path.string().c_str());
+        }
         nosVulkan->DestroyResource(&buf);
         nosVulkan->DestroyResource(&TempSrgbCopy);
         TempSrgbCopy = {};
