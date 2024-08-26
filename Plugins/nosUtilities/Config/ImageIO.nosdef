@@ -55,8 +55,14 @@
               "visualizer": {
                 "type": "FILE_PICKER",
                 "file_extensions": [ ".png" ]
-              },
-              "description": "Supported filetypes (with some limitations):\nJPEG, PNG, TGA, BMP, PSD, GIF, HDR, PIC"
+              }
+            },
+            {
+              "name": "IncludeAlpha",
+              "type_name": "bool",
+              "data": true,
+              "show_as": "PROPERTY",
+              "can_show_as": "INPUT_PIN_OR_PROPERTY"
             },
             {
               "name": "In",
