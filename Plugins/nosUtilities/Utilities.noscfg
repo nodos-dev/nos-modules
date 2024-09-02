@@ -35,7 +35,9 @@
         "Config/IsSameStringNode.nosdef",
         "Config/ShowStatusNode.nosdef",
         "Config/SinkGraph.nosdef",
-        "Config/Sink.nosdef"
+        "Config/Sink.nosdef",
+        "Config/PropagateExecution.nosdef",
+        "Config/TimedFunctionSignaller.nosdef"
     ],
     "custom_types": [
         "Config/Merge.fbs",
@@ -154,9 +156,19 @@
             "display_name": "Threaded Sink"
         },
         {
-            "category": "Utilities",
-            "class_name": "Sink",
-            "display_name": "Sink"
+          "category": "Utilities",
+          "class_name": "Sink",
+          "display_name": "Sink"
+        },
+        {
+          "category": "Utilities",
+          "class_name": "PropagateExecution",
+          "display_name": "Propagate Execution"
+        },
+        {
+          "category": "Utilities",
+          "class_name": "TimedFunctionSignaller",
+          "display_name": "Timed Function Signaller"
         }
     ],
     "subsystem_options": [

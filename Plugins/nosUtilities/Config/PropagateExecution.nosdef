@@ -1,0 +1,31 @@
+{
+	"nodes": [
+		{
+			"class_name": "PropagateExecution",
+			"display_name": "Propagate Execution",
+			"contents_type": "Job",
+			"pins": [
+				{
+					"name": "Input",
+					"type_name": "nos.exe",
+					"show_as": "INPUT_PIN",
+					"can_show_as": "INPUT_PIN_OR_PROPERTY"
+				}
+			],
+			"functions": [
+				{
+					"class_name": "Propagate",
+					"contents_type": "Job",
+					"pins": [
+						{
+							"name": "Output",
+							"type_name": "nos.exe",
+							"show_as": "OUTPUT_PIN",
+							"can_show_as": "OUTPUT_PIN_OR_PROPERTY"
+						}
+					]
+				}
+			]
+		}
+	]
+}
