@@ -2,10 +2,8 @@
 
 // Includes
 #include <Nodos/PluginAPI.h>
+#include <Nodos/Name.hpp>
 #include <glm/glm.hpp>
-
-// Nodes
-#include "GaussianBlur.hpp"
 
 // Dependencies
 #include <nosVulkanSubsystem/nosVulkanSubsystem.h>
@@ -22,7 +20,6 @@ namespace nos::filters
 
 enum Filters : int
 {
-	GaussianBlur = 0,
 	Count
 };
 
@@ -33,7 +30,6 @@ NOSAPI_ATTR nosResult NOSAPI_CALL ExportNodeFunctions(size_t* outSize, nosNodeFu
 		*outSize = Filters::Count;
 		return NOS_RESULT_SUCCESS;
 	}
-	RegisterGaussianBlur(outList[GaussianBlur]);
 	return NOS_RESULT_SUCCESS;
 }
 
