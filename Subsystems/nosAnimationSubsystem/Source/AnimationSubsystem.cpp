@@ -21,7 +21,7 @@ static std::unique_ptr<PinDataAnimator> GAnimator = nullptr;
 nosResult OnPreExecuteNode(nosNodeExecuteParams* params)
 {
 	nosUUID scheduledNodeId;
-	if (nosEngine.GetCurrentRunnerPathInfo(&scheduledNodeId, nullptr) == NOS_RESULT_FAILED)
+	if (params->DeltaSeconds.x == 0 || nosEngine.GetCurrentRunnerPathInfo(&scheduledNodeId, nullptr) == NOS_RESULT_FAILED)
 		return NOS_RESULT_FAILED;
 
 	auto pathInfo = GAnimator->GetPathInfo(scheduledNodeId);

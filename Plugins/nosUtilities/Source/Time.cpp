@@ -14,12 +14,14 @@ struct TimeNodeContext : NodeContext
 	{
 		auto pin = GetPinValues(params);
 		auto sec = GetPinValue<float>(pin, NSN_Seconds);
-		float time = (params->DeltaSeconds.x * frameCount++) / (double)params->DeltaSeconds.y;
+		auto deltaSecs = params->DeltaSeconds;
+		if (params->DeltaSeconds.x == 0)
+			deltaSecs = { 1, 60 };
+		float time = (params->DeltaSeconds.x * FrameNumber++) / (double)params->DeltaSeconds.y;
 		nosEngine.SetPinValue(params->Pins[0].Id, { .Data = &time, .Size = sizeof(float) });
 		return NOS_RESULT_SUCCESS;
 	}
-
-	uint64_t frameCount = 0;
+	uint64_t FrameNumber = 0;
 };
 
 
