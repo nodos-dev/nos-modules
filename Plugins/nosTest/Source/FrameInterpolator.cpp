@@ -44,7 +44,10 @@ struct FrameInterpolatorNode : NodeContext
 	{
 		{
 			std::unique_lock guard(Mutex);
-			DeltaNanosec = 1'000'000'000u * (params->DeltaSeconds.x / double(params->DeltaSeconds.y));
+			auto deltaSecs = params->DeltaSeconds;
+			if (params->DeltaSeconds.x == 0)
+				deltaSecs = { 1, 60 };
+			DeltaNanosec = 1'000'000'000u * (deltaSecs.x / double(deltaSecs.y));
 			if (!InputPinId)
 				InputPinId = params->Pins[0].Id;
 		}
