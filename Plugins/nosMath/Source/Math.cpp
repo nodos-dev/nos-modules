@@ -283,17 +283,15 @@ struct SineWaveNodeContext : NodeContext
 		auto amplitude = *GetPinValue<float>(pins, NOS_NAME_STATIC("Amplitude"));
 		auto offset = *GetPinValue<float>(pins, NOS_NAME_STATIC("Offset"));
 		auto frequency = *GetPinValue<float>(pins, NOS_NAME_STATIC("Frequency"));
-		auto deltaSecs = params->DeltaSeconds;
-		if (params->DeltaSeconds.x == 0)
-			deltaSecs = { 1, 60 };
-		double time = (deltaSecs.x * FrameNumber++) / (double)deltaSecs.y;
+		double time = (params->DeltaSeconds.x * frameCount++) / (double)params->DeltaSeconds.y;
 		double sec = glm::mod(time * (double)frequency, glm::pi<double>() * 2.0);
 		float result = (amplitude * glm::sin(sec)) + offset;
 		*GetPinValue<float>(pins, NOS_NAME_STATIC("Out")) = result;
 		//nosEngine.SetPinValue(ids[NOS_NAME_STATIC("Out")], {.Data = &result, .Size = sizeof(float)});
 		return NOS_RESULT_SUCCESS;
 	}
-	uint64_t FrameNumber = 0;
+
+	uint64_t frameCount = 0;
 };
 
 void RegisterEval(nosNodeFunctions*);
