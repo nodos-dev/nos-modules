@@ -23,9 +23,9 @@ struct ArrayNode : NodeContext
 				nos::TypeInfo arrayType = nos::TypeInfo(pin.TypeName);
 				auto elementTypeName = arrayType->ElementType->TypeName;
 				Type = nos::TypeInfo(elementTypeName);
-				LoadPins();
 			}
 		}
+		LoadPins();
 	}
 
 	void OnNodeUpdated(const nosFbNode* inNode) override
