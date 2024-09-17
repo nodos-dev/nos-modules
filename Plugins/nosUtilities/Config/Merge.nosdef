@@ -43,7 +43,7 @@
                 },
                 {
                     "name": "Blend_Mode_0",
-                    "type_name": "nos.fb.BlendMode",
+                    "type_name": "nos.utilities.BlendMode",
                     "show_as": "PROPERTY",
                     "data": "Normal",
                     "pin_category": "Layer (0)",
@@ -52,7 +52,7 @@
                 },
                 {
                     "name": "Blend_Mode_1",
-                    "type_name": "nos.fb.BlendMode",
+                    "type_name": "nos.utilities.BlendMode",
                     "show_as": "PROPERTY",
                     "data": "Normal",
                     "pin_category": "Layer (1)",

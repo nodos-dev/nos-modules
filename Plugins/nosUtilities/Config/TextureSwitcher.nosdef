@@ -13,7 +13,7 @@
             "pins": [
                 {
                     "name": "Output_Channel",
-                    "type_name": "nos.plugin.switcher.TextureSwitcherChannel",
+                    "type_name": "nos.utilities.TextureSwitcherChannel",
                     "show_as": "PROPERTY",
                     "can_show_as": "INPUT_PIN_OR_PROPERTY",
                     "description": "Channel index to display on output",

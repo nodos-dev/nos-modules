@@ -22,7 +22,7 @@
         },
         {
           "name": "Method",
-          "type_name": "nos.fb.ResizeMethod",
+          "type_name": "nos.utilities.ResizeMethod",
           "show_as": "PROPERTY",
           "can_show_as": "INPUT_OUTPUT_PROPERTY",
           "description": "Scaling filter algorithm. Supported algorithms:\nNearest, bilinear, bicubic, directional blur, lanczos3, gaussian unsharp mask",

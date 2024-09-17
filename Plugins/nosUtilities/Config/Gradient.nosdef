@@ -45,7 +45,7 @@
                 },
                 {
                     "name": "Kind",
-                    "type_name": "nos.fb.GradientKind",
+                    "type_name": "nos.utilities.GradientKind",
                     "show_as": "PROPERTY",
                     "can_show_as": "INPUT_PIN_OR_PROPERTY",
                     "description": "Sets the output images gradient type"

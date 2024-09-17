@@ -233,7 +233,7 @@ struct MergeContext : NodeContext
 				fb::CreatePinDirect(fbb,
 				                    &blendId,
 				                    blendPinName.c_str(),
-				                    "nos.fb.BlendMode",
+				                    "nos.utilities.BlendMode",
 				                    fb::ShowAs::PROPERTY,
 				                    fb::CanShowAs::OUTPUT_PIN_OR_PROPERTY,
 				                    pinCategory.c_str(),

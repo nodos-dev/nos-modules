@@ -16,7 +16,7 @@
                 },
                 {
                     "name": "Channel",
-                    "type_name": "nos.fb.ChannelViewerChannels",
+                    "type_name": "nos.utilities.ChannelViewerChannels",
                     "show_as": "PROPERTY",
                     "can_show_as": "PROPERTY_ONLY",
                     "data": "A",
@@ -24,7 +24,7 @@
                 },
                 {
                     "name": "Format",
-                    "type_name": "nos.fb.ChannelViewerFormats",
+                    "type_name": "nos.utilities.ChannelViewerFormats",
                     "show_as": "PROPERTY",
                     "can_show_as": "PROPERTY_ONLY",
                     "data": "Rec_709",
