@@ -10,11 +10,11 @@ NOS_INIT()
 NOS_BEGIN_IMPORT_DEPS()
 NOS_END_IMPORT_DEPS()
 
-namespace nos::sys::anim
+namespace nos::sys::animation
 {
 namespace editor
 {
-	NOS_FBS_CREATE_FUNCTION_MAKE_FOR_UNION(nos::sys::anim::editor, FromAnimation)
+	NOS_FBS_CREATE_FUNCTION_MAKE_FOR_UNION(nos::sys::animation::editor, FromAnimation)
 }
 static std::unique_ptr<PinDataAnimator> GAnimator = nullptr;
 
@@ -73,10 +73,10 @@ void OnEndFrame(nosUUID scheduledPinId)
 
 void OnMessageFromEditor(uint64_t editorId, nosBuffer blob)
 {
-	auto msg = flatbuffers::GetRoot<sys::anim::editor::FromEditor>(blob.Data);
+	auto msg = flatbuffers::GetRoot<editor::FromEditor>(blob.Data);
 	switch (msg->event_type())
 	{
-	case sys::anim::editor::FromEditorUnion::AnimatePin: {
+	case sys::animation::editor::FromEditorUnion::AnimatePin: {
 		auto animatePin = msg->event_as_AnimatePin();
 		if(!animatePin || !animatePin->pin_path())
 			return;
@@ -116,7 +116,7 @@ void OnEditorConnected(uint64_t editorId)
 
 nosResult NOSAPI_CALL OnPreUnloadSubsystem()
 {
-	nos::sys::anim::GAnimator = nullptr;
+	nos::sys::animation::GAnimator = nullptr;
 	return NOS_RESULT_SUCCESS;
 }
 }
@@ -126,19 +126,19 @@ extern "C"
 NOSAPI_ATTR nosResult NOSAPI_CALL nosExportSubsystem(nosSubsystemFunctions* subsystemFunctions)
 {
 		
-	subsystemFunctions->OnPreExecuteNode = nos::sys::anim::OnPreExecuteNode;
-	subsystemFunctions->ShouldExecuteNodeWithoutDirty = nos::sys::anim::ShouldExecuteNodeWithoutDirty;
-	subsystemFunctions->OnPathStart = nos::sys::anim::OnPathStart;
-	subsystemFunctions->OnPathStop = nos::sys::anim::OnPathStop;
-	subsystemFunctions->OnEndFrame = nos::sys::anim::OnEndFrame;
-	subsystemFunctions->OnPinDeleted = nos::sys::anim::OnPinDeleted;
+	subsystemFunctions->OnPreExecuteNode = nos::sys::animation::OnPreExecuteNode;
+	subsystemFunctions->ShouldExecuteNodeWithoutDirty = nos::sys::animation::ShouldExecuteNodeWithoutDirty;
+	subsystemFunctions->OnPathStart = nos::sys::animation::OnPathStart;
+	subsystemFunctions->OnPathStop = nos::sys::animation::OnPathStop;
+	subsystemFunctions->OnEndFrame = nos::sys::animation::OnEndFrame;
+	subsystemFunctions->OnPinDeleted = nos::sys::animation::OnPinDeleted;
 
-	subsystemFunctions->OnMessageFromEditor = nos::sys::anim::OnMessageFromEditor;
-	subsystemFunctions->OnEditorConnected = nos::sys::anim::OnEditorConnected;
+	subsystemFunctions->OnMessageFromEditor = nos::sys::animation::OnMessageFromEditor;
+	subsystemFunctions->OnEditorConnected = nos::sys::animation::OnEditorConnected;
 
-	subsystemFunctions->OnPreUnloadSubsystem = nos::sys::anim::OnPreUnloadSubsystem;
+	subsystemFunctions->OnPreUnloadSubsystem = nos::sys::animation::OnPreUnloadSubsystem;
 		
-	nos::sys::anim::GAnimator = std::make_unique<nos::sys::anim::PinDataAnimator>();
+	nos::sys::animation::GAnimator = std::make_unique<nos::sys::animation::PinDataAnimator>();
 	return NOS_RESULT_SUCCESS;
 }
 }

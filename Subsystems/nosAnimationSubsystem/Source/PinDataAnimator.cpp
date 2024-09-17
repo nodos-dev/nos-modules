@@ -5,7 +5,7 @@
 #include <glm/ext/quaternion_common.hpp>
 
 
-namespace nos::sys::anim
+namespace nos::sys::animation
 {
 
 /// https://probablymarcus.com/blocks/2015/02/26/using-bezier-curves-as-easing-functions.html
@@ -363,7 +363,7 @@ std::optional<PathInfo> PinDataAnimator::GetPathInfo(nosUUID const& scheduledNod
 	return it->second;
 }
 
-void anim::PinDataAnimator::CreatePathInfo(nosUUID const& scheduledNodeId, nosVec2u const& deltaSec)
+void PinDataAnimator::CreatePathInfo(nosUUID const& scheduledNodeId, nosVec2u const& deltaSec)
 {
 	std::unique_lock lock(PathInfosMutex);
 	uint64_t startFSM = MillisecondsToFrameNumber(std::chrono::duration_cast<std::chrono::milliseconds>(
@@ -373,13 +373,13 @@ void anim::PinDataAnimator::CreatePathInfo(nosUUID const& scheduledNodeId, nosVe
 	PathInfos[scheduledNodeId] = {.StartFSM = startFSM};
 }
 
-void anim::PinDataAnimator::DeletePathInfo(nosUUID const& scheduledNodeId)
+void PinDataAnimator::DeletePathInfo(nosUUID const& scheduledNodeId)
 {
 	std::unique_lock lock(PathInfosMutex);
 	PathInfos.erase(scheduledNodeId);
 }
 
-void anim::PinDataAnimator::PathExecutionFinished(nosUUID const& scheduledNodeId)
+void PinDataAnimator::PathExecutionFinished(nosUUID const& scheduledNodeId)
 {
 	std::unique_lock lock(PathInfosMutex);
 	PathInfos[scheduledNodeId].CurFrame++;

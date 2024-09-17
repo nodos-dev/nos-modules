@@ -1,4 +1,4 @@
-namespace nos.fb;
+namespace nos.utilities;
 
 enum GradientKind: uint
 {

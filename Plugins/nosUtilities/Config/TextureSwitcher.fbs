@@ -1,4 +1,4 @@
-namespace nos.plugin.switcher;
+namespace nos.utilities;
 
 enum TextureSwitcherChannel : uint {
     Channel_1 = 0,

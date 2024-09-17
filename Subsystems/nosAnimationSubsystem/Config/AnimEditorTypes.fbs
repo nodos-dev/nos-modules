@@ -1,6 +1,6 @@
 include "Common.fbs";
 
-namespace nos.sys.anim.editor;
+namespace nos.sys.animation.editor;
 
 table AnimatableTypes {
 	types: [string];

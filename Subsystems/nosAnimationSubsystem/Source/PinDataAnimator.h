@@ -8,7 +8,7 @@
 #include <nosAnimationSubsystem/AnimEditorTypes_generated.h>
 #include <Nodos/Helpers.hpp>
 
-namespace nos::sys::anim
+namespace nos::sys::animation
 {
 
 inline uint64_t MillisecondsToFrameNumber(uint64_t ms, nosVec2u deltaSeconds)

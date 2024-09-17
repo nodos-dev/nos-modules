@@ -1,4 +1,4 @@
-namespace nos.fb;
+namespace nos.utilities;
 
 enum Source : uint {
   Input1 = 0,
