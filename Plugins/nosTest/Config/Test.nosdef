@@ -269,14 +269,14 @@
 					"pins": [
 						{
 							"name": "in1",
-							"type_name": "nos.Test.TestStruct",
+							"type_name": "nos.test.TestStruct",
 							"show_as": "INPUT_PIN",
 							"pin_category": "A"
 
 						},
 						{
 							"name": "in2",
-							"type_name": "nos.Test.TestTable",
+							"type_name": "nos.test.TestTable",
 							"show_as": "INPUT_PIN"
 						},
 						{
@@ -302,13 +302,13 @@
 				},
 				{
 					"name": "TestPin3",
-					"type_name": "nos.Test.TestEnum",
+					"type_name": "nos.test.TestEnum",
 					"show_as": "INPUT_PIN",
 					"pin_category": "B"
 				},
 				{
 					"name": "TestPin4",
-					"type_name": "nos.Test.TestStruct2",
+					"type_name": "nos.test.TestStruct2",
 					"show_as": "OUTPUT_PIN",
 					"pin_category": "B|A"
 				}

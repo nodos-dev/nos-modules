@@ -1,4 +1,4 @@
-namespace nos.Test;
+namespace nos.test;
 
 struct TestStruct {
 	test1:float;
@@ -6,7 +6,7 @@ struct TestStruct {
 
 
 struct TestStruct2 {
-	test1:nos.Test.TestStruct;
+	test1:nos.test.TestStruct;
 	test2:float;
 }
 
