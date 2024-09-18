@@ -28,6 +28,7 @@
         },
         {
             "class_name": "U32ToString",
+            "description": "(Deprecated) Converts an unsigned integer to a string",
             "contents_type": "Job",
             "pins": [
                 {
