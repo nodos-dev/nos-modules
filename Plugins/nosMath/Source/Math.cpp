@@ -190,7 +190,6 @@ nosResult VecBinopExecute(void* ctx, nosNodeExecuteParams* params)
 
 enum class MathNodeTypes : int {
 	ENUM_GEN_NODE_NAMES_ALL_OPS()
-	U32ToString, // TODO: Generate other ToString nodes too.
 	SineWave,
 	Clamp,
 	Absolute,
@@ -204,14 +203,6 @@ enum class MathNodeTypes : int {
 	Transpose,
 	Count
 };
-
-template<class T>
-nosResult ToString(void* ctx, nosNodeExecuteParams* params)
-{
-	auto* in = static_cast<u32*>(params->Pins[0].Data->Data);
-	auto s = std::to_string(*in);
-	return nosEngine.SetPinValue(params->Pins[1].Id, nosBuffer { .Data = (void*)s.c_str(), .Size = s.size() + 1 });
-}
 
 template<u32 hi, class F, u32 i = 0>
 void For(F&& f)
@@ -311,11 +302,6 @@ nosResult NOSAPI_CALL ExportNodeFunctions(size_t* outCount, nosNodeFunctions** o
 		switch ((MathNodeTypes)i)
 		{
 			GEN_ALL_CASES()
-		case MathNodeTypes::U32ToString: {
-				node->ClassName = NOS_NAME_STATIC("nos.math.U32ToString");
-				node->ExecuteNode = ToString<u32>;
-				break;
-			}
 		case MathNodeTypes::SineWave: {
 			NOS_BIND_NODE_CLASS(NOS_NAME_STATIC("nos.math.SineWave"), SineWaveNodeContext, node);
 			break;

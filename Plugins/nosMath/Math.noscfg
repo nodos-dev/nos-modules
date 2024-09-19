@@ -21,12 +21,6 @@
     "associated_nodes": [
         {
             "category": "Math",
-            "class_name": "U32ToString",
-            "display_name": "To String (u32)",
-            "hide_in_context_menu": true
-        },
-        {
-            "category": "Math",
             "class_name": "PerspectiveView",
             "display_name": "Perspective View"
         },

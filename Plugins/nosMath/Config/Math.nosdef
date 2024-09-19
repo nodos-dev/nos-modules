@@ -27,23 +27,6 @@
             ]
         },
         {
-            "class_name": "U32ToString",
-            "description": "(Deprecated) Converts an unsigned integer to a string",
-            "contents_type": "Job",
-            "pins": [
-                {
-                    "name": "in",
-                    "type_name": "uint",
-                    "show_as": "INPUT_PIN"
-                },
-                {
-                    "name": "out",
-                    "type_name": "string",
-                    "show_as": "OUTPUT_PIN"
-                }
-            ]
-        },
-        {
             "class_name": "SineWave",
             "contents_type": "Job",
             "always_execute": true,
