@@ -2,7 +2,7 @@
     "info": {
         "id": {
             "name": "nos.math",
-            "version": "1.3.0"
+            "version": "1.4.0"
         },
         "description": "Nodes for math operations.",
         "display_name": "Math",
@@ -12,7 +12,8 @@
     "node_definitions": [
         "Config/Math.nosdef",
         "Config/Eval.nosdef",
-        "Config/Matrix.nosdef"
+        "Config/Matrix.nosdef",
+        "Config/Round.nosdef"
     ],
     "binary_path": "Binaries/nosMath",
     "third_party_software": [
@@ -28,6 +29,11 @@
             "category": "Math",
             "class_name": "Eval",
             "display_name": "Eval"
+        },
+        {
+            "category": "Math",
+            "class_name": "Round",
+            "display_name": "Round"
         },
         {
             "category": "Math|Linear Algebra",
