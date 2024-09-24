@@ -19,11 +19,13 @@ struct CPUSleepNode : NodeContext
 		if (busyWait)
 		{
 			auto end = std::chrono::high_resolution_clock::now() + std::chrono::nanoseconds(uint64_t(milliseconds * 1.0e6));
-			while (std::chrono::high_resolution_clock::now() < end)
+			bool isPreempted = false;
+			while (nosEngine.IsRunnerThreadPreempted(&isPreempted) == NOS_RESULT_SUCCESS && !isPreempted && 
+				std::chrono::high_resolution_clock::now() < end)
 				;
 		}
 		else
-			std::this_thread::sleep_for(std::chrono::nanoseconds(uint64_t(milliseconds * 1.0e6)));
+			nosEngine.WaitFor(milliseconds);
 		return NOS_RESULT_SUCCESS;
 	}
 };
