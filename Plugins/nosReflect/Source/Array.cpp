@@ -21,8 +21,11 @@ struct ArrayNode : NodeContext
 			if (pin.ShowAs == fb::ShowAs::OUTPUT_PIN)
 			{
 				nos::TypeInfo arrayType = nos::TypeInfo(pin.TypeName);
-				auto elementTypeName = arrayType->ElementType->TypeName;
-				Type = nos::TypeInfo(elementTypeName);
+				if (arrayType.TypeName != NSN_VOID)
+				{
+					auto elementTypeName = arrayType.TypeName;
+					Type = nos::TypeInfo(elementTypeName);
+				}
 			}
 		}
 		LoadPins();
@@ -45,10 +48,35 @@ struct ArrayNode : NodeContext
 	{
 		nosTypeInfo* info = nullptr;
 		nosEngine.GetTypeInfo(params->IncomingTypeName, &info);
-		if (info->BaseType == NOS_BASE_TYPE_ARRAY)
+		if (params->InstigatorPinName == NOS_NAME_STATIC("Input 0")) {
+			if (info->BaseType == NOS_BASE_TYPE_ARRAY)
+			{
+				strcpy(params->OutErrorMessage, "Input pin must not be an array type");
+				return NOS_RESULT_FAILED;
+			}
+		}
+		else if (params->InstigatorPinName == NSN_Output)
 		{
-			strcpy(params->OutErrorMessage, "Input pin must not be an array type");
-			return NOS_RESULT_FAILED;
+			nos::TypeInfo info(params->IncomingTypeName);
+			if (info->BaseType != NOS_BASE_TYPE_ARRAY)
+			{
+				strcpy(params->OutErrorMessage, "Output pin must be an array type");
+				return NOS_RESULT_FAILED;
+			}
+			Type = nos::TypeInfo(nos::TypeInfo(params->IncomingTypeName)->ElementType->TypeName);
+			nos::Name elementName = info->ElementType->TypeName;
+			for (size_t i = 0; i < params->PinCount; i++)
+			{
+				auto& pinInfo = params->Pins[i];
+				std::string pinName = nosEngine.GetString(pinInfo.Name);
+				if (pinName.find("Input") != std::string::npos)
+				{
+					pinInfo.OutResolvedTypeName = elementName;
+					break;
+				}
+			}
+
+			return NOS_RESULT_SUCCESS;
 		}
 		return NOS_RESULT_SUCCESS;
 	}
@@ -82,7 +110,7 @@ struct ArrayNode : NodeContext
 		auto outPin = GetPin(NSN_Output);
 		if (!outPin)
 			return false;
-		
+
 		auto outval = GenerateVector(*Type, values);
 
 		auto vec = (flatbuffers::Vector<flatbuffers::Offset<flatbuffers::Table>>*)(outval.data());
