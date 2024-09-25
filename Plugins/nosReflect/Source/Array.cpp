@@ -46,8 +46,7 @@ struct ArrayNode : NodeContext
 
 	nosResult OnResolvePinDataTypes(nosResolvePinDataTypesParams* params) override
 	{
-		nosTypeInfo* info = nullptr;
-		nosEngine.GetTypeInfo(params->IncomingTypeName, &info);
+		nos::TypeInfo info(params->IncomingTypeName);
 		if (params->InstigatorPinName == NOS_NAME_STATIC("Input 0")) {
 			if (info->BaseType == NOS_BASE_TYPE_ARRAY)
 			{
@@ -57,7 +56,6 @@ struct ArrayNode : NodeContext
 		}
 		else if (params->InstigatorPinName == NSN_Output)
 		{
-			nos::TypeInfo info(params->IncomingTypeName);
 			if (info->BaseType != NOS_BASE_TYPE_ARRAY)
 			{
 				strcpy(params->OutErrorMessage, "Output pin must be an array type");
@@ -108,7 +106,7 @@ struct ArrayNode : NodeContext
 	bool SetOutput(std::vector<const void*> const& values)
 	{
 		auto outPin = GetPin(NSN_Output);
-		if (!outPin)
+		if (!outPin || !Type)
 			return false;
 
 		auto outval = GenerateVector(*Type, values);
@@ -195,7 +193,7 @@ struct ArrayNode : NodeContext
 		std::vector<flatbuffers::Offset<nos::ContextMenuItem>> fields;
 		std::string add = "Add Input " + std::to_string(inputs.size());
 		fields.push_back(nos::CreateContextMenuItemDirect(fbb, add.c_str(), 1));
-		if (inputs.size() > 1)
+		if (inputs.size() > 0)
 		{
 			std::string remove = "Remove Input " + std::to_string(inputs.size() - 1);
 			fields.push_back(nos::CreateContextMenuItemDirect(fbb, remove.c_str(), 2));
@@ -240,7 +238,7 @@ struct ArrayNode : NodeContext
 		break;
 		case 2: // Remove Field
 		{
-			std::vector<fb::UUID> id = {inputs.back()->Id};
+			std::vector<fb::UUID> id = { inputs.back()->Id };
 			HandleEvent(
 				CreateAppEvent(fbb, CreatePartialNodeUpdateDirect(fbb, &NodeId, ClearFlags::NONE, &id)));
 		}
