@@ -29,6 +29,7 @@ struct ArrayNode : NodeContext
 			}
 		}
 		LoadPins();
+		UpdateOutputVectorSize();
 	}
 
 	void OnNodeUpdated(const nosFbNode* inNode) override
@@ -41,7 +42,7 @@ struct ArrayNode : NodeContext
 		for (auto* pin : *inNode->pins())
 			if (pin->show_as() == fb::ShowAs::INPUT_PIN)
 				values.push_back((void*)pin->data()->data());
-		SetOutput(values);
+		SendOutputArray(values);
 	}
 
 	nosResult OnResolvePinDataTypes(nosResolvePinDataTypesParams* params) override
@@ -70,9 +71,8 @@ struct ArrayNode : NodeContext
 			nos::Name elementName = info->ElementType->TypeName;
 			Type = nos::TypeInfo(elementName);
 			setResolvedTypeNames(elementName);
-
-			return NOS_RESULT_SUCCESS;
 		}
+
 		for (auto& pin : GetInputs())
 		{
 			if (pin->ShowAs == nos::fb::ShowAs::INPUT_PIN && pin->Id == params->InstigatorPinId)
@@ -87,6 +87,7 @@ struct ArrayNode : NodeContext
 				break;
 			}
 		}
+		UpdateOutputVectorSize();
 		return NOS_RESULT_SUCCESS;
 	}
 
@@ -119,7 +120,7 @@ struct ArrayNode : NodeContext
 		return inputs;
 	}
 
-	bool SetOutput(std::vector<const void*> const& values)
+	bool SendOutputArray(std::vector<const void*> const& values)
 	{
 		auto outPin = GetPin(NSN_Output);
 		if (!outPin || !Type)
@@ -149,7 +150,7 @@ struct ArrayNode : NodeContext
 		}
 	}
 
-	void CreateOutput()
+	void UpdateOutputVectorSize()
 	{
 		if (!Type)
 			return;
@@ -159,32 +160,17 @@ struct ArrayNode : NodeContext
 
 		nosBuffer value;
 		std::vector<u8> data;
-		std::vector<u8> outData;
 
 		if (NOS_RESULT_SUCCESS == nosEngine.GetDefaultValueOfType(Type->TypeName, &value))
 		{
 			data = std::vector<u8>{(u8*)value.Data, (u8*)value.Data + value.Size};
-			outData = GenerateVector(*Type, {data.data()});
 		}
 
-		flatbuffers::FlatBufferBuilder fbb;
-
-		nosUUID id = nosEngine.GenerateID();
-
-		std::vector<::flatbuffers::Offset<nos::fb::Pin>> pins = {
-			fb::CreatePinDirect(fbb,
-								&id,
-								"Output",
-								outputType.c_str(),
-								fb::ShowAs::OUTPUT_PIN,
-								fb::CanShowAs::OUTPUT_PIN_ONLY,
-								0,
-								0,
-								&outData),
-		};
-
-		HandleEvent(CreateAppEvent(
-			fbb, nos::CreatePartialNodeUpdateDirect(fbb, &NodeId, ClearFlags::NONE, 0, &pins)));
+		std::vector<const void*> datas;
+		for (unsigned int i = 0; i < GetInputs().size(); i++) {
+			datas.push_back(data.data());
+		}
+		SendOutputArray(datas);
 	}
 
 	nosResult ExecuteNode(nosNodeExecuteParams* params) override
@@ -198,7 +184,7 @@ struct ArrayNode : NodeContext
 				continue;
 			values.push_back(params->Pins[i].Data->Data);
 		}
-		return SetOutput(values) ? NOS_RESULT_SUCCESS : NOS_RESULT_FAILED;
+		return SendOutputArray(values) ? NOS_RESULT_SUCCESS : NOS_RESULT_FAILED;
 	}
 
 	void OnMenuRequested(const nosContextMenuRequest* request) override
@@ -227,7 +213,7 @@ struct ArrayNode : NodeContext
 		std::vector<u8> data;
 		nos::Name typeName = Type ? Name(Type->TypeName) : NSN_VOID;
 		if (NOS_RESULT_SUCCESS == nosEngine.GetDefaultValueOfType(typeName, &value))
-			data = std::vector<u8>{(u8*)value.Data, (u8*)value.Data + value.Size};
+			data = std::vector<u8>{ (u8*)value.Data, (u8*)value.Data + value.Size };
 
 		auto outputType = "[" + typeName.AsString() + "]";
 		auto name = "Input " + std::to_string(inputs.size());
@@ -246,6 +232,7 @@ struct ArrayNode : NodeContext
 		};
 		HandleEvent(
 			CreateAppEvent(fbb, CreatePartialNodeUpdateDirect(fbb, &NodeId, ClearFlags::NONE, 0, &pins)));
+		UpdateOutputVectorSize();
 	}
 
 	void SendRemoveElementRequest() {
