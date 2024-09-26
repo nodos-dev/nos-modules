@@ -46,23 +46,7 @@ struct ArrayNode : NodeContext
 
 	nosResult OnResolvePinDataTypes(nosResolvePinDataTypesParams* params) override
 	{
-		nos::TypeInfo info(params->IncomingTypeName);
-		if (params->InstigatorPinName == NOS_NAME_STATIC("Input 0")) {
-			if (info->BaseType == NOS_BASE_TYPE_ARRAY)
-			{
-				strcpy(params->OutErrorMessage, "Input pin must not be an array type");
-				return NOS_RESULT_FAILED;
-			}
-		}
-		else if (params->InstigatorPinName == NSN_Output)
-		{
-			if (info->BaseType != NOS_BASE_TYPE_ARRAY)
-			{
-				strcpy(params->OutErrorMessage, "Output pin must be an array type");
-				return NOS_RESULT_FAILED;
-			}
-			Type = nos::TypeInfo(nos::TypeInfo(params->IncomingTypeName)->ElementType->TypeName);
-			nos::Name elementName = info->ElementType->TypeName;
+		auto setResolvedTypeNames = [params](nosName elementName) {
 			for (size_t i = 0; i < params->PinCount; i++)
 			{
 				auto& pinInfo = params->Pins[i];
@@ -70,11 +54,38 @@ struct ArrayNode : NodeContext
 				if (pinName.find("Input") != std::string::npos)
 				{
 					pinInfo.OutResolvedTypeName = elementName;
-					break;
 				}
+				if (pinName == "Output")
+					pinInfo.OutResolvedTypeName = nos::Name('[' + nos::Name(elementName).AsString() + ']');
 			}
+		};
+		nos::TypeInfo info(params->IncomingTypeName);
+		if (params->InstigatorPinName == NSN_Output)
+		{
+			if (info->BaseType != NOS_BASE_TYPE_ARRAY)
+			{
+				strcpy(params->OutErrorMessage, "Output pin must be an array type");
+				return NOS_RESULT_FAILED;
+			}
+			nos::Name elementName = info->ElementType->TypeName;
+			Type = nos::TypeInfo(elementName);
+			setResolvedTypeNames(elementName);
 
 			return NOS_RESULT_SUCCESS;
+		}
+		for (auto& pin : GetInputs())
+		{
+			if (pin->ShowAs == nos::fb::ShowAs::INPUT_PIN && pin->Id == params->InstigatorPinId)
+			{
+				if (info->BaseType == NOS_BASE_TYPE_ARRAY)
+				{
+					strcpy(params->OutErrorMessage, "Input pin must not be an array type");
+					return NOS_RESULT_FAILED;
+				}
+				Type = nos::TypeInfo(params->IncomingTypeName);
+				setResolvedTypeNames(params->IncomingTypeName);
+				break;
+			}
 		}
 		return NOS_RESULT_SUCCESS;
 	}
@@ -83,9 +94,14 @@ struct ArrayNode : NodeContext
 	{
 		if (Type || update->UpdatedField != NOS_PIN_FIELD_TYPE_NAME)
 			return;
+		
 		auto newTypeName = Name(update->TypeName);
+		auto typeInfo = nos::TypeInfo(newTypeName);
+		if (typeInfo->BaseType != NOS_BASE_TYPE_ARRAY)
+		{
+			newTypeName = nos::Name('[' + nos::Name(update->TypeName).AsString() + ']');
+		}
 		Type = nos::TypeInfo(newTypeName);
-		CreateOutput();
 	}
 
 	std::vector<const NodePin*> GetInputs()
