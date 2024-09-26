@@ -17,6 +17,16 @@
                     "show_as": "OUTPUT_PIN",
                     "can_show_as": "OUTPUT_PIN_OR_PROPERTY"
                 }
+            ],
+            "functions": [
+                {
+                "class_name": "Add Element",
+                "contents_type": "Job"
+                },
+                {
+                "class_name": "Remove Element",
+                "contents_type": "Job"
+                }
             ]
         },
         {

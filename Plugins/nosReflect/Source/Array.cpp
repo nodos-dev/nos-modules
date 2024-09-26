@@ -203,47 +203,87 @@ struct ArrayNode : NodeContext
 			nos::app::CreateAppContextMenuUpdateDirect(fbb, &NodeId, request->pos(), request->instigator(), &fields)));
 	}
 
-	void OnMenuCommand(nosUUID itemID, uint32_t cmd) override
-	{
+	void SendAddElementRequest() {
 		auto inputs = GetInputs();
 		flatbuffers::FlatBufferBuilder fbb;
+
+		nosBuffer value;
+		std::vector<u8> data;
+		nos::Name typeName = Type ? Name(Type->TypeName) : NSN_VOID;
+		if (NOS_RESULT_SUCCESS == nosEngine.GetDefaultValueOfType(typeName, &value))
+			data = std::vector<u8>{(u8*)value.Data, (u8*)value.Data + value.Size};
+
+		auto outputType = "[" + typeName.AsString() + "]";
+		auto name = "Input " + std::to_string(inputs.size());
+		nosUUID id = nosEngine.GenerateID();
+
+		std::vector pins = {
+			nos::fb::CreatePinDirect(fbb,
+									 &id,
+									 name.c_str(),
+									 typeName.AsCStr(),
+									 nos::fb::ShowAs::INPUT_PIN,
+									 nos::fb::CanShowAs::INPUT_PIN_OR_PROPERTY,
+									 0,
+									 0,
+									 &data),
+		};
+		HandleEvent(
+			CreateAppEvent(fbb, CreatePartialNodeUpdateDirect(fbb, &NodeId, ClearFlags::NONE, 0, &pins)));
+	}
+
+	void SendRemoveElementRequest() {
+		auto inputs = GetInputs();
+		if (inputs.size() == 0) {
+			nosEngine.LogE("You can't remove element from an empty array");
+			return;
+		}
+		flatbuffers::FlatBufferBuilder fbb;
+
+		std::vector<fb::UUID> id = { inputs.back()->Id };
+		HandleEvent(
+			CreateAppEvent(fbb, CreatePartialNodeUpdateDirect(fbb, &NodeId, ClearFlags::NONE, &id)));
+	}
+
+	void OnMenuCommand(nosUUID itemID, uint32_t cmd) override
+	{
 		switch (cmd)
 		{
 		case 1: // Add Field
 		{
-			nosBuffer value;
-			std::vector<u8> data;
-			nos::Name typeName = Type ? Name(Type->TypeName) : NSN_VOID;
-			if (NOS_RESULT_SUCCESS == nosEngine.GetDefaultValueOfType(typeName, &value))
-				data = std::vector<u8>{(u8*)value.Data, (u8*)value.Data + value.Size};
-
-			auto outputType = "[" + typeName.AsString() + "]";
-			auto name = "Input " + std::to_string(inputs.size());
-			nosUUID id = nosEngine.GenerateID();
-
-			std::vector pins = {
-				nos::fb::CreatePinDirect(fbb,
-										 &id,
-										 name.c_str(),
-										 typeName.AsCStr(),
-										 nos::fb::ShowAs::INPUT_PIN,
-										 nos::fb::CanShowAs::INPUT_PIN_OR_PROPERTY,
-										 0,
-										 0,
-										 &data),
-			};
-			HandleEvent(
-				CreateAppEvent(fbb, CreatePartialNodeUpdateDirect(fbb, &NodeId, ClearFlags::NONE, 0, &pins)));
+			SendAddElementRequest();
 		}
 		break;
 		case 2: // Remove Field
 		{
-			std::vector<fb::UUID> id = { inputs.back()->Id };
-			HandleEvent(
-				CreateAppEvent(fbb, CreatePartialNodeUpdateDirect(fbb, &NodeId, ClearFlags::NONE, &id)));
+			SendRemoveElementRequest();
 		}
 		break;
 		}
+	}
+
+	static nosResult GetFunctions(size_t* outCount, nosName* outFunctionNames, nosPfnNodeFunctionExecute* outFunctions) {
+		*outCount = 2;
+		if (!outFunctionNames || !outFunctions)
+			return NOS_RESULT_SUCCESS;
+
+		outFunctionNames[0] = NOS_NAME_STATIC("Add Element");
+		outFunctions[0] = [](void* ctx, nosFunctionExecuteParams* params)
+			{
+				auto nodeCtx = (ArrayNode*)ctx;
+				nodeCtx->SendAddElementRequest();
+				return NOS_RESULT_SUCCESS;
+			};
+
+		outFunctionNames[1] = NOS_NAME_STATIC("Remove Element");
+		outFunctions[1] = [](void* ctx, nosFunctionExecuteParams* params)
+			{
+				auto nodeCtx = (ArrayNode*)ctx;
+				nodeCtx->SendRemoveElementRequest();
+				return NOS_RESULT_SUCCESS;
+			};
+
+		return NOS_RESULT_SUCCESS;
 	}
 };
 
