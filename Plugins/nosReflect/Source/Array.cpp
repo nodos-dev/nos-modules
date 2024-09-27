@@ -53,9 +53,7 @@ struct ArrayNode : NodeContext
 				auto& pinInfo = params->Pins[i];
 				std::string pinName = nosEngine.GetString(pinInfo.Name);
 				if (pinName.find("Input") != std::string::npos)
-				{
 					pinInfo.OutResolvedTypeName = elementName;
-				}
 				if (pinName == "Output")
 					pinInfo.OutResolvedTypeName = nos::Name('[' + nos::Name(elementName).AsString() + ']');
 			}
@@ -69,7 +67,6 @@ struct ArrayNode : NodeContext
 				return NOS_RESULT_FAILED;
 			}
 			nos::Name elementName = info->ElementType->TypeName;
-			Type = nos::TypeInfo(elementName);
 			setResolvedTypeNames(elementName);
 		}
 
@@ -82,12 +79,10 @@ struct ArrayNode : NodeContext
 					strcpy(params->OutErrorMessage, "Input pin must not be an array type");
 					return NOS_RESULT_FAILED;
 				}
-				Type = nos::TypeInfo(params->IncomingTypeName);
 				setResolvedTypeNames(params->IncomingTypeName);
 				break;
 			}
 		}
-		UpdateOutputVectorSize();
 		return NOS_RESULT_SUCCESS;
 	}
 
@@ -98,11 +93,12 @@ struct ArrayNode : NodeContext
 		
 		auto newTypeName = Name(update->TypeName);
 		auto typeInfo = nos::TypeInfo(newTypeName);
-		if (typeInfo->BaseType != NOS_BASE_TYPE_ARRAY)
+		if (typeInfo->BaseType == NOS_BASE_TYPE_ARRAY)
 		{
-			newTypeName = nos::Name('[' + nos::Name(update->TypeName).AsString() + ']');
+			newTypeName = typeInfo->ElementType->TypeName;
 		}
 		Type = nos::TypeInfo(newTypeName);
+		UpdateOutputVectorSize();
 	}
 
 	std::vector<const NodePin*> GetInputs()
@@ -129,7 +125,6 @@ struct ArrayNode : NodeContext
 		auto outval = GenerateVector(*Type, values);
 
 		auto vec = (flatbuffers::Vector<flatbuffers::Offset<flatbuffers::Table>>*)(outval.data());
-		assert(GetInputs().size() == vec->size());
 		nosEngine.SetPinValue(outPin->Id, {outval.data(), outval.size()});
 		return true;
 	}
@@ -154,9 +149,6 @@ struct ArrayNode : NodeContext
 	{
 		if (!Type)
 			return;
-
-		auto typeName = Name(Type->TypeName).AsString();
-		auto outputType = "[" + typeName + "]";
 
 		nosBuffer value;
 		std::vector<u8> data;
@@ -246,6 +238,7 @@ struct ArrayNode : NodeContext
 		std::vector<fb::UUID> id = { inputs.back()->Id };
 		HandleEvent(
 			CreateAppEvent(fbb, CreatePartialNodeUpdateDirect(fbb, &NodeId, ClearFlags::NONE, &id)));
+		UpdateOutputVectorSize();
 	}
 
 	void OnMenuCommand(nosUUID itemID, uint32_t cmd) override
