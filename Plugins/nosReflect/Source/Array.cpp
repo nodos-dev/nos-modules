@@ -23,7 +23,7 @@ struct ArrayNode : NodeContext
 				nos::TypeInfo arrayType = nos::TypeInfo(pin.TypeName);
 				if (arrayType.TypeName != NSN_VOID)
 				{
-					auto elementTypeName = arrayType.TypeName;
+					auto elementTypeName = arrayType->ElementType->TypeName;
 					Type = nos::TypeInfo(elementTypeName);
 				}
 			}
