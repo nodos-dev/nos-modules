@@ -167,7 +167,7 @@
           "display_name": "Propagate Execution"
         },
 		{
-			"category": "Media IO",
+			"category": "Utilities",
 			"class_name": "UploadBufferProvider",
 			"display_name": "Upload Buffer Provider"
 		},
