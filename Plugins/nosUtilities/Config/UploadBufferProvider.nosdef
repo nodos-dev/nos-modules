@@ -1,0 +1,57 @@
+{
+  "nodes": [
+	{
+		"class_name": "UploadBufferProvider",
+		"display_name": "Upload Buffer Provider",
+		"contents_type": "Job",
+		"description": "",
+		"pins": [
+			{
+				"name": "Run",
+				"type_name": "nos.exe",
+				"show_as": "INPUT_PIN",
+				"can_show_as": "INPUT_PIN_ONLY"
+			},
+			{
+				"name": "Continue",
+				"type_name": "nos.exe",
+				"show_as": "OUTPUT_PIN",
+				"can_show_as": "OUTPUT_PIN_ONLY"
+			},
+			{
+				"name": "Buffer",
+				"type_name": "nos.sys.vulkan.Buffer",
+				"show_as": "OUTPUT_PIN",
+				"can_show_as": "OUTPUT_PIN_ONLY"
+			},
+			{
+				"name": "GPUEventRef",
+				"type_name": "nos.sys.vulkan.GPUEventResource",
+				"show_as": "OUTPUT_PIN",
+				"can_show_as": "OUTPUT_PIN_ONLY"
+			},
+			{
+				"name": "QueueSize",
+				"type_name": "uint",
+				"show_as": "PROPERTY",
+				"can_show_as": "PROPERTY_ONLY",
+				"data": 2
+			},
+			{
+				"name": "Alignment",
+				"description": "Used for creating memory-aligned buffers in memory",
+				"type_name": "uint",
+				"def": 0,
+				"show_as": "PROPERTY",
+				"can_show_as": "INPUT_PIN_OR_PROPERTY"
+			},
+			{
+				"name": "BufferSize",
+				"type_name": "ulong",
+				"show_as": "INPUT_PIN",
+				"can_show_as": "INPUT_PIN_OR_PROPERTY"
+			}
+		]
+	}
+  ]
+}

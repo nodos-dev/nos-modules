@@ -37,6 +37,7 @@
         "Config/SinkGraph.nosdef",
         "Config/Sink.nosdef",
         "Config/PropagateExecution.nosdef",
+		"Config/UploadBufferProvider.nosdef",
         "Config/TimedFunctionSignaller.nosdef"
     ],
     "custom_types": [
@@ -165,6 +166,11 @@
           "class_name": "PropagateExecution",
           "display_name": "Propagate Execution"
         },
+		{
+			"category": "Media IO",
+			"class_name": "UploadBufferProvider",
+			"display_name": "Upload Buffer Provider"
+		},
         {
           "category": "Utilities",
           "class_name": "TimedFunctionSignaller",

@@ -40,6 +40,7 @@ enum Utilities : int
 	ShowStatusNode,
 	Sink,
 	PropagateExecution,
+	UploadBufferProvider,
 	Count
 };
 
@@ -57,6 +58,7 @@ nosResult RegisterIsSameStringNode(nosNodeFunctions*);
 nosResult RegisterShowStatusNode(nosNodeFunctions*);
 nosResult RegisterSink(nosNodeFunctions*);
 nosResult RegisterPropagateExecution(nosNodeFunctions*);
+nosResult RegisterUploadBufferProvider(nosNodeFunctions*);
 
 nosResult NOSAPI_CALL ExportNodeFunctions(size_t* outSize, nosNodeFunctions** outList)
 {
@@ -92,6 +94,7 @@ nosResult NOSAPI_CALL ExportNodeFunctions(size_t* outSize, nosNodeFunctions** ou
 			GEN_CASE_NODE(ShowStatusNode)
 			GEN_CASE_NODE(Sink)
 			GEN_CASE_NODE(PropagateExecution)
+			GEN_CASE_NODE(UploadBufferProvider)
 		}
 	}
 	return NOS_RESULT_SUCCESS;
