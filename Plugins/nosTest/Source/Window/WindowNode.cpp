@@ -2,10 +2,17 @@
 
 #include "WindowNode.h"
 #include "GLFW/glfw3.h"
+#if defined(WIN32)
 #define GLFW_EXPOSE_NATIVE_WIN32
+#elif defined(__linux)
+#define GLFW_EXPOSE_NATIVE_X11
+#else
+#error "Unsupported platform"
+#endif
 #include "GLFW/glfw3native.h"
 
 #include "nosUtil/Stopwatch.hpp"
+#include <cstdint>
 namespace nos::test
 {
 
@@ -153,7 +160,17 @@ void WindowNode::OnEnterRunnerThread(std::optional<nosUUID> runnerId)
 	glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 	glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
 	Window = glfwCreateWindow(800, 600, "NOSWindow", nullptr, nullptr);
-	if (nosVulkan->CreateWindowSurface(glfwGetWin32Window(Window), &Surface) != NOS_RESULT_SUCCESS)
+	
+	auto windowHandle =
+#if defined(WIN32)
+	glfwGetWin32Window(Window)
+#elif defined(__linux)
+	glfwGetX11Window(Window)
+#else
+#error "Unsupported platform"
+#endif
+	;
+	if (nosVulkan->CreateWindowSurface((void*)windowHandle, &Surface) != NOS_RESULT_SUCCESS)
 	{
 		DestroyWindow();
 		return;
