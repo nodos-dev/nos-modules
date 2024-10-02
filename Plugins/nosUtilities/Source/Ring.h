@@ -10,6 +10,11 @@
 
 #include "nosUtil/Stopwatch.hpp"
 
+#define inputPinName NOS_NAME_STATIC("Input")
+#define outputPinName NOS_NAME_STATIC("Output")
+#define voidTypeName NOS_NAME_STATIC("nos.fb.Void")
+#define vulkanBufferTypeName NOS_NAME_STATIC("nos.sys.vulkan.Buffer")
+#define vulkanTextureTypeName NOS_NAME_STATIC("nos.sys.vulkan.Texture")
 namespace nos
 {
 
@@ -39,7 +44,7 @@ struct TRing
             if (type == ResourceType::Buffer)
             {
                 Res.Info.Type = NOS_RESOURCE_TYPE_BUFFER;
-                Res.Info.Buffer = vkss::ConvertToResourceInfo(*InterpretPinValue<sys::vulkan::Buffer>(r.Data)).Info.Buffer;
+                Res.Info.Buffer = vkss::ConvertToResourceInfo(*(sys::vulkan::Buffer*)r.Data).Info.Buffer;
             }
             else if (type == ResourceType::Texture)
             {
@@ -317,6 +322,11 @@ struct RingNodeBase : NodeContext
 
 	TypeInfo typeInfo;
 	void Init() {
+		if (typeInfo->TypeName == vulkanBufferTypeName)
+			type = ResourceType::Buffer;
+		else if (typeInfo->TypeName == vulkanTextureTypeName)
+			type = ResourceType::Texture;
+
 		nosBuffer sample;
 		nosEngine.GetDefaultValueOfType(typeInfo->TypeName, &sample);
 		Ring = std::make_unique<TRing>(1, type, sample);
@@ -357,12 +367,18 @@ struct RingNodeBase : NodeContext
 			else if (type == ResourceType::Buffer)
 			{
 				auto info = vkss::ConvertToResourceInfo(*InterpretPinValue<sys::vulkan::Buffer>(newBuf.Data())).Info.Buffer;
-				auto sampleInfo = vkss::ConvertBufferInfo(vkss::ConvertToResourceInfo(*InterpretPinValue<sys::vulkan::Buffer>(Ring->Sample.Data())));
+				auto sampleInfo = vkss::ConvertBufferInfo(vkss::ConvertToResourceInfo(*(sys::vulkan::Buffer*)(Ring->Sample.Data())));
 				if (sampleInfo.size_in_bytes() != info.Size)
 				{
 					sampleInfo.mutate_size_in_bytes(info.Size);
-					NeedsRecreation = true;
+					sampleInfo.mutate_element_type((sys::vulkan::BufferElementType)info.ElementType);
+					sampleInfo.mutate_field_type((sys::vulkan::FieldType)info.FieldType);
+					sampleInfo.mutate_alignment(info.Alignment);
+					sampleInfo.mutate_usage((sys::vulkan::BufferUsage)(NOS_BUFFER_USAGE_TRANSFER_SRC | NOS_BUFFER_USAGE_TRANSFER_DST));
+					sampleInfo.mutate_memory_flags((sys::vulkan::MemoryFlags)(NOS_MEMORY_FLAGS_DOWNLOAD | NOS_MEMORY_FLAGS_HOST_VISIBLE));
+ 					NeedsRecreation = true;
 				}
+				Ring->Sample = Buffer::From(sampleInfo);
 			}
 
 			if (NeedsRecreation)
@@ -376,7 +392,7 @@ struct RingNodeBase : NodeContext
 		{
 			AddPinValueWatcher(NOS_NAME_STATIC("Alignment"), [this](nos::Buffer const& newAlignment, std::optional<nos::Buffer> oldVal) {
 				uint32_t alignment = *newAlignment.As<uint32_t>();
-				auto sampleInfo = vkss::ConvertToResourceInfo(*InterpretPinValue<sys::vulkan::Buffer>(Ring->Sample.Data())).Info.Buffer;
+				auto sampleInfo = vkss::ConvertToResourceInfo(*(sys::vulkan::Buffer*) (Ring->Sample.Data())).Info.Buffer;
 				if (sampleInfo.Alignment == alignment)
 					return;
 				sampleInfo.Alignment = alignment;
@@ -387,8 +403,19 @@ struct RingNodeBase : NodeContext
 		}
 	}
 
-	RingNodeBase(const nosFbNode* node, OnRestartType onRestart) : NodeContext(node), OnRestart(onRestart), typeInfo(NOS_NAME_STATIC("nos.fb.Void")) {
-		
+	RingNodeBase(const nosFbNode* node, OnRestartType onRestart) : NodeContext(node), OnRestart(onRestart), typeInfo(voidTypeName) {
+		nosName typeName = voidTypeName;
+		for (auto& pin : Pins | std::views::values)
+		{
+			if (pin.TypeName != voidTypeName && (pin.Name == outputPinName || pin.Name == inputPinName))
+			{
+				typeName = pin.TypeName;
+			}
+		}
+		if (typeName != voidTypeName) {
+			typeInfo = nos::TypeInfo(typeName);
+			Init();
+		}
 	}
 
 	virtual std::string GetName() const = 0;
@@ -402,16 +429,10 @@ struct RingNodeBase : NodeContext
 
 	nosResult OnResolvePinDataTypes(nosResolvePinDataTypesParams* params) override
 	{
-		if (typeInfo.TypeName != NOS_NAME_STATIC("nos.fb.Void"))
+		if (typeInfo.TypeName != voidTypeName)
 			return NOS_RESULT_FAILED;
 		
 		typeInfo = TypeInfo(params->IncomingTypeName);
-		if (typeInfo->TypeName == NOS_NAME_STATIC("nos.sys.vulkan.Buffer"))
-			type = ResourceType::Buffer;
-		else if (typeInfo->TypeName == NOS_NAME_STATIC("nos.sys.vulkan.Texture"))
-			type = ResourceType::Texture;
-		else
-			return NOS_RESULT_FAILED;
 
 		for (size_t i = 0; i < params->PinCount; i++)
 		{
@@ -425,7 +446,7 @@ struct RingNodeBase : NodeContext
 	}
 
 	void OnPinUpdated(const nosPinUpdate* pinUpdate) {
-		if (typeInfo->TypeName == NOS_NAME_STATIC("nos.fb.Void") || Ring)
+		if (typeInfo->TypeName == voidTypeName || Ring)
 			return;
 
 		Init();
@@ -438,20 +459,19 @@ struct RingNodeBase : NodeContext
 
 		NodeExecuteParams pins(params);
 
-		auto it = pins.find(NOS_NAME_STATIC("Input"));
+		auto it = pins.find(inputPinName);
 		assert(it != pins.end());
 		auto& inputPin = it->second;
 		assert(inputPin.Data);
 
 		nosResourceShareInfo input = {};
-		nosName inputName = NOS_NAME_STATIC("Input");
 		switch (type)
 		{
 		case nos::ResourceType::Buffer:
-			input = vkss::ConvertToResourceInfo(*pins.GetPinData<sys::vulkan::Buffer>(inputName));
+			input = vkss::ConvertToResourceInfo(*pins.GetPinData<sys::vulkan::Buffer>(inputPinName));
 			break;
 		case nos::ResourceType::Texture:
-			input = vkss::DeserializeTextureInfo(pins[inputName].Data->Data);
+			input = vkss::DeserializeTextureInfo(pins[inputPinName].Data->Data);
 			break;
 		case nos::ResourceType::Generic:
 			return NOS_RESULT_FAILED;
@@ -546,7 +566,7 @@ struct RingNodeBase : NodeContext
 		SendRingStats();
 		if (Mode == RingMode::FILL)
 		{
-			//Sleep for 20 ms & if still Fill, return pending
+			//Sleep for 100 ms & if still Fill, return pending
 			std::unique_lock<std::mutex> lock(ModeMutex);
 			if (!ModeCV.wait_for(lock, std::chrono::milliseconds(100), [this] { return Mode != RingMode::FILL; }))
 				return NOS_RESULT_PENDING;
