@@ -58,6 +58,15 @@
 					"name": "mat4d_prop",
 					"type_name": "nos.fb.mat4d",
 					"show_as": "OUTPUT_PIN"
+				},
+				{
+					"name": "color_array",
+					"type_name": "[nos.fb.vec4]",
+					"show_as": "INPUT_PIN",
+					"can_show_as": "INPUT_PIN_OR_PROPERTY",
+					"visualizer": { 
+						"type": "COLOR_PICKER"
+					}
 				}
 			]
 		},
