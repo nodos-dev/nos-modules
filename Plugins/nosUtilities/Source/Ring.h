@@ -556,7 +556,7 @@ struct RingNodeBase : NodeContext
 		return NOS_RESULT_SUCCESS;
 	}
 
-	nosResult CopyFromBegin(nosCopyInfo* cpy, TRing::Resource** foundSlot, nosResourceShareInfo* outputResource) {
+	nosResult CommonCopyFrom(nosCopyInfo* cpy, TRing::Resource** foundSlot, nosResourceShareInfo* outputResource) {
 		if (LastPopped != nullptr)
 		{
 			DEBUG_BREAK
@@ -666,8 +666,6 @@ struct RingNodeBase : NodeContext
 
 	void OnPathStart() override
 	{
-		if (!Ring)
-			return;
 		if (Ring && OnRestart == OnRestartType::RESET)
 			Ring->Reset(false);
 		if (RequestedRingSize)

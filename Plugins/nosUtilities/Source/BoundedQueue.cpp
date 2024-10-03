@@ -33,7 +33,7 @@ struct BoundedQueueNodeContext : RingNodeBase
 	nosResult CopyFrom(nosCopyInfo* cpy) override {
 		TRing::Resource* slot = nullptr;
 		nosResourceShareInfo outputResource = {};
-		auto beginResult = CopyFromBegin(cpy, &slot, &outputResource);
+		auto beginResult = CommonCopyFrom(cpy, &slot, &outputResource);
 		if(beginResult != NOS_RESULT_SUCCESS)
 			return beginResult;
 
@@ -80,17 +80,6 @@ struct BoundedQueueNodeContext : RingNodeBase
 
 	nosResult ExecuteNode(nosNodeExecuteParams* params) override {
 		return ExecuteRingNode(params, false, NOS_NAME_STATIC("BoundedQueue"), false);
-	}
-
-	void OnEndFrame(nosUUID pinId, bool causedByCancel) override
-	{
-		if (pinId == PinName2Id[NOS_NAME_STATIC("Output")])
-		{
-			if (!LastPopped)
-				return;
-			Ring->EndPop(LastPopped);
-			LastPopped = nullptr;
-		}
 	}
 };
 
