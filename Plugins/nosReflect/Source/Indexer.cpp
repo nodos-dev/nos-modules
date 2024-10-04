@@ -14,21 +14,11 @@ struct Indexer : NodeContext
     u32 Index = 0;
     u32 ArraySize = 0;
     
-	bool IsOrphan = false;
-
     Indexer(const nosFbNode* inNode) : NodeContext(inNode)
     {
-        u32 arraySize = 0;
-
         for (auto pin : *inNode->pins())
         {
-			if (pin->name()->string_view() == NSN_Output)
-            {
-                if(flatbuffers::IsFieldPresent(pin, fb::Pin::VT_DATA))
-                    arraySize = ((flatbuffers::Vector<u8>*)(pin->data()->Data()))->size();
-				IsOrphan = pin->orphan_state() ? pin->orphan_state()->is_orphan() : false;
-            }
-            else if(pin->name()->string_view() == NSN_Output)
+			if(pin->name()->string_view() == NSN_Output)
             {
                 if (pin->type_name()->string_view() != NSN_VOID)
                 {
@@ -41,11 +31,6 @@ struct Indexer : NodeContext
 			        Index = *(u32*)pin->data()->Data();
             }
         }
-        if(Type)
-		{
-			ArraySize = arraySize;
-			ManageOrphan();
-		}
     }
 
     nosResult OnResolvePinDataTypes(nosResolvePinDataTypesParams* params) override
@@ -104,10 +89,21 @@ struct Indexer : NodeContext
 		if (update->PinName == NSN_Output)
 		{
 			Type = nos::TypeInfo(update->TypeName);
-			ManageOrphan();
 		}
 	}
 
+	bool SetIndex(u32 newIndex)
+    {
+		Index = newIndex;
+    	if (Index >= ArraySize)
+    	{
+    		SetNodeStatusMessage("Array index out of bounds", fb::NodeStatusMessageType::FAILURE);
+    		return false;
+    	}
+    	ClearNodeStatusMessages();
+    	return true;
+    }
+	
     nosResult ExecuteNode(nosNodeExecuteParams* params) override
     {
 		if (!Type)
@@ -115,26 +111,24 @@ struct Indexer : NodeContext
 
 		auto pins = NodeExecuteParams(params);
 		auto vec = (flatbuffers::Vector<u8>*)(pins[NSN_Input].Data->Data);
-		Index = *(u32*)pins[NSN_Index].Data->Data;
-		ArraySize = vec->size();
-		if (Index < ArraySize)
+    	ArraySize = vec->size();
+		if (!SetIndex(*(u32*)pins[NSN_Index].Data->Data))
+			return NOS_RESULT_FAILED;
+		auto ID = pins[NSN_Output].Id;
+		auto& type = *Type;
+		if (type->ByteSize)
 		{
-			auto ID = pins[NSN_Output].Id;
-			auto& type = *Type;
-			if (type->ByteSize)
-			{
-				auto data = vec->data() + Index * type->ByteSize;
-				nosEngine.SetPinValue(ID, {(void*)data, type->ByteSize});
-			}
-			else
-			{
-				flatbuffers::FlatBufferBuilder fbb;
-				auto vect = (flatbuffers::Vector<flatbuffers::Offset<flatbuffers::Table>>*)(pins[NSN_Input].Data->Data);
-				auto elem = vect->Get(Index);
-				fbb.Finish(flatbuffers::Offset<flatbuffers::Table>(CopyTable(fbb, type, elem)));
-				nos::Buffer buf = fbb.Release();
-				nosEngine.SetPinValueDirect(ID, buf);
-			}
+			auto data = vec->data() + Index * type->ByteSize;
+			nosEngine.SetPinValue(ID, {(void*)data, type->ByteSize});
+		}
+		else
+		{
+			flatbuffers::FlatBufferBuilder fbb;
+			auto vect = (flatbuffers::Vector<flatbuffers::Offset<flatbuffers::Table>>*)(pins[NSN_Input].Data->Data);
+			auto elem = vect->Get(Index);
+			fbb.Finish(flatbuffers::Offset<flatbuffers::Table>(CopyTable(fbb, type, elem)));
+			nos::Buffer buf = fbb.Release();
+			nosEngine.SetPinValue(ID, buf);
 		}
 		return NOS_RESULT_SUCCESS;
     }
@@ -143,38 +137,16 @@ struct Indexer : NodeContext
     {
         if (pinName == NSN_Index)
         {
-			Index = *(u32*)value.Data;
-			ManageOrphan();
+        	SetIndex(*(u32*)value.Data);
 		}
         else if (pinName == NSN_Input)
         {
 			if (!Type)
 				return;
             ArraySize = ((flatbuffers::Vector<u8>*)(value.Data))->size();
-			// Pin is somehow deleted, so create it
-			auto pin = GetPin(NSN_Input);
-			if (!pin) {
-				nosEngine.LogE("Indexer's input pin is deleted somehow, report this!");
-			}
-			ManageOrphan();
+			SetIndex(Index);
 		}
 	}
-
-    void ManageOrphan()
-    {
-		static fb::TOrphanState indexBigger{.is_orphan = true, .message = "Index is bigger than array size"};
-		static fb::TOrphanState nonOrphan{.is_orphan = false};
-		bool shouldOrphan = Index >= ArraySize;
-        auto out = GetPin(NSN_Output);
-		if (shouldOrphan == IsOrphan)
-			return;
-		IsOrphan = shouldOrphan;
-        flatbuffers::FlatBufferBuilder fbb;
-        std::vector<::flatbuffers::Offset<PartialPinUpdate>> updates = {
-            CreatePartialPinUpdateDirect(fbb, &out->Id, 0, nos::fb::OrphanState::Pack(fbb, shouldOrphan ? &indexBigger : &nonOrphan))
-        };
-        HandleEvent(CreateAppEvent(fbb, CreatePartialNodeUpdateDirect(fbb, &NodeId, ClearFlags::NONE, 0, 0, 0, 0, 0, 0, 0, &updates)));
-    }
 };
 
 nosResult RegisterIndexer(nosNodeFunctions* fn)
