@@ -139,22 +139,23 @@ nos::Buffer VectorInterpolator(editor::InterpolationUnion const& interp, const d
 	return nos::Buffer(&newData, sizeof(T));
 }
 
-nos::fb::vec3 InterpolateRotation(nos::fb::vec3 const& start, nos::fb::vec3 const& end, const double t)
+template <typename Vec3Type, typename ScalarType, typename T>
+Vec3Type InterpolateRotation(const Vec3Type& start, const Vec3Type& end, const T t)
 {
-	glm::vec3 glmStart(start.x(), start.y(), start.z());
-	glm::vec3 glmEnd(end.x(), end.y(), end.z());
-	glm::quat startQuat = glm::quat(glm::radians(glmStart));
-	glm::quat endQuat = glm::quat(glm::radians(glmEnd));
-	glm::quat newQuat = glm::slerp(startQuat, endQuat, (float) t);
-	glm::vec3 newEuler = glm::degrees(glm::eulerAngles(newQuat));
-	return {newEuler.x, newEuler.y, newEuler.z};
+    glm::vec<3, ScalarType> glmStart(start.x(), start.y(), start.z());
+    glm::vec<3, ScalarType> glmEnd(end.x(), end.y(), end.z());
+    glm::qua<ScalarType> startQuat = glm::quat(glm::radians(glmStart));
+    glm::qua<ScalarType> endQuat = glm::quat(glm::radians(glmEnd));
+    glm::qua<ScalarType> newQuat = glm::slerp(startQuat, endQuat, static_cast<ScalarType>(t));
+    glm::vec<3, ScalarType> newEuler = glm::degrees(glm::eulerAngles(newQuat));
+    return Vec3Type(newEuler.x, newEuler.y, newEuler.z);
 }
 
 static nos::Buffer LerpTrack(const fb::Track* start, const fb::Track* end, const double t)
 {
 	nos::fb::TTrack interm;
 	interm.location = LerpVec<fb::vec3, 3>(*start->location(), *end->location(), t);
-	interm.rotation = InterpolateRotation(*start->rotation(), *end->rotation(), t); // quat
+	interm.rotation = InterpolateRotation<fb::vec3, float>(*start->rotation(), *end->rotation(), t); // quat
 	interm.fov = Lerp(start->fov(), end->fov(), t);
 	interm.focus = Lerp(start->focus(), end->focus(), t);
 	interm.zoom = Lerp(start->zoom(), end->zoom(), t);
@@ -188,6 +189,33 @@ nos::Buffer TrackInterpolator(editor::InterpolationUnion const& interp, const do
 		auto start = flatbuffers::GetRoot<fb::Track>(ease->start.data());
 		auto end = flatbuffers::GetRoot<fb::Track>(ease->end.data());
 		return LerpTrack(start, end, CubicBezierEasing((glm::vec2&)ease->control1, (glm::vec2&)ease->control2).Get(t));
+	}
+}
+
+template <editor::Interpolation Mode>
+nos::Buffer TransformInterpolator(editor::InterpolationUnion const& interp, const double t)
+{
+	if constexpr (Mode == editor::Interpolation::Lerp)
+	{
+		auto* lerp = interp.AsLerp();
+		auto start = flatbuffers::GetRoot<fb::Transform>(lerp->start.data());
+		auto end = flatbuffers::GetRoot<fb::Transform>(lerp->end.data());
+		nos::fb::Transform interm;
+		interm.mutable_position() = LerpVec<fb::vec3d, 3>(start->position(), end->position(), t);
+		interm.mutable_rotation() = InterpolateRotation<fb::vec3d, double>(start->rotation(), end->rotation(), t); // quat
+		interm.mutable_scale() = LerpVec<fb::vec3d, 3>(start->scale(), end->scale(), t);
+		return nos::Buffer::From(interm);
+	}
+	else if constexpr (Mode == editor::Interpolation::CubicBezier)
+	{
+		auto* ease = interp.AsCubicBezier();
+		auto start = flatbuffers::GetRoot<fb::Transform>(ease->start.data());
+		auto end = flatbuffers::GetRoot<fb::Transform>(ease->end.data());
+		nos::fb::Transform interm;
+		interm.mutable_position() = EaseVec<fb::vec3d, 3>(start->position(), end->position(), ease->control1, ease->control2, t);
+		interm.mutable_rotation() = InterpolateRotation<fb::vec3d, double>(start->rotation(), end->rotation(), CubicBezierEasing((glm::vec2&)ease->control1, (glm::vec2&)ease->control2).Get(t)); // quat
+		interm.mutable_scale() = EaseVec<fb::vec3d, 3>(start->scale(), end->scale(), ease->control1, ease->control2, t);
+		return nos::Buffer::From(interm);
 	}
 }
 
@@ -231,6 +259,8 @@ PinDataAnimator::PinDataAnimator()
 	AddVectorInterpolators<fb::vec4u8, 4, "nos.fb.vec4u8">(this);
 	AddInterpolator<editor::Interpolation::Lerp, "nos.fb.Track">(TrackInterpolator<editor::Interpolation::Lerp>);
 	AddInterpolator<editor::Interpolation::CubicBezier, "nos.fb.Track">(TrackInterpolator<editor::Interpolation::CubicBezier>);
+	AddInterpolator<editor::Interpolation::Lerp, "nos.fb.Transform">(TransformInterpolator<editor::Interpolation::Lerp>);
+	AddInterpolator<editor::Interpolation::CubicBezier, "nos.fb.Transform">(TransformInterpolator<editor::Interpolation::CubicBezier>);
 }
 
 bool PinDataAnimator::AddAnimation(nosUUID const& pinId,
@@ -262,6 +292,7 @@ bool PinDataAnimator::AddAnimation(nosUUID const& pinId,
 		nosEngine.LogE("No interpolator found for %s and %s.", nos::Name(typeInfo.TypeName).AsCStr(), editor::EnumNameInterpolation(data.Interp.type));
 		return false;
 	}
+	nosEngine.LogD("Animation added for pin %s", UUID2STR(pinId).c_str());
 	std::unique_lock lock(AnimationsMutex);
 	Animations[pinId].push(std::move(data));
 	return true;
