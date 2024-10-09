@@ -8,7 +8,6 @@
 #include <stb_image_write.h>
 
 #include <nosVulkanSubsystem/Helpers.hpp>
-#include "../Shaders/Linear2SRGB.frag.spv.dat"
 
 #include <mutex>
 
@@ -16,9 +15,6 @@
 
 namespace nos::utilities
 {
-NOS_REGISTER_NAME(Linear2SRGB_Pass);
-NOS_REGISTER_NAME(Linear2SRGB_Shader);
-NOS_REGISTER_NAME(In);
 NOS_REGISTER_NAME(IncludeAlpha);
 NOS_REGISTER_NAME_SPACED(Nos_Utilities_WriteImage, "nos.utilities.WriteImage")
 
@@ -141,22 +137,7 @@ struct WriteImage : NodeContext {
 nosResult RegisterWriteImage(nosNodeFunctions* fn)
 {
     NOS_BIND_NODE_CLASS(NSN_Nos_Utilities_WriteImage, WriteImage, fn);
-
-    nosShaderInfo2 shader = {
-	    .Key = NSN_Linear2SRGB_Shader,
-	    .Source = {.SpirvBlob = {(void*)Linear2SRGB_frag_spv, sizeof(Linear2SRGB_frag_spv)}},
-	    .AssociatedNodeClassName = NSN_Nos_Utilities_WriteImage
-    };
-	auto ret = nosVulkan->RegisterShaders2(1, &shader);
-	if (NOS_RESULT_SUCCESS != ret)
-		return ret;
-
-	nosPassInfo pass = {
-		.Key = NSN_Linear2SRGB_Pass,
-		.Shader = NSN_Linear2SRGB_Shader,
-		.MultiSample = 1,
-	};
-	return nosVulkan->RegisterPasses(1, &pass);
+    return NOS_RESULT_SUCCESS;
 }
 
 } // namespace nos
