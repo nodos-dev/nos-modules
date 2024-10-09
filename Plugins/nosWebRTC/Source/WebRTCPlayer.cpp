@@ -128,8 +128,8 @@ struct WebRTCPlayerNodeContext : nos::NodeContext {
 	nosWebRTCStatsLogger PlayerOnFrameLogger;
 
 	std::unique_ptr<nosWebRTCPlayerInterface> p_nosWebRTC;
-	std::unique_ptr<RingProxy> RGBAConversionRing;
-	std::unique_ptr<RingProxy> OutputRing;
+	std::unique_ptr<WebRTCRing> RGBAConversionRing;
+	std::unique_ptr<WebRTCRing> OutputRing;
 
 	std::atomic<EWebRTCPlayerStates> currentState;
 	nosUUID NodeID;
@@ -138,14 +138,10 @@ struct WebRTCPlayerNodeContext : nos::NodeContext {
 	nosUUID ConnectToPeerID;
 	nosUUID DisconnectFromServerID;
 
-	std::atomic<bool> shouldConvertFrame = false;
 	std::atomic<bool> checkCallbacks = true;
 
 	std::mutex WebRTCCallbacksMutex;
 	std::condition_variable WebRTCCallbacksCV;
-
-	std::mutex FrameConversionMutex;
-	std::condition_variable FrameConversionCV;
 
 	std::thread FrameConverterThread;
 	std::thread CallbackHandlerThread;
@@ -194,9 +190,9 @@ struct WebRTCPlayerNodeContext : nos::NodeContext {
 			OnFrameVBuffers.push_back(std::move(tmpV));
 		}
 
-		RGBAConversionRing = std::make_unique<RingProxy>(OnFrameYBuffers.size(),"WebRTCPlayer RGBA Conversion Ring");
+		RGBAConversionRing = std::make_unique<WebRTCRing>(OnFrameYBuffers.size(),"WebRTCPlayer RGBA Conversion Ring");
 		
-		OutputRing = std::make_unique<RingProxy>(ConvertedTextures.size(), "WebRTCPlayer Output Ring");
+		OutputRing = std::make_unique<WebRTCRing>(ConvertedTextures.size(), "WebRTCPlayer Output Ring");
 
 		for (auto pin : *node->pins()) {
 			if (pin->show_as() == nos::fb::ShowAs::OUTPUT_PIN) {
@@ -269,7 +265,7 @@ struct WebRTCPlayerNodeContext : nos::NodeContext {
 
 	void ClearNodeInternals() {
 		if (FrameConverterThread.joinable()) {
-			shouldConvertFrame = false;
+			RGBAConversionRing->Stop();
 			FrameConverterThread.join();
 		}
 
@@ -281,12 +277,17 @@ struct WebRTCPlayerNodeContext : nos::NodeContext {
 		
 		PlayerOnFrameLogger.LogStats();
 		auto buffer = frame.video_frame_buffer()->GetI420();
-		if (!RGBAConversionRing->IsWriteable()) {
+		if (!RGBAConversionRing->CanPush()) {
 			nosEngine.LogW("WebRTC Player dropped a frame");
 			return;
 		}
 
-		int writeIndex = RGBAConversionRing->GetNextWritable();
+		auto writeIndexOpt = RGBAConversionRing->BeginPush();
+
+		if (!writeIndexOpt)
+			return;
+
+		auto writeIndex = *writeIndexOpt;
 
 		if (OnFrameYBuffers[writeIndex].Info.Texture.Width != buffer->width() || OnFrameYBuffers[writeIndex].Info.Texture.Height != buffer->height()) {
 			if(OnFrameYBuffers[writeIndex].Memory.Handle != NULL) {
@@ -332,17 +333,13 @@ struct WebRTCPlayerNodeContext : nos::NodeContext {
 							 nosVec2u(buffer->width() / 2, buffer->height() / 2),
 							 NOS_FORMAT_R8_SRGB,
 							 &OnFrameVBuffers[writeIndex]);
-		RGBAConversionRing->SetWrote();
-		FrameConversionCV.notify_one();
+		RGBAConversionRing->EndPush(writeIndex);
 	}
 
 	
 
 	nosResult CopyFrom(nosCopyInfo* copyInfo) override{
 		
-		if (!OutputRing->IsReadable()) {
-			return NOS_RESULT_FAILED;
-		}
 		auto now = std::chrono::high_resolution_clock::now();
 		if (timeLimit.count() > std::chrono::duration_cast<std::chrono::microseconds>(now - LastCopyTime).count()) {
 			//nosEngine.LogW("Too fast");
@@ -351,39 +348,44 @@ struct WebRTCPlayerNodeContext : nos::NodeContext {
 		LastCopyTime = std::chrono::high_resolution_clock::now();
 
 		PlayerBeginCopyToLogger.LogStats();
-		int readIndex = OutputRing->GetNextReadable();
+		auto readIndex = OutputRing->BeginPop(100);
+		if (!readIndex)
+		{
+			nosEngine.LogW("WebRTC Player dropped a frame");
+			return NOS_RESULT_PENDING;
+		}
 		auto dst = nos::vkss::DeserializeTextureInfo(copyInfo->PinData->Data);
 		nosCmd cmd;
 		nosVulkan->Begin("WebRTC Copy From", &cmd);
-		nosVulkan->Copy(cmd, &ConvertedTextures[readIndex], &dst, 0);
+		nosVulkan->Copy(cmd, &ConvertedTextures[*readIndex], &dst, 0);
 		nosGPUEvent event;
 		nosCmdEndParams endParams{.ForceSubmit = true, .OutGPUEventHandle = &event};
 		nosVulkan->End(cmd, &endParams);
 		nosVulkan->WaitGpuEvent(&event, UINT64_MAX);
 
-		OutputRing->SetRead();
-		FrameConversionCV.notify_one();
+		OutputRing->EndPop(*readIndex);
 		return NOS_RESULT_SUCCESS;
 	}
 
 	void ConvertFrames() {
-		while (shouldConvertFrame) {
+		while (!RGBAConversionRing->Exit) {
 			RGBAConversionRing->LogRing();
 			OutputRing->LogRing();
-			if (!RGBAConversionRing->IsReadable() || !OutputRing->IsWriteable()) {
-				//std::unique_lock<std::mutex> lock(FrameConversionMutex);
-				//FrameConversionCV.wait(lock);
+
+			auto readIndex = RGBAConversionRing->BeginPop(100);
+			if(!readIndex)
+				continue;
+			auto t_start = std::chrono::high_resolution_clock::now();
+			auto writeIndex = OutputRing->BeginPush();
+			if (!writeIndex) {
+				RGBAConversionRing->CancelPop(*readIndex);
 				continue;
 			}
-
-			int readIndex = RGBAConversionRing->GetNextReadable();
-			auto t_start = std::chrono::high_resolution_clock::now();
-			int writeIndex = OutputRing->GetNextWritable();
 			std::vector<nosShaderBinding> inputs;
-			inputs.emplace_back(nos::vkss::ShaderBinding(NSN_Output, ConvertedTextures[writeIndex]));
-			inputs.emplace_back(nos::vkss::ShaderBinding(NSN_PlaneY, OnFrameYBuffers[readIndex]));
-			inputs.emplace_back(nos::vkss::ShaderBinding(NSN_PlaneU, OnFrameUBuffers[readIndex]));
-			inputs.emplace_back(nos::vkss::ShaderBinding(NSN_PlaneV, OnFrameVBuffers[readIndex]));
+			inputs.emplace_back(nos::vkss::ShaderBinding(NSN_Output, ConvertedTextures[*writeIndex]));
+			inputs.emplace_back(nos::vkss::ShaderBinding(NSN_PlaneY, OnFrameYBuffers[*readIndex]));
+			inputs.emplace_back(nos::vkss::ShaderBinding(NSN_PlaneU, OnFrameUBuffers[*readIndex]));
+			inputs.emplace_back(nos::vkss::ShaderBinding(NSN_PlaneV, OnFrameVBuffers[*readIndex]));
 
 
 			nosCmd cmdRunPass;
@@ -399,14 +401,14 @@ struct WebRTCPlayerNodeContext : nos::NodeContext {
 				nosVulkan->RunComputePass(cmdRunPass, &pass);
 			}
 			nosVulkan->End(cmdRunPass, NOS_FALSE);
-			OutputRing->SetWrote();
+			OutputRing->EndPush(*writeIndex);
 
 			//auto t1 = std::chrono::high_resolution_clock::now();
 			//nosEngine.WatchLog("WebRTC Player-Compute Pass Time(us)", std::to_string(std::chrono::duration_cast<std::chrono::microseconds>(t1 - t0).count()).c_str());
 			//auto t_end = std::chrono::high_resolution_clock::now();
 			//
 			//nosEngine.WatchLog("WebRTC Player Run Time(us)", std::to_string(std::chrono::duration_cast<std::chrono::microseconds>(t_end - t_start).count()).c_str());
-			RGBAConversionRing->SetRead();
+			RGBAConversionRing->EndPop(*readIndex);
 		}
 	}
 
@@ -516,7 +518,8 @@ struct WebRTCPlayerNodeContext : nos::NodeContext {
 				case EWebRTCPlayerStates::eCONNECTED_TO_PEER: 
 				{
 					if (!FrameConverterThread.joinable()) {
-						shouldConvertFrame = true;
+						RGBAConversionRing->Reset(false); 
+						RGBAConversionRing->Exit = false;
 						FrameConverterThread = std::thread([this]() {ConvertFrames(); });
 					}
 					flatbuffers::FlatBufferBuilder fbb;

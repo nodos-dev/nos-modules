@@ -51,89 +51,213 @@ private:
 
 };
 
-struct RingProxy {
-public:
-	RingProxy(size_t size, std::string ringName = "") :Size(size), FreeCount(size) {
-		RingID++;
-		name = (ringName == "") ? "Ring_" + std::to_string(RingID) : ringName;
-		name_EMPTY = name + " Empty Slots:";
-		name_FILLED = name + " Filled Slots:";
+struct WebRTCRing
+{
+    struct
+    {
+        std::deque<int> Pool;
+        std::mutex Mutex;
+        std::condition_variable CV;
+    } Write, Read;
 
-	}
+    std::string RingName;
+    u32 Size = 0;
+    nosVec2u Extent;
+    std::atomic_bool Exit = false;
+    std::atomic_bool ResetFrameCount = true;
+   
+    WebRTCRing(u32 ringSize, std::string ringName) : RingName(std::move(ringName))
+    {
+        Resize(ringSize);
+    }
 
-	void LogRing() {
-		nosEngine.WatchLog(name_EMPTY.c_str(), std::to_string(FreeCount).c_str());
-		nosEngine.WatchLog(name_FILLED.c_str(), std::to_string(Size - FreeCount).c_str());
-	}
+    ~WebRTCRing()
+    {
+        Stop();
+    }
+    
+    void Resize(u32 size)
+    {
+        Write.Pool = {};
+        Read.Pool = {};
+        for (u32 i = 0; i < size; ++i)
+        {
+            Write.Pool.push_back(i);
+        }
+        Size = size;
+    }
 
-	int GetNextReadable() {
-		std::unique_lock lock(RingMutex);
-		if (FreeCount == Size && !IsFulledOnce) {
-			return -1;
-		}
-		assert(!(FreeCount == 0 && NextReadableFrame != NextWritableFrame));
-		return NextReadableFrame;
-	}
+    void Stop()
+    {
+        {
+            std::unique_lock l1(Write.Mutex);
+            std::unique_lock l2(Read.Mutex);
+            Exit = true;
+        }
+        Write.CV.notify_all();
+        Read.CV.notify_all();
+    }
 
-	void SetConditionVariable(std::condition_variable* cv) {
-		p_cv = cv;
-	}
+    bool IsFull()
+    {
+        std::unique_lock lock(Read.Mutex);
+        return Read.Pool.size() == Size;
+    }
 
-	void SetRead() {
-		std::unique_lock lock(RingMutex);
-		assert(FreeCount < (Size));
-		FreeCount++;
-		NextReadableFrame = (++NextReadableFrame % Size);
-		assert(!(FreeCount == 0 && NextReadableFrame != NextWritableFrame));
-	}
+    bool HasEmptySlots()
+    {
+        return EmptyFrames() != 0;
+    }
 
-	int GetNextWritable() {
-		std::unique_lock lock(RingMutex);
-		if (FreeCount == 0) {
-			return -1;
-		}
-		assert(!(FreeCount == 0 && NextReadableFrame != NextWritableFrame));
-		return NextWritableFrame;
-	}
-	void SetWrote() {
-		std::unique_lock lock(RingMutex);
-		assert(FreeCount > 0);
-		FreeCount--;
-		NextWritableFrame = (++NextWritableFrame % Size);
-		if (!IsFulledOnce && FreeCount == 0) {
-			IsFulledOnce = true;
-		}
-		if(p_cv)
-			p_cv->notify_one();
-		assert(!(FreeCount == 0 && NextReadableFrame != NextWritableFrame));
-	}
+    u32 EmptyFrames()
+    {
+        std::unique_lock lock(Write.Mutex);
+        return Write.Pool.size();
+    }
 
-	bool IsReadable() {
-		std::unique_lock lock(RingMutex);
-		if (!IsFulledOnce)
-			return false;
-		assert(!(FreeCount == 0 && NextReadableFrame != NextWritableFrame));
-		return (FreeCount < Size);
-	}
+    bool IsEmpty()
+    {
+        std::unique_lock lock(Read.Mutex);
+        return Read.Pool.empty();
+    }
 
-	bool IsWriteable() {
-		std::unique_lock lock(RingMutex);
-		assert(!(FreeCount == 0 && NextReadableFrame != NextWritableFrame));
-		return FreeCount > 0;
-	}
+    u32 ReadyFrames()
+    {
+        std::unique_lock lock(Read.Mutex);
+        return Read.Pool.size();
+    }
 
-	bool IsReady() {
-		return IsFulledOnce;
-	}
+    u32 TotalFrameCount()
+    {
+        std::unique_lock lock(Write.Mutex);
+        return Size - Write.Pool.size();
+    }
 
-private:
-	inline static int RingID;
-	std::string name, name_EMPTY, name_FILLED;
-	std::condition_variable* p_cv = nullptr;
-	std::atomic_bool IsFulledOnce = false;
-	std::mutex RingMutex;
-	size_t Size;
-	std::atomic_size_t FreeCount;
-	std::atomic_size_t NextReadableFrame = 0;
-	std::atomic_size_t NextWritableFrame = 0;
+    std::optional<int> BeginPush()
+    {
+        std::unique_lock lock(Write.Mutex);
+        while (Write.Pool.empty() && !Exit)
+            Write.CV.wait(lock);
+        if (Exit)
+            return std::nullopt;
+        int res = Write.Pool.front();
+        Write.Pool.pop_front();
+        return res;
+    }
+
+    void EndPush(int res)
+    {
+        {
+            std::unique_lock lock(Read.Mutex);
+            Read.Pool.push_back(res);
+            assert(Read.Pool.size() <= Size);
+        }
+        Read.CV.notify_one();
+    }
+
+    void CancelPush(int res)
+    {
+        {
+            std::unique_lock lock(Write.Mutex);
+            Write.Pool.push_front(res);
+            assert(Write.Pool.size() <= Size);
+        }
+        Write.CV.notify_one();
+    }
+    void CancelPop(int res)
+    {
+        {
+            std::unique_lock lock(Read.Mutex);
+            Read.Pool.push_front(res);
+            assert(Read.Pool.size() <= Size);
+        }
+        Read.CV.notify_one();
+    }
+
+    std::optional<int> BeginPop(uint64_t timeoutMilliseconds)
+    {
+        std::unique_lock lock(Read.Mutex);
+        if (!Read.CV.wait_for(lock, std::chrono::milliseconds(timeoutMilliseconds), [this]() {return !Read.Pool.empty() || Exit; }))
+            return std::nullopt;
+        if (Exit)
+            return std::nullopt;
+        auto res = Read.Pool.front();
+        Read.Pool.pop_front();
+        return res;
+    }
+
+    void EndPop(int res)
+    {
+        {
+            std::unique_lock lock(Write.Mutex);
+            Write.Pool.push_back(res);
+            assert(Write.Pool.size() <= Size);
+        }
+        Write.CV.notify_one();
+    }
+
+    bool CanPop(u32 spare = 0)
+    {
+        std::unique_lock lock(Read.Mutex);
+        if (Read.Pool.size() > spare)
+        {
+            // TODO: Under current arch, schedule requests are sent for the node instead of pin, so this code shouldn't be needed, but check.
+            // auto newFrameNumber = Read.Pool.front()->FrameNumber.load();
+            // bool result = ResetFrameCount || !frameNumber || newFrameNumber > frameNumber;
+            // frameNumber = newFrameNumber;
+            // ResetFrameCount = false;
+            return true;
+        }
+
+        return false;
+    }
+
+    bool CanPush()
+    {
+        std::unique_lock lock(Write.Mutex);
+        return !Write.Pool.empty();
+    }
+
+    std::optional<int> TryPush()
+    {
+        if (CanPush())
+            return BeginPush();
+        return std::nullopt;
+    }
+
+    std::optional<int> TryPush(const std::chrono::milliseconds timeout)
+    {
+        {
+            std::unique_lock lock(Write.Mutex);
+            if (Write.Pool.empty())
+                Write.CV.wait_for(lock, timeout, [&] { return CanPush(); });
+        }
+        return TryPush();
+    }
+
+    std::optional<int> TryPop(u32 spare = 0)
+    {
+        if (CanPop(spare))
+            return BeginPop(20);
+        return std::nullopt;
+    }
+
+    void Reset(bool fill)
+    {
+        auto& from = fill ? Write : Read;
+        auto& to = fill ? Read : Write;
+        std::unique_lock l1(Write.Mutex);
+        std::unique_lock l2(Read.Mutex);
+        while (!from.Pool.empty())
+        {
+            int slot = from.Pool.front();
+            from.Pool.pop_front();
+            to.Pool.push_back(slot);
+        }
+    }
+
+    void LogRing() {
+        nosEngine.WatchLog((RingName + " ready frames").c_str(), std::to_string(Read.Pool.size()).c_str());
+        nosEngine.WatchLog((RingName + " empty frames").c_str(), std::to_string(Write.Pool.size()).c_str());
+    }
 };
