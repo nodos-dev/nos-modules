@@ -1,6 +1,3 @@
-[submodule "Shaders"]
-	path = Plugins/Shaders
-	url = https://github.com/mediaz/shaders
 [submodule "mzWebRTC/External"]
 	path = Plugins/nosWebRTC/External
 	url = https://github.com/mediaz/webRTC-builds.git
