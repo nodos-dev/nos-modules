@@ -28,8 +28,6 @@ namespace nos::vkss
 
 namespace nos::utilities
 {
-NOS_REGISTER_NAME(SRGB2Linear_Pass);
-NOS_REGISTER_NAME(SRGB2Linear_Shader);
 NOS_REGISTER_NAME_SPACED(Nos_Utilities_ReadImage, "nos.utilities.ReadImage")
 
 enum State
