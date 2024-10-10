@@ -17,6 +17,8 @@ struct ArrayNode : NodeContext
 			if (pin.ShowAs == fb::ShowAs::INPUT_PIN)
 			{
 				PinCount++;
+				if (pin.TypeName != NSN_VOID)
+					Type = nos::TypeInfo(pin.TypeName);
 			}
 			if (pin.ShowAs == fb::ShowAs::OUTPUT_PIN)
 			{

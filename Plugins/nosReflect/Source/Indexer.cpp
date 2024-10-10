@@ -90,6 +90,17 @@ struct Indexer : NodeContext
 		{
 			Type = nos::TypeInfo(update->TypeName);
 		}
+		else if (update->PinName == NSN_Input)
+		{
+			auto newTypeName = nos::Name(update->TypeName);
+			auto typeInfo = nos::TypeInfo(newTypeName);
+			if (typeInfo->BaseType == NOS_BASE_TYPE_ARRAY)
+			{
+				newTypeName = typeInfo->ElementType->TypeName;
+			}
+			Type = nos::TypeInfo(newTypeName);
+		}
+		UpdateInputVectorSize();
 	}
 
 	bool SetIndex(u32 newIndex)
@@ -103,6 +114,28 @@ struct Indexer : NodeContext
     	ClearNodeStatusMessages();
     	return true;
     }
+
+	bool UpdateInputVectorSize() {
+		nosBuffer value;
+		std::vector<u8> data;
+
+		if (NOS_RESULT_SUCCESS == nosEngine.GetDefaultValueOfType(Type->TypeName, &value))
+		{
+			data = std::vector<u8>{ (u8*)value.Data, (u8*)value.Data + value.Size };
+		}
+
+		std::vector<const void*> datas = { data.data() };
+
+		auto inPin = GetPin(NSN_Input);
+		if (!inPin || !Type)
+			return false;
+
+		auto outval = GenerateVector(*Type, datas);
+
+		auto vec = (flatbuffers::Vector<flatbuffers::Offset<flatbuffers::Table>>*)(outval.data());
+		nosEngine.SetPinValue(inPin->Id, { outval.data(), outval.size() });
+		return true;
+	}
 	
     nosResult ExecuteNode(nosNodeExecuteParams* params) override
     {
@@ -110,6 +143,11 @@ struct Indexer : NodeContext
 			return NOS_RESULT_FAILED;
 
 		auto pins = NodeExecuteParams(params);
+		if (!pins[NSN_Input].Data)
+		{
+			UpdateInputVectorSize();
+		}
+
 		auto vec = (flatbuffers::Vector<u8>*)(pins[NSN_Input].Data->Data);
     	ArraySize = vec->size();
 		if (!SetIndex(*(u32*)pins[NSN_Index].Data->Data))
