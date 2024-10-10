@@ -28,7 +28,7 @@ struct Indexer : NodeContext
                     arraySize = ((flatbuffers::Vector<u8>*)(pin->data()->Data()))->size();
 				IsOrphan = pin->orphan_state() ? pin->orphan_state()->is_orphan() : false;
             }
-            else if(pin->name()->string_view() == NSN_Input)
+            else if(pin->name()->string_view() == NSN_Output)
             {
                 if (pin->type_name()->string_view() != NSN_VOID)
                 {
@@ -151,6 +151,11 @@ struct Indexer : NodeContext
 			if (!Type)
 				return;
             ArraySize = ((flatbuffers::Vector<u8>*)(value.Data))->size();
+			// Pin is somehow deleted, so create it
+			auto pin = GetPin(NSN_Input);
+			if (!pin) {
+				nosEngine.LogE("Indexer's input pin is deleted somehow, report this!");
+			}
 			ManageOrphan();
 		}
 	}

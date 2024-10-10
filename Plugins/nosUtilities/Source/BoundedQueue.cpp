@@ -16,12 +16,6 @@ namespace nos::utilities
 
 struct BoundedQueueNodeContext : RingNodeBase
 {
-	static constexpr nosTextureInfo SampleTexture = nosTextureInfo{
-		.Width = 1920,
-		.Height = 1080,
-		.Format = NOS_FORMAT_R16G16B16A16_SFLOAT,
-		.Usage = nosImageUsage(NOS_IMAGE_USAGE_TRANSFER_SRC | NOS_IMAGE_USAGE_TRANSFER_DST),
-	};
 	BoundedQueueNodeContext(nosFbNode const* node) : RingNodeBase(node, RingNodeBase::OnRestartType::RESET)
 	{
 	}
@@ -37,12 +31,14 @@ struct BoundedQueueNodeContext : RingNodeBase
 		if(beginResult != NOS_RESULT_SUCCESS)
 			return beginResult;
 
-		nosCmd cmd;
-		nosCmdBeginParams beginParams = { NOS_NAME("BoundedQueue"), NodeId, &cmd };
-		nosVulkan->Begin2(&beginParams);
-		nosVulkan->Copy(cmd, &slot->Res, &outputResource, 0);
-		nosCmdEndParams end{ .ForceSubmit = NOS_TRUE, .OutGPUEventHandle = &slot->Params.WaitEvent };
-		nosVulkan->End(cmd, &end);
+		if (type == ResourceType::Buffer || type == ResourceType::Texture) {
+			nosCmd cmd;
+			nosCmdBeginParams beginParams = { NOS_NAME("BoundedQueue"), NodeId, &cmd };
+			nosVulkan->Begin2(&beginParams);
+			nosVulkan->Copy(cmd, &slot->Res, &outputResource, 0);
+			nosCmdEndParams end{ .ForceSubmit = NOS_TRUE, .OutGPUEventHandle = &slot->Params.WaitEvent };
+			nosVulkan->End(cmd, &end);
+		}
 
 		switch (type)
 		{
