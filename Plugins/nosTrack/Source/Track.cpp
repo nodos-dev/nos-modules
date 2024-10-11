@@ -456,6 +456,7 @@ void TrackNodeContext::Run()
 		nosEngine.GetDefaultValueOfType(NOS_NAME_STATIC("nos.fb.Track"), &defaultTrackData);
 		nos::Buffer defaultTrackBuffer = nos::Buffer((uint8_t*)defaultTrackData.Data, defaultTrackData.Size);
 		fb::TTrack defaultTrack = defaultTrackBuffer.As<fb::TTrack>();
+		bool restartOnFirstSuccess = false;
 		while (!ShouldStop)
 		{
 			try
@@ -473,12 +474,18 @@ void TrackNodeContext::Run()
 						// Queue sisiyo mu?
 						// while (DataQueue.size() > Delay) DataQueue.pop();
 						nosEngine.WatchLog("Track Queue Size", std::to_string(DataQueue.size()).c_str());
+						if (restartOnFirstSuccess)
+						{
+							restartOnFirstSuccess = false;
+							SignalRestart();
+						}
 					}
 				}
 			}
 			catch (const  asio::system_error& e)
 			{
 				nosEngine.LogW("Exception when listening on port %d: %s", Port.load(), e.what());
+				restartOnFirstSuccess = true;
 			}
 		}
 		if (sock)
