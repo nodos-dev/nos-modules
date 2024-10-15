@@ -51,12 +51,12 @@ struct ResourceTypeManager {
 	virtual void DestroyResource(ResourceBase* res) = 0;
 	virtual void Reset(ResourceBase* res) = 0;
 	virtual void WaitForDownloadToEnd(ResourceBase* res, const std::string& nodeTypeName, const std::string& nodeDisplayName, nosCopyInfo* cpy) = 0;
-	virtual void SendCopyCmdToGPU(ResourceBase* res, nosCopyInfo* cpy, nos::fb::UUID NodeId, nosResourceShareInfo* outputResource) = 0;
+	virtual void SendCopyCmdToGPU(ResourceBase* res, nosCopyInfo* cpy, nos::fb::UUID NodeId, const nosBuffer& outputPinData) = 0;
 	virtual nosResult Push(ResourceBase* r, void* pinInfo, nosNodeExecuteParams* params, nos::Name ringExecuteName) = 0;
 	virtual void* GetPinInfo(nosPinInfo& pin, bool rejectFieldMismatch) = 0;
 	// Returns false if resource is compatible with the current sample
 	virtual bool CheckNewResource(nosName updateName, nosBuffer newVal, std::optional<nos::Buffer> oldVal, bool updateSample) = 0;
-	virtual bool BeginCopyFrom(ResourceBase* r, void* pinData, nos::Buffer& outPinVal, nosResourceShareInfo* outputResource) = 0;
+	virtual bool BeginCopyFrom(ResourceBase* r, void* pinData, nos::Buffer& outPinVal) = 0;
 };
 
 struct GPUTextureResourceTypeManager : ResourceTypeManager {
@@ -123,12 +123,13 @@ struct GPUTextureResourceTypeManager : ResourceTypeManager {
 		nosEngine.SetPinValue(cpy->ID, nos::Buffer::From(vkss::ConvertTextureInfo(res->ShareInfo)));
 	}
 
-	void SendCopyCmdToGPU(ResourceBase* r, nosCopyInfo* cpy, nos::fb::UUID NodeId, nosResourceShareInfo* outputResource) override {
+	void SendCopyCmdToGPU(ResourceBase* r, nosCopyInfo* cpy, nos::fb::UUID NodeId, const nosBuffer& outputPinData) override {
 		Resource* res = GetResource<GPUTextureResourceTypeManager>(r);
+		nosResourceShareInfo outputResource = vkss::DeserializeTextureInfo(outputPinData.Data);
 		nosCmd cmd;
 		nosCmdBeginParams beginParams = { NOS_NAME("BoundedQueue"), NodeId, &cmd };
 		nosVulkan->Begin2(&beginParams);
-		nosVulkan->Copy(cmd, &res->ShareInfo, outputResource, 0);
+		nosVulkan->Copy(cmd, &res->ShareInfo, &outputResource, 0);
 		nosCmdEndParams end{ .ForceSubmit = NOS_TRUE, .OutGPUEventHandle = &res->Params.WaitEvent };
 		nosVulkan->End(cmd, &end);
 
@@ -215,11 +216,11 @@ struct GPUTextureResourceTypeManager : ResourceTypeManager {
 		return needsRecreation;
 	}
 
-	bool BeginCopyFrom(ResourceBase* r, void* pinData, nos::Buffer& outPinVal, nosResourceShareInfo* outputResource) override{
+	bool BeginCopyFrom(ResourceBase* r, void* pinData, nos::Buffer& outPinVal) override{
 		Resource* res = GetResource<GPUTextureResourceTypeManager>(r);
 		auto outputTextureDesc = static_cast<sys::vulkan::Texture*>(pinData);
 		auto output = vkss::DeserializeTextureInfo(outputTextureDesc);
-		*outputResource = output;
+		outPinVal = Buffer::From(vkss::ConvertTextureInfo(output));
 		if (res->ShareInfo.Info.Texture.Height != output.Info.Texture.Height ||
 			res->ShareInfo.Info.Texture.Width != output.Info.Texture.Width ||
 			res->ShareInfo.Info.Texture.Format != output.Info.Texture.Format)
@@ -231,7 +232,6 @@ struct GPUTextureResourceTypeManager : ResourceTypeManager {
 
 			sys::vulkan::TTexture texDef = vkss::ConvertTextureInfo(output);
 			texDef.unscaled = true;
-			*outputResource = output;
 			outPinVal = Buffer::From(texDef);
 			return true;
 		}
@@ -303,12 +303,13 @@ struct GPUBufferResourceTypeManager : ResourceTypeManager {
 		nosEngine.SetPinValue(cpy->ID, nos::Buffer::From(vkss::ConvertBufferInfo(r->ShareInfo)));
 	}
 
-	void SendCopyCmdToGPU(ResourceBase* res, nosCopyInfo* cpy, nos::fb::UUID NodeId, nosResourceShareInfo* outputResource) override {
+	void SendCopyCmdToGPU(ResourceBase* res, nosCopyInfo* cpy, nos::fb::UUID NodeId, const nosBuffer& outputPinData) override {
 		auto r = GetResource<GPUBufferResourceTypeManager>(res);
+		nosResourceShareInfo outputResource = vkss::ConvertToResourceInfo(*InterpretPinValue<sys::vulkan::Buffer>(outputPinData.Data));
 		nosCmd cmd;
 		nosCmdBeginParams beginParams = { NOS_NAME("BoundedQueue"), NodeId, &cmd };
 		nosVulkan->Begin2(&beginParams);
-		nosVulkan->Copy(cmd, &r->ShareInfo, outputResource, 0);
+		nosVulkan->Copy(cmd, &r->ShareInfo, &outputResource, 0);
 		nosCmdEndParams end{ .ForceSubmit = NOS_TRUE, .OutGPUEventHandle = &r->Params.WaitEvent };
 		nosVulkan->End(cmd, &end);
 
@@ -401,17 +402,16 @@ struct GPUBufferResourceTypeManager : ResourceTypeManager {
 		return needsRecreation;
 	}
 
-	bool BeginCopyFrom(ResourceBase* r, void* pinData, nos::Buffer& outPinVal, nosResourceShareInfo* outputResource) override{
+	bool BeginCopyFrom(ResourceBase* r, void* pinData, nos::Buffer& outPinVal) override{
 		Resource* res = GetResource<GPUBufferResourceTypeManager>(r);
 		auto outputBufferDesc = *static_cast<sys::vulkan::Buffer*>(pinData);
 		auto output = vkss::ConvertToResourceInfo(outputBufferDesc);
-		*outputResource = output;
+		outPinVal = Buffer::From(vkss::ConvertBufferInfo(output));
 		if (res->ShareInfo.Info.Buffer.Size != output.Info.Buffer.Size)
 		{
 			output.Memory = {};
 			output.Info.Type = NOS_RESOURCE_TYPE_BUFFER;
 			output.Info.Buffer = res->ShareInfo.Info.Buffer;
-			*outputResource = output;
 			outPinVal = Buffer::From(vkss::ConvertBufferInfo(output));
 			return true;
 		}
@@ -820,7 +820,7 @@ struct RingNodeBase : NodeContext
 		return NOS_RESULT_SUCCESS;
 	}
 
-	nosResult CommonCopyFrom(nosCopyInfo* cpy, ResourceTypeManager::ResourceBase** foundSlot, nosResourceShareInfo* outputResource) {
+	nosResult CommonCopyFrom(nosCopyInfo* cpy, ResourceTypeManager::ResourceBase** foundSlot) {
 		if (LastPopped != nullptr)
 		{
 			DEBUG_BREAK
@@ -849,7 +849,7 @@ struct RingNodeBase : NodeContext
 
 		nosResourceShareInfo output;
 		nos::Buffer outPinVal;
-		bool changePinValue = Ring->Manager->BeginCopyFrom(slot, cpy->PinData->Data, outPinVal, outputResource);
+		bool changePinValue = Ring->Manager->BeginCopyFrom(slot, cpy->PinData->Data, outPinVal);
 		if (changePinValue) {
 			nosEngine.SetPinValueByName(NodeId, NOS_NAME_STATIC("Output"), outPinVal);
 		}

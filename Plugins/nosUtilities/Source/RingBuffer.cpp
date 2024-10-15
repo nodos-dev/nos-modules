@@ -26,8 +26,7 @@ struct RingBufferNodeContext : RingNodeBase
 
 	nosResult CopyFrom(nosCopyInfo* cpy) override {
 		ResourceTypeManager::ResourceBase* slot = nullptr;
-		nosResourceShareInfo outputResource = {};
-		auto beginResult = CommonCopyFrom(cpy, &slot, &outputResource);
+		auto beginResult = CommonCopyFrom(cpy, &slot);
 		if (beginResult != NOS_RESULT_SUCCESS)
 			return beginResult;
 
