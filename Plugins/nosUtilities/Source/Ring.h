@@ -667,11 +667,6 @@ struct RingNodeBase : NodeContext
 	TypeInfo typeInfo;
 	ResourceTypeManager::ResourceBase* LastPopped = nullptr;
 
-
-	// GPU Resource Specifics
-	nosTextureFieldType WantedField = NOS_TEXTURE_FIELD_TYPE_UNKNOWN;
-
-
 	void Init() {
 		ResourceTypeManager* resourceManager = nullptr;
 		if (typeInfo->TypeName == vulkanBufferTypeName)
