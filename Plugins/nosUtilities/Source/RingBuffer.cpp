@@ -25,22 +25,13 @@ struct RingBufferNodeContext : RingNodeBase
 	}
 
 	nosResult CopyFrom(nosCopyInfo* cpy) override {
-		TRing::Resource* slot = nullptr;
+		ResourceTypeManager::ResourceBase* slot = nullptr;
 		nosResourceShareInfo outputResource = {};
 		auto beginResult = CommonCopyFrom(cpy, &slot, &outputResource);
 		if (beginResult != NOS_RESULT_SUCCESS)
 			return beginResult;
 
-		if (slot->Params.WaitEvent) {
-			nos::util::Stopwatch sw;
-			nosVulkan->WaitGpuEvent(&slot->Params.WaitEvent, UINT64_MAX);
-			auto elapsed = sw.Elapsed();
-			nosEngine.WatchLog((GetName() + " Copy From GPU Wait: " + NodeName.AsString()).c_str(),
-				nos::util::Stopwatch::ElapsedString(elapsed).c_str());
-		}
-
-
-		nosEngine.SetPinValue(cpy->ID, nos::Buffer::From(vkss::ConvertBufferInfo(slot->Res)));
+		Ring->Manager->WaitForDownloadToEnd(slot, "RingBuffer", NodeName.AsString(), cpy);
 
 		cpy->CopyFromOptions.ShouldSetSourceFrameNumber = true;
 		cpy->FrameNumber = slot->FrameNumber;
