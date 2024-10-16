@@ -38,7 +38,9 @@
         "Config/Sink.nosdef",
         "Config/PropagateExecution.nosdef",
 		"Config/UploadBufferProvider.nosdef",
-        "Config/TimedFunctionSignaller.nosdef"
+        "Config/TimedFunctionSignaller.nosdef",
+        "Config/RingBuffer.nosdef",
+        "Config/BoundedQueue.nosdef"
     ],
     "custom_types": [
         "Config/Merge.fbs",
@@ -175,6 +177,16 @@
           "category": "Utilities",
           "class_name": "TimedFunctionSignaller",
           "display_name": "Timed Function Signaller"
+        },
+        {
+          "category": "Utilities",
+          "class_name": "RingBuffer",
+          "display_name": "Ring Buffer"
+        },
+        {
+          "category": "Utilities",
+          "class_name": "BoundedQueue",
+          "display_name": "Bounded Queue"
         }
     ],
     "subsystem_options": [

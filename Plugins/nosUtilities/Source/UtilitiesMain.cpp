@@ -41,6 +41,8 @@ enum Utilities : int
 	Sink,
 	PropagateExecution,
 	UploadBufferProvider,
+	BoundedQueue,
+	RingBuffer,
 	Count
 };
 
@@ -59,6 +61,8 @@ nosResult RegisterShowStatusNode(nosNodeFunctions*);
 nosResult RegisterSink(nosNodeFunctions*);
 nosResult RegisterPropagateExecution(nosNodeFunctions*);
 nosResult RegisterUploadBufferProvider(nosNodeFunctions*);
+nosResult RegisterBoundedQueue(nosNodeFunctions*);
+nosResult RegisterRingBuffer(nosNodeFunctions*);
 
 nosResult NOSAPI_CALL ExportNodeFunctions(size_t* outSize, nosNodeFunctions** outList)
 {
@@ -95,6 +99,8 @@ nosResult NOSAPI_CALL ExportNodeFunctions(size_t* outSize, nosNodeFunctions** ou
 			GEN_CASE_NODE(Sink)
 			GEN_CASE_NODE(PropagateExecution)
 			GEN_CASE_NODE(UploadBufferProvider)
+			GEN_CASE_NODE(BoundedQueue)
+			GEN_CASE_NODE(RingBuffer)
 		}
 	}
 	return NOS_RESULT_SUCCESS;
