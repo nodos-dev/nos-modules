@@ -181,12 +181,12 @@
         {
           "category": "Utilities",
           "class_name": "RingBuffer",
-          "display_name": "Templated Ring Buffer"
+          "display_name": "Ring Buffer"
         },
         {
           "category": "Utilities",
           "class_name": "BoundedQueue",
-          "display_name": "Templated Bounded Queue"
+          "display_name": "Bounded Queue"
         }
     ],
     "subsystem_options": [
