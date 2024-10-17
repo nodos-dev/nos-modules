@@ -2,7 +2,7 @@
   "nodes": [
     {
       "class_name": "BoundedQueue",
-      "display_name": "Templated Bounded Queue",
+      "display_name": "Bounded Queue",
       "contents_type": "Job",
       "description":  "",
       "pins": [

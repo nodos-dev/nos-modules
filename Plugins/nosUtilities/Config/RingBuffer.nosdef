@@ -2,7 +2,7 @@
   "nodes": [
     {
       "class_name": "RingBuffer",
-      "display_name": "Templated Ring Buffer",
+      "display_name": "Ring Buffer",
       "contents_type": "Job",
       "description":  "",
       "pins": [

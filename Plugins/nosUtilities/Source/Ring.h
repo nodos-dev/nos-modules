@@ -493,6 +493,8 @@ struct TRing
     {
         Write.Pool = {};
         Read.Pool = {};
+		for (auto& res : Resources)
+			Manager->DestroyResource(res.get());
         Resources.clear();
         for (u32 i = 0; i < size; ++i)
 		{
@@ -526,6 +528,8 @@ struct TRing
     ~TRing()
     {
         Stop();
+		for (auto& res : Resources)
+			Manager->DestroyResource(res.get());
         Resources.clear();
     }
 
@@ -775,7 +779,7 @@ struct RingNodeBase : NodeContext
 			}
 			});
 		AddPinValueWatcher(NOS_NAME_STATIC("Alignment"), [this](nos::Buffer const& newAlignment, std::optional<nos::Buffer> oldVal) {
-			bool needsRecreation = Ring->Manager->CheckNewResource(NOS_NAME_STATIC("Alignment"), newAlignment, oldVal, true); 
+			bool needsRecreation = Ring->Manager->CheckNewResource(NOS_NAME_STATIC("Alignment"), newAlignment, oldVal, true);
 
 			if (needsRecreation)
 			{
@@ -814,7 +818,7 @@ struct RingNodeBase : NodeContext
 	{
 		if (typeInfo.TypeName != voidTypeName)
 			return NOS_RESULT_FAILED;
-		
+
 		typeInfo = TypeInfo(params->IncomingTypeName);
 
 		for (size_t i = 0; i < params->PinCount; i++)
@@ -837,7 +841,7 @@ struct RingNodeBase : NodeContext
 
 	nosResult ExecuteRingNode(nosNodeExecuteParams* params, bool useSlotEvent, nosName ringExecuteName, bool rejectFieldMismatch)
 	{
-		if (Ring->Exit || Ring->Size == 0|| !typeInfo)
+		if (Ring->Exit || Ring->Size == 0 || !typeInfo)
 			return NOS_RESULT_FAILED;
 
 		NodeExecuteParams pins(params);
@@ -980,6 +984,14 @@ struct RingNodeBase : NodeContext
 	void SendPathRestart()
 	{
 		nosEngine.SendPathRestart(PinName2Id[NOS_NAME_STATIC("Input")]);
+	}
+
+	~RingNodeBase()
+	{
+		if (LastPopped)
+			delete LastPopped;
+		if (Ring)
+			Ring->Stop();
 	}
 };
 
