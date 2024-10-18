@@ -66,6 +66,7 @@ struct ReadImageContext
 			auto dt = std::chrono::duration_cast<std::chrono::milliseconds>(Clock::now() - time_started);
             ss << "Read Image: Loaded in " << dt << "\nFile: " << load_path;
             nosEngine.LogDI(load_path.c_str(), ss.str().c_str());
+			msg.push_back(fb::CreateNodeStatusMessageDirect(fbb, "Loaded image", fb::NodeStatusMessageType::INFO));
             break;
         }
         case State::Failed:
@@ -110,6 +111,12 @@ static nosResult GetFunctions(size_t* count, nosName* names, nosPfnNodeFunctionE
 
 			int w, h, n;
 			stbi_info(path.string().c_str(), &w, &h, &n);
+
+			if (w < 0 || h < 0 || n < 0) {
+				nosEngine.LogE("STBI couldn't load image from %s.", path.string().c_str());
+				c->UpdateStatus(State::Failed);
+				return NOS_RESULT_FAILED;
+			}
 			
 			nosResourceShareInfo outRes = {
 				.Info = {.Type = NOS_RESOURCE_TYPE_TEXTURE,
