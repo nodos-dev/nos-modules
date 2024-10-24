@@ -43,24 +43,6 @@
           "description": ""
         },
         {
-          "id": "6a7812ed-8e0c-46de-a4c3-b5118397d73a",
-          "name": "Wait",
-          "display_name": "Wait",
-          "type_name": "bool",
-          "show_as": "PROPERTY",
-          "can_show_as": "PROPERTY_ONLY",
-          "pin_category": "",
-          "visualizer": { },
-          "data": true,
-          "referred_by": [],
-          "def": true,
-          "meta_data_map": [],
-          "contents_type": "PortalPin",
-          "contents": { "source_id": "7a587325-e432-4be7-9461-9a15ae128b36" },
-          "orphan_state": { },
-          "description": "Wait until gpu tasks(gpu nodes etc.) are completed."
-        },
-        {
           "id": "8bdd8685-8d98-4feb-b10c-52e173c948d3",
           "name": "AcceptsRepeat",
           "display_name": "Accept Repeat",
@@ -76,7 +58,7 @@
           "contents_type": "PortalPin",
           "contents": { "source_id": "48f150e3-ce1e-4143-9faf-a160d42f4fa2" },
           "orphan_state": { },
-          "description": "Wait until GPU tasks are completed."
+          "advanced_property": true
         },
         {
           "id": "4100a156-de8c-4ede-81ff-58a76e11a147",
@@ -226,7 +208,6 @@
                 "visualizer": { },
                 "data": true,
                 "referred_by": [
-                  "6a7812ed-8e0c-46de-a4c3-b5118397d73a"
                 ],
                 "def": true,
                 "meta_data_map": [],

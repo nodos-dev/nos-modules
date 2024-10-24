@@ -32,7 +32,8 @@
           "show_as": "PROPERTY",
           "can_show_as": "PROPERTY_ONLY",
           "data": true,
-          "description": "Wait until GPU tasks are completed."
+          "description": "Wait until GPU tasks are completed",
+          "advanced_property": true
         },
         {
           "name": "AcceptsRepeat",
@@ -41,7 +42,7 @@
           "show_as": "PROPERTY",
           "can_show_as": "PROPERTY_ONLY",
           "data": false,
-          "description": "Wait until GPU tasks are completed."
+          "advanced_property": true
         },
         {
           "name": "SinkMode",
