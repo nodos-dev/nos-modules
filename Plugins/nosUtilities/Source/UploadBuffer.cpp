@@ -24,8 +24,8 @@ struct UploadBufferNodeContext : NodeContext
 		nosGPUEvent* event = nullptr;
 		if (gpuEventRef)
 		{
-			nosVulkan->GetGPUEvent(gpuEventRef, &event);
-			assert(*event == 0);
+			auto res = nosVulkan->GetGPUEvent(gpuEventRef, &event);
+			assert(res != NOS_RESULT_SUCCESS || *event == 0);
 		}
 		
 		output.mutate_field_type(input.field_type());

@@ -38,9 +38,10 @@ namespace nos::utilities
 		{
 			if (Event)
 			{
-				nosGPUEvent* event;
-				nosVulkan->GetGPUEvent(Event, &event);
-				if (*event)
+				nosGPUEvent* event = nullptr;
+				auto res = nosVulkan->GetGPUEvent(Event, &event);
+
+				if (res == NOS_RESULT_SUCCESS && *event)
 					nosVulkan->WaitGpuEvent(event, UINT64_MAX);
 			}
 			nosVulkan->DestroyResource(&BufferInfo);
@@ -121,8 +122,8 @@ namespace nos::utilities
 			if (nextBuf.Event)
 			{
 				util::Stopwatch sw;
-				nosGPUEvent* event;
-				nosVulkan->GetGPUEvent(nextBuf.Event, &event);
+				nosGPUEvent* event = nullptr;
+				auto res = nosVulkan->GetGPUEvent(nextBuf.Event, &event);
 				if (*event)
 					nosVulkan->WaitGpuEvent(event, UINT64_MAX);
 				nosEngine.WatchLog("UploadBufferProvider Wait", sw.ElapsedString().c_str());
@@ -140,8 +141,8 @@ namespace nos::utilities
 			{
 				if (buf.Event)
 				{
-					nosGPUEvent* event;
-					nosVulkan->GetGPUEvent(buf.Event, &event);
+					nosGPUEvent* event = nullptr;
+					auto res = nosVulkan->GetGPUEvent(buf.Event, &event);
 					if (*event)
 						nosVulkan->WaitGpuEvent(event, UINT64_MAX);
 				}
