@@ -25,12 +25,12 @@ struct BoundedQueueNodeContext : RingNodeBase
 	}
 	
 	nosResult CopyFrom(nosCopyInfo* cpy) override {
-		ResourceTypeManager::ResourceBase* slot = nullptr;
+		ResourceInterface::ResourceBase* slot = nullptr;
 		auto beginResult = CommonCopyFrom(cpy, &slot);
 		if(beginResult != NOS_RESULT_SUCCESS)
 			return beginResult;
 
-		Ring->Manager->SendCopyCmdToGPU(slot, cpy, NodeId);
+		Ring->ResInterface->SendCopyCmdToGPU(slot, cpy, NodeId);
 
 		cpy->CopyFromOptions.ShouldSetSourceFrameNumber = true;
 		cpy->FrameNumber = slot->FrameNumber;

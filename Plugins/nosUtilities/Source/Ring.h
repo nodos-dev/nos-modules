@@ -18,7 +18,9 @@
 
 namespace nos
 {
-struct ResourceTypeManager {
+struct ResourceInterface {
+	virtual ~ResourceInterface() = default;
+
 	enum class ResourceType : uint32_t {
 		GPUBuffer = 1,
 		GPUTexture,
@@ -28,14 +30,14 @@ struct ResourceTypeManager {
 	ResourceType Type;
 
 	struct ResourceBase {
-		uint32_t ResourceTypeId = UINT32_MAX;
+		ResourceType ResourceType;
 		std::atomic_uint64_t FrameNumber;
 	};
 
 
 	template<typename T>
 	static T::Resource* GetResource(ResourceBase* res) {
-		if (res->ResourceTypeId == (uint32_t)T::RESOURCETYPEID) {
+		if (res->ResourceType == T::RESOURCE_TYPE) {
 			return static_cast<T::Resource*>(res);
 		}
 		return nullptr;
@@ -46,7 +48,7 @@ struct ResourceTypeManager {
 		return static_cast<T::PinData*>(pin.Data);
 	}
 
-	ResourceTypeManager(ResourceType type) : Type(type) {}
+	ResourceInterface(ResourceType type) : Type(type) {}
 	virtual rc<ResourceBase> CreateResource() = 0;
 	virtual void DestroyResource(ResourceBase* res) = 0;
 	virtual void Reset(ResourceBase* res) = 0;
@@ -59,15 +61,15 @@ struct ResourceTypeManager {
 	virtual bool BeginCopyFrom(ResourceBase* r, const nosBuffer& pinData, nos::Buffer& outPinVal) = 0;
 };
 
-struct GPUTextureResourceTypeManager : ResourceTypeManager {
-	static constexpr uint32_t RESOURCETYPEID = (uint32_t)ResourceTypeManager::ResourceType::GPUTexture;
+struct GPUTextureResource : ResourceInterface {
+	static constexpr ResourceType RESOURCE_TYPE = ResourceInterface::ResourceType::GPUTexture;
 	struct Resource : ResourceBase {
 		nosResourceShareInfo ShareInfo = {};
 		struct {
 			nosTextureFieldType FieldType = NOS_TEXTURE_FIELD_TYPE_UNKNOWN;
 			nosGPUEvent WaitEvent = 0;
 		} Params{};
-		Resource() { ResourceTypeId = RESOURCETYPEID; }
+		Resource() { ResourceType = RESOURCE_TYPE; }
 	};
 	typedef nosResourceShareInfo PinData;
 	nosTextureFieldType WantedField = NOS_TEXTURE_FIELD_TYPE_UNKNOWN;
@@ -78,7 +80,7 @@ struct GPUTextureResourceTypeManager : ResourceTypeManager {
 		.Usage = nosImageUsage(NOS_IMAGE_USAGE_TRANSFER_SRC | NOS_IMAGE_USAGE_TRANSFER_DST),
 	};
 
-	GPUTextureResourceTypeManager() : ResourceTypeManager(ResourceType::GPUTexture) {
+	GPUTextureResource() : ResourceInterface(ResourceType::GPUTexture) {
 		nosResourceShareInfo shareInfo;
 		shareInfo.Info.Type = NOS_RESOURCE_TYPE_TEXTURE;
 		shareInfo.Info.Texture = SampleTexture;
@@ -94,14 +96,14 @@ struct GPUTextureResourceTypeManager : ResourceTypeManager {
 	}
 	void DestroyResource(ResourceBase* r) override
 	{
-		Resource* res = GetResource<GPUTextureResourceTypeManager>(r);
+		Resource* res = GetResource<GPUTextureResource>(r);
 		if (res->Params.WaitEvent)
 			nosVulkan->WaitGpuEvent(&res->Params.WaitEvent, UINT64_MAX);
 		nosVulkan->DestroyResource(&res->ShareInfo);
 	}
 	void Reset(ResourceBase* r) override
 	{
-		Resource* res = GetResource<GPUTextureResourceTypeManager>(r);
+		Resource* res = GetResource<GPUTextureResource>(r);
 		if (res->Params.WaitEvent)
 			nosVulkan->WaitGpuEvent(&res->Params.WaitEvent, UINT64_MAX);
 		res->Params = {};
@@ -109,7 +111,7 @@ struct GPUTextureResourceTypeManager : ResourceTypeManager {
 	}
 
 	void WaitForDownloadToEnd(ResourceBase* r, const std::string& nodeTypeName, const std::string& nodeDisplayName, nosCopyInfo* cpy) override {
-		Resource* res = GetResource<GPUTextureResourceTypeManager>(r); 
+		Resource* res = GetResource<GPUTextureResource>(r); 
 		if (res->Params.WaitEvent) {
 			nos::util::Stopwatch sw;
 			nosVulkan->WaitGpuEvent(&res->Params.WaitEvent, UINT64_MAX);
@@ -123,7 +125,7 @@ struct GPUTextureResourceTypeManager : ResourceTypeManager {
 	}
 
 	void SendCopyCmdToGPU(ResourceBase* r, nosCopyInfo* cpy, nos::fb::UUID NodeId) override {
-		Resource* res = GetResource<GPUTextureResourceTypeManager>(r);
+		Resource* res = GetResource<GPUTextureResource>(r);
 		nosResourceShareInfo outputResource = vkss::DeserializeTextureInfo(cpy->PinData->Data);
 		nosCmd cmd;
 		nosCmdBeginParams beginParams = { NOS_NAME("BoundedQueue"), NodeId, &cmd };
@@ -168,7 +170,7 @@ struct GPUTextureResourceTypeManager : ResourceTypeManager {
 	}
 
 	nosResult Push(ResourceBase* r, void* pinInfo, nosNodeExecuteParams* params, nos::Name ringExecuteName, bool pushEventForCopyFrom) override {
-		Resource* res = GetResource<GPUTextureResourceTypeManager>(r);
+		Resource* res = GetResource<GPUTextureResource>(r);
 		res->FrameNumber = params->FrameNumber;
 
 		nosResourceShareInfo input = vkss::DeserializeTextureInfo(pinInfo);
@@ -216,7 +218,7 @@ struct GPUTextureResourceTypeManager : ResourceTypeManager {
 	}
 
 	bool BeginCopyFrom(ResourceBase* r, const nosBuffer& pinData, nos::Buffer& outPinVal) override{
-		Resource* res = GetResource<GPUTextureResourceTypeManager>(r);
+		Resource* res = GetResource<GPUTextureResource>(r);
 		auto outputTextureDesc = static_cast<sys::vulkan::Texture*>(pinData.Data);
 		auto output = vkss::DeserializeTextureInfo(outputTextureDesc);
 		outPinVal = Buffer::From(vkss::ConvertTextureInfo(output));
@@ -238,8 +240,8 @@ struct GPUTextureResourceTypeManager : ResourceTypeManager {
 	}
 };
 
-struct GPUBufferResourceTypeManager : ResourceTypeManager {
-	static constexpr uint32_t RESOURCETYPEID = (uint32_t)ResourceTypeManager::ResourceType::GPUBuffer;
+struct GPUBufferResource : ResourceInterface {
+	static constexpr ResourceType RESOURCE_TYPE = ResourceInterface::ResourceType::GPUBuffer;
 	typedef nosResourceShareInfo PinData;
 	struct Resource : ResourceBase
 	{
@@ -248,7 +250,7 @@ struct GPUBufferResourceTypeManager : ResourceTypeManager {
 			nosTextureFieldType FieldType = NOS_TEXTURE_FIELD_TYPE_UNKNOWN;
 			nosGPUEvent WaitEvent = 0;
 		} Params{};
-		Resource() { ResourceTypeId = RESOURCETYPEID; }
+		Resource() { ResourceType = RESOURCE_TYPE; }
 	};
 	nosTextureFieldType WantedField = NOS_TEXTURE_FIELD_TYPE_UNKNOWN;
 	static constexpr nosBufferInfo SampleBuffer =
@@ -258,7 +260,7 @@ struct GPUBufferResourceTypeManager : ResourceTypeManager {
 					  .MemoryFlags = nosMemoryFlags(NOS_MEMORY_FLAGS_DOWNLOAD | NOS_MEMORY_FLAGS_HOST_VISIBLE) };
 
 
-	GPUBufferResourceTypeManager() : ResourceTypeManager((ResourceType)RESOURCETYPEID) {
+	GPUBufferResource() : ResourceInterface(RESOURCE_TYPE) {
 		nosResourceShareInfo shareInfo;
 		shareInfo.Info.Type = NOS_RESOURCE_TYPE_BUFFER;
 		shareInfo.Info.Buffer = SampleBuffer;
@@ -273,14 +275,14 @@ struct GPUBufferResourceTypeManager : ResourceTypeManager {
 		return res;
 	}
 	void DestroyResource(ResourceBase* res) override {
-		auto r = GetResource<GPUBufferResourceTypeManager>(res);
+		auto r = GetResource<GPUBufferResource>(res);
 		if (r->Params.WaitEvent)
 			nosVulkan->WaitGpuEvent(&r->Params.WaitEvent, UINT64_MAX);
 		nosVulkan->DestroyResource(&r->ShareInfo);
 	}
 	void Reset(ResourceBase* res) override
 	{
-		auto r = GetResource<GPUBufferResourceTypeManager>(res);
+		auto r = GetResource<GPUBufferResource>(res);
 		if (r->Params.WaitEvent)
 			nosVulkan->WaitGpuEvent(&r->Params.WaitEvent, UINT64_MAX);
 		r->Params = {};
@@ -288,7 +290,7 @@ struct GPUBufferResourceTypeManager : ResourceTypeManager {
 	}
 
 	void WaitForDownloadToEnd(ResourceBase* res, const std::string& nodeTypeName, const std::string& nodeDisplayName, nosCopyInfo* cpy) override {
-		auto r = GetResource<GPUBufferResourceTypeManager>(res);
+		auto r = GetResource<GPUBufferResource>(res);
 		if (r->Params.WaitEvent) {
 			nos::util::Stopwatch sw;
 			nosVulkan->WaitGpuEvent(&r->Params.WaitEvent, UINT64_MAX);
@@ -302,7 +304,7 @@ struct GPUBufferResourceTypeManager : ResourceTypeManager {
 	}
 
 	void SendCopyCmdToGPU(ResourceBase* res, nosCopyInfo* cpy, nos::fb::UUID NodeId) override {
-		auto r = GetResource<GPUBufferResourceTypeManager>(res);
+		auto r = GetResource<GPUBufferResource>(res);
 		nosResourceShareInfo outputResource = vkss::ConvertToResourceInfo(*InterpretPinValue<sys::vulkan::Buffer>(cpy->PinData->Data));
 		nosCmd cmd;
 		nosCmdBeginParams beginParams = { NOS_NAME("BoundedQueue"), NodeId, &cmd };
@@ -345,7 +347,7 @@ struct GPUBufferResourceTypeManager : ResourceTypeManager {
 	}
 
 	nosResult Push(ResourceBase* r, void* pinInfo, nosNodeExecuteParams* params, nos::Name ringExecuteName, bool pushEventForCopyFrom) override {
-		Resource* res = GetResource<GPUBufferResourceTypeManager>(r);
+		Resource* res = GetResource<GPUBufferResource>(r);
 		res->FrameNumber = params->FrameNumber;
 
 		nosResourceShareInfo input = vkss::ConvertToResourceInfo(*InterpretPinValue<sys::vulkan::Buffer>(pinInfo));
@@ -401,7 +403,7 @@ struct GPUBufferResourceTypeManager : ResourceTypeManager {
 	}
 
 	bool BeginCopyFrom(ResourceBase* r, const nosBuffer& pinData, nos::Buffer& outPinVal) override{
-		Resource* res = GetResource<GPUBufferResourceTypeManager>(r);
+		Resource* res = GetResource<GPUBufferResource>(r);
 		auto outputBufferDesc = *static_cast<sys::vulkan::Buffer*>(pinData.Data);
 		auto output = vkss::ConvertToResourceInfo(outputBufferDesc);
 		outPinVal = Buffer::From(vkss::ConvertBufferInfo(output));
@@ -417,16 +419,16 @@ struct GPUBufferResourceTypeManager : ResourceTypeManager {
 	}
 };
 
-struct CPUTrivialResourceTypeManager : ResourceTypeManager {
-	static constexpr uint32_t RESOURCETYPEID = (uint32_t)ResourceTypeManager::ResourceType::CPUGeneric;
+struct CPUTrivialResource : ResourceInterface {
+	static constexpr ResourceType RESOURCE_TYPE = ResourceInterface::ResourceType::CPUGeneric;
 	typedef nosBuffer PinData;
 	struct Resource : ResourceBase
 	{
 		nos::Buffer data = {};
-		Resource() { ResourceTypeId = RESOURCETYPEID; }
+		Resource() { ResourceType = RESOURCE_TYPE; }
 	};
 
-	CPUTrivialResourceTypeManager() : ResourceTypeManager((ResourceType)RESOURCETYPEID) {
+	CPUTrivialResource() : ResourceInterface(RESOURCE_TYPE) {
 		nosBuffer defaultVal;
 		nosEngine.GetDefaultValueOfType(voidTypeName, &defaultVal);
 		Sample = defaultVal;
@@ -437,22 +439,22 @@ struct CPUTrivialResourceTypeManager : ResourceTypeManager {
 		return res;
 	}
 	void DestroyResource(ResourceBase* res) override {
-		auto r = GetResource<CPUTrivialResourceTypeManager>(res);
+		auto r = GetResource<CPUTrivialResource>(res);
 		delete r;
 	}
 	void Reset(ResourceBase* res) override
 	{
-		auto r = GetResource<CPUTrivialResourceTypeManager>(res);
+		auto r = GetResource<CPUTrivialResource>(res);
 		r->FrameNumber = 0;
 	}
 
 	void WaitForDownloadToEnd(ResourceBase* res, const std::string& nodeTypeName, const std::string& nodeDisplayName, nosCopyInfo* cpy) override {
-		auto r = GetResource<CPUTrivialResourceTypeManager>(res);
+		auto r = GetResource<CPUTrivialResource>(res);
 		nosEngine.SetPinValue(cpy->ID, r->data);
 	}
 
 	void SendCopyCmdToGPU(ResourceBase* res, nosCopyInfo* cpy, nos::fb::UUID NodeId) override {
-		auto r = GetResource<CPUTrivialResourceTypeManager>(res);
+		auto r = GetResource<CPUTrivialResource>(res);
 		nosEngine.SetPinValue(cpy->ID, r->data);
 	}
 
@@ -461,7 +463,7 @@ struct CPUTrivialResourceTypeManager : ResourceTypeManager {
 	}
 
 	nosResult Push(ResourceBase* r, void* pinInfo, nosNodeExecuteParams* params, nos::Name ringExecuteName, bool pushEventForCopyFrom) override {
-		Resource* res = GetResource<CPUTrivialResourceTypeManager>(r);
+		Resource* res = GetResource<CPUTrivialResource>(r);
 		res->FrameNumber = params->FrameNumber;
 		res->data = *(nosBuffer*)pinInfo;
 
@@ -476,7 +478,7 @@ struct CPUTrivialResourceTypeManager : ResourceTypeManager {
 
 	bool BeginCopyFrom(ResourceBase* r, const nosBuffer& pinData, nos::Buffer& outPinVal) override {
 		outPinVal = pinData;
-		Resource* res = GetResource<CPUTrivialResourceTypeManager>(r);
+		Resource* res = GetResource<CPUTrivialResource>(r);
 
 		return true;
 	}
@@ -484,19 +486,19 @@ struct CPUTrivialResourceTypeManager : ResourceTypeManager {
 
 struct TRing
 {
-	ResourceTypeManager* Manager;
-	bool rejectFieldMismatch = false;
+	ResourceInterface* ResInterface;
+	bool RejectFieldMismatch = false;
 
     void Resize(u32 size)
     {
         Write.Pool = {};
         Read.Pool = {};
 		for (auto& res : Resources)
-			Manager->DestroyResource(res.get());
+			ResInterface->DestroyResource(res.get());
         Resources.clear();
         for (u32 i = 0; i < size; ++i)
 		{
-			auto res = Manager->CreateResource();
+			auto res = ResInterface->CreateResource();
 
 			Resources.push_back(res);
             Write.Pool.push_back(res.get());
@@ -504,19 +506,19 @@ struct TRing
         Size = size;
     }
     
-	TRing(u32 ringSize, ResourceTypeManager* resourceManager) : Manager(resourceManager)
+	TRing(u32 ringSize, ResourceInterface* resourceManager) : ResInterface(resourceManager)
     {
         Resize(ringSize);
     }
 
     struct
     {
-        std::deque<ResourceTypeManager::ResourceBase *> Pool;
+        std::deque<ResourceInterface::ResourceBase *> Pool;
         std::mutex Mutex;
         std::condition_variable CV;
     } Write, Read;
 
-    std::vector<rc<ResourceTypeManager::ResourceBase>> Resources;
+    std::vector<rc<ResourceInterface::ResourceBase>> Resources;
 
     u32 Size = 0;
     nosVec2u Extent;
@@ -527,7 +529,7 @@ struct TRing
     {
         Stop();
 		for (auto& res : Resources)
-			Manager->DestroyResource(res.get());
+			ResInterface->DestroyResource(res.get());
         Resources.clear();
     }
 
@@ -577,7 +579,7 @@ struct TRing
         return Size - Write.Pool.size();
     }
 
-	ResourceTypeManager::ResourceBase*BeginPush()
+	ResourceInterface::ResourceBase*BeginPush()
     {
         std::unique_lock lock(Write.Mutex);
         while (Write.Pool.empty() && !Exit)
@@ -586,12 +588,12 @@ struct TRing
         }
         if (Exit)
             return 0;
-        ResourceTypeManager::ResourceBase* res = Write.Pool.front();
+        ResourceInterface::ResourceBase* res = Write.Pool.front();
         Write.Pool.pop_front();
         return res;
     }
 
-    void EndPush(ResourceTypeManager::ResourceBase* res)
+    void EndPush(ResourceInterface::ResourceBase* res)
     {
         {
             std::unique_lock lock(Read.Mutex);
@@ -601,7 +603,7 @@ struct TRing
         Read.CV.notify_one();
     }
 
-    void CancelPush(ResourceTypeManager::ResourceBase* res)
+    void CancelPush(ResourceInterface::ResourceBase* res)
 	{
 		{
 			std::unique_lock lock(Write.Mutex);
@@ -611,7 +613,7 @@ struct TRing
 		}
 		Write.CV.notify_one();
 	}
-	void CancelPop(ResourceTypeManager::ResourceBase* res)
+	void CancelPop(ResourceInterface::ResourceBase* res)
 	{
 		{
 			std::unique_lock lock(Read.Mutex);
@@ -621,7 +623,7 @@ struct TRing
 		Read.CV.notify_one();
 	}
 
-	ResourceTypeManager::ResourceBase*BeginPop(uint64_t timeoutMilliseconds)
+	ResourceInterface::ResourceBase*BeginPop(uint64_t timeoutMilliseconds)
     {
         std::unique_lock lock(Read.Mutex);
         if (!Read.CV.wait_for(lock, std::chrono::milliseconds(timeoutMilliseconds), [this]() {return !Read.Pool.empty() || Exit; }))
@@ -633,7 +635,7 @@ struct TRing
         return res;
     }
 
-    void EndPop(ResourceTypeManager::ResourceBase*res)
+    void EndPop(ResourceInterface::ResourceBase*res)
     {
         {
             std::unique_lock lock(Write.Mutex);
@@ -666,14 +668,14 @@ struct TRing
         return !Write.Pool.empty();
     }
 
-	ResourceTypeManager::ResourceBase*TryPush()
+	ResourceInterface::ResourceBase*TryPush()
     {
         if (CanPush())
             return BeginPush();
         return 0;
     }
 
-	ResourceTypeManager::ResourceBase*TryPush(const std::chrono::milliseconds timeout)
+	ResourceInterface::ResourceBase*TryPush(const std::chrono::milliseconds timeout)
     {
 		{
             std::unique_lock lock(Write.Mutex);
@@ -683,7 +685,7 @@ struct TRing
 		return TryPush();
     }
 
-	ResourceTypeManager::ResourceBase*TryPop(u64& frameNumber, u32 spare = 0)
+	ResourceInterface::ResourceBase*TryPop(u64& frameNumber, u32 spare = 0)
     {
         if (CanPop(frameNumber, spare))
             return BeginPop(20);
@@ -700,7 +702,7 @@ struct TRing
 		{
 			auto* slot = from.Pool.front();
 			from.Pool.pop_front();
-			Manager->Reset(slot);
+			ResInterface->Reset(slot);
 			to.Pool.push_back(slot);
 		}
     }
@@ -731,23 +733,23 @@ struct RingNodeBase : NodeContext
 	std::condition_variable ModeCV;
 	std::mutex ModeMutex;
 	std::atomic<RingMode> Mode = RingMode::CONSUME;
-	TypeInfo typeInfo;
-	ResourceTypeManager::ResourceBase* LastPopped = nullptr;
+	TypeInfo TypeInfo;
+	ResourceInterface::ResourceBase* LastPopped = nullptr;
 
 	void Init() {
-		ResourceTypeManager* resourceManager = nullptr;
-		if (typeInfo->TypeName == vulkanBufferTypeName)
-			resourceManager = new GPUBufferResourceTypeManager();
-		else if (typeInfo->TypeName == vulkanTextureTypeName)
-			resourceManager = new GPUTextureResourceTypeManager();
+		ResourceInterface* resource = nullptr;
+		if (TypeInfo->TypeName == vulkanBufferTypeName)
+			resource = new GPUBufferResource();
+		else if (TypeInfo->TypeName == vulkanTextureTypeName)
+			resource = new GPUTextureResource();
 		else
 		{
 			nosBuffer sample;
-			nosEngine.GetDefaultValueOfType(typeInfo->TypeName, &sample);
-			resourceManager = new CPUTrivialResourceTypeManager();
+			nosEngine.GetDefaultValueOfType(TypeInfo->TypeName, &sample);
+			resource = new CPUTrivialResource();
 		}
 
-		Ring = std::make_unique<TRing>(1, resourceManager);
+		Ring = std::make_unique<TRing>(1, resource);
 
 		Ring->Stop();
 		AddPinValueWatcher(NOS_NAME_STATIC("Size"), [this](nos::Buffer const& newSize, std::optional<nos::Buffer> oldVal) {
@@ -767,7 +769,7 @@ struct RingNodeBase : NodeContext
 			}
 			});
 		AddPinValueWatcher(NOS_NAME_STATIC("Input"), [this](nos::Buffer const& newBuf, std::optional<nos::Buffer> oldVal) {
-			bool needsRecreation = Ring->Manager->CheckNewResource(NOS_NAME_STATIC("Input"), newBuf, oldVal, true);
+			bool needsRecreation = Ring->ResInterface->CheckNewResource(NOS_NAME_STATIC("Input"), newBuf, oldVal, true);
 
 			if (needsRecreation)
 			{
@@ -777,7 +779,7 @@ struct RingNodeBase : NodeContext
 			}
 			});
 		AddPinValueWatcher(NOS_NAME_STATIC("Alignment"), [this](nos::Buffer const& newAlignment, std::optional<nos::Buffer> oldVal) {
-			bool needsRecreation = Ring->Manager->CheckNewResource(NOS_NAME_STATIC("Alignment"), newAlignment, oldVal, true);
+			bool needsRecreation = Ring->ResInterface->CheckNewResource(NOS_NAME_STATIC("Alignment"), newAlignment, oldVal, true);
 
 			if (needsRecreation)
 			{
@@ -788,7 +790,7 @@ struct RingNodeBase : NodeContext
 			});
 	}
 
-	RingNodeBase(const nosFbNode* node, OnRestartType onRestart) : NodeContext(node), OnRestart(onRestart), typeInfo(voidTypeName) {
+	RingNodeBase(const nosFbNode* node, OnRestartType onRestart) : NodeContext(node), OnRestart(onRestart), TypeInfo(voidTypeName) {
 		nosName typeName = voidTypeName;
 		for (auto& pin : Pins | std::views::values)
 		{
@@ -798,7 +800,7 @@ struct RingNodeBase : NodeContext
 			}
 		}
 		if (typeName != voidTypeName) {
-			typeInfo = nos::TypeInfo(typeName);
+			TypeInfo = nos::TypeInfo(typeName);
 			Init();
 		}
 	}
@@ -814,24 +816,24 @@ struct RingNodeBase : NodeContext
 
 	nosResult OnResolvePinDataTypes(nosResolvePinDataTypesParams* params) override
 	{
-		if (typeInfo.TypeName != voidTypeName)
+		if (TypeInfo.TypeName != voidTypeName)
 			return NOS_RESULT_FAILED;
 
-		typeInfo = TypeInfo(params->IncomingTypeName);
+		TypeInfo = nos::TypeInfo(params->IncomingTypeName);
 
 		for (size_t i = 0; i < params->PinCount; i++)
 		{
 			auto& pinInfo = params->Pins[i];
 			std::string pinName = nosEngine.GetString(pinInfo.Name);
 			if (pinName == "Input" || pinName == "Output")
-				pinInfo.OutResolvedTypeName = typeInfo->TypeName;
+				pinInfo.OutResolvedTypeName = TypeInfo->TypeName;
 		}
 
 		return NOS_RESULT_SUCCESS;
 	}
 
 	void OnPinUpdated(const nosPinUpdate* pinUpdate) {
-		if (typeInfo->TypeName == voidTypeName || Ring)
+		if (TypeInfo->TypeName == voidTypeName || Ring)
 			return;
 
 		Init();
@@ -839,7 +841,7 @@ struct RingNodeBase : NodeContext
 
 	nosResult ExecuteRingNode(nosNodeExecuteParams* params, bool pushEventForCopyFrom, nosName ringExecuteName, bool rejectFieldMismatch)
 	{
-		if (Ring->Exit || Ring->Size == 0 || !typeInfo)
+		if (Ring->Exit || Ring->Size == 0 || !TypeInfo)
 			return NOS_RESULT_FAILED;
 
 		NodeExecuteParams pins(params);
@@ -849,7 +851,7 @@ struct RingNodeBase : NodeContext
 		auto& inputPin = it->second;
 		assert(inputPin.Data);
 
-		void* input = Ring->Manager->GetPinInfo(pins[inputPinName], rejectFieldMismatch);
+		void* input = Ring->ResInterface->GetPinInfo(pins[inputPinName], rejectFieldMismatch);
 		if (input == nullptr) {
 			SendScheduleRequest(0);
 			return NOS_RESULT_FAILED;
@@ -860,15 +862,15 @@ struct RingNodeBase : NodeContext
 			nosEngine.LogI("Trying to push while ring is full");
 		}
 
-		typename ResourceTypeManager::ResourceBase* slot = nullptr;
+		typename ResourceInterface::ResourceBase* slot = nullptr;
 		{
 			nos::util::Stopwatch sw;
-			ScopedProfilerEvent({ .Name = "Wait For Empty Slot" });
+			ScopedProfilerEvent _({ .Name = "Wait For Empty Slot" });
 			slot = Ring->BeginPush();
 			nosEngine.WatchLog((GetName() + " Begin Push").c_str(), nos::util::Stopwatch::ElapsedString(sw.Elapsed()).c_str());
 		}
 
-		Ring->Manager->Push(slot, input, params, ringExecuteName, pushEventForCopyFrom);
+		Ring->ResInterface->Push(slot, input, params, ringExecuteName, pushEventForCopyFrom);
 		Ring->EndPush(slot);
 
 		if (Mode == RingMode::FILL && Ring->IsFull())
@@ -880,7 +882,7 @@ struct RingNodeBase : NodeContext
 		return NOS_RESULT_SUCCESS;
 	}
 
-	nosResult CommonCopyFrom(nosCopyInfo* cpy, ResourceTypeManager::ResourceBase** foundSlot) {
+	nosResult CommonCopyFrom(nosCopyInfo* cpy, ResourceInterface::ResourceBase** foundSlot) {
 		if (LastPopped != nullptr)
 		{
 			DEBUG_BREAK
@@ -898,9 +900,9 @@ struct RingNodeBase : NodeContext
 
 		auto effectiveSpareCount = SpareCount.load(); // TODO: * (1 + u32(th->Interlaced()));
 
-		ResourceTypeManager::ResourceBase* slot = nullptr;
+		ResourceInterface::ResourceBase* slot = nullptr;
 		{
-			ScopedProfilerEvent({ .Name = "Wait For Filled Slot" });
+			ScopedProfilerEvent _({ .Name = "Wait For Filled Slot" });
 			slot = Ring->BeginPop(100);
 		}
 		// If timeout or exit
@@ -909,7 +911,7 @@ struct RingNodeBase : NodeContext
 
 		nosResourceShareInfo output;
 		nos::Buffer outPinVal;
-		bool changePinValue = Ring->Manager->BeginCopyFrom(slot, *cpy->PinData, outPinVal);
+		bool changePinValue = Ring->ResInterface->BeginCopyFrom(slot, *cpy->PinData, outPinVal);
 		if (changePinValue) {
 			nosEngine.SetPinValueByName(NodeId, NOS_NAME_STATIC("Output"), outPinVal);
 		}
@@ -967,7 +969,7 @@ struct RingNodeBase : NodeContext
 		}
 		if (NeedsRecreation)
 		{
-			Ring = std::make_unique<TRing>(Ring->Size, Ring->Manager);
+			Ring = std::make_unique<TRing>(Ring->Size, Ring->ResInterface);
 			Ring->Exit = true;
 			NeedsRecreation = false;
 		}
@@ -984,7 +986,7 @@ struct RingNodeBase : NodeContext
 		nosEngine.SendPathRestart(PinName2Id[NOS_NAME_STATIC("Input")]);
 	}
 
-	~RingNodeBase()
+	~RingNodeBase() override
 	{
 		if (LastPopped)
 			delete LastPopped;
