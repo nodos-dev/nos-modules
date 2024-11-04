@@ -52,7 +52,7 @@ struct ResourceTypeManager {
 	virtual void Reset(ResourceBase* res) = 0;
 	virtual void WaitForDownloadToEnd(ResourceBase* res, const std::string& nodeTypeName, const std::string& nodeDisplayName, nosCopyInfo* cpy) = 0;
 	virtual void SendCopyCmdToGPU(ResourceBase* res, nosCopyInfo* cpy, nos::fb::UUID NodeId) = 0;
-	virtual nosResult Push(ResourceBase* r, void* pinInfo, nosNodeExecuteParams* params, nos::Name ringExecuteName) = 0;
+	virtual nosResult Push(ResourceBase* r, void* pinInfo, nosNodeExecuteParams* params, nos::Name ringExecuteName, bool pushEventForCopyFrom) = 0;
 	virtual void* GetPinInfo(nosPinInfo& pin, bool rejectFieldMismatch) = 0;
 	// Returns false if resource is compatible with the current sample
 	virtual bool CheckNewResource(nosName updateName, nosBuffer newVal, std::optional<nos::Buffer> oldVal, bool updateSample) = 0;
@@ -70,7 +70,6 @@ struct GPUTextureResourceTypeManager : ResourceTypeManager {
 		Resource() { ResourceTypeId = RESOURCETYPEID; }
 	};
 	typedef nosResourceShareInfo PinData;
-	bool useSlotEvent = false;
 	nosTextureFieldType WantedField = NOS_TEXTURE_FIELD_TYPE_UNKNOWN;
 	static constexpr nosTextureInfo SampleTexture = nosTextureInfo{
 		.Width = 1920,
@@ -168,7 +167,7 @@ struct GPUTextureResourceTypeManager : ResourceTypeManager {
 		return pin.Data->Data;
 	}
 
-	nosResult Push(ResourceBase* r, void* pinInfo, nosNodeExecuteParams* params, nos::Name ringExecuteName) override {
+	nosResult Push(ResourceBase* r, void* pinInfo, nosNodeExecuteParams* params, nos::Name ringExecuteName, bool pushEventForCopyFrom) override {
 		Resource* res = GetResource<GPUTextureResourceTypeManager>(r);
 		res->FrameNumber = params->FrameNumber;
 
@@ -190,7 +189,7 @@ struct GPUTextureResourceTypeManager : ResourceTypeManager {
 
 		nosVulkan->Begin2(&beginParams);
 		nosVulkan->Copy(cmd, &input, &res->ShareInfo, 0);
-		nosCmdEndParams end{ .ForceSubmit = NOS_TRUE, .OutGPUEventHandle = useSlotEvent ? &res->Params.WaitEvent : nullptr };
+		nosCmdEndParams end{ .ForceSubmit = NOS_TRUE, .OutGPUEventHandle = pushEventForCopyFrom ? &res->Params.WaitEvent : nullptr };
 		nosVulkan->End(cmd, &end);
 		return NOS_RESULT_SUCCESS;
 	}
@@ -251,7 +250,6 @@ struct GPUBufferResourceTypeManager : ResourceTypeManager {
 		} Params{};
 		Resource() { ResourceTypeId = RESOURCETYPEID; }
 	};
-	bool useSlotEvent = false;
 	nosTextureFieldType WantedField = NOS_TEXTURE_FIELD_TYPE_UNKNOWN;
 	static constexpr nosBufferInfo SampleBuffer =
 		nosBufferInfo{ .Size = 1,
@@ -346,7 +344,7 @@ struct GPUBufferResourceTypeManager : ResourceTypeManager {
 		return pin.Data->Data;
 	}
 
-	nosResult Push(ResourceBase* r, void* pinInfo, nosNodeExecuteParams* params, nos::Name ringExecuteName) override {
+	nosResult Push(ResourceBase* r, void* pinInfo, nosNodeExecuteParams* params, nos::Name ringExecuteName, bool pushEventForCopyFrom) override {
 		Resource* res = GetResource<GPUBufferResourceTypeManager>(r);
 		res->FrameNumber = params->FrameNumber;
 
@@ -367,7 +365,7 @@ struct GPUBufferResourceTypeManager : ResourceTypeManager {
 
 		nosVulkan->Begin2(&beginParams);
 		nosVulkan->Copy(cmd, &input, &res->ShareInfo, 0);
-		nosCmdEndParams end{ .ForceSubmit = NOS_TRUE, .OutGPUEventHandle = useSlotEvent ? &res->Params.WaitEvent : nullptr };
+		nosCmdEndParams end{ .ForceSubmit = NOS_TRUE, .OutGPUEventHandle = pushEventForCopyFrom ? &res->Params.WaitEvent : nullptr };
 		nosVulkan->End(cmd, &end);
 		return NOS_RESULT_SUCCESS;
 	}
@@ -462,7 +460,7 @@ struct CPUTrivialResourceTypeManager : ResourceTypeManager {
 		return (void*)pin.Data;
 	}
 
-	nosResult Push(ResourceBase* r, void* pinInfo, nosNodeExecuteParams* params, nos::Name ringExecuteName) override {
+	nosResult Push(ResourceBase* r, void* pinInfo, nosNodeExecuteParams* params, nos::Name ringExecuteName, bool pushEventForCopyFrom) override {
 		Resource* res = GetResource<CPUTrivialResourceTypeManager>(r);
 		res->FrameNumber = params->FrameNumber;
 		res->data = *(nosBuffer*)pinInfo;
@@ -839,7 +837,7 @@ struct RingNodeBase : NodeContext
 		Init();
 	}
 
-	nosResult ExecuteRingNode(nosNodeExecuteParams* params, bool useSlotEvent, nosName ringExecuteName, bool rejectFieldMismatch)
+	nosResult ExecuteRingNode(nosNodeExecuteParams* params, bool pushEventForCopyFrom, nosName ringExecuteName, bool rejectFieldMismatch)
 	{
 		if (Ring->Exit || Ring->Size == 0 || !typeInfo)
 			return NOS_RESULT_FAILED;
@@ -870,7 +868,7 @@ struct RingNodeBase : NodeContext
 			nosEngine.WatchLog((GetName() + " Begin Push").c_str(), nos::util::Stopwatch::ElapsedString(sw.Elapsed()).c_str());
 		}
 
-		Ring->Manager->Push(slot, input, params, ringExecuteName);
+		Ring->Manager->Push(slot, input, params, ringExecuteName, pushEventForCopyFrom);
 		Ring->EndPush(slot);
 
 		if (Mode == RingMode::FILL && Ring->IsFull())
