@@ -901,6 +901,11 @@ struct RingNodeBase : NodeContext
 		if (!Ring || Ring->Exit)
 			return NOS_RESULT_FAILED;
 		SendRingStats();
+
+		// This is needed since out pins are created as dirty and CopyFrom is called for dirty pins.
+		if (!IsOutLive)
+			return NOS_RESULT_SUCCESS;
+
 		if (Mode == RingMode::FILL)
 		{
 			//Sleep for 100 ms & if still Fill, return pending
@@ -911,9 +916,6 @@ struct RingNodeBase : NodeContext
 
 		auto effectiveSpareCount = SpareCount.load(); // TODO: * (1 + u32(th->Interlaced()));
 
-		// This is needed since out pins are created as dirty and CopyFrom is called for dirty pins.
-		if (!IsOutLive)
-			return NOS_RESULT_SUCCESS;
 
 		ResourceInterface::ResourceBase* slot = nullptr;
 		{
