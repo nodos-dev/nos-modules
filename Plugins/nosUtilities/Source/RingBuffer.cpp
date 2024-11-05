@@ -27,7 +27,7 @@ struct RingBufferNodeContext : RingNodeBase
 	nosResult CopyFrom(nosCopyInfo* cpy) override {
 		ResourceInterface::ResourceBase* slot = nullptr;
 		auto beginResult = CommonCopyFrom(cpy, &slot);
-		if (beginResult != NOS_RESULT_SUCCESS)
+		if (beginResult != NOS_RESULT_SUCCESS || !slot)
 			return beginResult;
 
 		Ring->ResInterface->WaitForDownloadToEnd(slot, "RingBuffer", NodeName.AsString(), cpy);
@@ -46,6 +46,7 @@ struct RingBufferNodeContext : RingNodeBase
 
 	void OnEndFrame(nosUUID pinId, bool causedByCancel) override
 	{
+		RingNodeBase::OnEndFrame(pinId, causedByCancel);
 		if (pinId == PinName2Id[NOS_NAME_STATIC("Output")])
 		{
 			if (!LastPopped)

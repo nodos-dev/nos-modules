@@ -27,7 +27,7 @@ struct BoundedQueueNodeContext : RingNodeBase
 	nosResult CopyFrom(nosCopyInfo* cpy) override {
 		ResourceInterface::ResourceBase* slot = nullptr;
 		auto beginResult = CommonCopyFrom(cpy, &slot);
-		if(beginResult != NOS_RESULT_SUCCESS)
+		if(beginResult != NOS_RESULT_SUCCESS || !slot)
 			return beginResult;
 
 		Ring->ResInterface->SendCopyCmdToGPU(slot, cpy, NodeId);

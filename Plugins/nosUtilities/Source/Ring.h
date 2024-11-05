@@ -716,6 +716,7 @@ struct RingNodeBase : NodeContext
 		FILL,
 	};
 	std::unique_ptr<TRing> Ring = nullptr;
+	std::atomic_bool IsOutLive = false;
 
 	// If reset, then reset the ring on path stop
 	// If wait until full, do not output until ring is full & then start consuming
@@ -792,6 +793,10 @@ struct RingNodeBase : NodeContext
 
 	RingNodeBase(const nosFbNode* node, OnRestartType onRestart) : NodeContext(node), OnRestart(onRestart), TypeInfo(voidTypeName) {
 		nosName typeName = voidTypeName;
+		if(auto* pins = node->pins())
+			for (auto* pin : *pins)
+				if (pin->name()->c_str() == outputPinName)
+					IsOutLive = pin->live();
 		for (auto& pin : Pins | std::views::values)
 		{
 			if (pin.TypeName != voidTypeName && (pin.Name == outputPinName || pin.Name == inputPinName))
@@ -878,6 +883,12 @@ struct RingNodeBase : NodeContext
 			Mode = RingMode::CONSUME;
 			ModeCV.notify_all();
 		}
+		if (!IsOutLive)
+		{
+			flatbuffers::FlatBufferBuilder fbb;
+			HandleEvent(CreateAppEvent(fbb, nos::CreatePartialPinUpdateDirect(fbb, &PinName2Id[NOS_NAME_STATIC("Output")], 0, 0, 0, 0, nos::Action::NOP, 0, fb::ShowAs::NONE, nos::Action::SET)));
+			IsOutLive = true;
+		}
 
 		return NOS_RESULT_SUCCESS;
 	}
@@ -899,6 +910,10 @@ struct RingNodeBase : NodeContext
 		}
 
 		auto effectiveSpareCount = SpareCount.load(); // TODO: * (1 + u32(th->Interlaced()));
+
+		// This is needed since out pins are created as dirty and CopyFrom is called for dirty pins.
+		if (!IsOutLive)
+			return NOS_RESULT_SUCCESS;
 
 		ResourceInterface::ResourceBase* slot = nullptr;
 		{
@@ -984,6 +999,19 @@ struct RingNodeBase : NodeContext
 	void SendPathRestart()
 	{
 		nosEngine.SendPathRestart(PinName2Id[NOS_NAME_STATIC("Input")]);
+	}
+
+	void OnEndFrame(nosUUID pinId, bool causedByCancel)
+	{
+		if (!causedByCancel)
+			return;
+		if (pinId == PinName2Id[NOS_NAME_STATIC("Output")])
+			return;
+		if(!IsOutLive)
+			return;
+		flatbuffers::FlatBufferBuilder fbb;
+		HandleEvent(CreateAppEvent(fbb, nos::CreatePartialPinUpdateDirect(fbb, &PinName2Id[NOS_NAME_STATIC("Output")], 0, 0, 0, 0, nos::Action::NOP, 0, fb::ShowAs::NONE, nos::Action::RESET)));
+		IsOutLive = false;
 	}
 
 	~RingNodeBase() override
