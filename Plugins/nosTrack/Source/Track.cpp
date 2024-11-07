@@ -209,7 +209,7 @@ void TrackNodeContext::SignalRestart()
 
 void TrackNodeContext::OnPinValueChanged(nos::Name pinName, nosUUID pinId, nosBuffer val)
 {
-#define SET_VALUE(ty, name, var) if(pinName == NOS_NAME_STATIC(#name)) Args.##var = *(ty*)value;
+#define SET_VALUE(ty, name, var) if(pinName == NOS_NAME_STATIC(#name)) Args.var = *(ty*)value;
 
 	void* value = val.Data;
 	SET_VALUE(bool, NegateX, NegatePos.x);
@@ -374,9 +374,9 @@ f32 CalculateDistortionScale(f32 AspectRatio, glm::vec2 k1k2)
 
 glm::vec3 TrackNodeContext::Swizzle(glm::vec3 v, glm::bvec3 n, u8 control)
 {
-	if (control & 0b001) v = v.zyx;
-	if (control & 0b010) v = v.yzx;
-	if (control & 0b100) v = v.zxy;
+	if (control & 0b001) v = v.zyx();
+	if (control & 0b010) v = v.yzx();
+	if (control & 0b100) v = v.zxy();
 	return glm::mix(v, -v, n);
 }
 
@@ -385,7 +385,7 @@ nos::Buffer TrackNodeContext::UpdateTrackOut(fb::TTrack& outTrack)
 	auto xf = Args;
 
 	glm::vec3 pos = Swizzle(reinterpret_cast<glm::vec3&>(outTrack.location), xf.NegatePos, (u8)xf.CoordinateSystem);
-	glm::vec3 rot = Swizzle(reinterpret_cast<glm::vec3&>(outTrack.rotation).zyx, xf.NegateRot.zyx, (u8)xf.RotationSystem).zyx;
+	glm::vec3 rot = Swizzle(reinterpret_cast<glm::vec3&>(outTrack.rotation).zyx(), xf.NegateRot.zyx(), (u8)xf.RotationSystem).zyx();
 
 	auto CR = MakeRotation(Args.CameraRotation);
 	auto TR = MakeRotation(rot);
@@ -488,9 +488,8 @@ void TrackNodeContext::Run()
 				restartOnFirstSuccess = true;
 			}
 		}
-		if (sock)
+		if (sock && sock->is_open())
 		{
-			sock->shutdown(asio::socket_base::shutdown_both);
 			sock->close();
 			sock = nullptr;
 		}

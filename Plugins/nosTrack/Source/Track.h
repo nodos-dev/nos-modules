@@ -3,8 +3,10 @@
 
 #define GLM_FORCE_SWIZZLE
 
+#if defined(_WIN32)
 #define WINVER 0x0A00
 #define _WIN32_WINNT 0x0A00
+#endif
 
 #include <nosUtil/Thread.h>
 #include <AppService_generated.h>
