@@ -9,6 +9,5 @@
     "trigger_publish_globs": [
         "Source/**",
         "CMakeLists.txt"
-    ],
-    "target_platforms": ["x86_64-windows"]
+    ]
 }
