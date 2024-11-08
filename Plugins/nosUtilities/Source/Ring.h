@@ -885,8 +885,7 @@ struct RingNodeBase : NodeContext
 		}
 		if (!IsOutLive)
 		{
-			flatbuffers::FlatBufferBuilder fbb;
-			HandleEvent(CreateAppEvent(fbb, nos::CreatePartialPinUpdateDirect(fbb, &PinName2Id[NOS_NAME_STATIC("Output")], 0, 0, 0, 0, nos::Action::NOP, 0, fb::ShowAs::NONE, nos::Action::SET)));
+			ChangePinLiveness(NOS_NAME_STATIC("Output"), true);
 			IsOutLive = true;
 		}
 
@@ -1011,8 +1010,7 @@ struct RingNodeBase : NodeContext
 			return;
 		if(!IsOutLive)
 			return;
-		flatbuffers::FlatBufferBuilder fbb;
-		HandleEvent(CreateAppEvent(fbb, nos::CreatePartialPinUpdateDirect(fbb, &PinName2Id[NOS_NAME_STATIC("Output")], 0, 0, 0, 0, nos::Action::NOP, 0, fb::ShowAs::NONE, nos::Action::RESET)));
+		ChangePinLiveness(NOS_NAME_STATIC("Output"), false);
 		IsOutLive = false;
 	}
 
