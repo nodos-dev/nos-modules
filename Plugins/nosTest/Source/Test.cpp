@@ -123,6 +123,27 @@ nosResult RegisterFrameInterpolator(nosNodeFunctions* nodeFunctions);
 
 struct TestPluginFunctions : PluginFunctions
 {
+	nosResult Initialize() override
+	{
+		nosTypeInfo* leakedTypeInfo{};
+		auto res  = nosEngine.GetTypeInfo(NOS_NAME_STATIC("nos.test.TestStruct"), &leakedTypeInfo);
+		assert(res == NOS_RESULT_SUCCESS);
+
+		nosResourceShareInfo leakedTextureInfo{.Info={.Type = NOS_RESOURCE_TYPE_TEXTURE, .Texture={.Width = 1, .Height = 1, .Format = NOS_FORMAT_R8G8B8A8_UNORM}}};
+		res = nosVulkan->CreateResource(&leakedTextureInfo);
+		assert(res == NOS_RESULT_SUCCESS);
+		nosResourceShareInfo leakedBufferInfo{ .Info = {.Type = NOS_RESOURCE_TYPE_BUFFER, .Buffer = {.Size = 1, .Usage = NOS_BUFFER_USAGE_TRANSFER_DST}} };
+		res = nosVulkan->CreateResource(&leakedBufferInfo);
+		assert(res == NOS_RESULT_SUCCESS);
+		nosGPUEventResource leakedEventResource{};
+		res = nosVulkan->CreateGPUEventResource(&leakedEventResource);
+		assert(res == NOS_RESULT_SUCCESS);
+		res = nosVulkan->IncreaseGPUEventResourceRefCount(leakedEventResource);
+		assert(res == NOS_RESULT_SUCCESS);
+		res = nosVulkan->DestroyGPUEventResource(&leakedEventResource);
+		assert(res == NOS_RESULT_SUCCESS);
+		return NOS_RESULT_SUCCESS;
+	}
 	nosResult ExportNodeFunctions(size_t& outCount, nosNodeFunctions** outFunctions) override
 	{
 		outCount = 11;
