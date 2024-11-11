@@ -285,6 +285,7 @@ struct BreakNode : NodeContext
 			return NOS_RESULT_SUCCESS;
 		auto pins = NodeExecuteParams(params);
 		SetOutputValues(pins[NSN_Input].Data);
+		params->MarkAllOutsDirty = false;
 		return NOS_RESULT_SUCCESS;
 	}
 };
