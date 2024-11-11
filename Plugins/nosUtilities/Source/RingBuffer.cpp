@@ -44,9 +44,9 @@ struct RingBufferNodeContext : RingNodeBase
 		return ExecuteRingNode(params, true, NOS_NAME_STATIC("RingBuffer"), true);
 	}
 
-	void OnEndFrame(nosUUID pinId, bool causedByCancel) override
+	void OnEndFrame(nosUUID pinId, nosEndFrameCause cause) override
 	{
-		RingNodeBase::OnEndFrame(pinId, causedByCancel);
+		RingNodeBase::OnEndFrame(pinId, cause);
 		if (pinId == PinName2Id[NOS_NAME_STATIC("Output")])
 		{
 			if (!LastPopped)

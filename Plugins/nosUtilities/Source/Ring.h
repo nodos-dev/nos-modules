@@ -1002,9 +1002,9 @@ struct RingNodeBase : NodeContext
 		nosEngine.SendPathRestart(PinName2Id[NOS_NAME_STATIC("Input")]);
 	}
 
-	void OnEndFrame(nosUUID pinId, bool causedByCancel)
+	void OnEndFrame(nosUUID pinId, nosEndFrameCause cause) override
 	{
-		if (!causedByCancel)
+		if (cause != NOS_END_FRAME_FAILED)
 			return;
 		if (pinId == PinName2Id[NOS_NAME_STATIC("Output")])
 			return;
