@@ -49,42 +49,41 @@ struct EvalNodeContext : NodeContext
 			if (ShowExpressionInNode != newVal)
 			{
 				ShowExpressionInNode = newVal;
-				if (Status.Type == fb::NodeStatusMessageType::INFO)
-				{
-					if (!ShowExpressionInNode)
-						ClearNodeStatusMessages();
-					else
-						SetNodeStatusMessage(Status.Message, Status.Type);
-				}
+				Compile();
+			}
+		}
+		else if (pinName == NOS_NAME("Expression"))
+		{
+			auto exprStr = InterpretPinValue<const char>(value.Data);
+			if (strlen(exprStr) == 0)
+				SetStatus("No math expression is provided", fb::NodeStatusMessageType::WARNING);
+			nosEngine.LogI("Compiling expression: %s", exprStr);
+			if (strcmp(Expression.c_str(), exprStr) != 0)
+			{
+				Expression = exprStr;
+				Compile();
 			}
 		}
 	}
 
 	bool ShowExpressionInNode = false;
 
-	void SetPinOrphan(const nosUUID& pinId, bool orphan, const char* message = nullptr)
-	{
-		flatbuffers::FlatBufferBuilder fbb;
-		HandleEvent(CreateAppEvent(fbb, CreatePartialPinUpdateDirect(fbb, &pinId, 0, fb::CreateOrphanStateDirect(fbb, orphan, message))));
-	}
-
-	void SetPinOrphan(nos::Name pinName, bool orphan, const char* message = nullptr)
-	{
-		auto pinId = *GetPinId(pinName);
-		SetPinOrphan(pinId, orphan, message);
-	}
-
 	void SetStatus(const std::string& message, fb::NodeStatusMessageType type)
 	{
-		if (message == Status.Message && type == Status.Type)
-			return;
-		flatbuffers::FlatBufferBuilder fbb;
-		auto pinId = *GetPinId(NOS_NAME("Result"));
+		nosEngine.LogD("Eval: Setting node status");
 		if (type == fb::NodeStatusMessageType::FAILURE)
-			SetPinOrphan(pinId, true, message.c_str());
-		else 
-			SetPinOrphan(pinId, false);
-		SetNodeStatusMessage(message, type);
+		{
+			SetPinOrphan(NOS_NAME("Result"), true, message.c_str());
+			SetNodeStatusMessage(message, type);
+		}
+		else
+		{
+			SetPinOrphan(NOS_NAME("Result"), false);
+			if (ShowExpressionInNode)
+				SetNodeStatusMessage(message, type);
+			else
+				ClearNodeStatusMessages();
+		}
 		Status = { message, type };
 	}
 
@@ -226,9 +225,7 @@ struct EvalNodeContext : NodeContext
 			HandleEvent(CreateAppEvent(fbb, CreatePartialNodeUpdateDirect(fbb, &NodeId, ClearFlags::NONE, &pinsToRemove)));
 			break;
 		}
-
 		}
-
 	}
 
 	bool Compile()
@@ -260,29 +257,14 @@ struct EvalNodeContext : NodeContext
 			SetStatus(err.what(), fb::NodeStatusMessageType::FAILURE);
 			return false;
 		}
-		if (ShowExpressionInNode)
-			SetStatus(Expression, fb::NodeStatusMessageType::INFO);
+		SetStatus(Expression, fb::NodeStatusMessageType::INFO);
 		return true;
 	}
 
 	nosResult ExecuteNode(nosNodeExecuteParams* params) override
 	{
 		nos::NodeExecuteParams pins(params);
-
-		auto exprStr = InterpretPinValue<const char>(pins[NOS_NAME("Expression")].Data->Data);
-		if (strlen(exprStr) == 0)
-		{
-			SetStatus("No math expression is provided", fb::NodeStatusMessageType::WARNING);
-			return NOS_RESULT_SUCCESS;
-		}
-
-		if (strcmp(Expression.c_str(), exprStr) != 0)
-		{
-			Expression = exprStr;
-			if (!Compile())
-				return NOS_RESULT_FAILED;
-		}
-
+		
 		for (auto const& [uniqueName, value] : Variables)
 		{
 			auto pinValue = *InterpretPinValue<double>(pins[uniqueName].Data->Data);
