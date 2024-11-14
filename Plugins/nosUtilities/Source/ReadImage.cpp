@@ -51,6 +51,21 @@ struct ReadImageContext : NodeContext
 		CurrentState(State::Idle), 
 		TimeStarted(Clock::now())
 	{
+		std::filesystem::path path;
+		bool sRGB = false;
+		for (auto* pin : *node->pins())
+		{
+			auto name = pin->name()->c_str();
+			auto data = pin->data();
+			if (!data || !data->size())
+				continue;
+			if (strcmp(name, "Path") == 0)
+				path = std::string(reinterpret_cast<const char*>(data->data()));
+			else if (strcmp(name, "sRGB") == 0)
+				sRGB = *reinterpret_cast<const bool*>(data->data());
+		}
+		if (!path.empty())
+			LoadImage(path, *GetPinId(NSN_Out), sRGB);
 	}
 
 	~ReadImageContext()
@@ -99,33 +114,16 @@ struct ReadImageContext : NodeContext
 		}
 	}
 
-	static nosResult OnImageLoaded(void* ctx, nosFunctionExecuteParams* params)
+	nosResult LoadImage(std::filesystem::path path, nosUUID outPinId, bool sRGB)
 	{
-		auto c = (ReadImageContext*)ctx;
-		c->FlushImageDecRefCallbacks();
-		return NOS_RESULT_SUCCESS;
-	}
-	
-	static nosResult Load(void* ctx, nosFunctionExecuteParams* params)
-	{
-		auto c = (ReadImageContext*)ctx;
-		if (c->CurrentState == State::Loading)
-		{
-			nosEngine.LogE("Read Image is already loading an image.");
-			return NOS_RESULT_FAILED;
-		}
-
-		c->UpdateStatus(State::Loading);
-
-		nos::NodeExecuteParams nodeParams(params->ParentNodeExecuteParams);
-		std::filesystem::path path = InterpretPinValue<const char>(nodeParams[NSN_Path].Data->Data);
-		c->FilePath = path.string();
+		UpdateStatus(State::Loading);
+		FilePath = path.string();
 		try
 		{
 			if (!std::filesystem::exists(path))
 			{
 				nosEngine.LogE("Read Image cannot load file %s", path.string().c_str());
-				c->UpdateStatus(State::Failed);
+				UpdateStatus(State::Failed);
 				return NOS_RESULT_FAILED;
 			}
 
@@ -134,7 +132,7 @@ struct ReadImageContext : NodeContext
 
 			if (w < 0 || h < 0 || n < 0) {
 				nosEngine.LogE("STBI couldn't load image from %s.", path.string().c_str());
-				c->UpdateStatus(State::Failed);
+				UpdateStatus(State::Failed);
 				return NOS_RESULT_FAILED;
 			}
 
@@ -143,13 +141,10 @@ struct ReadImageContext : NodeContext
 							.Texture = {.Width = (u32)w, .Height = (u32)h, .Format = NOS_FORMAT_R8G8B8A8_UNORM, .FieldType = NOS_TEXTURE_FIELD_TYPE_PROGRESSIVE}} };
 
 			// unless reading raw bytes, this is useless since samplers convert to linear space automatically
-			if (*InterpretPinValue<bool>(nodeParams[NSN_sRGB].Data->Data))
+			if (sRGB)
 				outRes.Info.Texture.Format = NOS_FORMAT_R8G8B8A8_SRGB;
 
-			std::filesystem::path path = InterpretPinValue<const char>(nodeParams[NSN_Path].Data->Data);
-			auto outPinId = nodeParams[NSN_Out].Id;
-
-			std::thread([c, outPinId, path, outRes]() mutable {
+			std::thread([this, outPinId, path, outRes]() mutable {
 				try
 				{
 					if (!std::filesystem::exists(path))
@@ -172,7 +167,7 @@ struct ReadImageContext : NodeContext
 					nosCmd cmd{};
 					nosCmdBeginParams beginParams {
 						.Name = NOS_NAME("ReadImage Load"),
-						.AssociatedNodeId = c->NodeId,
+						.AssociatedNodeId = this->NodeId,
 						.OutCmdHandle = &cmd
 					};
 					nosVulkan->Begin2(&beginParams);
@@ -183,13 +178,13 @@ struct ReadImageContext : NodeContext
 					nosEngine.SetPinValue(outPinId, nos::Buffer::From(vkss::ConvertTextureInfo(outRes)));
 
 					{
-						std::lock_guard<std::mutex> lock(c->OutImageDecRefCallbacksMutex);
-						c->OutImageDecRefCallbacks.push([c, outRes]() {
+						std::lock_guard<std::mutex> lock(this->OutImageDecRefCallbacksMutex);
+						this->OutImageDecRefCallbacks.push([this, outRes]() {
 							nosVulkan->DestroyResource(&outRes);
 						});
 					}
 					
-					nosEngine.CallNodeFunction(c->NodeId, NOS_NAME_STATIC("OnImageLoaded"));
+					nosEngine.CallNodeFunction(this->NodeId, NOS_NAME_STATIC("OnImageLoaded"));
 
 					free(img);
 				}
@@ -198,15 +193,39 @@ struct ReadImageContext : NodeContext
 					nosEngine.LogE("Error while loading image: %s", e.what());
 				}
 
-				c->UpdateStatus(State::Idle);
+				UpdateStatus(State::Idle);
 			}).detach();
 		}
 		catch (const std::exception& e)
 		{
 			nosEngine.LogE("Error while loading image: %s", e.what());
-			c->UpdateStatus(State::Failed);
+			UpdateStatus(State::Failed);
 		}
 		return NOS_RESULT_SUCCESS;
+	}
+
+	static nosResult OnImageLoaded(void* ctx, nosFunctionExecuteParams* params)
+	{
+		auto c = (ReadImageContext*)ctx;
+		c->FlushImageDecRefCallbacks();
+		return NOS_RESULT_SUCCESS;
+	}
+	
+	static nosResult Load(void* ctx, nosFunctionExecuteParams* params)
+	{
+		auto c = (ReadImageContext*)ctx;
+		if (c->CurrentState == State::Loading)
+		{
+			nosEngine.LogE("Read Image is already loading an image.");
+			return NOS_RESULT_FAILED;
+		}
+
+		nos::NodeExecuteParams nodeParams(params->ParentNodeExecuteParams);
+		std::filesystem::path path = InterpretPinValue<const char>(nodeParams[NSN_Path].Data->Data);
+		auto outPinId = nodeParams[NSN_Out].Id;
+		auto sRGB = *InterpretPinValue<bool>(nodeParams[NSN_sRGB].Data->Data);
+
+		return c->LoadImage(path, outPinId, sRGB);
 	}
 
 	static nosResult GetFunctions(size_t* count, nosName* names, nosPfnNodeFunctionExecute* fns)
