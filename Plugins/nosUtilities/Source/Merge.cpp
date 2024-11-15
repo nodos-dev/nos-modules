@@ -9,22 +9,6 @@
 
 #include "Names.h"
 
-namespace nos
-{
-std::seed_seq Seed()
-{
-	std::random_device rd;
-	auto seed_data = std::array<int, std::mt19937::state_size>{};
-	std::generate(std::begin(seed_data), std::end(seed_data), std::ref(rd));
-	return std::seed_seq(std::begin(seed_data), std::end(seed_data));
-}
-
-std::seed_seq seed = Seed();
-std::mt19937 mtengine(seed);
-uuids::uuid_random_generator generator(mtengine);
-
-}
-
 namespace nos::utilities
 {
 
@@ -47,14 +31,22 @@ struct MergePin
 
 struct MergeContext : NodeContext
 {
-	uint32_t TextureCount = 2;
 	std::vector<MergePin> AddedPins;
+
+	static uint32_t GetTextureCount(size_t pinCount)
+	{
+		return (pinCount - 2) / 3;
+	}
+
+	uint32_t GetTextureCount() const
+	{
+		return MergeContext::GetTextureCount(Pins.size());
+	}
 
 	MergeContext(nosFbNode const* node) : NodeContext(node) 
 	{
-		TextureCount = (node->pins()->size() - 2) / 3;
-
-		if (TextureCount > 2)
+		auto textureCount = GetTextureCount();
+		if (textureCount > 2)
 		{
 			flatbuffers::FlatBufferBuilder fbb;
 			std::vector<flatbuffers::Offset<PartialPinUpdate>> updatePins;
@@ -71,7 +63,7 @@ struct MergeContext : NodeContext
 			}
 
 			// Refill AddedPins
-			for (int i = 2; i < TextureCount; ++i)
+			for (int i = 2; i < textureCount; ++i)
 			{
 				std::string count = std::to_string(i);
 				std::string texPinName = "Texture_" + count;
@@ -107,7 +99,8 @@ struct MergeContext : NodeContext
 		const nosResourceShareInfo output = vkss::DeserializeTextureInfo(values[NSN_Out]);
 
 		std::vector<nosShaderBinding> bindings;
-		std::vector<nosResourceShareInfo> textures(TextureCount);
+		auto textureCount = GetTextureCount(params->PinCount);
+		std::vector<nosResourceShareInfo> textures(textureCount);
 
 		std::array<int, 16> blends = {};
 		std::array<float, 16> opacities = {};
@@ -139,7 +132,7 @@ struct MergeContext : NodeContext
 
 		bindings.emplace_back(vkss::ShaderBinding(NSN_Blends, blends));
 		bindings.emplace_back(vkss::ShaderBinding(NSN_Opacities, opacities));
-		bindings.emplace_back(vkss::ShaderBinding(NSN_Texture_Count, TextureCount));
+		bindings.emplace_back(vkss::ShaderBinding(NSN_Texture_Count, textureCount));
 		bindings.emplace_back(vkss::ShaderBinding(NSN_Textures, textures.data(), textures.size()));
 
 		nosRunPassParams mergePass{
@@ -164,7 +157,7 @@ struct MergeContext : NodeContext
 		std::vector<flatbuffers::Offset<nos::ContextMenuItem>> items = {
 			nos::CreateContextMenuItemDirect(fbb, "Add Texture", 1),
 		};
-		if (TextureCount > 2)
+		if (GetTextureCount() > 2)
 			items.push_back(nos::CreateContextMenuItemDirect(fbb, "Delete Last Texture", 2));
 
 		auto event = CreateAppEvent(fbb,
@@ -185,7 +178,7 @@ struct MergeContext : NodeContext
 
 		if (cmd == 1)
 		{
-			auto count = std::to_string(TextureCount++);
+			auto count = std::to_string(GetTextureCount());
 			nosBuffer buffer;
 			nosEngine.GetDefaultValueOfType(NOS_NAME_STATIC("nos.sys.vulkan.Texture"), &buffer);
 
@@ -250,9 +243,8 @@ struct MergeContext : NodeContext
 		}
 		if (cmd == 2)
 		{
-			if (TextureCount > 2)
+			if (GetTextureCount() > 2)
 			{
-				TextureCount--;
 				flatbuffers::FlatBufferBuilder fbb;
 				std::vector<nosUUID> ids = {AddedPins.back().TextureId, AddedPins.back().OpacityId,
 				                           AddedPins.back().BlendId};
