@@ -12,12 +12,11 @@
 #pragma comment(lib, "Ws2_32.lib")
 #else
 #include <unistd.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <sys/sysctl.h>
-#include <netdb.h>
-#include <ctime>
+#include <time.h>
 #include <unistd.h>
+#include <ifaddrs.h>
+#include <arpa/inet.h>
+#include <net/if.h>
 #endif
 
 namespace nos::utilities
@@ -34,11 +33,10 @@ std::string GetHostName()
 	return hostName;
 }
 
-std::string GetIpv4Address() 
+std::string GetIpv4Address()
 {
-	std::string ip;
-
 #if defined(_WIN32)
+	std::string ip;
 	WSADATA wsaData;
 	if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0) {
 		perror("WSAStartup");
@@ -61,25 +59,33 @@ std::string GetIpv4Address()
 	}
 	WSACleanup();
 #else
-	char hostbuffer[256];
-	char* IPbuffer;
-	struct hostent* host_entry;
-	int hostname;
-	// To retrieve hostname
-	hostname = gethostname(hostbuffer, sizeof(hostbuffer));
-	if (hostname == -1) {
-		perror("gethostname");
+	struct ifaddrs* interfaces = nullptr;
+	struct ifaddrs* ifa = nullptr;
+	char ip[INET6_ADDRSTRLEN];
+
+	if (getifaddrs(&interfaces) == -1) {
+		std::cerr << "Error getting network interfaces" << std::endl;
 		return "";
 	}
-	// To retrieve host information
-	host_entry = gethostbyname(hostbuffer);
-	if (host_entry == NULL) {
-		perror("gethostbyname");
-		return "";
+
+	for (ifa = interfaces; ifa != nullptr; ifa = ifa->ifa_next) {
+		if (ifa->ifa_addr == nullptr)
+			continue;
+
+		// Check if the interface is an IPv4 or IPv6 address
+		if (ifa->ifa_addr->sa_family == AF_INET) {  // IPv4
+			void* addr = &((struct sockaddr_in*)ifa->ifa_addr)->sin_addr;
+			inet_ntop(AF_INET, addr, ip, sizeof(ip));
+			std::string interface_name = ifa->ifa_name;
+			if (interface_name == "lo") // Skip loopback interface
+				continue;
+			freeifaddrs(interfaces);
+			return std::string(ip); // Returns the first interface.
+		}
 	}
-	// To convert an Internet network address into ASCII string
-	IPbuffer = inet_ntoa(*((struct in_addr*)host_entry->h_addr_list[0]));
-	ip = IPbuffer;
+
+	freeifaddrs(interfaces);
+	return "";
 #endif
 	return ip;
 }
@@ -92,7 +98,7 @@ long long GetUpTime()
 #elif __unix__ || __unix || __linux__ || __APPLE__
 	// Unix-based (Linux, macOS, etc.) implementation
 	struct timespec ts;
-	if (clock_gettime(CLOCK_UPTIME, &ts) == 0) {
+	if (clock_gettime(CLOCK_BOOTTIME, &ts) == 0) {
 		return ts.tv_sec;
 	}
 	else {
@@ -109,7 +115,7 @@ struct HostNode : NodeContext
 	struct HostInfo
 	{
 		std::pair<nosUUID, std::string> HostName;
-		std::pair<nosUUID, std::string> IpAddress;
+		std::pair<nosUUID, std::string> IpAddress; // TODO: Return a map of interfaces and IPs
 		std::pair<nosUUID, uint32_t> UptimeS;
 
 		template <auto Member, typename T>
