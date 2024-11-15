@@ -1,0 +1,39 @@
+{
+  "nodes": [
+    {
+      "class_name": "Host",
+      "contents_type": "Job",
+      "description": "Information provider for the host that runs Nodos",
+      "display_name": "Host",
+      "pins": [
+        {
+          "name": "HostName",
+          "display_name": "Host Name",
+          "type_name": "string",
+          "show_as": "OUTPUT_PIN",
+          "can_show_as": "OUTPUT_PIN_OR_PROPERTY",
+          "readonly": true,
+          "description": "Host name of the machine that runs this node"
+        },
+        {
+          "name": "IpAddress",
+          "display_name": "IP Address",
+          "type_name": "string",
+          "show_as": "OUTPUT_PIN",
+          "can_show_as": "OUTPUT_PIN_OR_PROPERTY",
+          "readonly": true,
+          "description": "IP address of the machine that runs this node"
+        },
+        {
+          "name": "UptimeSeconds",
+          "display_name": "Uptime (seconds)",
+          "type_name": "uint",
+          "show_as": "OUTPUT_PIN",
+          "can_show_as": "OUTPUT_PIN_OR_PROPERTY",
+          "readonly": true,
+          "description": "Uptime (s) of the machine that runs this node"
+        }
+      ]
+    }
+  ]
+}

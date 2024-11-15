@@ -2,7 +2,7 @@
     "info": {
         "id": {
             "name": "nos.utilities",
-            "version": "2.9.3"
+            "version": "2.10.0"
         },
         "description": "Various utility nodes.",
         "display_name": "Utilities",
@@ -37,10 +37,11 @@
         "Config/SinkGraph.nosdef",
         "Config/Sink.nosdef",
         "Config/PropagateExecution.nosdef",
-		"Config/UploadBufferProvider.nosdef",
+        "Config/UploadBufferProvider.nosdef",
         "Config/TimedFunctionSignaller.nosdef",
         "Config/RingBuffer.nosdef",
-        "Config/BoundedQueue.nosdef"
+        "Config/BoundedQueue.nosdef",
+        "Config/Host.nosdef"
     ],
     "custom_types": [
         "Config/Merge.fbs",
@@ -144,14 +145,14 @@
             "display_name": "Texture To Buffer"
         },
         {
-          "category": "Utilities",
-          "class_name": "IsSameString",
-          "display_name": "Is Same String"
+            "category": "Utilities",
+            "class_name": "IsSameString",
+            "display_name": "Is Same String"
         },
         {
-          "category": "Utilities",
-          "class_name": "ShowStatus",
-          "display_name": "Show Status"
+            "category": "Utilities",
+            "class_name": "ShowStatus",
+            "display_name": "Show Status"
         },
         {
             "category": "Utilities",
@@ -159,34 +160,40 @@
             "display_name": "Threaded Sink"
         },
         {
-          "category": "Utilities",
-          "class_name": "Sink",
-          "display_name": "Sink"
+            "category": "Utilities",
+            "class_name": "Sink",
+            "display_name": "Sink"
         },
         {
-          "category": "Utilities",
-          "class_name": "PropagateExecution",
-          "display_name": "Propagate Execution"
-        },
-		{
-			"category": "Utilities",
-			"class_name": "UploadBufferProvider",
-			"display_name": "Upload Buffer Provider"
-		},
-        {
-          "category": "Utilities",
-          "class_name": "TimedFunctionSignaller",
-          "display_name": "Timed Function Signaller"
+            "category": "Utilities",
+            "class_name": "PropagateExecution",
+            "display_name": "Propagate Execution"
         },
         {
-          "category": "Utilities",
-          "class_name": "RingBuffer",
-          "display_name": "Ring Buffer"
+            "category": "Utilities",
+            "class_name": "UploadBufferProvider",
+            "display_name": "Upload Buffer Provider"
         },
         {
-          "category": "Utilities",
-          "class_name": "BoundedQueue",
-          "display_name": "Bounded Queue"
+            "category": "Utilities",
+            "class_name": "TimedFunctionSignaller",
+            "display_name": "Timed Function Signaller"
+        },
+        {
+            "category": "Utilities",
+            "class_name": "RingBuffer",
+            "display_name": "Ring Buffer"
+        },
+        {
+            "category": "Utilities",
+            "class_name": "BoundedQueue",
+            "display_name": "Bounded Queue"
+        },
+        {
+            "category": "Utilities",
+            "class_name": "nos.utilities.Host",
+            "display_name": "Host",
+            "hide_in_context_menu": false
         }
     ],
     "subsystem_options": [
