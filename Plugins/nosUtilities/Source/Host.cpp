@@ -19,6 +19,8 @@
 #include <net/if.h>
 #endif
 
+#include <thread>
+
 namespace nos::utilities
 {
 std::string GetHostName()
@@ -109,82 +111,110 @@ long long GetUpTime()
 #endif
 }
 
-
-struct HostNode : NodeContext
+struct HostInfoPins
 {
-	struct HostInfo
-	{
-		std::pair<nosUUID, std::string> HostName;
-		std::pair<nosUUID, std::string> IpAddress; // TODO: Return a map of interfaces and IPs
-		std::pair<nosUUID, uint32_t> UptimeS;
+	nosUUID HostNamePinId;
+	nosUUID IpAddressPinId;
+	nosUUID UptimeSecondsPinId;
+};
 
-		template <auto Member, typename T>
-		void Set(T const& value)
+struct HostInfo
+{
+	std::string HostName;
+	std::string IpAddress; // TODO: Return a map of interfaces and IPs
+	uint32_t UptimeS;
+
+	std::unordered_map<nosUUID, HostInfoPins> Listeners;
+
+	template <auto Member, auto PinMember, typename T>
+	void Set(T const& value)
+	{
+		auto& old = this->*Member;
+		if (old != value)
 		{
-			auto& member = this->*Member;
-			auto& old = member.second;
-			if (old != value)
+			old = value;
+			if constexpr (std::is_same_v<T, std::string>)
 			{
-				old = value;
-				if constexpr (std::is_same_v<T, std::string>)
-					nosEngine.SetPinValue(member.first, nos::Buffer(value.c_str(), value.size() + 1));
-				else
-				{
-					auto size = sizeof(value);
-					nosEngine.SetPinValue(member.first, nos::Buffer(reinterpret_cast<const char*>(&value), size));
-				}
+				nos::Buffer buf(value.c_str(), value.size() + 1);
+				for (auto& [_, listener] : Listeners)
+					nosEngine.SetPinValue(listener.*PinMember, buf);
+			}
+			else
+			{
+				auto size = sizeof(value);
+				nos::Buffer buf(reinterpret_cast<const char*>(&value), size);
+				for (auto& [_, listener] : Listeners)
+					nosEngine.SetPinValue(listener.*PinMember, buf);
 			}
 		}
-	};
+	}
 
-	HostNode(const nosFbNode* node) : NodeContext(node)
+	void AddListener(nosUUID nodeId, HostInfoPins pins)
 	{
-		// TODO: Use OS callbacks to subscribe to changes.
-		BackgroundThread = std::thread([this,
-			hostNamePinId = *GetPinId(NOS_NAME("HostName")),
-			ipAddressPinId = *GetPinId(NOS_NAME("IpAddress")),
-			uptimePinId = *GetPinId(NOS_NAME("UptimeSeconds"))
-		]()
+		Listeners[nodeId] = std::move(pins);
+		if (!Listeners.empty() && !Worker.joinable())
+		{
+			nosEngine.LogD("Host: Starting worker thread");
+			Worker = std::jthread([this](std::stop_token stopToken) // TODO: Use OS callbacks to subscribe to changes.
 			{
-				HostInfo info{
-					.HostName = {hostNamePinId, ""},
-					.IpAddress = {ipAddressPinId, ""},
-					.UptimeS = {uptimePinId, 0}
-				};
-				while (true)
+				while (!stopToken.stop_requested())
 				{
 					auto hostName = GetHostName();
 					auto ip = GetIpv4Address();
 					auto uptime = GetUpTime();
-					info.Set<&HostInfo::HostName>(hostName);
-					info.Set<&HostInfo::IpAddress>(ip);
+					Set<&HostInfo::HostName, &HostInfoPins::HostNamePinId>(hostName);
+					Set<&HostInfo::IpAddress, &HostInfoPins::IpAddressPinId>(ip);
 					if (uptime != -1)
-						info.Set<&HostInfo::UptimeS>((uint32_t)uptime);
+						Set<&HostInfo::UptimeS, &HostInfoPins::UptimeSecondsPinId>((uint32_t)uptime);
 					std::unique_lock lock(Mutex);
-					if (CV.wait_for(lock, std::chrono::seconds(1), [this] { return ShouldExit.load(); }))
+					if (CV.wait_for(lock, std::chrono::seconds(1), [&stopToken] { return stopToken.stop_requested(); }))
 						break;
 				}
 			});
+		}
 	}
 
-	~HostNode()
+	void RemoveListener(nosUUID nodeId)
 	{
-		ShouldExit = true;
-		CV.notify_all();
-		if (BackgroundThread.joinable())
-			BackgroundThread.join();
+		Listeners.erase(nodeId);
+		if (Listeners.empty())
+		{
+			nosEngine.LogD("Host: Stopping worker thread");
+			Worker.request_stop();
+			CV.notify_one();
+			if (Worker.joinable())
+				Worker.join();
+		}
+	}
+	
+	std::jthread Worker;
+	std::mutex Mutex;
+	std::condition_variable CV;
+} GHostInfo{};
+
+struct HostNode : NodeContext
+{
+
+	HostNode(const nosFbNode* node) : NodeContext(node)
+	{
+		
+		HostInfoPins pins {
+			.HostNamePinId = *GetPinId(NOS_NAME("HostName")),
+			.IpAddressPinId = *GetPinId(NOS_NAME("IpAddress")),
+			.UptimeSecondsPinId = *GetPinId(NOS_NAME("UptimeSeconds"))
+		};
+		GHostInfo.AddListener(NodeId, std::move(pins));
+	}
+
+	~HostNode() override
+	{
+		GHostInfo.RemoveListener(NodeId);
 	}
 
 	nosResult ExecuteNode(nosNodeExecuteParams* params) override
 	{
 		return NOS_RESULT_SUCCESS;
 	}
-
-protected:
-	std::thread BackgroundThread;
-	std::condition_variable CV;
-	std::mutex Mutex;
-	std::atomic_bool ShouldExit = false;
 };
 
 nosResult RegisterHost(nosNodeFunctions* fn)
