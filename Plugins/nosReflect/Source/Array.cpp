@@ -153,11 +153,11 @@ struct ArrayNode : NodeContext
 			return;
 
 		nosBuffer value;
-		std::vector<u8> data;
+		std::vector<uint8_t> data;
 
 		if (NOS_RESULT_SUCCESS == nosEngine.GetDefaultValueOfType(Type->TypeName, &value))
 		{
-			data = std::vector<u8>{(u8*)value.Data, (u8*)value.Data + value.Size};
+			data = std::vector<uint8_t>{(uint8_t*)value.Data, (uint8_t*)value.Data + value.Size};
 		}
 
 		std::vector<const void*> datas;
@@ -204,10 +204,10 @@ struct ArrayNode : NodeContext
 		flatbuffers::FlatBufferBuilder fbb;
 
 		nosBuffer value;
-		std::vector<u8> data;
+		std::vector<uint8_t> data;
 		nos::Name typeName = Type ? Name(Type->TypeName) : NSN_VOID;
 		if (NOS_RESULT_SUCCESS == nosEngine.GetDefaultValueOfType(typeName, &value))
-			data = std::vector<u8>{ (u8*)value.Data, (u8*)value.Data + value.Size };
+			data = std::vector<uint8_t>{ (uint8_t*)value.Data, (uint8_t*)value.Data + value.Size };
 
 		auto outputType = "[" + typeName.AsString() + "]";
 		auto name = "Input " + std::to_string(inputs.size());

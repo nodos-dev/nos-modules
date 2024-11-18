@@ -15,16 +15,16 @@ TrackNodeContext::TrackNodeContext(nos::fb::Node const* node) : NodeContext(node
 	for (auto* pin : *node->pins())
 	{
 		auto str = pin->name()->str();
-		LoadField<u32>(pin, NSN_UDP_Port, Port);
-		LoadField<u32>(pin, NSN_Delay, Delay);
-		LoadField<u32>(pin, NSN_Spare_Count, SpareCount);
+		LoadField<uint32_t>(pin, NSN_UDP_Port, Port);
+		LoadField<uint32_t>(pin, NSN_Delay, Delay);
+		LoadField<uint32_t>(pin, NSN_Spare_Count, SpareCount);
 		LoadField<bool>(pin, NSN_NegateX, Args.NegatePos.x);
 		LoadField<bool>(pin, NSN_NegateY, Args.NegatePos.y);
 		LoadField<bool>(pin, NSN_NegateZ, Args.NegatePos.z);
 		LoadField<bool>(pin, NSN_NegatePan, Args.NegateRot.z);
 		LoadField<bool>(pin, NSN_NegateTilt, Args.NegateRot.y);
 		LoadField<bool>(pin, NSN_NegateRoll, Args.NegateRot.x);
-		LoadField<f32>(pin, NSN_TransformScale, Args.TransformScale);
+		LoadField<float>(pin, NSN_TransformScale, Args.TransformScale);
 		LoadField<fb::CoordinateSystem>(pin, NSN_CoordinateSystem, Args.CoordinateSystem);
 		LoadField<fb::RotationSystem>(pin, NSN_RotationSystem, Args.RotationSystem);
 		LoadField<glm::vec3>(pin, NSN_DevicePosition, Args.DevicePosition);
@@ -32,7 +32,7 @@ TrackNodeContext::TrackNodeContext(nos::fb::Node const* node) : NodeContext(node
 		LoadField<glm::vec3>(pin, NSN_CameraPosition, Args.CameraPosition);
 		LoadField<glm::vec3>(pin, NSN_CameraRotation, Args.CameraRotation);
 		LoadField<bool>(pin, NSN_Enable, enable);
-		LoadField<f32>(pin, NSN_CenterShiftRatio, Args.CenterShiftRatio);
+		LoadField<float>(pin, NSN_CenterShiftRatio, Args.CenterShiftRatio);
 	}
 	Restart();
 	if (enable)
@@ -221,7 +221,7 @@ void TrackNodeContext::OnPinValueChanged(nos::Name pinName, nosUUID pinId, nosBu
 	SET_VALUE(bool, NegateRoll, NegateRot.x);
 
 	SET_VALUE(bool, EnableEffectiveFOV, EnableEffectiveFOV);
-	SET_VALUE(f32, TransformScale, TransformScale);
+	SET_VALUE(float, TransformScale, TransformScale);
 	SET_VALUE(fb::CoordinateSystem, CoordinateSystem, CoordinateSystem);
 	SET_VALUE(fb::RotationSystem, Pan_Tilt_Roll, RotationSystem);
 
@@ -229,11 +229,11 @@ void TrackNodeContext::OnPinValueChanged(nos::Name pinName, nosUUID pinId, nosBu
 	SET_VALUE(glm::vec3, DeviceRotation, DeviceRotation);
 	SET_VALUE(glm::vec3, CameraPosition, CameraPosition);
 	SET_VALUE(glm::vec3, CameraRotation, CameraRotation);
-	SET_VALUE(f32, CenterShiftRatio, CenterShiftRatio);
+	SET_VALUE(float, CenterShiftRatio, CenterShiftRatio);
 
 	if (pinName == NOS_NAME_STATIC("Delay"))
 	{
-		Delay = *(u32*)value;
+		Delay = *(uint32_t*)value;
 		SignalRestart();
 		return;
 	}
@@ -287,7 +287,7 @@ void TrackNodeContext::OnPinValueChanged(nos::Name pinName, nosUUID pinId, nosBu
 	}
 	if (pinName == NSN_AutoSpareMaxJitter)
 	{
-		AutoSpareMaxJitter = *(f32*)value;
+		AutoSpareMaxJitter = *(float*)value;
 		return;
 	}
 }
@@ -319,46 +319,46 @@ fb::TTrack TrackNodeContext::GetDefaultOrFirstTrack()
 	return track;
 }
 
-f64 CalculateR(f64 R, glm::dvec2 k1k2)
+double CalculateR(double R, glm::dvec2 k1k2)
 {
-	f64 R2 = R * R;
-	f64 R4 = R2 * R2;
+	double R2 = R * R;
+	double R4 = R2 * R2;
 	return k1k2.x * R2 + k1k2.y * R4 + 1;
 }
 
-f64 CalculateRoot(f64 TargetR, glm::dvec2 k1k2, f64 InitialR)
+double CalculateRoot(double TargetR, glm::dvec2 k1k2, double InitialR)
 {
-	f64 R = InitialR;
+	double R = InitialR;
 	for (int t = 0; t < 10; ++t)
 	{
-		f64 R2 = R * R;
-		f64 R3 = R2 * R;
-		f64 R4 = R2 * R2;
-		f64 R5 = R3 * R2;
-		f64 fR = k1k2.x * R3 + k1k2.y * R5 + R - TargetR; // (K1 * R2 + K2 * R4 + 1) * R - TargetR;
-		f64 dfR = 3 * k1k2.x * R2 + 5 * k1k2.y * R4 + 1;
-		f64 hR = fR / dfR;
+		double R2 = R * R;
+		double R3 = R2 * R;
+		double R4 = R2 * R2;
+		double R5 = R3 * R2;
+		double fR = k1k2.x * R3 + k1k2.y * R5 + R - TargetR; // (K1 * R2 + K2 * R4 + 1) * R - TargetR;
+		double dfR = 3 * k1k2.x * R2 + 5 * k1k2.y * R4 + 1;
+		double hR = fR / dfR;
 		R = R - hR;
 	}
 	return R;
 }
 
-f32 CalculateDistortionScale(f32 AspectRatio, glm::vec2 k1k2)
+float CalculateDistortionScale(float AspectRatio, glm::vec2 k1k2)
 {
 	auto AspectVector = glm::vec2(AspectRatio, 1);
-	f32 X = sqrt(1.0f / (AspectVector.x * AspectVector.x + AspectVector.y * AspectVector.y));
+	float X = sqrt(1.0f / (AspectVector.x * AspectVector.x + AspectVector.y * AspectVector.y));
 	auto AspectRatioVector = AspectVector * X;
 	glm::vec2 P = glm::vec2(0., 1.) * AspectRatioVector;
-	f32 PLength = glm::length(P);
-	f32 YMin = (f32)CalculateRoot(PLength, k1k2, 1.0f) / PLength;
+	float PLength = glm::length(P);
+	float YMin = (float)CalculateRoot(PLength, k1k2, 1.0f) / PLength;
 	glm::vec2 PMin = P;
 	int32 IterCount = 1000;
-	f32 IterStep = 1.f / IterCount;
+	float IterStep = 1.f / IterCount;
 	for (int32 Iter = 0; Iter < IterCount; ++Iter)
 	{
 		P = glm::vec2(Iter * IterStep, 1.0) * AspectRatioVector;
 		PLength = glm::length(P);
-		f32 Y = (f32)CalculateRoot(PLength, k1k2, 1.0f) / PLength;
+		float Y = (float)CalculateRoot(PLength, k1k2, 1.0f) / PLength;
 		if (Y < YMin)
 		{
 			YMin = Y;
@@ -368,11 +368,11 @@ f32 CalculateDistortionScale(f32 AspectRatio, glm::vec2 k1k2)
 	auto PMinLength = glm::length(PMin);
 	auto ScaleMinRoot = CalculateRoot(PMinLength, k1k2, 1.0);
 	auto ScaleMin = ScaleMinRoot / PMinLength;
-	auto SMin = (f32)CalculateR(PMinLength, k1k2);
+	auto SMin = (float)CalculateR(PMinLength, k1k2);
 	return SMin;
 }
 
-glm::vec3 TrackNodeContext::Swizzle(glm::vec3 v, glm::bvec3 n, u8 control)
+glm::vec3 TrackNodeContext::Swizzle(glm::vec3 v, glm::bvec3 n, uint8_t control)
 {
 	if (control & 0b001) v = v.zyx();
 	if (control & 0b010) v = v.yzx();
@@ -384,8 +384,8 @@ nos::Buffer TrackNodeContext::UpdateTrackOut(fb::TTrack& outTrack)
 {
 	auto xf = Args;
 
-	glm::vec3 pos = Swizzle(reinterpret_cast<glm::vec3&>(outTrack.location), xf.NegatePos, (u8)xf.CoordinateSystem);
-	glm::vec3 rot = Swizzle(reinterpret_cast<glm::vec3&>(outTrack.rotation).zyx(), xf.NegateRot.zyx(), (u8)xf.RotationSystem).zyx();
+	glm::vec3 pos = Swizzle(reinterpret_cast<glm::vec3&>(outTrack.location), xf.NegatePos, (uint8_t)xf.CoordinateSystem);
+	glm::vec3 rot = Swizzle(reinterpret_cast<glm::vec3&>(outTrack.rotation).zyx(), xf.NegateRot.zyx(), (uint8_t)xf.RotationSystem).zyx();
 
 	auto CR = MakeRotation(Args.CameraRotation);
 	auto TR = MakeRotation(rot);
@@ -414,7 +414,7 @@ void TrackNodeContext::Run()
 {
 	flatbuffers::FlatBufferBuilder fbb;
 	HandleEvent(
-		nos::CreateAppEvent(fbb, nos::app::CreateSetThreadNameDirect(fbb, (u64)StdThread.native_handle(), "Track")));
+		nos::CreateAppEvent(fbb, nos::app::CreateSetThreadNameDirect(fbb, (uint64_t)StdThread.native_handle(), "Track")));
 
 	asio::io_service io_serv;
 	{
@@ -451,7 +451,7 @@ void TrackNodeContext::Run()
 				sock = nullptr;
 			}
 		}
-		u8 buf[4096];
+		uint8_t buf[4096];
 		nosBuffer defaultTrackData;
 		nosEngine.GetDefaultValueOfType(NOS_NAME_STATIC("nos.fb.Track"), &defaultTrackData);
 		nos::Buffer defaultTrackBuffer = nos::Buffer((uint8_t*)defaultTrackData.Data, defaultTrackData.Size);
@@ -466,7 +466,7 @@ void TrackNodeContext::Run()
 				uint64_t nanoSeconds = std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count();
 				{
 					fb::TTrack data = defaultTrack;
-					if (Parse(std::vector<u8>{buf, buf + len}, data))
+					if (Parse(std::vector<uint8_t>{buf, buf + len}, data))
 					{
 						std::unique_lock<std::mutex> guard(QMutex);
 						DataQueue.push({ data, nanoSeconds });
@@ -502,7 +502,7 @@ glm::mat3 MakeRotation(glm::vec3 rot)
 }
 glm::vec3 GetEulers(glm::mat4 mat)
 {
-	f32 x, y, z;
+	float x, y, z;
 	glm::extractEulerAngleZYX(mat, z, y, x);
 	return glm::degrees(glm::vec3(-x, -y, z));
 }

@@ -152,7 +152,7 @@ struct DelayNode : NodeContext
 			auto name = nos::Name(pin->name()->c_str());
 			if (NSN_Delay == name)
 			{
-				Ring.Size = *(u32*)pin->data()->data();
+				Ring.Size = *(uint32_t*)pin->data()->data();
 			}
 			if (NSN_Output == name)
 			{
@@ -170,7 +170,7 @@ struct DelayNode : NodeContext
 			return;
 		if (NSN_Delay == pinName)
 		{
-			Ring.Size = *static_cast<u32*>(value.Data);
+			Ring.Size = *static_cast<uint32_t*>(value.Data);
 		}
 	}
 

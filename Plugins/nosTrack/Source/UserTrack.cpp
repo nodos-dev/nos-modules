@@ -17,8 +17,8 @@ void RegisterController(nosNodeFunctions* functions)
     struct UserTrack {
         
 		glm::vec3 v = {};
-		f32 impulse = 1.0;
-		f32 decay = 0;
+		float impulse = 1.0;
+		float decay = 0;
 		nos::fb::UUID OutTrackId;
 		nos::fb::UUID InTrackId;
 
@@ -32,11 +32,11 @@ void RegisterController(nosNodeFunctions* functions)
         	nosEngine.SetPinValue(InTrackId, {.Data = val.Data(), .Size = val.Size()});
         }
 
-		f32& yaw()
+		float& yaw()
 		{
 			return ((glm::vec3&)state.rotation).z;
 		}
-		f32& pitch()
+		float& pitch()
 		{
 			return ((glm::vec3&)state.rotation).y;
 		}
@@ -80,9 +80,9 @@ void RegisterController(nosNodeFunctions* functions)
         glm::vec3 r = orientation[1];
         glm::vec3 u = orientation[2];
         
-        glm::vec3 pf =  f * f32((key == 'W') - (key == 'S'));
-        glm::vec3 pr =  r * f32((key == 'D') - (key == 'A'));
-        glm::vec3 pu =  u * f32((key == 'E') - (key == 'Q'));
+        glm::vec3 pf =  f * float((key == 'W') - (key == 'S'));
+        glm::vec3 pr =  r * float((key == 'D') - (key == 'A'));
+        glm::vec3 pu =  u * float((key == 'E') - (key == 'Q'));
         
         ctx->v += ctx->impulse * (pf + pr + pu);
         pos += 10.f * (pf + pr + pu);
@@ -110,8 +110,8 @@ void RegisterController(nosNodeFunctions* functions)
     {
         auto c = (UserTrack*)ctx;
     	auto values = GetPinValues(params);
-		c->impulse = glm::max(*(f32*)values[NSN_Impulse], 1.f);
-		c->decay = glm::max(*(f32*)values[NSN_Decay], 0.f);
+		c->impulse = glm::max(*(float*)values[NSN_Impulse], 1.f);
+		c->decay = glm::max(*(float*)values[NSN_Decay], 0.f);
         (glm::vec3&)c->state.location += c->v;
         c->v *= exp(-c->decay);
 		auto inTrack = GetPinValue<fb::TTrack>(values, NSN_Input);

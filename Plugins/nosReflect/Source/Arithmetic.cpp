@@ -37,32 +37,32 @@ static void MapScalarToT(nosTypeInfo ty, auto&& f)
     case NOS_BASE_TYPE_FLOAT:
         switch(ty.BitWidth)
         {
-            case 32: return f.template operator()<f32>();
-            case 64: return f.template operator()<f64>();
+            case 32: return f.template operator()<float>();
+            case 64: return f.template operator()<double>();
         }
         return;
     case NOS_BASE_TYPE_INT:
         switch(ty.BitWidth)
         {
-            case 8:  return f.template operator()<i8>();
-            case 16: return f.template operator()<i16>();
-            case 32: return f.template operator()<i32>();
-            case 64: return f.template operator()<i64>();
+            case 8:  return f.template operator()<int8_t>();
+            case 16: return f.template operator()<int16_t>();
+            case 32: return f.template operator()<int32_t>();
+            case 64: return f.template operator()<int64_t>();
         }
         return;
     case NOS_BASE_TYPE_UINT:
         switch(ty.BitWidth)
         {
-            case 8:  return f.template operator()<u8>();
-            case 16: return f.template operator()<u16>();
-            case 32: return f.template operator()<u32>();
-            case 64: return f.template operator()<u64>();
+            case 8:  return f.template operator()<uint8_t>();
+            case 16: return f.template operator()<uint16_t>();
+            case 32: return f.template operator()<uint32_t>();
+            case 64: return f.template operator()<uint64_t>();
         }
     }
     return;
 }
 
-static void DoOp(fb::BinaryOperator op, nosTypeInfo const& ty, u8* lhs, u8* rhs, u8* dst)
+static void DoOp(fb::BinaryOperator op, nosTypeInfo const& ty, uint8_t* lhs, uint8_t* rhs, uint8_t* dst)
 {
     switch(ty.BaseType)
     {
@@ -148,7 +148,7 @@ struct ArithmeticNodeContext : NodeContext
 		Operator = op;
 		flatbuffers::FlatBufferBuilder fbb;
 		auto displayName = fbb.CreateString(BinaryOpToDisplayName(op));
-		std::vector<u8> opData = nos::Buffer::From(*Operator);
+		std::vector<uint8_t> opData = nos::Buffer::From(*Operator);
 		std::vector params = {
 			fb::CreateTemplateParameterDirect(fbb, "nos.fb.BinaryOperator", &opData)
 		};
@@ -165,7 +165,7 @@ struct ArithmeticNodeContext : NodeContext
 	{
 		Type = nos::TypeInfo(typeName);
 		flatbuffers::FlatBufferBuilder fbb;
-		std::vector<u8> typeData = nos::Buffer(nos::Name(Type->TypeName).AsCStr(), 1 + nos::Name(Type->TypeName).AsString().size());
+		std::vector<uint8_t> typeData = nos::Buffer(nos::Name(Type->TypeName).AsCStr(), 1 + nos::Name(Type->TypeName).AsString().size());
 		std::vector params = {
 			fb::CreateTemplateParameterDirect(fbb, "string", &typeData)
 		};
@@ -215,7 +215,7 @@ struct ArithmeticNodeContext : NodeContext
 
 		nos::Buffer buf(*pins[NSN_Output].Data);
 		// TODO: we can directly set execute node function ptr instead of switch case etc.
-		DoOp(*Operator, *Type, (u8*)pins[NSN_A].Data->Data, (u8*)pins[NSN_B].Data->Data, (u8*)buf.Data());
+		DoOp(*Operator, *Type, (uint8_t*)pins[NSN_A].Data->Data, (uint8_t*)pins[NSN_B].Data->Data, (uint8_t*)buf.Data());
 		nosEngine.SetPinValue(pins[NSN_Output].Id, buf);
 
 		return NOS_RESULT_SUCCESS;
@@ -229,7 +229,7 @@ struct ArithmeticNodeContext : NodeContext
 		std::vector<flatbuffers::Offset<nos::ContextMenuItem>> ops;
 
 		for (auto op : fb::EnumValuesBinaryOperator())
-			ops.push_back(nos::CreateContextMenuItemDirect(fbb, BinaryOpToDisplayName(op), u32(op)));
+			ops.push_back(nos::CreateContextMenuItemDirect(fbb, BinaryOpToDisplayName(op), uint32_t(op)));
 
 		HandleEvent(CreateAppEvent(fbb, CreateAppContextMenuUpdateDirect(fbb, &NodeId, request->pos(), request->instigator(), &ops)));
 	}

@@ -111,7 +111,7 @@ struct SinkNode : NodeContext
 		ShouldStop = false;
 		Thread = std::thread([this]() { SinkThread(); });
 		flatbuffers::FlatBufferBuilder fbb;
-		HandleEvent(CreateAppEvent(fbb, nos::app::CreateSetThreadNameDirect(fbb, (u64)Thread.native_handle(), "Sink Thread")));
+		HandleEvent(CreateAppEvent(fbb, nos::app::CreateSetThreadNameDirect(fbb, (uint64_t)Thread.native_handle(), "Sink Thread")));
 	}
 
 	void OnPathStart() override 

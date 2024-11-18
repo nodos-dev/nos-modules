@@ -105,7 +105,7 @@ struct MergeContext : NodeContext
 		std::array<int, 16> blends = {};
 		std::array<float, 16> opacities = {};
 		
-		u32 curr = 0;
+		uint32_t curr = 0;
 		
 		for (size_t i = 0; i < params->PinCount; ++i)
 		{
@@ -184,7 +184,7 @@ struct MergeContext : NodeContext
 
 			std::string texPinName = "Texture_" + count;
 			nosUUID texId = nosEngine.GenerateID();
-			std::vector<uint8_t> texData((u8*)buffer.Data, (u8*)buffer.Data + buffer.Size);
+			std::vector<uint8_t> texData((uint8_t*)buffer.Data, (uint8_t*)buffer.Data + buffer.Size);
 
 			std::string opacityPinName = "Opacity_" + count;
 			nosUUID opacityId = nosEngine.GenerateID();

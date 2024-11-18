@@ -231,7 +231,7 @@ struct FreeDNodeContext : public TrackNodeContext
 		bool InvertZoom = false;
 		bool InvertFocus = false;
 
-        bool Parse(std::vector<u8> const& data, fb::TTrack& TrackData) override
+        bool Parse(std::vector<uint8_t> const& data, fb::TTrack& TrackData) override
         {
             if(data.size() < sizeof(FreeDMessage_D1))
             {

@@ -22,7 +22,7 @@ NOS_REGISTER_NAME_SPACED(VOID, "nos.fb.Void")
 
 
 void CopyInline(
-	flatbuffers::FlatBufferBuilder& fbb, uint16_t offset, const u8* data, size_t align, size_t size)
+	flatbuffers::FlatBufferBuilder& fbb, uint16_t offset, const uint8_t* data, size_t align, size_t size)
 {
 	fbb.Align(align);
 	fbb.PushBytes(data, size);
@@ -45,7 +45,7 @@ const flatbuffers::StructDef* GetUnionType(
 	auto type_field = parent->fields.Lookup(unionfield->name + "_type");
 	
 	FLATBUFFERS_ASSERT(type_field);
-	auto union_type = table->GetField<u8>(type_field->value.offset, 0);
+	auto union_type = table->GetField<uint8_t>(type_field->value.offset, 0);
 	auto enumval = enumdef->ReverseLookup(union_type);
 	return enumval->union_type.struct_def;
 }
@@ -370,7 +370,7 @@ flatbuffers::uoffset_t CopyArgs(
 		case NOS_BASE_TYPE_STRUCT: {
 			if (field->Type->ByteSize) {
 				fbb.Align(field->Type->Alignment);
-				fbb.PushBytes((u8*)data, field->Type->ByteSize);
+				fbb.PushBytes((uint8_t*)data, field->Type->ByteSize);
 				fbb.TrackField(field->Offset, fbb.GetSize());
 				break;
 			}
@@ -382,7 +382,7 @@ flatbuffers::uoffset_t CopyArgs(
 			break;
 		default: {  // Scalars.
 			fbb.Align(field->Type->Alignment);
-			fbb.PushBytes((u8*)data, field->Type->ByteSize);
+			fbb.PushBytes((uint8_t*)data, field->Type->ByteSize);
 			fbb.TrackField(field->Offset, fbb.GetSize());
 			break;
 		}
@@ -429,18 +429,18 @@ flatbuffers::uoffset_t GenerateOffset(
     return 0;
 }
 
-std::vector<u8> GenerateBuffer(
+std::vector<uint8_t> GenerateBuffer(
 	const nosTypeInfo* type,
 	const void* data)
 {
 	if (type->ByteSize)
 	{
-		if (data) return std::vector<u8>{(u8*)data, (u8*)data + type->ByteSize};
-		return std::vector<u8>(type->ByteSize);
+		if (data) return std::vector<uint8_t>{(uint8_t*)data, (uint8_t*)data + type->ByteSize};
+		return std::vector<uint8_t>(type->ByteSize);
 	}
 	if(!data) return {};
     flatbuffers::FlatBufferBuilder fbb;
-    fbb.Finish(flatbuffers::Offset<u8>(GenerateOffset(fbb, type, data)));
+    fbb.Finish(flatbuffers::Offset<uint8_t>(GenerateOffset(fbb, type, data)));
     return nos::Buffer(fbb.Release());
 }
 
@@ -453,8 +453,8 @@ flatbuffers::uoffset_t GenerateVector(
 	if (type->ByteSize)
 	{
 		fbb.StartVector(values.size(), type->ByteSize, 1);
-		for (u32 i = values.size(); i != 0; --i)
-			fbb.PushBytes((u8*)values[i-1], type->ByteSize);
+		for (uint32_t i = values.size(); i != 0; --i)
+			fbb.PushBytes((uint8_t*)values[i-1], type->ByteSize);
 		offset = fbb.EndVector(values.size());
 	}
 	else
@@ -485,12 +485,12 @@ flatbuffers::uoffset_t GenerateVector(
 }
 
 
-std::vector<u8> GenerateVector(const nosTypeInfo* type, std::vector<const void*> inputs)
+std::vector<uint8_t> GenerateVector(const nosTypeInfo* type, std::vector<const void*> inputs)
 {
 	flatbuffers::FlatBufferBuilder fbb;
 	fbb.Finish(flatbuffers::Offset<flatbuffers::Vector<uint8_t>>(GenerateVector(fbb, type, std::move(inputs))));
 	auto buf = fbb.Release();
-	return std::vector<u8>{flatbuffers::GetMutableRoot<u8>(buf.data()), buf.data()+buf.size()};
+	return std::vector<uint8_t>{flatbuffers::GetMutableRoot<uint8_t>(buf.data()), buf.data()+buf.size()};
 }
 
 } // namespace nos::engine

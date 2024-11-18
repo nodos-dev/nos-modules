@@ -90,7 +90,7 @@ struct MakeNode : NodeContext
     	if (NOS_RESULT_FAILED == res)
     		return;
     	std::vector<flatbuffers::Offset<nos::ContextMenuItem>> types;
-    	u32 index = 0;
+    	uint32_t index = 0;
     	for (auto ty : AllTypeNames)
     		types.push_back(nos::CreateContextMenuItemDirect(fbb, nos::Name(ty).AsCStr(), index++));
     	HandleEvent(CreateAppEvent(fbb, app::CreateAppContextMenuUpdateDirect(fbb, &NodeId, request->pos(), request->instigator(), &types)));
@@ -113,7 +113,7 @@ struct MakeNode : NodeContext
 	    // Set template parameter
         flatbuffers::FlatBufferBuilder fbb;
         
-        std::vector<u8> data = nos::Buffer(nos::Name(typeInfo->TypeName).AsCStr(), 1 + nos::Name(typeInfo->TypeName).AsString().size());
+        std::vector<uint8_t> data = nos::Buffer(nos::Name(typeInfo->TypeName).AsCStr(), 1 + nos::Name(typeInfo->TypeName).AsString().size());
         std::vector <flatbuffers::Offset<fb::TemplateParameter>> params = { fb::CreateTemplateParameterDirect(fbb, "string", &data) };
         auto paramsOffset = fbb.CreateVector(params);
 		auto typeNameOffset = fbb.CreateString(nos::Name(typeInfo->TypeName).AsCStr());
@@ -158,7 +158,7 @@ struct MakeNode : NodeContext
 		if (!defBuf.Data)
 			return;
     	auto buf = nos::Buffer(defBuf);
-    	std::vector<u8> data = buf;
+    	std::vector<uint8_t> data = buf;
         flatbuffers::FlatBufferBuilder fbb;
         std::vector<flatbuffers::Offset<nos::fb::Pin>> pinsToAdd = {};
         std::vector<::flatbuffers::Offset<PartialPinUpdate>> pinsToUpdate = {};
@@ -222,10 +222,10 @@ struct MakeNode : NodeContext
             else
             {
                 nosUUID id = nosEngine.GenerateID();
-                std::vector<u8> data(type->ByteSize);
+                std::vector<uint8_t> data(type->ByteSize);
                 if (type->BaseType == NOS_BASE_TYPE_STRING)
                 {
-                    data = std::vector<u8>(1, 0);
+                    data = std::vector<uint8_t>(1, 0);
                 }
                 pinsToAdd.push_back(fb::CreatePinDirect(fbb, &id, nos::Name(NSN_Value).AsCStr(), nos::Name(type->TypeName).AsCStr(), nos::fb::ShowAs::INPUT_PIN, nos::fb::CanShowAs::INPUT_PIN_OR_PROPERTY, 0, 0, &data));
             }
@@ -254,16 +254,16 @@ struct MakeNode : NodeContext
                 else
                 {
                     nosUUID id = nosEngine.GenerateID();
-					std::vector<u8> data;
+					std::vector<uint8_t> data;
 					if (type->ByteSize)
 					{
-						auto* fieldStart = buf.As<u8>() + field.Offset;
-						data = std::vector<u8>(fieldStart,
+						auto* fieldStart = buf.As<uint8_t>() + field.Offset;
+						data = std::vector<uint8_t>(fieldStart,
 											   fieldStart + field.Type->ByteSize);
                     }
 					else
 					{
-                        data = GenerateBuffer(field.Type, rootIftable->GetStruct<u8*>(field.Offset));
+                        data = GenerateBuffer(field.Type, rootIftable->GetStruct<uint8_t*>(field.Offset));
                     }
                     pinsToAdd.push_back(fb::CreatePinDirect(fbb, &id, nos::Name(field.Name).AsCStr(), nos::Name(field.Type->TypeName).AsCStr(), nos::fb::ShowAs::INPUT_PIN, nos::fb::CanShowAs::INPUT_PIN_OR_PROPERTY, 0, 0, &data));
                 }
@@ -280,7 +280,7 @@ struct MakeNode : NodeContext
             !pinsToDelete.empty() ||
             !pinsToUpdate.empty())
 		{
-			std::vector<u8> data =
+			std::vector<uint8_t> data =
 				nos::Buffer(nos::Name(Type->TypeName).AsCStr(), 1 + nos::Name(Type->TypeName).AsString().size());
 			std::vector<flatbuffers::Offset<fb::TemplateParameter>> params = {
 				fb::CreateTemplateParameterDirect(fbb, "string", &data)};
@@ -371,7 +371,7 @@ nosResult RegisterMake(nosNodeFunctions* fn)
 		info.category = "Type";
 		info.class_name = "nos.reflect.Make";
 		info.display_name = "Make " + name.substr(idx);
-		std::vector<u8> data(1 + name.size());
+		std::vector<uint8_t> data(1 + name.size());
 		memcpy(data.data(), name.data(), name.size());
 		info.params.emplace_back(new fb::TTemplateParameter{ {},"string", std::move(data) });
 		flatbuffers::FlatBufferBuilder fbb;

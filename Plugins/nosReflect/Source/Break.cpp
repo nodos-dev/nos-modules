@@ -31,7 +31,7 @@ struct BreakNode : NodeContext
 		if (!Type || (*Type)->BaseType != NOS_BASE_TYPE_ARRAY || pinName != NSN_Input)
 			return;
 		auto pin = GetPin(pinName);
-		flatbuffers::Vector<u8>* vec = (flatbuffers::Vector<u8>*)value.Data;
+		auto* vec = (flatbuffers::Vector<uint8_t>*)value.Data;
 		if (vec->size() != ArraySize)
 		{
 			ArraySize = vec->size();
@@ -162,12 +162,12 @@ struct BreakNode : NodeContext
     		for (size_t a = 0; a < ArraySize - i; a++)
     		{
     			nosUUID newPinId = nosEngine.GenerateID();
-    			std::vector<u8> vec{};
+    			std::vector<uint8_t> vec{};
     			nosBuffer defVal{};
 				auto& type = *Type;
     			if (nosEngine.GetDefaultValueOfType(type->ElementType->TypeName, &defVal) == NOS_RESULT_SUCCESS)
     			{
-    				vec = std::vector((const u8*)defVal.Data, (const u8*)defVal.Data + defVal.Size);
+    				vec = std::vector((const uint8_t*)defVal.Data, (const uint8_t*)defVal.Data + defVal.Size);
     			}
 
     			std::vector<uint8_t> data = std::vector<uint8_t>(type->ByteSize);
@@ -208,12 +208,12 @@ struct BreakNode : NodeContext
         if(!buf)
 			return;
 
-		auto data = (const u8*)buf->Data;
+		auto data = (const uint8_t*)buf->Data;
         auto& type = *Type;
         switch (type->BaseType)
         {
         case NOS_BASE_TYPE_ARRAY: {
-        	const flatbuffers::Vector<u8>* vec = (flatbuffers::Vector<u8>*)(data);
+        	const flatbuffers::Vector<uint8_t>* vec = (flatbuffers::Vector<uint8_t>*)(data);
         	auto tableVec = (const flatbuffers::Vector<flatbuffers::Offset<flatbuffers::Table>>*)vec;
         	for (int i = 0; i < vec->size(); ++i)
         	{
@@ -255,7 +255,7 @@ struct BreakNode : NodeContext
 				
 				if (field.Type->ByteSize)
 				{
-					auto data = !type->ByteSize ? root->GetStruct<u8*>(field.Offset) : ((u8*)root + field.Offset);
+					auto data = !type->ByteSize ? root->GetStruct<uint8_t*>(field.Offset) : ((uint8_t*)root + field.Offset);
 					SetPinValueCached(pin->Id, { (void*)data, field.Type->ByteSize });
 				}
                 else

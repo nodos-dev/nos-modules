@@ -489,14 +489,14 @@ struct TRing
 	ResourceInterface* ResInterface;
 	bool RejectFieldMismatch = false;
 
-    void Resize(u32 size)
+    void Resize(uint32_t size)
     {
         Write.Pool = {};
         Read.Pool = {};
 		for (auto& res : Resources)
 			ResInterface->DestroyResource(res.get());
         Resources.clear();
-        for (u32 i = 0; i < size; ++i)
+        for (uint32_t i = 0; i < size; ++i)
 		{
 			auto res = ResInterface->CreateResource();
 
@@ -506,7 +506,7 @@ struct TRing
         Size = size;
     }
     
-	TRing(u32 ringSize, ResourceInterface* resourceManager) : ResInterface(resourceManager)
+	TRing(uint32_t ringSize, ResourceInterface* resourceManager) : ResInterface(resourceManager)
     {
         Resize(ringSize);
     }
@@ -520,7 +520,7 @@ struct TRing
 
     std::vector<rc<ResourceInterface::ResourceBase>> Resources;
 
-    u32 Size = 0;
+    uint32_t Size = 0;
     nosVec2u Extent;
     std::atomic_bool Exit = false;
     std::atomic_bool ResetFrameCount = true;
@@ -555,7 +555,7 @@ struct TRing
 		return EmptyFrames() != 0;
 	}
 
-	u32 EmptyFrames()
+	uint32_t EmptyFrames()
 	{
 		std::unique_lock lock(Write.Mutex);
 		return Write.Pool.size();
@@ -567,13 +567,13 @@ struct TRing
         return Read.Pool.empty();
     }
 
-    u32 ReadyFrames()
+    uint32_t ReadyFrames()
     {
         std::unique_lock lock(Read.Mutex);
         return Read.Pool.size();
     }
 
-    u32 TotalFrameCount()
+    uint32_t TotalFrameCount()
     {
         std::unique_lock lock(Write.Mutex);
         return Size - Write.Pool.size();
@@ -646,7 +646,7 @@ struct TRing
         Write.CV.notify_one();
     }
 
-    bool CanPop(u64& frameNumber, u32 spare = 0)
+    bool CanPop(uint64_t& frameNumber, uint32_t spare = 0)
     {
         std::unique_lock lock(Read.Mutex);
         if (Read.Pool.size() > spare)
@@ -685,7 +685,7 @@ struct TRing
 		return TryPush();
     }
 
-	ResourceInterface::ResourceBase*TryPop(u64& frameNumber, u32 spare = 0)
+	ResourceInterface::ResourceBase*TryPop(uint64_t& frameNumber, uint32_t spare = 0)
     {
         if (CanPop(frameNumber, spare))
             return BeginPop(20);
@@ -913,7 +913,7 @@ struct RingNodeBase : NodeContext
 				return NOS_RESULT_PENDING;
 		}
 
-		auto effectiveSpareCount = SpareCount.load(); // TODO: * (1 + u32(th->Interlaced()));
+		auto effectiveSpareCount = SpareCount.load(); // TODO: * (1 + uint32_t(th->Interlaced()));
 
 
 		ResourceInterface::ResourceBase* slot = nullptr;

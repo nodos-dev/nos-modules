@@ -11,8 +11,8 @@ struct Indexer : NodeContext
 {
 	std::optional<nos::TypeInfo> Type = std::nullopt;
 
-    u32 Index = 0;
-    u32 ArraySize = 0;
+    uint32_t Index = 0;
+	uint32_t ArraySize = 0;
     
     Indexer(const nosFbNode* inNode) : NodeContext(inNode)
     {
@@ -28,7 +28,7 @@ struct Indexer : NodeContext
 			else if (pin->name()->string_view() == NSN_Index) 
 			{
 				if (flatbuffers::IsFieldPresent(pin, fb::Pin::VT_DATA))
-			        Index = *(u32*)pin->data()->Data();
+			        Index = *(uint32_t*)pin->data()->Data();
             }
         }
     }
@@ -103,7 +103,7 @@ struct Indexer : NodeContext
 		UpdateInputVectorSize();
 	}
 
-	bool SetIndex(u32 newIndex)
+	bool SetIndex(uint32_t newIndex)
     {
 		Index = newIndex;
     	if (Index >= ArraySize)
@@ -117,11 +117,11 @@ struct Indexer : NodeContext
 
 	bool UpdateInputVectorSize() {
 		nosBuffer value;
-		std::vector<u8> data;
+		std::vector<uint8_t> data;
 
 		if (NOS_RESULT_SUCCESS == nosEngine.GetDefaultValueOfType(Type->TypeName, &value))
 		{
-			data = std::vector<u8>{ (u8*)value.Data, (u8*)value.Data + value.Size };
+			data = std::vector<uint8_t>{ (uint8_t*)value.Data, (uint8_t*)value.Data + value.Size };
 		}
 
 		std::vector<const void*> datas = { data.data() };
@@ -148,9 +148,9 @@ struct Indexer : NodeContext
 			UpdateInputVectorSize();
 		}
 
-		auto vec = (flatbuffers::Vector<u8>*)(pins[NSN_Input].Data->Data);
+		auto vec = (flatbuffers::Vector<uint8_t>*)(pins[NSN_Input].Data->Data);
     	ArraySize = vec->size();
-		if (!SetIndex(*(u32*)pins[NSN_Index].Data->Data))
+		if (!SetIndex(*(uint32_t*)pins[NSN_Index].Data->Data))
 			return NOS_RESULT_FAILED;
 		auto ID = pins[NSN_Output].Id;
 		auto& type = *Type;
@@ -175,13 +175,13 @@ struct Indexer : NodeContext
     {
         if (pinName == NSN_Index)
         {
-        	SetIndex(*(u32*)value.Data);
+        	SetIndex(*(uint32_t*)value.Data);
 		}
         else if (pinName == NSN_Input)
         {
 			if (!Type)
 				return;
-            ArraySize = ((flatbuffers::Vector<u8>*)(value.Data))->size();
+            ArraySize = ((flatbuffers::Vector<uint8_t>*)(value.Data))->size();
 			SetIndex(Index);
 		}
 	}

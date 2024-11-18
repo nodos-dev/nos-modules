@@ -625,7 +625,7 @@ struct WebRTCNodeContext : nos::NodeContext {
 						shouldSendFrame = true;
 						FrameSenderThread = std::thread([this]() {SendFrames(); });
 						flatbuffers::FlatBufferBuilder fbb;
-						HandleEvent(nos::CreateAppEvent(fbb, nos::app::CreateSetThreadNameDirect(fbb, (u64)FrameSenderThread.native_handle(), "WebRTC Frame Sender")));
+						HandleEvent(nos::CreateAppEvent(fbb, nos::app::CreateSetThreadNameDirect(fbb, (uint64_t)FrameSenderThread.native_handle(), "WebRTC Frame Sender")));
 					}
 					currentState = EWebRTCPlayerStates::eNONE;
 					break;

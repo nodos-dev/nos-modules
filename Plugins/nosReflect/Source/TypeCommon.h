@@ -15,7 +15,7 @@ void CopyInline(flatbuffers::FlatBufferBuilder& fbb, decltype(nosTypeInfo::Field
     const flatbuffers::Table* table, size_t align, size_t size);
 
 void CopyInline(
-	flatbuffers::FlatBufferBuilder& fbb, uint16_t offset, const u8* data, size_t align, size_t size);
+	flatbuffers::FlatBufferBuilder& fbb, uint16_t offset, const uint8_t* data, size_t align, size_t size);
 
 void CopyInline2(flatbuffers::FlatBufferBuilder& fbb, const flatbuffers::FieldDef* fielddef,
 	const flatbuffers::Table* table, size_t align, size_t size);
@@ -45,11 +45,11 @@ flatbuffers::uoffset_t GenerateOffset(
     const nosTypeInfo* type,
     const void* data);
 
-std::vector<u8> GenerateBuffer(
+std::vector<uint8_t> GenerateBuffer(
     const nosTypeInfo* type,
     const void* data);
 
-std::vector<u8> GenerateVector(
+std::vector<uint8_t> GenerateVector(
 	const nosTypeInfo* type, 
 	std::vector<const void*> inputs);
 

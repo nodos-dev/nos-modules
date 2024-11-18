@@ -78,21 +78,21 @@ public:
 		glm::bvec3 NegatePos = {};
 		glm::bvec3 NegateRot = {};
 		bool EnableEffectiveFOV = true;
-		f32 TransformScale = 1.f;
+		float TransformScale = 1.f;
 		nos::fb::CoordinateSystem CoordinateSystem = fb::CoordinateSystem::XYZ;
 		nos::fb::RotationSystem   RotationSystem = fb::RotationSystem::PTR;
 		glm::vec3 DevicePosition = {};
 		glm::vec3 DeviceRotation = {};
 		glm::vec3 CameraPosition = {};
 		glm::vec3 CameraRotation = {};
-		f32 CenterShiftRatio = 1.f;
+		float CenterShiftRatio = 1.f;
 	};
   TransformMapping Args = {};
 
 public:
 	TrackNodeContext(nos::fb::Node const* node);
 	virtual ~TrackNodeContext() {}
-	virtual bool Parse(std::vector<u8> const& data, fb::TTrack& out) = 0;
+	virtual bool Parse(std::vector<uint8_t> const& data, fb::TTrack& out) = 0;
 	void OnPathStart() override;	
 	void OnPathCommand(const nosPathCommand* command) override;
 	void PerformAutoSpare(uint64_t firstVBLTime);
@@ -115,6 +115,6 @@ public:
 		return false;
 	}
 protected:
-	glm::vec3 Swizzle(glm::vec3 v, glm::bvec3 n, u8 control);
+	glm::vec3 Swizzle(glm::vec3 v, glm::bvec3 n, uint8_t control);
 };
 }

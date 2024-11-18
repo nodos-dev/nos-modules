@@ -138,7 +138,7 @@ struct ReadImageContext : NodeContext
 
 			nosResourceShareInfo outRes = {
 				.Info = {.Type = NOS_RESOURCE_TYPE_TEXTURE,
-							.Texture = {.Width = (u32)w, .Height = (u32)h, .Format = NOS_FORMAT_R8G8B8A8_UNORM, .FieldType = NOS_TEXTURE_FIELD_TYPE_PROGRESSIVE}} };
+							.Texture = {.Width = (uint32_t)w, .Height = (uint32_t)h, .Format = NOS_FORMAT_R8G8B8A8_UNORM, .FieldType = NOS_TEXTURE_FIELD_TYPE_PROGRESSIVE}} };
 
 			// unless reading raw bytes, this is useless since samplers convert to linear space automatically
 			if (sRGB)
@@ -154,7 +154,7 @@ struct ReadImageContext : NodeContext
 					}
 
 					int w, h, n;
-					u8* img = stbi_load(path.string().c_str(), &w, &h, &n, 4);
+					uint8_t* img = stbi_load(path.string().c_str(), &w, &h, &n, 4);
 					if (!img)
 					{
 						nosEngine.LogE("Couldn't load image from %s.", path.string().c_str());

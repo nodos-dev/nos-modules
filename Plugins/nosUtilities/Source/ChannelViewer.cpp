@@ -19,8 +19,8 @@ static nosResult ExecuteNode(void* ctx, nosNodeExecuteParams* pins)
 	const nosResourceShareInfo input = vkss::DeserializeTextureInfo(values[NSN_Input]);
 	const nosResourceShareInfo output = vkss::DeserializeTextureInfo(values[NSN_Output]);
 
-	auto channel = *(u32*)values[NSN_Channel];
-	auto format = *(u32*)values[NSN_Format];
+	auto channel = *(uint32_t*)values[NSN_Channel];
+	auto format = *(uint32_t*)values[NSN_Format];
 
 	glm::vec4 val{};
 	val[channel & 3] = 1;
@@ -37,7 +37,7 @@ static nosResult ExecuteNode(void* ctx, nosNodeExecuteParams* pins)
 	nosRunPassParams pass = {
 		.Key = NSN_Channel_Viewer_Pass,
 		.Bindings = bindings.data(),
-		.BindingCount = (u32)bindings.size(),
+		.BindingCount = (uint32_t)bindings.size(),
 		.Output = output,
 		.Wireframe = false,
 	};
