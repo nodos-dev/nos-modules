@@ -9,7 +9,7 @@
         "dependencies": [
             {
                 "name": "nos.sys.vulkan",
-                "version": "5.8.0"
+                "version": "5.22.0"
             }
         ],
         "category": "Utilities"

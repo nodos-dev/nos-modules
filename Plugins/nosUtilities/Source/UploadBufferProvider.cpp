@@ -11,6 +11,7 @@ NOS_REGISTER_NAME(GPUEventRef);
 NOS_REGISTER_NAME(QueueSize);
 NOS_REGISTER_NAME(BufferSize);
 NOS_REGISTER_NAME(Alignment);
+NOS_REGISTER_NAME(ForceHostMemory);
 
 
 namespace nos::utilities
@@ -57,7 +58,7 @@ namespace nos::utilities
 				.Buffer = nosBufferInfo{
 					.Size = 0,
 					.Usage = nosBufferUsage(NOS_BUFFER_USAGE_TRANSFER_SRC),
-					.MemoryFlags = nosMemoryFlags(NOS_MEMORY_FLAGS_HOST_VISIBLE)
+					.MemoryFlags = nosMemoryFlags(NOS_MEMORY_FLAGS_HOST_VISIBLE | NOS_MEMORY_FLAGS_FORCE_HOST_MEMORY)
 				}
 			}
 		};
@@ -79,9 +80,7 @@ namespace nos::utilities
 						return;
 					Buffers.clear();
 					for (size_t i = 0; i < QueueSize; i++)
-					{
 						Buffers.emplace_back(SampleBuffer);
-					}
 					CurrentIndex = 0;
 				});
 			AddPinValueWatcher(NSN_BufferSize, [this](nos::Buffer const& newVal, std::optional<nos::Buffer> oldVal)
@@ -94,9 +93,7 @@ namespace nos::utilities
 					SampleBuffer.Info.Buffer.Size = newSize;
 					Buffers.clear();
 					for (size_t i = 0; i < QueueSize; i++)
-					{
 						Buffers.emplace_back(SampleBuffer);
-					}
 				});
 			AddPinValueWatcher(NSN_Alignment, [this](nos::Buffer const& newVal, std::optional<nos::Buffer> oldVal)
 				{
@@ -106,9 +103,21 @@ namespace nos::utilities
 					SampleBuffer.Info.Buffer.Alignment = newAlignment;
 					Buffers.clear();
 					for (size_t i = 0; i < QueueSize; i++)
-					{
 						Buffers.emplace_back(SampleBuffer);
-					}
+				});
+			AddPinValueWatcher(NSN_ForceHostMemory, [this](nos::Buffer const& newVal, std::optional<nos::Buffer> oldVal)
+				{
+					bool newForceHostMemory = *InterpretPinValue<bool>(newVal);
+					auto& memFlags = SampleBuffer.Info.Buffer.MemoryFlags;
+					if (!!(memFlags & NOS_MEMORY_FLAGS_FORCE_HOST_MEMORY) == newForceHostMemory)
+						return;
+					if (newForceHostMemory)
+						memFlags = nosMemoryFlags(memFlags | NOS_MEMORY_FLAGS_FORCE_HOST_MEMORY);
+					else
+						memFlags = nosMemoryFlags(memFlags & ~NOS_MEMORY_FLAGS_FORCE_HOST_MEMORY);
+					Buffers.clear();
+					for (size_t i = 0; i < QueueSize; i++)
+						Buffers.emplace_back(SampleBuffer);
 				});
 		}
 
