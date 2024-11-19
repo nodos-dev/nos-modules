@@ -29,11 +29,25 @@ struct RegexNode : NodeContext
 		auto& outGroupsPin = pins[NOS_NAME("Groups")].Id;
 
 		std::smatch match;
-		std::regex re(expression);
-		if (std::regex_search(inputCopy, match, re))
-			nosEngine.SetPinValue(outMatchPin, nos::Buffer::From(true));
-		else
+		try
+		{
+			if (strncmp(Expression.c_str(), expression, std::max(Expression.size(), strlen(expression))) != 0)
+			{
+				Compiled = std::regex(expression);
+				Expression = expression;
+			}
+			if (std::regex_search(inputCopy, match, Compiled))
+				nosEngine.SetPinValue(outMatchPin, nos::Buffer::From(true));
+			else
+				nosEngine.SetPinValue(outMatchPin, nos::Buffer::From(false));
+		}
+		catch (std::exception const& e)
+		{
+			Groups.clear();
 			nosEngine.SetPinValue(outMatchPin, nos::Buffer::From(false));
+			SetNodeStatusMessage(e.what(), fb::NodeStatusMessageType::FAILURE);
+			return NOS_RESULT_SUCCESS;
+		}
 
 		std::vector<std::string> curGroups;
 		for (size_t i = 0; i < match.size(); ++i)
@@ -60,7 +74,7 @@ struct RegexNode : NodeContext
 				elements.push_back(fbb.CreateString(curGroups[i].c_str()));
 			fbb.Finish(fbb.CreateVector(elements));
 			nos::Buffer groupsBuf = fbb.Release();
-			auto root = flatbuffers::GetRoot<uint8_t>(groupsBuf.Data()); // We don't correctly handle string arrays in nos.reflect.
+			auto root = flatbuffers::GetRoot<uint8_t>(groupsBuf.Data()); // TODO: Move array creation code to API.
 			nosEngine.SetPinValue(outGroupsPin, { (void*)root, groupsBuf.Size() });
 		}
 		else
@@ -72,6 +86,8 @@ struct RegexNode : NodeContext
 	}
 
 	std::vector<std::string> Groups;
+	std::regex Compiled;
+	std::string Expression;
 };
 
 nosResult RegisterRegex(nosNodeFunctions* fn)
