@@ -168,12 +168,24 @@ struct Indexer : NodeContext
 		}
 		else
 		{
-			flatbuffers::FlatBufferBuilder fbb;
-			auto vect = (flatbuffers::Vector<flatbuffers::Offset<flatbuffers::Table>>*)(pins[NSN_Input].Data->Data);
-			auto elem = vect->Get(Index);
-			fbb.Finish(flatbuffers::Offset<flatbuffers::Table>(CopyTable(fbb, type, elem)));
-			nos::Buffer buf = fbb.Release();
-			nosEngine.SetPinValue(ID, buf);
+			nos::Buffer buf;
+			if (type->BaseType == NOS_BASE_TYPE_STRING)
+			{
+				flatbuffers::FlatBufferBuilder fbb;
+				auto vect = (flatbuffers::Vector<flatbuffers::Offset<flatbuffers::String>>*)(pins[NSN_Input].Data->Data);
+				auto elem = vect->Get(Index);
+				buf = nos::Buffer(elem->c_str(), elem->size() + 1);
+				nosEngine.SetPinValue(ID, buf);
+			}
+			else
+			{
+				flatbuffers::FlatBufferBuilder fbb;
+				auto vect = (flatbuffers::Vector<flatbuffers::Offset<flatbuffers::Table>>*)(pins[NSN_Input].Data->Data);
+				auto elem = vect->Get(Index);
+				fbb.Finish(flatbuffers::Offset<flatbuffers::Table>(CopyTable(fbb, type, elem)));
+				buf = fbb.Release();
+				nosEngine.SetPinValue(ID, buf);	
+			}
 		}
 		return NOS_RESULT_SUCCESS;
     }
