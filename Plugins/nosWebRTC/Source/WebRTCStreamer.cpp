@@ -264,11 +264,7 @@ struct WebRTCNodeContext : nos::NodeContext {
 		
 		nosVec2u deltaSec{10'000u, (uint32_t)std::floor(FPS * 10'000)};
 
-		flatbuffers::FlatBufferBuilder fbb;
-
-		HandleEvent(
-			nos::CreateAppEvent(fbb, nos::CreatePartialNodeUpdateDirect(fbb, &DisconnectFromServerID,
-				nos::ClearFlags::NONE, 0, 0, 0, 0, 0, 0, 0, 0, 0, nos::fb::CreateOrphanStateDirect(fbb, true))));
+		SetNodeOrphanState(DisconnectFromServerID, NOS_ORPHAN_STATE_TYPE_ORPHAN);
 	}
 
 	~WebRTCNodeContext() override {
@@ -605,16 +601,8 @@ struct WebRTCNodeContext : nos::NodeContext {
 				case EWebRTCPlayerStates::eCONNECTED_TO_SERVER:
 				{
 					nosEngine.LogI("WebRTC Streamer connected to server");
-
-					flatbuffers::FlatBufferBuilder fbb;
-					HandleEvent(
-						nos::CreateAppEvent(fbb, nos::CreatePartialNodeUpdateDirect(fbb, &ConnectToServerID, 
-							nos::ClearFlags::NONE, 0, 0, 0, 0, 0, 0, 0, 0, 0, nos::fb::CreateOrphanStateDirect(fbb, true))));
-
-					HandleEvent(
-						nos::CreateAppEvent(fbb, nos::CreatePartialNodeUpdateDirect(fbb, &DisconnectFromServerID,
-							nos::ClearFlags::NONE, 0, 0, 0, 0, 0, 0, 0, 0, 0, nos::fb::CreateOrphanStateDirect(fbb, false))));
-
+					SetNodeOrphanState(ConnectToServerID, NOS_ORPHAN_STATE_TYPE_ORPHAN);
+					SetNodeOrphanState(DisconnectFromServerID, NOS_ORPHAN_STATE_TYPE_ACTIVE);
 					currentState = EWebRTCPlayerStates::eNONE;
 					break;
 				}
@@ -633,15 +621,8 @@ struct WebRTCNodeContext : nos::NodeContext {
 				case EWebRTCPlayerStates::eDISCONNECTED_FROM_SERVER:
 				{
 					nosEngine.LogI("WebRTC Streamer disconnected from server");
-
-					flatbuffers::FlatBufferBuilder fbb;
-					HandleEvent(
-						nos::CreateAppEvent(fbb, nos::CreatePartialNodeUpdateDirect(fbb, &ConnectToServerID, nos::ClearFlags::NONE, 0, 0, 0, 0, 0, 0, 0, 0, 0, nos::fb::CreateOrphanStateDirect(fbb, false))));
-					
-					HandleEvent(
-						nos::CreateAppEvent(fbb, nos::CreatePartialNodeUpdateDirect(fbb, &DisconnectFromServerID,
-							nos::ClearFlags::NONE, 0, 0, 0, 0, 0, 0, 0, 0, 0, nos::fb::CreateOrphanStateDirect(fbb, true))));
-					
+					SetNodeOrphanState(ConnectToServerID, NOS_ORPHAN_STATE_TYPE_ACTIVE);
+					SetNodeOrphanState(DisconnectFromServerID, NOS_ORPHAN_STATE_TYPE_ORPHAN);
 					ClearNodeInternals();
 					
 					currentState = EWebRTCPlayerStates::eNONE;

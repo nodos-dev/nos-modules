@@ -194,10 +194,8 @@ struct HostInfo
 
 struct HostNode : NodeContext
 {
-
 	HostNode(const nosFbNode* node) : NodeContext(node)
 	{
-		
 		HostInfoPins pins {
 			.HostNamePinId = *GetPinId(NOS_NAME("HostName")),
 			.IpAddressPinId = *GetPinId(NOS_NAME("IpAddress")),

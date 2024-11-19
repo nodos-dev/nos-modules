@@ -428,9 +428,9 @@ void TrackNodeContext::Run()
 				sock->set_option(udp::socket::reuse_address(true));
 				sock->set_option(asio::detail::socket_option::integer<SOL_SOCKET, SO_RCVTIMEO>{1000});
 				sock->bind(udp::endpoint(udp::v4(), Port));
-				fb::TOrphanState nonOrphanState = { .is_orphan = false };
+				fb::TPinOrphanState nonOrphanState = { .type = fb::PinOrphanStateType::ACTIVE };
 				flatbuffers::FlatBufferBuilder fbb;
-				std::vector<flatbuffers::Offset< nos::PartialPinUpdate>> updatePins = { nos::CreatePartialPinUpdate(fbb, &trackPinId, 0, nos::fb::OrphanState::Pack(fbb, &nonOrphanState)) };
+				std::vector<flatbuffers::Offset< nos::PartialPinUpdate>> updatePins = { nos::CreatePartialPinUpdate(fbb, &trackPinId, 0, nos::fb::PinOrphanState::Pack(fbb, &nonOrphanState)) };
 
 				HandleEvent(CreateAppEvent(
 					fbb,
@@ -438,9 +438,9 @@ void TrackNodeContext::Run()
 			}
 			catch (const  asio::system_error& e)
 			{
-				nos::fb::TOrphanState orphanState{ .is_orphan = true, .message = "Could not open UDP socket " + std::to_string(Port.load()) + ": " + e.what() };
+				nos::fb::TPinOrphanState orphanState{ .type = fb::PinOrphanStateType::ORPHAN, .message = "Could not open UDP socket " + std::to_string(Port.load()) + ": " + e.what() };
 				flatbuffers::FlatBufferBuilder fbb;
-				std::vector<flatbuffers::Offset< nos::PartialPinUpdate>> updatePins = { nos::CreatePartialPinUpdate(fbb, &trackPinId, 0, nos::fb::OrphanState::Pack(fbb, &orphanState)) };
+				std::vector<flatbuffers::Offset< nos::PartialPinUpdate>> updatePins = { nos::CreatePartialPinUpdate(fbb, &trackPinId, 0, nos::fb::PinOrphanState::Pack(fbb, &orphanState)) };
 
 				HandleEvent(CreateAppEvent(fbb,
 					nos::CreatePartialNodeUpdateDirect(fbb, &NodeId, nos::ClearFlags::NONE, 0, 0, 0, 0, 0, 0, 0, &updatePins)));

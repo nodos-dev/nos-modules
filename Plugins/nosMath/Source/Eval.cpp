@@ -73,12 +73,12 @@ struct EvalNodeContext : NodeContext
 		nosEngine.LogD("Eval: Setting node status");
 		if (type == fb::NodeStatusMessageType::FAILURE)
 		{
-			SetPinOrphan(NOS_NAME("Result"), true, message.c_str());
+			SetPinOrphanState(NOS_NAME("Result"), fb::PinOrphanStateType::ORPHAN, message.c_str());
 			SetNodeStatusMessage(message, type);
 		}
 		else
 		{
-			SetPinOrphan(NOS_NAME("Result"), false);
+			SetPinOrphanState(NOS_NAME("Result"), fb::PinOrphanStateType::ACTIVE);
 			if (ShowExpressionInNode)
 				SetNodeStatusMessage(message, type);
 			else
@@ -100,7 +100,7 @@ struct EvalNodeContext : NodeContext
 			}
 		}
 		ClearNodeStatusMessages();
-		SetPinOrphan(NOS_NAME("Result"), false);
+		SetPinOrphanState(NOS_NAME("Result"), fb::PinOrphanStateType::ACTIVE);
 		DisplayNames[nos::Name(update->PinName)] = newDisplayName;
 		Compile();
 	}
@@ -126,7 +126,7 @@ struct EvalNodeContext : NodeContext
 				DisplayNames[nos::Name(uniqueName)] = displayName;
 				Inputs.push_back(*pin->id());
 				if (auto orphanState = pin->orphan_state()) {
-					if (orphanState->is_orphan())
+					if (orphanState->type() == fb::PinOrphanStateType::ORPHAN)
 						pinsToUnorphan.push_back(*pin->id());
 				}
 			}
@@ -145,7 +145,7 @@ struct EvalNodeContext : NodeContext
 		if (prevDisplayNames != DisplayNames)
 			Compile();
 		for (auto const& pinId : pinsToUnorphan)
-			SetPinOrphan(pinId, false);
+			SetPinOrphanState(pinId, fb::PinOrphanStateType::ACTIVE);
 	}
 	
 	void OnNodeMenuRequested(const nosContextMenuRequest* request) override

@@ -109,11 +109,18 @@ struct Indexer : NodeContext
     	if (Index >= ArraySize)
     	{
     		SetNodeStatusMessage("Array index out of bounds", fb::NodeStatusMessageType::FAILURE);
+			SetPinOrphanState(NSN_Output, fb::PinOrphanStateType::PASSIVE, "Array index out of bounds");
     		return false;
     	}
-    	ClearNodeStatusMessages();
+		ClearOutputState();
     	return true;
     }
+
+	void ClearOutputState()
+	{
+		SetPinOrphanState(NSN_Output, fb::PinOrphanStateType::ACTIVE, "");
+		ClearNodeStatusMessages();
+	}
 
 	bool UpdateInputVectorSize() {
 		nosBuffer value;

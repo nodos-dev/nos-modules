@@ -138,7 +138,7 @@ struct ArrayNode : NodeContext
 
 		for (auto& [id, p] : Pins)
 			if (p.IsOrphan)
-				updates.push_back(CreatePartialPinUpdate(fbb, &p.Id, 0, fb::CreateOrphanState(fbb, false)));
+				updates.push_back(CreatePartialPinUpdate(fbb, &p.Id, 0, fb::CreatePinOrphanStateDirect(fbb, fb::PinOrphanStateType::ACTIVE)));
 
 		if (!updates.empty())
 		{

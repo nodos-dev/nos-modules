@@ -173,7 +173,7 @@ struct MakeNode : NodeContext
 				pinsToUpdate.push_back(CreatePartialPinUpdateDirect(fbb,
 																	&out->Id,
 																	0,
-																	nos::fb::CreateOrphanStateDirect(fbb, false),
+																	nos::fb::CreatePinOrphanStateDirect(fbb, fb::PinOrphanStateType::ACTIVE),
 																	nos::Name(type->TypeName).AsCStr(),
 																	nos::Name(type->TypeName).AsCStr()));
 			}
@@ -208,7 +208,7 @@ struct MakeNode : NodeContext
                     pinsToUpdate.push_back(CreatePartialPinUpdateDirect(fbb,
                         &pin->Id,
                         0,
-                        nos::fb::CreateOrphanStateDirect(fbb, false),
+                        nos::fb::CreatePinOrphanStateDirect(fbb, fb::PinOrphanStateType::ACTIVE),
                         nos::Name(type->TypeName).AsCStr(),
                         nos::Name(NSN_Value).AsCStr()));
                 }
@@ -246,7 +246,7 @@ struct MakeNode : NodeContext
                         pinsToUpdate.push_back(CreatePartialPinUpdateDirect(fbb,
                             &f->Id,
                             0,
-                            nos::fb::CreateOrphanStateDirect(fbb, false),
+                            nos::fb::CreatePinOrphanStateDirect(fbb, fb::PinOrphanStateType::ACTIVE),
                             nos::Name(field.Type->TypeName).AsCStr(),
                             nos::Name(field.Name).AsCStr()));
                     }

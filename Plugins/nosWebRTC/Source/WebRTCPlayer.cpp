@@ -223,12 +223,7 @@ struct WebRTCPlayerNodeContext : nos::NodeContext {
 		NodeID = *node->id();
 		
 		checkCallbacks = true;
-
-		flatbuffers::FlatBufferBuilder fbb;
-
-		HandleEvent(
-			nos::CreateAppEvent(fbb, nos::CreatePartialNodeUpdateDirect(fbb, &DisconnectFromServerID,
-				nos::ClearFlags::NONE, 0, 0, 0, 0, 0, 0, 0, 0, 0, nos::fb::CreateOrphanStateDirect(fbb, true))));
+		SetNodeOrphanState(DisconnectFromServerID, NOS_ORPHAN_STATE_TYPE_ORPHAN);
 	}
 
 	~WebRTCPlayerNodeContext() override {
@@ -501,15 +496,8 @@ struct WebRTCPlayerNodeContext : nos::NodeContext {
 				{
 					nosEngine.LogI("WebRTC Player connected to server");
 
-					flatbuffers::FlatBufferBuilder fbb;
-					HandleEvent(
-						nos::CreateAppEvent(fbb, nos::CreatePartialNodeUpdateDirect(fbb, &ConnectToServerID, 
-							nos::ClearFlags::NONE, 0, 0, 0, 0, 0, 0, 0, 0, 0, nos::fb::CreateOrphanStateDirect(fbb, true))));
-
-					HandleEvent(
-						nos::CreateAppEvent(fbb, nos::CreatePartialNodeUpdateDirect(fbb, &DisconnectFromServerID,
-							nos::ClearFlags::NONE, 0, 0, 0, 0, 0, 0, 0, 0, 0, nos::fb::CreateOrphanStateDirect(fbb, false))));
-
+					SetNodeOrphanState(ConnectToServerID, NOS_ORPHAN_STATE_TYPE_ORPHAN);
+					SetNodeOrphanState(DisconnectFromServerID, NOS_ORPHAN_STATE_TYPE_ACTIVE);
 					currentState = EWebRTCPlayerStates::eNONE;
 					break;
 				}
@@ -519,10 +507,7 @@ struct WebRTCPlayerNodeContext : nos::NodeContext {
 						shouldConvertFrame = true;
 						FrameConverterThread = std::thread([this]() {ConvertFrames(); });
 					}
-					flatbuffers::FlatBufferBuilder fbb;
-					HandleEvent(
-						nos::CreateAppEvent(fbb, nos::CreatePartialNodeUpdateDirect(fbb, &ConnectToPeerID,
-							nos::ClearFlags::NONE, 0, 0, 0, 0, 0, 0, 0, 0, 0, nos::fb::CreateOrphanStateDirect(fbb, true))));
+					SetNodeOrphanState(ConnectToPeerID, NOS_ORPHAN_STATE_TYPE_ORPHAN);
 					currentState = EWebRTCPlayerStates::eNONE;
 					break;
 				}
@@ -530,14 +515,9 @@ struct WebRTCPlayerNodeContext : nos::NodeContext {
 				{
 					nosEngine.LogI("WebRTC Player disconnected from server");
 
-					flatbuffers::FlatBufferBuilder fbb;
-					HandleEvent(
-						nos::CreateAppEvent(fbb, nos::CreatePartialNodeUpdateDirect(fbb, &ConnectToServerID, nos::ClearFlags::NONE, 0, 0, 0, 0, 0, 0, 0, 0, 0, nos::fb::CreateOrphanStateDirect(fbb, false))));
-					
-					HandleEvent(
-						nos::CreateAppEvent(fbb, nos::CreatePartialNodeUpdateDirect(fbb, &DisconnectFromServerID,
-							nos::ClearFlags::NONE, 0, 0, 0, 0, 0, 0, 0, 0, 0, nos::fb::CreateOrphanStateDirect(fbb, true))));
-					
+					SetNodeOrphanState(ConnectToServerID, NOS_ORPHAN_STATE_TYPE_ACTIVE);
+					SetNodeOrphanState(DisconnectFromServerID, NOS_ORPHAN_STATE_TYPE_ORPHAN);
+
 					ClearNodeInternals();
 					
 					currentState = EWebRTCPlayerStates::eNONE;
@@ -546,11 +526,7 @@ struct WebRTCPlayerNodeContext : nos::NodeContext {
 				case EWebRTCPlayerStates::eDISCONNECTED_FROM_PEER:
 				{
 					//shouldSendFrame = false;
-					flatbuffers::FlatBufferBuilder fbb;
-					HandleEvent(
-						nos::CreateAppEvent(fbb, nos::CreatePartialNodeUpdateDirect(fbb, &ConnectToPeerID,
-							nos::ClearFlags::NONE, 0, 0, 0, 0, 0, 0, 0, 0, 0, nos::fb::CreateOrphanStateDirect(fbb, false))));
-
+					SetNodeOrphanState(ConnectToPeerID, NOS_ORPHAN_STATE_TYPE_ACTIVE);
 					currentState = EWebRTCPlayerStates::eNONE;
 					break;
 				}

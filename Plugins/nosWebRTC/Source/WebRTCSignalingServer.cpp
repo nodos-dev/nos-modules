@@ -35,11 +35,7 @@ struct WebRTCSignalingServerNodeContext : nos::NodeContext {
 			}
 		}
 
-		flatbuffers::FlatBufferBuilder fbb;
-
-		HandleEvent(
-			nos::CreateAppEvent(fbb, nos::CreatePartialNodeUpdateDirect(fbb, &StopServerUUID,
-				nos::ClearFlags::NONE, 0, 0, 0, 0, 0, 0, 0, 0, 0, nos::fb::CreateOrphanStateDirect(fbb, true))));
+		SetNodeOrphanState(StopServerUUID, NOS_ORPHAN_STATE_TYPE_ORPHAN);
 	}
 
 	~WebRTCSignalingServerNodeContext() {
@@ -65,27 +61,13 @@ struct WebRTCSignalingServerNodeContext : nos::NodeContext {
 	}
 
 	void OnServerCreated() {
-		flatbuffers::FlatBufferBuilder fbb;
-
-		HandleEvent(
-			nos::CreateAppEvent(fbb, nos::CreatePartialNodeUpdateDirect(fbb, &StartServerUUID,
-				nos::ClearFlags::NONE, 0, 0, 0, 0, 0, 0, 0, 0, 0, nos::fb::CreateOrphanStateDirect(fbb, true))));
-
-		HandleEvent(
-			nos::CreateAppEvent(fbb, nos::CreatePartialNodeUpdateDirect(fbb, &StopServerUUID,
-				nos::ClearFlags::NONE, 0, 0, 0, 0, 0, 0, 0, 0, 0, nos::fb::CreateOrphanStateDirect(fbb, false))));
+		SetNodeOrphanState(StartServerUUID, NOS_ORPHAN_STATE_TYPE_ORPHAN);
+		SetNodeOrphanState(StopServerUUID, NOS_ORPHAN_STATE_TYPE_ACTIVE);
 	}
 
 	void OnServerDestroyed() {
-		flatbuffers::FlatBufferBuilder fbb;
-
-		HandleEvent(
-			nos::CreateAppEvent(fbb, nos::CreatePartialNodeUpdateDirect(fbb, &StartServerUUID,
-				nos::ClearFlags::NONE, 0, 0, 0, 0, 0, 0, 0, 0, 0, nos::fb::CreateOrphanStateDirect(fbb, false))));
-
-		HandleEvent(
-			nos::CreateAppEvent(fbb, nos::CreatePartialNodeUpdateDirect(fbb, &StopServerUUID,
-				nos::ClearFlags::NONE, 0, 0, 0, 0, 0, 0, 0, 0, 0, nos::fb::CreateOrphanStateDirect(fbb, true))));
+		SetNodeOrphanState(StartServerUUID, NOS_ORPHAN_STATE_TYPE_ACTIVE);
+		SetNodeOrphanState(StopServerUUID, NOS_ORPHAN_STATE_TYPE_ORPHAN);
 	}
 
 	void OnStreamerConnected(int id, std::string path) {

@@ -373,7 +373,7 @@ public:
 		if (!m)
 			return NOS_RESULT_NOT_FOUND;
 
-		return CallMethod<nosResult>("execute_node", NOS_RESULT_FAILED, PyNativeNodeExecuteParams(params));
+		return CallMethod<nosResult>("execute_node", PyNativeNodeExecuteParams(params));
 	}
 
 	void OnPinValueChanged(nos::Name pinName, nosUUID pinId, nosBuffer value) override

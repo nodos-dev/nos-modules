@@ -74,7 +74,7 @@ struct BreakNode : NodeContext
 	
 		if (auto* in = GetPin(NSN_Input))
 		{
-			pinsToUpdate.push_back(CreatePartialPinUpdate(fbb, &in->Id, 0, fb::CreateOrphanState(fbb, false)));
+			pinsToUpdate.push_back(CreatePartialPinUpdate(fbb, &in->Id, 0, fb::CreatePinOrphanStateDirect(fbb, fb::PinOrphanStateType::ACTIVE)));
 			acceptedPins.insert(in->Name);
 		}
 		auto& type = *Type;
@@ -91,7 +91,7 @@ struct BreakNode : NodeContext
 					pinsToUpdate.push_back(CreatePartialPinUpdateDirect(fbb,
 																		&pin->Id,
 																		0,
-																		nos::fb::CreateOrphanStateDirect(fbb, false),
+																		nos::fb::CreatePinOrphanStateDirect(fbb, fb::PinOrphanStateType::ACTIVE),
 																		nos::Name(field.Type->TypeName).AsCStr()));
 				}
 				else
@@ -127,7 +127,7 @@ struct BreakNode : NodeContext
         		i++;
         		if (pin->IsOrphan)
         		{
-        			pinsToUpdate.push_back(CreatePartialPinUpdate(fbb, &pin->Id, 0, fb::CreateOrphanState(fbb, false)));
+        			pinsToUpdate.push_back(CreatePartialPinUpdate(fbb, &pin->Id, 0, fb::CreatePinOrphanStateDirect(fbb, fb::PinOrphanStateType::ACTIVE)));
         		}
         	}
         	ArraySize = i;
