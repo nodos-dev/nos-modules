@@ -21,11 +21,6 @@
 
 using Clock = std::chrono::high_resolution_clock;
 
-namespace nos::vkss
-{
-#include <nosVulkanSubsystem/CAPIStructHelpers.inl>
-}
-
 namespace nos::utilities
 {
 NOS_REGISTER_NAME_SPACED(Nos_Utilities_ReadImage, "nos.utilities.ReadImage")
