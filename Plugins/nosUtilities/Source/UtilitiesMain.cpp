@@ -44,6 +44,7 @@ enum Utilities : int
 	BoundedQueue,
 	RingBuffer,
 	Host,
+	Regex,
 	Count
 };
 
@@ -65,6 +66,7 @@ nosResult RegisterUploadBufferProvider(nosNodeFunctions*);
 nosResult RegisterBoundedQueue(nosNodeFunctions*);
 nosResult RegisterRingBuffer(nosNodeFunctions*);
 nosResult RegisterHost(nosNodeFunctions*);
+nosResult RegisterRegex(nosNodeFunctions*);
 
 nosResult NOSAPI_CALL ExportNodeFunctions(size_t* outSize, nosNodeFunctions** outList)
 {
@@ -104,6 +106,7 @@ nosResult NOSAPI_CALL ExportNodeFunctions(size_t* outSize, nosNodeFunctions** ou
 			GEN_CASE_NODE(BoundedQueue)
 			GEN_CASE_NODE(RingBuffer)
 			GEN_CASE_NODE(Host)
+			GEN_CASE_NODE(Regex)
 		}
 	}
 	return NOS_RESULT_SUCCESS;

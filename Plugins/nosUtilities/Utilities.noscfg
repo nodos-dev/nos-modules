@@ -41,7 +41,8 @@
         "Config/TimedFunctionSignaller.nosdef",
         "Config/RingBuffer.nosdef",
         "Config/BoundedQueue.nosdef",
-        "Config/Host.nosdef"
+        "Config/Host.nosdef",
+        "Config/Regex.nosdef"
     ],
     "custom_types": [
         "Config/Merge.fbs",
@@ -191,8 +192,14 @@
         },
         {
             "category": "Utilities",
-            "class_name": "nos.utilities.Host",
+            "class_name": "Host",
             "display_name": "Host",
+            "hide_in_context_menu": false
+        },
+        {
+            "category": "String",
+            "class_name": "Regex",
+            "display_name": "Regex",
             "hide_in_context_menu": false
         }
     ],
