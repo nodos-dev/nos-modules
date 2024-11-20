@@ -213,10 +213,22 @@ struct ArithmeticNodeContext : NodeContext
 		flatbuffers::FlatBufferBuilder fbb;
 		NodeExecuteParams pins(params);
 
-		nos::Buffer buf(*pins[NSN_Output].Data);
+		auto& A = pins[NSN_A];
+		auto& B = pins[NSN_B];
+		auto& Output = pins[NSN_Output];
+
 		// TODO: we can directly set execute node function ptr instead of switch case etc.
-		DoOp(*Operator, *Type, (uint8_t*)pins[NSN_A].Data->Data, (uint8_t*)pins[NSN_B].Data->Data, (uint8_t*)buf.Data());
-		nosEngine.SetPinValue(pins[NSN_Output].Id, buf);
+		if ((*Type)->BaseType == NOS_BASE_TYPE_STRING)
+		{
+			std::stringstream ss;
+			ss << (const char*)A.Data->Data << (const char*)B.Data->Data;
+			auto str = ss.str();
+			nosEngine.SetPinValue(Output.Id, nosBuffer{(void*)str.c_str(), str.size() + 1});
+		}
+		else
+		{
+			DoOp(*Operator, *Type, (uint8_t*)A.Data->Data, (uint8_t*)B.Data->Data, (uint8_t*)Output.Data->Data);
+		}
 
 		return NOS_RESULT_SUCCESS;
 	}
