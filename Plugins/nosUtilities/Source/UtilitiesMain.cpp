@@ -7,7 +7,7 @@
 
 #include <nosVulkanSubsystem/nosVulkanSubsystem.h>
 
-NOS_INIT_WITH_MIN_REQUIRED_MINOR(5)
+NOS_INIT_WITH_MIN_REQUIRED_MINOR(9)
 NOS_VULKAN_INIT()
 
 NOS_BEGIN_IMPORT_DEPS()
@@ -45,6 +45,7 @@ enum Utilities : int
 	RingBuffer,
 	Host,
 	Regex,
+	Pin2Json,
 	Count
 };
 
@@ -67,6 +68,7 @@ nosResult RegisterBoundedQueue(nosNodeFunctions*);
 nosResult RegisterRingBuffer(nosNodeFunctions*);
 nosResult RegisterHost(nosNodeFunctions*);
 nosResult RegisterRegex(nosNodeFunctions*);
+nosResult RegisterPin2Json(nosNodeFunctions*);
 
 nosResult NOSAPI_CALL ExportNodeFunctions(size_t* outSize, nosNodeFunctions** outList)
 {
@@ -107,6 +109,7 @@ nosResult NOSAPI_CALL ExportNodeFunctions(size_t* outSize, nosNodeFunctions** ou
 			GEN_CASE_NODE(RingBuffer)
 			GEN_CASE_NODE(Host)
 			GEN_CASE_NODE(Regex)
+			GEN_CASE_NODE(Pin2Json)
 		}
 	}
 	return NOS_RESULT_SUCCESS;
