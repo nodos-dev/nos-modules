@@ -214,7 +214,6 @@ struct BreakNode : NodeContext
         {
         case NOS_BASE_TYPE_ARRAY: {
         	const flatbuffers::Vector<uint8_t>* vec = (flatbuffers::Vector<uint8_t>*)(data);
-        	auto tableVec = (const flatbuffers::Vector<flatbuffers::Offset<flatbuffers::Table>>*)vec;
         	for (int i = 0; i < vec->size(); ++i)
         	{
         		auto pinId = GetPinId(nos::Name("Output " + std::to_string(i)));
@@ -225,15 +224,21 @@ struct BreakNode : NodeContext
         			auto data = vec->data() + i * type->ElementType->ByteSize;
         			SetPinValueCached(*pinId, {(void*)data, type->ElementType->ByteSize});
         		}
-        		else
-        		{
-        			// TODO: Strings
-        			flatbuffers::FlatBufferBuilder fbb;
-        			fbb.Finish(
-						flatbuffers::Offset<flatbuffers::Table>(CopyTable(fbb, type->ElementType, tableVec->Get(i))));
-        			nos::Buffer buf = fbb.Release();
-        			SetPinValueCached(*pinId, {(void*)buf.Data(), buf.Size()});
+        		else if (type->ElementType->BaseType == NOS_BASE_TYPE_STRING)
+				{
+					auto strVec = (flatbuffers::Vector<flatbuffers::Offset<flatbuffers::String>>*)(vec);
+					auto str = strVec->Get(i)->string_view();
+					SetPinValueCached(*pinId, { (void*)str.data(), str.size() + 1 });
         		}
+				else
+				{
+					auto tableVec = (flatbuffers::Vector<flatbuffers::Offset<flatbuffers::Table>>*)(vec);
+					flatbuffers::FlatBufferBuilder fbb;
+					fbb.Finish(
+						flatbuffers::Offset<flatbuffers::Table>(CopyTable(fbb, type->ElementType, tableVec->Get(i))));
+					nos::Buffer buf = fbb.Release();
+					SetPinValueCached(*pinId, { (void*)buf.Data(), buf.Size() });
+				}
         	}
         	break;
         }
