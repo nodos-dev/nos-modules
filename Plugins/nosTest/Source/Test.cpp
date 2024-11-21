@@ -119,6 +119,16 @@ public:
 	}
 };
 
+struct AlwaysDirtyNode : nos::NodeContext
+{
+	using NodeContext::NodeContext;
+	void OnPinValueChanged(nos::Name pinName, nosUUID pinId, nosBuffer value) override
+	{
+		if (pinName == NOS_NAME_STATIC("OutLive"))
+			ChangePinLiveness(NOS_NAME_STATIC("Output"), *InterpretPinValue<bool>(value));
+	}
+};
+
 nosResult RegisterFrameInterpolator(nosNodeFunctions* nodeFunctions);
 
 struct TestPluginFunctions : PluginFunctions
@@ -146,7 +156,7 @@ struct TestPluginFunctions : PluginFunctions
 	}
 	nosResult ExportNodeFunctions(size_t& outCount, nosNodeFunctions** outFunctions) override
 	{
-		outCount = 11;
+		outCount = 12;
 		if (!outFunctions)
 			return NOS_RESULT_SUCCESS;
 
@@ -259,6 +269,7 @@ struct TestPluginFunctions : PluginFunctions
 				nosEngine.LogD("LiveOutWithInput: CopyFrom");
 				return NOS_RESULT_SUCCESS;
 			};
+		NOS_BIND_NODE_CLASS(NOS_NAME_STATIC("nos.test.AlwaysDirty"), AlwaysDirtyNode, outFunctions[11]);
 		return NOS_RESULT_SUCCESS;
 	}
 };

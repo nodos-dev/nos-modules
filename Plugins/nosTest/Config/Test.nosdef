@@ -64,7 +64,7 @@
 					"type_name": "[nos.fb.vec4]",
 					"show_as": "INPUT_PIN",
 					"can_show_as": "INPUT_PIN_OR_PROPERTY",
-					"visualizer": { 
+					"visualizer": {
 						"type": "COLOR_PICKER"
 					}
 				}
@@ -327,10 +327,10 @@
 			"class_name": "GpuStress",
 			"contents_type": "Job",
 			"contents": {
-			    "type": "nos.sys.vulkan.GPUNode",
-			    "options": {
-			        "shader": "./Source/GpuStress.frag.spv"
-			    }
+				"type": "nos.sys.vulkan.GPUNode",
+				"options": {
+					"shader": "./Source/GpuStress.frag.spv"
+				}
 			},
 			"pins": [
 				{
@@ -356,50 +356,50 @@
 				}
 			]
 		},
-        {
-            "class_name": "CopyTest",
-            "contents_type": "Job",
-            "pins": [
-                {
-                    "name": "Input",
-                    "type_name": "nos.sys.vulkan.Texture",
-                    "show_as": "INPUT_PIN",
-                    "can_show_as": "INPUT_PIN_OR_PROPERTY"
-                },
-                {
-                    "name": "Output",
-                    "type_name": "nos.sys.vulkan.Texture",
-                    "show_as": "OUTPUT_PIN",
-                    "can_show_as": "OUTPUT_PIN_OR_PROPERTY"
-                }
-            ]
-        },
-        {
-            "class_name": "CopyTestLicensed",
-            "contents_type": "Job",
-            "pins": [
-                {
-                    "name": "Input",
-                    "type_name": "nos.sys.vulkan.Texture",
-                    "show_as": "INPUT_PIN",
-                    "can_show_as": "INPUT_PIN_OR_PROPERTY"
-                },
-                {
-                    "name": "Output",
-                    "type_name": "nos.sys.vulkan.Texture",
-                    "show_as": "OUTPUT_PIN",
-                    "can_show_as": "OUTPUT_PIN_OR_PROPERTY"
-                }
-            ]
-        },
+		{
+			"class_name": "CopyTest",
+			"contents_type": "Job",
+			"pins": [
+				{
+					"name": "Input",
+					"type_name": "nos.sys.vulkan.Texture",
+					"show_as": "INPUT_PIN",
+					"can_show_as": "INPUT_PIN_OR_PROPERTY"
+				},
+				{
+					"name": "Output",
+					"type_name": "nos.sys.vulkan.Texture",
+					"show_as": "OUTPUT_PIN",
+					"can_show_as": "OUTPUT_PIN_OR_PROPERTY"
+				}
+			]
+		},
+		{
+			"class_name": "CopyTestLicensed",
+			"contents_type": "Job",
+			"pins": [
+				{
+					"name": "Input",
+					"type_name": "nos.sys.vulkan.Texture",
+					"show_as": "INPUT_PIN",
+					"can_show_as": "INPUT_PIN_OR_PROPERTY"
+				},
+				{
+					"name": "Output",
+					"type_name": "nos.sys.vulkan.Texture",
+					"show_as": "OUTPUT_PIN",
+					"can_show_as": "OUTPUT_PIN_OR_PROPERTY"
+				}
+			]
+		},
 		{
 			"class_name": "PyPow",
 			"contents_type": "Job",
 			"contents": {
-			    "type": "nos.py.PythonNode",
-			    "options": {
-			        "source": "./Source/PowNode.py"
-			    }
+				"type": "nos.py.PythonNode",
+				"options": {
+					"source": "./Source/PowNode.py"
+				}
 			},
 			"pins": [
 				{
@@ -444,11 +444,11 @@
 			"class_name": "ComputeTest1",
 			"contents_type": "Job",
 			"contents": {
-			    "type": "nos.sys.vulkan.GPUNode",
-			    "options": {
-			        "shader": "./Shaders/ComputeTest1.comp",
+				"type": "nos.sys.vulkan.GPUNode",
+				"options": {
+					"shader": "./Shaders/ComputeTest1.comp",
 					"stage": "COMPUTE"
-			    }
+				}
 			},
 			"pins": [
 				{
@@ -489,17 +489,36 @@
 			"pins": [
 				{
 					"name": "Input",
-          "type_name": "float",
-          "show_as": "INPUT_PIN",
-          "can_show_as": "INPUT_PIN_ONLY"
-        },
-        {
-          "name": "Output",
-          "type_name": "float",
-          "show_as": "OUTPUT_PIN",
+					"type_name": "float",
+					"show_as": "INPUT_PIN",
+					"can_show_as": "INPUT_PIN_ONLY"
+				},
+				{
+					"name": "Output",
+					"type_name": "float",
+					"show_as": "OUTPUT_PIN",
 					"can_show_as": "OUTPUT_PIN_ONLY",
 					"live": true
-        }
+				}
+			]
+		},
+		{
+			"class_name": "AlwaysDirty",
+			"contents_type": "Job",
+			"always_execute": true,
+			"pins": [
+				{
+					"name": "OutLive",
+					"type_name": "bool",
+					"show_as": "PROPERTY",
+					"can_show_as": "INPUT_PIN_OR_PROPERTY"
+				},
+				{
+					"name": "Output",
+					"type_name": "nos.fb.Void",
+					"show_as": "OUTPUT_PIN",
+					"can_show_as": "OUTPUT_PIN_ONLY"
+				}
 			]
 		}
 	]

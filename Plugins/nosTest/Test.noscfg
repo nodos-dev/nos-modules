@@ -1,100 +1,105 @@
 {
-    "info": {
-        "id": {
-            "name": "nos.test",
-            "version": "0.2.0"
-        },
-        "display_name": "Test",
-        "description": "Plugin for testing purposes.",
-        "dependencies": [
-            {
-                "name": "nos.sys.vulkan",
-                "version": "5.2.0"
-            },
-            {
-                "name": "nos.py",
-                "version": "0.1.0"
-            }
-        ],
-        "category": "Test"
+  "info": {
+    "id": {
+      "name": "nos.test",
+      "version": "0.2.0"
     },
-    "custom_types": [ "Config/Test.fbs", "Config/FrameInterpolator.fbs" ],
-    "node_definitions": [
-        "Config/Test.nosdef",
-        "Config/FrameInterpolator.nosdef",
-		"Config/Window.nosdef"
-    ],
-    "binary_path": "Binaries/nosTest",
-    "associated_nodes": [
-        {
-            "category": "Test",
-            "class_name": "NodeTest",
-            "display_name": "NodeTestNode"
-        },
-		{
-			"category": "Test",
-            "class_name": "NodeWithCategories",
-            "display_name": "NodeWithCategories"
-		},
-		{
-			"category": "Test",
-            "class_name": "NodeWithFunctions",
-            "display_name": "NodeWithFunctions"
-		},
-		{
-			"category": "Test",
-            "class_name": "NodeWithCustomTypes",
-            "display_name": "NodeWithCustomTypes"
-		},
-        {
-            "category": "Test",
-            "class_name": "GpuStress",
-            "display_name": "GPU Stress"
-        },
-        {
-            "category": "Test",
-            "class_name": "CopyTest",
-            "display_name": "Copy Test"
-        },
-        {
-            "category": "Test",
-            "class_name": "CopyTestLicensed",
-            "display_name": "Copy Test Licensed"
-        },
-        {
-            "category": "Test",
-            "class_name": "CopyBuffer",
-            "display_name": "Copy Buffer"
-        },
-        {
-            "category": "Test",
-            "class_name": "ComputeTest1",
-            "display_name": "ComputeTest1"
-        },
-        {
-            "category": "Test",
-            "class_name": "FrameInterpolator",
-            "display_name": "Frame Interpolator"
-        },
-        {
-          "category": "Test|Window",
-          "class_name": "Window",
-          "display_name": "Window"
-        },
-        {
-            "category": "Test",
-            "class_name": "PyPow",
-            "display_name": "PyPow"
-        },
+    "display_name": "Test",
+    "description": "Plugin for testing purposes.",
+    "dependencies": [
       {
-        "category": "Test",
-        "class_name": "BypassTexture",
-        "display_name": "Bypass Texture"
+        "name": "nos.sys.vulkan",
+        "version": "5.2.0"
       },
       {
-        "category": "Test",
-        "class_name": "LiveOutWithInput",
-        "display_name": "Live Out With Input"
+        "name": "nos.py",
+        "version": "0.1.0"
       }
-    ]
+    ],
+    "category": "Test"
+  },
+  "custom_types": [ "Config/Test.fbs", "Config/FrameInterpolator.fbs" ],
+  "node_definitions": [
+    "Config/Test.nosdef",
+    "Config/FrameInterpolator.nosdef",
+    "Config/Window.nosdef"
+  ],
+  "binary_path": "Binaries/nosTest",
+  "associated_nodes": [
+    {
+      "category": "Test",
+      "class_name": "NodeTest",
+      "display_name": "NodeTestNode"
+    },
+    {
+      "category": "Test",
+      "class_name": "NodeWithCategories",
+      "display_name": "NodeWithCategories"
+    },
+    {
+      "category": "Test",
+      "class_name": "NodeWithFunctions",
+      "display_name": "NodeWithFunctions"
+    },
+    {
+      "category": "Test",
+      "class_name": "NodeWithCustomTypes",
+      "display_name": "NodeWithCustomTypes"
+    },
+    {
+      "category": "Test",
+      "class_name": "GpuStress",
+      "display_name": "GPU Stress"
+    },
+    {
+      "category": "Test",
+      "class_name": "CopyTest",
+      "display_name": "Copy Test"
+    },
+    {
+      "category": "Test",
+      "class_name": "CopyTestLicensed",
+      "display_name": "Copy Test Licensed"
+    },
+    {
+      "category": "Test",
+      "class_name": "CopyBuffer",
+      "display_name": "Copy Buffer"
+    },
+    {
+      "category": "Test",
+      "class_name": "ComputeTest1",
+      "display_name": "ComputeTest1"
+    },
+    {
+      "category": "Test",
+      "class_name": "FrameInterpolator",
+      "display_name": "Frame Interpolator"
+    },
+    {
+      "category": "Test|Window",
+      "class_name": "Window",
+      "display_name": "Window"
+    },
+    {
+      "category": "Test",
+      "class_name": "PyPow",
+      "display_name": "PyPow"
+    },
+    {
+      "category": "Test",
+      "class_name": "BypassTexture",
+      "display_name": "Bypass Texture"
+    },
+    {
+      "category": "Test",
+      "class_name": "LiveOutWithInput",
+      "display_name": "Live Out With Input"
+    },
+    {
+      "category": "Test",
+      "class_name": "AlwaysDirty",
+      "display_name": "Always Dirty"
+    }
+  ]
 }
