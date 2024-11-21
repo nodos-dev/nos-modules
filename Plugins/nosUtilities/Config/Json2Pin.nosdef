@@ -1,0 +1,26 @@
+{
+  "nodes": [
+    {
+      "class_name": "Json2Pin",
+      "contents_type": "Job",
+      "description": "Convert JSON data to Pin",
+      "display_name": "Json2Pin",
+      "pins": [
+        {
+          "type_name": "string",
+          "name": "Json",
+          "show_as": "INPUT_PIN",
+          "can_show_as": "INPUT_PIN_ONLY",
+          "description": "JSON data to convert to pin"
+        },
+        {
+          "name": "Out",
+          "type_name": "nos.fb.Void",
+          "show_as": "OUTPUT_PIN",
+          "can_show_as": "OUTPUT_PIN_ONLY",
+          "description": "JSON representation of the pin data"
+        }
+      ]
+    }
+  ]
+}

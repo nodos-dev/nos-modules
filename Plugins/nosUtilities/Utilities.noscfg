@@ -43,7 +43,8 @@
         "Config/BoundedQueue.nosdef",
         "Config/Host.nosdef",
         "Config/Regex.nosdef",
-        "Config/Pin2Json.nosdef"
+        "Config/Pin2Json.nosdef",
+        "Config/Json2Pin.nosdef"
     ],
     "custom_types": [
         "Config/Merge.fbs",
@@ -207,6 +208,12 @@
             "category": "String",
             "class_name": "Pin2Json",
             "display_name": "Pin To JSON",
+            "hide_in_context_menu": false
+        },
+        {
+            "category": "String",
+            "class_name": "Json2Pin",
+            "display_name": "JSON To Pin",
             "hide_in_context_menu": false
         }
     ],

@@ -46,6 +46,7 @@ enum Utilities : int
 	Host,
 	Regex,
 	Pin2Json,
+	Json2Pin,
 	Count
 };
 
@@ -69,6 +70,7 @@ nosResult RegisterRingBuffer(nosNodeFunctions*);
 nosResult RegisterHost(nosNodeFunctions*);
 nosResult RegisterRegex(nosNodeFunctions*);
 nosResult RegisterPin2Json(nosNodeFunctions*);
+nosResult RegisterJson2Pin(nosNodeFunctions*);
 
 nosResult NOSAPI_CALL ExportNodeFunctions(size_t* outSize, nosNodeFunctions** outList)
 {
@@ -110,6 +112,7 @@ nosResult NOSAPI_CALL ExportNodeFunctions(size_t* outSize, nosNodeFunctions** ou
 			GEN_CASE_NODE(Host)
 			GEN_CASE_NODE(Regex)
 			GEN_CASE_NODE(Pin2Json)
+			GEN_CASE_NODE(Json2Pin)
 		}
 	}
 	return NOS_RESULT_SUCCESS;
