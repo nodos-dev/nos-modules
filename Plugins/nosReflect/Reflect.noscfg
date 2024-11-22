@@ -21,28 +21,33 @@
 		{
 			"category": "Type",
 			"class_name": "MakeDynamic",
-			"display_name": "Make"
+			"display_name": "Make",
+			"name_aliases": [ "variable", "create", "new" ]
 		},
 		{
 			"category": "Type",
 			"class_name": "Make",
 			"display_name": "Make",
-			"hide_in_context_menu": true
+			"hide_in_context_menu": true,
+			"name_aliases": [ "variable", "create", "new" ]
 		},
 		{
 			"category": "Type",
 			"class_name": "Break",
-			"display_name": "Break"
+			"display_name": "Break",
+			"name_aliases": [ "member", "argument" ]
 		},
 		{
 			"category": "Type",
 			"class_name": "Array",
-			"display_name": "Array"
+			"display_name": "Array",
+			"name_aliases": [ "list", "vector", "dynamic" ]
 		},
 		{
 			"category": "Type",
 			"class_name": "Indexer",
-			"display_name": "Indexer"
+			"display_name": "Indexer",
+			"name_aliases": [ "element" ]
 		},
 		{
 			"category": "Type",
@@ -53,7 +58,8 @@
 			"category": "Arithmetic",
 			"class_name": "Arithmetic",
 			"display_name": "Add",
-			"params": [{"type_name":  "nos.fb.BinaryOperator", "value" :  "ADD"}]
+			"params": [{"type_name":  "nos.fb.BinaryOperator", "value" :  "ADD"}],
+			"name_aliases": [ "plus", "sum" ]
 		},
 		{
 			"category": "Arithmetic",
@@ -77,7 +83,8 @@
 			"category": "Arithmetic",
 			"class_name": "Arithmetic",
 			"display_name": "Log",
-			"params": [{"type_name":  "nos.fb.BinaryOperator", "value" :  "LOG"}]
+			"params": [{"type_name":  "nos.fb.BinaryOperator", "value" :  "LOG"}],
+			"name_aliases": [ "logarithm", "ln" ]
 		}
 	]
 }
