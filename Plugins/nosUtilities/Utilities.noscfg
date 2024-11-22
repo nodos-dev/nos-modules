@@ -56,106 +56,113 @@
         "Config/Sink.fbs"
     ],
     "binary_path": "Binaries/nosUtilities",
-    "associated_nodes": [
-        {
-            "category": "Media",
-            "class_name": "ReadImage",
-            "display_name": "Read Image"
-        },
-        {
-            "category": "Media",
-            "class_name": "WriteImage",
-            "display_name": "Write Image"
-        },
-        {
-            "category": "Utilities",
-            "class_name": "Color",
-            "display_name": "Color"
-        },
-        {
-            "category": "Utilities",
-            "class_name": "Merge",
-            "display_name": "Merge"
-        },
-        {
-            "category": "Utilities",
-            "class_name": "SevenSegment",
-            "display_name": "SevenSegment"
-        },
-        {
-            "category": "Utilities",
-            "class_name": "Gradient",
-            "display_name": "Gradient"
-        },
-        {
-            "category": "Utilities",
-            "class_name": "Checkerboard",
-            "display_name": "Checkerboard"
-        },
-        {
-            "category": "Utilities",
-            "class_name": "Resize",
-            "display_name": "Resize"
-        },
-        {
-            "category": "Utilities",
-            "class_name": "Offset",
-            "display_name": "Offset"
-        },
-        {
-            "category": "Utilities",
-            "class_name": "QuadMerge",
-            "display_name": "Quad Merge"
-        },
-        {
-            "category": "Utilities",
-            "class_name": "Swizzle",
-            "display_name": "Swizzle"
-        },
-        {
-            "category": "Utilities",
-            "class_name": "TextureSwitcher",
-            "display_name": "Texture Switcher"
-        },
-        {
-            "category": "Channels",
-            "class_name": "ChannelViewer",
-            "display_name": "Channel Viewer"
-        },
-        {
-            "category": "Utilities",
-            "class_name": "Time",
-            "display_name": "Time"
-        },
-        {
-            "category": "Utilities",
-            "class_name": "CPUSleep",
-            "display_name": "CPU Sleep"
-        },
-        {
-            "category": "Utilities",
-            "class_name": "UploadBuffer",
-            "display_name": "Upload Buffer"
-        },
-        {
-            "category": "Utilities",
-            "class_name": "Buffer2Texture",
-            "display_name": "Buffer To Texture"
-        },
-        {
-            "category": "Utilities",
-            "class_name": "Texture2Buffer",
-            "display_name": "Texture To Buffer"
-        },
-        {
-            "category": "Utilities",
-            "class_name": "IsSameString",
-            "display_name": "Is Same String"
-        },
-        {
-            "category": "Utilities",
-            "class_name": "ShowStatus",
-            "display_name": "Show Status"
+  "associated_nodes": [
+    {
+      "category": "Media",
+      "class_name": "ReadImage",
+      "display_name": "Read Image"
+    },
+    {
+      "category": "Media",
+      "class_name": "WriteImage",
+      "display_name": "Write Image"
+    },
+    {
+      "category": "Utilities",
+      "class_name": "Color",
+      "display_name": "Color",
+      "name_aliases": [ "texture", "rgba" ]
+    },
+    {
+      "category": "Utilities",
+      "class_name": "Merge",
+      "display_name": "Merge"
+    },
+    {
+      "category": "Utilities",
+      "class_name": "SevenSegment",
+      "display_name": "SevenSegment"
+    },
+    {
+      "category": "Utilities",
+      "class_name": "Gradient",
+      "display_name": "Gradient"
+    },
+    {
+      "category": "Utilities",
+      "class_name": "Checkerboard",
+      "display_name": "Checkerboard"
+    },
+    {
+      "category": "Utilities",
+      "class_name": "Resize",
+      "display_name": "Resize"
+    },
+    {
+      "category": "Utilities",
+      "class_name": "Offset",
+      "display_name": "Offset"
+    },
+    {
+      "category": "Utilities",
+      "class_name": "QuadMerge",
+      "display_name": "Quad Merge"
+    },
+    {
+      "category": "Utilities",
+      "class_name": "Swizzle",
+      "display_name": "Swizzle"
+    },
+    {
+      "category": "Utilities",
+      "class_name": "TextureSwitcher",
+      "display_name": "Texture Switcher"
+    },
+    {
+      "category": "Channels",
+      "class_name": "ChannelViewer",
+      "display_name": "Channel Viewer",
+      "name_aliases": [ "display" ]
+    },
+    {
+      "category": "Utilities",
+      "class_name": "Time",
+      "display_name": "Time"
+    },
+    {
+      "category": "Utilities",
+      "class_name": "CPUSleep",
+      "display_name": "CPU Sleep",
+      "name_aliases": [ "Wait", "Milliseconds", "ms", "seconds" ]
+    },
+    {
+      "category": "Utilities",
+      "class_name": "UploadBuffer",
+      "display_name": "Upload Buffer"
+    },
+    {
+      "category": "Utilities",
+      "class_name": "Buffer2Texture",
+      "display_name": "Buffer To Texture",
+      "name_alises": [ "converter" ]
+    },
+    {
+      "category": "Utilities",
+      "class_name": "Texture2Buffer",
+      "display_name": "Texture To Buffer",
+      "name_alises": [ "converter" ]
+    },
+    {
+      "category": "Utilities",
+      "class_name": "IsSameString",
+      "display_name": "Is Same String",
+      "name_aliases": [ "compare", "equal" ]
+    },
+    {
+      "category": "Utilities",
+      "class_name": "ShowStatus",
+      "display_name": "Show Status",
+      "name_aliases": [ "print" ]
         },
         {
             "category": "Utilities",
@@ -172,15 +179,17 @@
             "class_name": "PropagateExecution",
             "display_name": "Propagate Execution"
         },
-        {
-            "category": "Utilities",
-            "class_name": "UploadBufferProvider",
-            "display_name": "Upload Buffer Provider"
-        },
+      {
+        "category": "Utilities",
+        "class_name": "UploadBufferProvider",
+        "display_name": "Upload Buffer Provider",
+        "name_aliases": [ "staging", "temporary" ]
+      },
         {
             "category": "Utilities",
             "class_name": "TimedFunctionSignaller",
-            "display_name": "Timed Function Signaller"
+            "display_name": "Timed Function Signaller",
+          "name_aliases": ["timer", "time", "delay", "wait", "timeout", "interval", "periodic", "repeated", "repeating", "schedule"]
         },
         {
             "category": "Utilities",
@@ -202,20 +211,23 @@
             "category": "String",
             "class_name": "Regex",
             "display_name": "Regex",
-            "hide_in_context_menu": false
+          "hide_in_context_menu": false,
+          "name_aliases": ["regular expression", "match", "replace", "search", "find", "split", "filter"]
         },
-        {
-            "category": "String",
-            "class_name": "Pin2Json",
-            "display_name": "Pin To JSON",
-            "hide_in_context_menu": false
-        },
-        {
-            "category": "String",
-            "class_name": "Json2Pin",
-            "display_name": "JSON To Pin",
-            "hide_in_context_menu": false
-        }
+      {
+        "category": "String",
+        "class_name": "Pin2Json",
+        "display_name": "Pin To JSON",
+        "hide_in_context_menu": false,
+        "name_alises": [ "converter" ]
+      },
+      {
+        "category": "String",
+        "class_name": "Json2Pin",
+        "display_name": "JSON To Pin",
+        "hide_in_context_menu": false,
+        "name_alises": [ "converter" ]
+      }
     ],
     "subsystem_options": [
         {
