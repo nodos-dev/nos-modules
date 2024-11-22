@@ -10,7 +10,7 @@
           "type_name": "string",
           "name": "Json",
           "show_as": "INPUT_PIN",
-          "can_show_as": "INPUT_PIN_ONLY",
+          "can_show_as": "INPUT_PIN_OR_PROPERTY",
           "description": "JSON data to convert to pin"
         },
         {
