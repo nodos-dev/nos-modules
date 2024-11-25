@@ -26,13 +26,15 @@
         {
             "category": "Noise",
             "class_name": "SimplexNoise",
-            "display_name": "Simplex Noise"
+          "display_name": "Simplex Noise",
+          "name_aliases": [ "random", "image" ]
         },
-        {
-            "category": "Noise",
-            "class_name": "WorleyNoise",
-            "display_name": "Worley Noise"
-        },
+      {
+        "category": "Noise",
+        "class_name": "WorleyNoise",
+        "display_name": "Worley Noise",
+        "name_aliases": [ "random", "image" ]
+      },
         {
             "category": "Noise",
             "class_name": "Fraction",

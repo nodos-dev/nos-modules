@@ -144,13 +144,13 @@
       "category": "Utilities",
       "class_name": "Buffer2Texture",
       "display_name": "Buffer To Texture",
-      "name_alises": [ "converter" ]
+      "name_aliases": [ "converter" ]
     },
     {
       "category": "Utilities",
       "class_name": "Texture2Buffer",
       "display_name": "Texture To Buffer",
-      "name_alises": [ "converter" ]
+      "name_aliases": [ "converter" ]
     },
     {
       "category": "Utilities",
@@ -194,12 +194,14 @@
         {
             "category": "Utilities",
             "class_name": "RingBuffer",
-            "display_name": "Ring Buffer"
+          "display_name": "Ring Buffer",
+          "name_aliases":  ["data structure", "algorithm", "circular"]
         },
         {
-            "category": "Utilities",
-            "class_name": "BoundedQueue",
-            "display_name": "Bounded Queue"
+          "category": "Utilities",
+          "class_name": "BoundedQueue",
+          "display_name": "Bounded Queue",
+          "name_aliases": [ "data structure", "algorithm", "circular" ]
         },
         {
             "category": "Utilities",
@@ -219,14 +221,14 @@
         "class_name": "Pin2Json",
         "display_name": "Pin To JSON",
         "hide_in_context_menu": false,
-        "name_alises": [ "converter" ]
+        "name_aliases": [ "converter" ]
       },
       {
         "category": "String",
         "class_name": "Json2Pin",
         "display_name": "JSON To Pin",
         "hide_in_context_menu": false,
-        "name_alises": [ "converter" ]
+        "name_aliases": [ "converter" ]
       }
     ],
     "subsystem_options": [

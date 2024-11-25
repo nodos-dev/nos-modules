@@ -39,7 +39,8 @@
         {
             "category": "Filters",
             "class_name": "ColorCorrect",
-            "display_name": "Color Correct"
+          "display_name": "Color Correct",
+          "name_aliases": ["post process"]
         },
         {
             "category": "Filters",
@@ -59,7 +60,8 @@
         {
             "category": "Filters",
             "class_name": "Thresholder",
-            "display_name": "Thresholder"
+          "display_name": "Thresholder",
+          "name_aliases": ["image segment"]
         },
         {
             "category": "Filters",
