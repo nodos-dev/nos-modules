@@ -77,7 +77,8 @@
 			"category": "Arithmetic",
 			"class_name": "Arithmetic",
 			"display_name": "Sub",
-			"params": [{"type_name":  "nos.fb.BinaryOperator", "value" :  "SUB"}]
+			"params": [{"type_name":  "nos.fb.BinaryOperator", "value" :  "SUB"}],
+			"name_aliases": [ "minus", "difference" ]
 		},
 		{
 			"category": "Arithmetic",

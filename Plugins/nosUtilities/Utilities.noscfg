@@ -60,12 +60,14 @@
     {
       "category": "Media",
       "class_name": "ReadImage",
-      "display_name": "Read Image"
+      "display_name": "Read Image",
+      "name_aliases": [ "Load texture from disk", "JPEG", "JPG", "PNG", "TGA", "BMP", "PSD", "GIF", "HDR", "PIC" ]
     },
     {
       "category": "Media",
       "class_name": "WriteImage",
-      "display_name": "Write Image"
+      "display_name": "Write Image",
+      "name_aliases": [ "Save texture to disk", "JPEG", "JPG", "PNG", "TGA", "BMP", "PSD", "GIF", "HDR", "PIC" ]
     },
     {
       "category": "Utilities",
@@ -76,27 +78,32 @@
     {
       "category": "Utilities",
       "class_name": "Merge",
-      "display_name": "Merge"
+      "display_name": "Merge",
+      "name_aliases": [ "combine", "concatenate", "add" ]
     },
     {
       "category": "Utilities",
       "class_name": "SevenSegment",
-      "display_name": "SevenSegment"
+      "display_name": "SevenSegment",
+      "name_aliases": [ "7 segment display", "visualize number" ]
     },
     {
       "category": "Utilities",
       "class_name": "Gradient",
-      "display_name": "Gradient"
+      "display_name": "Gradient",
+      "name_aliases": [ "linear interpolation", "lerp" ]
     },
     {
       "category": "Utilities",
       "class_name": "Checkerboard",
-      "display_name": "Checkerboard"
+      "display_name": "Checkerboard",
+      "name_aliases": [ "chessboard", "sample texture"]
     },
     {
       "category": "Utilities",
       "class_name": "Resize",
-      "display_name": "Resize"
+      "display_name": "Resize",
+      "name_aliases": [ "scale", "downsample", "upsample", "filtering", "sampling", "texture" ]
     },
     {
       "category": "Utilities",
@@ -106,12 +113,14 @@
     {
       "category": "Utilities",
       "class_name": "QuadMerge",
-      "display_name": "Quad Merge"
+      "display_name": "Quad Merge",
+      "name_aliases": [ "combine", "concatenate", "add", "quarter", "texture" ]
     },
     {
       "category": "Utilities",
       "class_name": "Swizzle",
-      "display_name": "Swizzle"
+      "display_name": "Swizzle",
+      "name_aliases": [ "reorder", "shuffle", "channel replace", "texture"]
     },
     {
       "category": "Utilities",
@@ -127,7 +136,8 @@
     {
       "category": "Utilities",
       "class_name": "Time",
-      "display_name": "Time"
+      "display_name": "Time",
+      "name_aliases": [ "timer", "clock", "delta", "elapsed"]
     },
     {
       "category": "Utilities",
@@ -138,19 +148,20 @@
     {
       "category": "Utilities",
       "class_name": "UploadBuffer",
-      "display_name": "Upload Buffer"
+      "display_name": "Upload Buffer",
+      "name_aliases": [ "staging", "temporary" ]
     },
     {
       "category": "Utilities",
       "class_name": "Buffer2Texture",
       "display_name": "Buffer To Texture",
-      "name_aliases": [ "converter" ]
+      "name_aliases": [ "converter", "image" ]
     },
     {
       "category": "Utilities",
       "class_name": "Texture2Buffer",
       "display_name": "Texture To Buffer",
-      "name_aliases": [ "converter" ]
+      "name_aliases": [ "converter", "image" ]
     },
     {
       "category": "Utilities",
@@ -206,7 +217,8 @@
         {
             "category": "Utilities",
             "class_name": "Host",
-            "display_name": "Host",
+          "display_name": "Host",
+            "name_aliases": [ "hostname", "ip", "address", "port", "network", "socket", "connection", "client", "server", "device", "current pc", "active pc", "computer" ]
             "hide_in_context_menu": false
         },
         {
