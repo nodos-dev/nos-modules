@@ -10,6 +10,7 @@ struct ArrayNode : NodeContext
 {
 	std::optional<nos::TypeInfo> Type = std::nullopt;
 	size_t PinCount = 0;
+	bool invalidNode = false;
 	ArrayNode(const nosFbNode* inNode) : NodeContext(inNode)
 	{
 		for (auto& pin : Pins | std::views::values)
@@ -23,11 +24,16 @@ struct ArrayNode : NodeContext
 			if (pin.ShowAs == fb::ShowAs::OUTPUT_PIN)
 			{
 				nos::TypeInfo arrayType = nos::TypeInfo(pin.TypeName);
-				if (arrayType.TypeName != NSN_VOID)
-				{
-					auto elementTypeName = arrayType->ElementType->TypeName;
-					Type = nos::TypeInfo(elementTypeName);
+				if (arrayType.TypeName == NSN_VOID)
+					continue;
+				if (arrayType->BaseType != NOS_BASE_TYPE_ARRAY) {
+					invalidNode = true;
+					pin.IsOrphan = true;
+					pin.ShowAs = nos::fb::ShowAs::PROPERTY;
+					continue;
 				}
+				auto elementTypeName = arrayType->ElementType->TypeName;
+				Type = nos::TypeInfo(elementTypeName);
 			}
 		}
 		LoadPins();
@@ -138,7 +144,7 @@ struct ArrayNode : NodeContext
 
 		for (auto& [id, p] : Pins)
 			if (p.IsOrphan)
-				updates.push_back(CreatePartialPinUpdate(fbb, &p.Id, 0, fb::CreatePinOrphanStateDirect(fbb, fb::PinOrphanStateType::ACTIVE)));
+				updates.push_back(CreatePartialPinUpdate(fbb, &p.Id, 0, fb::CreatePinOrphanStateDirect(fbb, invalidNode ? nos::fb::PinOrphanStateType::ORPHAN : nos::fb::PinOrphanStateType::ACTIVE), 0, 0, nos::Action::NOP, 0, p.ShowAs));
 
 		if (!updates.empty())
 		{
