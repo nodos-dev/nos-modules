@@ -2,7 +2,7 @@
     "info": {
         "id": {
             "name": "nos.utilities",
-            "version": "2.10.0"
+            "version": "2.11.0"
         },
         "description": "Various utility nodes.",
         "display_name": "Utilities",
@@ -10,6 +10,10 @@
             {
                 "name": "nos.sys.vulkan",
                 "version": "5.22.0"
+            },
+            {
+                "name": "nos.math",
+                "version": "1.3.0"
             }
         ],
         "category": "Utilities"
@@ -44,7 +48,8 @@
         "Config/Host.nosdef",
         "Config/Regex.nosdef",
         "Config/Pin2Json.nosdef",
-        "Config/Json2Pin.nosdef"
+        "Config/Json2Pin.nosdef",
+        "Config/AutoResize.nosdef"
     ],
     "custom_types": [
         "Config/Merge.fbs",
@@ -104,6 +109,12 @@
       "class_name": "Resize",
       "display_name": "Resize",
       "name_aliases": [ "scale", "downsample", "upsample", "filtering", "sampling", "texture" ]
+    },
+    {
+        "category": "Utilities",
+        "class_name": "AutoResize",
+        "display_name": "Auto Resize",
+        "name_aliases": [ "scale", "downsample", "upsample", "filtering", "sampling", "texture" ]
     },
     {
       "category": "Utilities",
