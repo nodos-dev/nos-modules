@@ -218,7 +218,7 @@
             "category": "Utilities",
             "class_name": "Host",
           "display_name": "Host",
-            "name_aliases": [ "hostname", "ip", "address", "port", "network", "socket", "connection", "client", "server", "device", "current pc", "active pc", "computer" ]
+            "name_aliases": [ "hostname", "ip", "address", "port", "network", "socket", "connection", "client", "server", "device", "current pc", "active pc", "computer" ],
             "hide_in_context_menu": false
         },
         {
