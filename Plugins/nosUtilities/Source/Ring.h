@@ -736,7 +736,6 @@ struct RingNodeBase : NodeContext
 	std::atomic<RingMode> Mode = RingMode::CONSUME;
 	std::atomic_bool RepeatWhenFilling = false;
 	TypeInfo TypeInfo;
-	ResourceInterface::ResourceBase* LastPopped = nullptr;
 
 	void Init() {
 		ResourceInterface* resource = nullptr;
@@ -880,9 +879,13 @@ struct RingNodeBase : NodeContext
 		}
 
 		Ring->ResInterface->Push(slot, input, params, ringExecuteName, pushEventForCopyFrom);
+		
+		bool isFillComplete = false;
+		if(Mode == RingMode::FILL)
+			isFillComplete = Ring->Write.Pool.size() == 0;
 		Ring->EndPush(slot);
 
-		if (Mode == RingMode::FILL && Ring->IsFull())
+		if (isFillComplete)
 		{
 			Mode = RingMode::CONSUME;
 			ModeCV.notify_all();
@@ -897,10 +900,6 @@ struct RingNodeBase : NodeContext
 	}
 
 	nosResult CommonCopyFrom(nosCopyInfo* cpy, ResourceInterface::ResourceBase** foundSlot) {
-		if (LastPopped != nullptr)
-		{
-			DEBUG_BREAK
-		}
 		if (!Ring || Ring->Exit)
 			return NOS_RESULT_FAILED;
 		SendRingStats();
@@ -981,6 +980,12 @@ struct RingNodeBase : NodeContext
 		if (!Ring) { return; }
 		if (Ring && OnRestart == OnRestartType::RESET)
 			Ring->Reset(false);
+		// We must wait for at least a frame to be sure that providing path is started and running smoothly
+		if (Ring && OnRestart == OnRestartType::WAIT_UNTIL_FULL && Ring->IsFull())
+		{
+			Ring->Write.Pool.push_back(Ring->Read.Pool.front());
+			Ring->Read.Pool.pop_front();
+		}
 		if (RequestedRingSize)
 		{
 			Ring->Resize(*RequestedRingSize);
@@ -995,8 +1000,6 @@ struct RingNodeBase : NodeContext
 		auto emptySlotCount = Ring->Write.Pool.size();
 		nosScheduleNodeParams schedule{ .NodeId = NodeId, .AddScheduleCount = emptySlotCount };
 		nosEngine.ScheduleNode(&schedule);
-		if (emptySlotCount == 0)
-			Mode = RingMode::CONSUME;
 		Ring->Exit = false;
 	}
 
@@ -1019,8 +1022,6 @@ struct RingNodeBase : NodeContext
 
 	~RingNodeBase() override
 	{
-		if (LastPopped)
-			delete LastPopped;
 		if (Ring)
 			Ring->Stop();
 	}

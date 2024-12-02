@@ -19,12 +19,20 @@ struct RingBufferNodeContext : RingNodeBase
 	RingBufferNodeContext(nosFbNode const* node) : RingNodeBase(node, RingNodeBase::OnRestartType::WAIT_UNTIL_FULL)
 	{
 	}
+	~RingBufferNodeContext()
+	{
+		NOS_SOFT_CHECK(LastPopped == nullptr);
+	}
+
+	ResourceInterface::ResourceBase* LastPopped = nullptr;
+
 	std::string GetName() const override
 	{
 		return "RingBuffer";
 	}
 
 	nosResult CopyFrom(nosCopyInfo* cpy) override {
+		NOS_SOFT_CHECK(LastPopped == nullptr);
 		ResourceInterface::ResourceBase* slot = nullptr;
 		auto beginResult = CommonCopyFrom(cpy, &slot);
 		if (beginResult != NOS_RESULT_SUCCESS || !slot)
