@@ -734,6 +734,7 @@ struct RingNodeBase : NodeContext
 	std::condition_variable ModeCV;
 	std::mutex ModeMutex;
 	std::atomic<RingMode> Mode = RingMode::CONSUME;
+	std::atomic_bool RepeatWhenFilling = false;
 	TypeInfo TypeInfo;
 	ResourceInterface::ResourceBase* LastPopped = nullptr;
 
@@ -768,7 +769,7 @@ struct RingNodeBase : NodeContext
 				RequestedRingSize = size;
 				Ring->Stop();
 			}
-			});
+		});
 		AddPinValueWatcher(NOS_NAME_STATIC("Input"), [this](nos::Buffer const& newBuf, std::optional<nos::Buffer> oldVal) {
 			bool needsRecreation = Ring->ResInterface->CheckNewResource(NOS_NAME_STATIC("Input"), newBuf, oldVal, true);
 
@@ -778,7 +779,7 @@ struct RingNodeBase : NodeContext
 				Ring->Stop();
 				NeedsRecreation = true;
 			}
-			});
+		});
 		AddPinValueWatcher(NOS_NAME_STATIC("Alignment"), [this](nos::Buffer const& newAlignment, std::optional<nos::Buffer> oldVal) {
 			bool needsRecreation = Ring->ResInterface->CheckNewResource(NOS_NAME_STATIC("Alignment"), newAlignment, oldVal, true);
 
@@ -788,7 +789,10 @@ struct RingNodeBase : NodeContext
 				Ring->Stop();
 				NeedsRecreation = true;
 			}
-			});
+		});
+		AddPinValueWatcher(NOS_NAME_STATIC("RepeatWhenFilling"), [this](nos::Buffer const& newVal, std::optional<nos::Buffer> oldVal) {
+			RepeatWhenFilling = *newVal.As<bool>();
+		});
 	}
 
 	RingNodeBase(const nosFbNode* node, OnRestartType onRestart) : NodeContext(node), OnRestart(onRestart), TypeInfo(voidTypeName) {
@@ -908,15 +912,14 @@ struct RingNodeBase : NodeContext
 		if (Mode == RingMode::FILL)
 		{
 			//Sleep for 100 ms & if still Fill, return pending
-			std::unique_lock<std::mutex> lock(ModeMutex);
+			if (RepeatWhenFilling)
+				return NOS_RESULT_SUCCESS;
+			std::unique_lock lock(ModeMutex);
 			if (!ModeCV.wait_for(lock, std::chrono::milliseconds(100), [this] { return Mode != RingMode::FILL; }))
 				return NOS_RESULT_PENDING;
 		}
 
-		auto effectiveSpareCount = SpareCount.load(); // TODO: * (1 + uint32_t(th->Interlaced()));
-
-
-		ResourceInterface::ResourceBase* slot = nullptr;
+		ResourceInterface::ResourceBase* slot;
 		{
 			ScopedProfilerEvent _({ .Name = "Wait For Filled Slot" });
 			slot = Ring->BeginPop(100);

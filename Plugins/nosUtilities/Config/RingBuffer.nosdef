@@ -50,6 +50,15 @@
           "show_as": "OUTPUT_PIN",
           "can_show_as": "OUTPUT_PIN_ONLY",
           "live": true
+        },
+        {
+          "name": "RepeatWhenFilling",
+          "display_name": "Repeat When Filling",
+          "type_name": "bool",
+          "description": "Serves the last value while the buffer is being filled instead of waiting",
+          "def": false,
+          "show_as": "PROPERTY",
+          "can_show_as": "INPUT_PIN_OR_PROPERTY"
         }
       ]
     }
