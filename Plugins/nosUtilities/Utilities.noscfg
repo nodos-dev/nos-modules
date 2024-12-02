@@ -2,7 +2,7 @@
     "info": {
         "id": {
             "name": "nos.utilities",
-            "version": "2.11.0"
+            "version": "2.12.0"
         },
         "description": "Various utility nodes.",
         "display_name": "Utilities",
@@ -49,7 +49,8 @@
         "Config/Regex.nosdef",
         "Config/Pin2Json.nosdef",
         "Config/Json2Pin.nosdef",
-        "Config/AutoResize.nosdef"
+        "Config/AutoResize.nosdef",
+        "Config/ExecDepend.nosdef"
     ],
     "custom_types": [
         "Config/Merge.fbs",
@@ -252,6 +253,12 @@
         "display_name": "JSON To Pin",
         "hide_in_context_menu": false,
         "name_aliases": [ "converter" ]
+      },
+      {
+        "category": "Execution",
+        "class_name": "ExecDepend",
+        "display_name": "Execution Dependency",
+        "name_aliases": [ "dep" ]
       }
     ],
     "subsystem_options": [
