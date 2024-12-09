@@ -416,34 +416,33 @@ void TrackNodeContext::Run()
 	HandleEvent(
 		nos::CreateAppEvent(fbb, nos::app::CreateSetThreadNameDirect(fbb, (u64)StdThread.native_handle(), "Track")));
 
+	fb::UUID trackPinId = *GetPinId(NSN_Track);
+	auto changeOrphanState = [&](bool newOrphan, std::string const& message = {})
+		{
+			fb::TOrphanState newOrphanState = { .is_orphan = newOrphan, .message = message };
+			flatbuffers::FlatBufferBuilder fbb;
+			std::vector<flatbuffers::Offset< nos::PartialPinUpdate>> updatePins = { nos::CreatePartialPinUpdate(fbb, &trackPinId, 0, nos::fb::OrphanState::Pack(fbb, &newOrphanState)) };
+			HandleEvent(CreateAppEvent(
+				fbb,
+				nos::CreatePartialNodeUpdateDirect(fbb, &NodeId, nos::ClearFlags::NONE, 0, 0, 0, 0, 0, 0, 0, &updatePins)));
+		};
+
 	asio::io_service io_serv;
 	{
 		nos::rc<udp::socket> sock;
 		while (!ShouldStop && !sock)
 		{
-			fb::UUID trackPinId = *GetPinId(NSN_Track);
 			try
 			{
 				sock = MakeShared<udp::socket>(io_serv, udp::v4());
 				sock->set_option(udp::socket::reuse_address(true));
 				sock->set_option(asio::detail::socket_option::integer<SOL_SOCKET, SO_RCVTIMEO>{1000});
 				sock->bind(udp::endpoint(udp::v4(), Port));
-				fb::TOrphanState nonOrphanState = { .is_orphan = false };
-				flatbuffers::FlatBufferBuilder fbb;
-				std::vector<flatbuffers::Offset< nos::PartialPinUpdate>> updatePins = { nos::CreatePartialPinUpdate(fbb, &trackPinId, 0, nos::fb::OrphanState::Pack(fbb, &nonOrphanState)) };
-
-				HandleEvent(CreateAppEvent(
-					fbb,
-					nos::CreatePartialNodeUpdateDirect(fbb, &NodeId, nos::ClearFlags::NONE, 0, 0, 0, 0, 0, 0, 0, &updatePins)));
+				changeOrphanState(false);
 			}
 			catch (const  asio::system_error& e)
 			{
-				nos::fb::TOrphanState orphanState{ .is_orphan = true, .message = "Could not open UDP socket " + std::to_string(Port.load()) + ": " + e.what() };
-				flatbuffers::FlatBufferBuilder fbb;
-				std::vector<flatbuffers::Offset< nos::PartialPinUpdate>> updatePins = { nos::CreatePartialPinUpdate(fbb, &trackPinId, 0, nos::fb::OrphanState::Pack(fbb, &orphanState)) };
-
-				HandleEvent(CreateAppEvent(fbb,
-					nos::CreatePartialNodeUpdateDirect(fbb, &NodeId, nos::ClearFlags::NONE, 0, 0, 0, 0, 0, 0, 0, &updatePins)));
+				changeOrphanState(true, "Could not open UDP socket " + std::to_string(Port.load()) + ": " + e.what());
 
 				nosEngine.LogW("could not open UDP socket %d: %s", Port.load(), e.what());
 
@@ -456,7 +455,7 @@ void TrackNodeContext::Run()
 		nosEngine.GetDefaultValueOfType(NOS_NAME_STATIC("nos.fb.Track"), &defaultTrackData);
 		nos::Buffer defaultTrackBuffer = nos::Buffer((uint8_t*)defaultTrackData.Data, defaultTrackData.Size);
 		fb::TTrack defaultTrack = defaultTrackBuffer.As<fb::TTrack>();
-		bool restartOnFirstSuccess = false;
+		bool reviveFromOrphanOnFirstSuccess = false;
 		while (!ShouldStop)
 		{
 			try
@@ -474,10 +473,10 @@ void TrackNodeContext::Run()
 						// Queue sisiyo mu?
 						// while (DataQueue.size() > Delay) DataQueue.pop();
 						nosEngine.WatchLog("Track Queue Size", std::to_string(DataQueue.size()).c_str());
-						if (restartOnFirstSuccess)
+						if (reviveFromOrphanOnFirstSuccess)
 						{
-							restartOnFirstSuccess = false;
-							SignalRestart();
+							reviveFromOrphanOnFirstSuccess = false;
+							changeOrphanState(false);
 						}
 					}
 				}
@@ -485,7 +484,8 @@ void TrackNodeContext::Run()
 			catch (const  asio::system_error& e)
 			{
 				nosEngine.LogW("Exception when listening on port %d: %s", Port.load(), e.what());
-				restartOnFirstSuccess = true;
+				changeOrphanState(true, "Exception when listening on port " + std::to_string(Port.load()) + ": " + e.what());
+				reviveFromOrphanOnFirstSuccess = true;
 			}
 		}
 		if (sock)
@@ -495,6 +495,7 @@ void TrackNodeContext::Run()
 			sock = nullptr;
 		}
 	}
+	changeOrphanState(true, "UDP thread is not active");
 }
 glm::mat3 MakeRotation(glm::vec3 rot)
 {
