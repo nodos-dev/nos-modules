@@ -9,6 +9,15 @@ NOS_END_IMPORT_DEPS()
 namespace nos::track
 {
 
+void SetPinOrphanState(nosUUID const& pinId, bool newOrphan, std::string const& message = "")
+{
+	flatbuffers::FlatBufferBuilder fbb;
+
+	HandleEvent(CreateAppEvent(
+		fbb,
+		nos::CreatePartialPinUpdateDirect(fbb, &pinId, 0, nos::fb::CreateOrphanStateDirect)));
+}
+
 TrackNodeContext::TrackNodeContext(nos::fb::Node const* node) : NodeContext(node)
 {
 	bool enable = 0;
@@ -417,6 +426,7 @@ void TrackNodeContext::Run()
 		nos::CreateAppEvent(fbb, nos::app::CreateSetThreadNameDirect(fbb, (uint64_t)StdThread.native_handle(), "Track")));
 
 	asio::io_service io_serv;
+	while(!ShouldStop)
 	{
 		nos::rc<udp::socket> sock;
 		while (!ShouldStop && !sock)
@@ -457,7 +467,8 @@ void TrackNodeContext::Run()
 		nos::Buffer defaultTrackBuffer = nos::Buffer((uint8_t*)defaultTrackData.Data, defaultTrackData.Size);
 		fb::TTrack defaultTrack = defaultTrackBuffer.As<fb::TTrack>();
 		bool restartOnFirstSuccess = false;
-		while (!ShouldStop)
+		bool connectionFailed = false;
+		while (!connectionFailed && !ShouldStop)
 		{
 			try
 			{
@@ -476,6 +487,7 @@ void TrackNodeContext::Run()
 						nosEngine.WatchLog("Track Queue Size", std::to_string(DataQueue.size()).c_str());
 						if (restartOnFirstSuccess)
 						{
+							SetPinOrphanState()
 							restartOnFirstSuccess = false;
 							SignalRestart();
 						}
@@ -485,7 +497,10 @@ void TrackNodeContext::Run()
 			catch (const  asio::system_error& e)
 			{
 				nosEngine.LogW("Exception when listening on port %d: %s", Port.load(), e.what());
-				restartOnFirstSuccess = true;
+				bool isOpen = sock->is_open();
+				if(!isOpen)
+					nosEngine.LogW("Socket is closed");
+				connectionFailed = true;
 			}
 		}
 		if (sock && sock->is_open())

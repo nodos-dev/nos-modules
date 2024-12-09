@@ -63,6 +63,7 @@ public:
 	std::atomic_uint SpareCount = 1;
 	std::atomic_bool ShouldRestart = false;
 	std::atomic_bool NeverStarve = false;
+	std::atomic_bool UDPConnected = false;
 	std::queue<std::pair<fb::TTrack, uint64_t>> DataQueue;
 	std::atomic_uint LastServedFrameNumber = 0;
 	bool AutoSpare = true;
