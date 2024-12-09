@@ -251,7 +251,16 @@ void TrackNodeContext::OnPinValueChanged(nos::Name pinName, nosUUID pinId, nosBu
 			}
 		}
 		else
+		{
+			fb::TOrphanState newOrphanState = { .is_orphan = true, .message = "Not enabled"};
+			nosUUID trackPinId = *GetPinId(NSN_Track);
+			flatbuffers::FlatBufferBuilder fbb;
+			std::vector<flatbuffers::Offset< nos::PartialPinUpdate>> updatePins = { nos::CreatePartialPinUpdate(fbb, &trackPinId, 0, nos::fb::OrphanState::Pack(fbb, &newOrphanState))};
+			HandleEvent(CreateAppEvent(
+				fbb,
+				nos::CreatePartialNodeUpdateDirect(fbb, &NodeId, nos::ClearFlags::NONE, 0, 0, 0, 0, 0, 0, 0, &updatePins)));
 			Stop();
+		}
 		return;
 	}
 
