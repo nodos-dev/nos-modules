@@ -260,7 +260,10 @@ void TrackNodeContext::OnPinValueChanged(nos::Name pinName, nosUUID pinId, nosBu
 			}
 		}
 		else
+		{
+			SetPinOrphanState(NSN_Track, fb::PinOrphanStateType::ORPHAN, "Not enabled");
 			Stop();
+		}
 		return;
 	}
 
@@ -426,89 +429,69 @@ void TrackNodeContext::Run()
 		nos::CreateAppEvent(fbb, nos::app::CreateSetThreadNameDirect(fbb, (uint64_t)StdThread.native_handle(), "Track")));
 
 	asio::io_service io_serv;
-	while(!ShouldStop)
+	nos::rc<udp::socket> sock;
+	while (!ShouldStop && !sock)
 	{
-		nos::rc<udp::socket> sock;
-		while (!ShouldStop && !sock)
+		try
 		{
-			fb::UUID trackPinId = *GetPinId(NSN_Track);
-			try
-			{
-				sock = MakeShared<udp::socket>(io_serv, udp::v4());
-				sock->set_option(udp::socket::reuse_address(true));
-				sock->set_option(asio::detail::socket_option::integer<SOL_SOCKET, SO_RCVTIMEO>{1000});
-				sock->bind(udp::endpoint(udp::v4(), Port));
-				fb::TPinOrphanState nonOrphanState = { .type = fb::PinOrphanStateType::ACTIVE };
-				flatbuffers::FlatBufferBuilder fbb;
-				std::vector<flatbuffers::Offset< nos::PartialPinUpdate>> updatePins = { nos::CreatePartialPinUpdate(fbb, &trackPinId, 0, nos::fb::PinOrphanState::Pack(fbb, &nonOrphanState)) };
-
-				HandleEvent(CreateAppEvent(
-					fbb,
-					nos::CreatePartialNodeUpdateDirect(fbb, &NodeId, nos::ClearFlags::NONE, 0, 0, 0, 0, 0, 0, 0, &updatePins)));
-			}
-			catch (const  asio::system_error& e)
-			{
-				nos::fb::TPinOrphanState orphanState{ .type = fb::PinOrphanStateType::ORPHAN, .message = "Could not open UDP socket " + std::to_string(Port.load()) + ": " + e.what() };
-				flatbuffers::FlatBufferBuilder fbb;
-				std::vector<flatbuffers::Offset< nos::PartialPinUpdate>> updatePins = { nos::CreatePartialPinUpdate(fbb, &trackPinId, 0, nos::fb::PinOrphanState::Pack(fbb, &orphanState)) };
-
-				HandleEvent(CreateAppEvent(fbb,
-					nos::CreatePartialNodeUpdateDirect(fbb, &NodeId, nos::ClearFlags::NONE, 0, 0, 0, 0, 0, 0, 0, &updatePins)));
-
-				nosEngine.LogW("could not open UDP socket %d: %s", Port.load(), e.what());
-
-				std::this_thread::sleep_for(std::chrono::seconds(2));
-				sock = nullptr;
-			}
+			sock = MakeShared<udp::socket>(io_serv, udp::v4());
+			sock->set_option(udp::socket::reuse_address(true));
+			sock->set_option(asio::detail::socket_option::integer<SOL_SOCKET, SO_RCVTIMEO>{1000});
+			sock->bind(udp::endpoint(udp::v4(), Port));
+			SetPinOrphanState(NSN_Track, fb::PinOrphanStateType::ACTIVE);
 		}
-		uint8_t buf[4096];
-		nosBuffer defaultTrackData;
-		nosEngine.GetDefaultValueOfType(NOS_NAME_STATIC("nos.fb.Track"), &defaultTrackData);
-		nos::Buffer defaultTrackBuffer = nos::Buffer((uint8_t*)defaultTrackData.Data, defaultTrackData.Size);
-		fb::TTrack defaultTrack = defaultTrackBuffer.As<fb::TTrack>();
-		bool restartOnFirstSuccess = false;
-		bool connectionFailed = false;
-		while (!connectionFailed && !ShouldStop)
+		catch (const  asio::system_error& e)
 		{
-			try
-			{
-				udp::endpoint sender_endpoint;
-				size_t len = sock->receive_from(asio::buffer(buf, 4096), sender_endpoint);
-				uint64_t nanoSeconds = std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count();
-				{
-					fb::TTrack data = defaultTrack;
-					if (Parse(std::vector<uint8_t>{buf, buf + len}, data))
-					{
-						std::unique_lock<std::mutex> guard(QMutex);
-						DataQueue.push({ data, nanoSeconds });
-
-						// Queue sisiyo mu?
-						// while (DataQueue.size() > Delay) DataQueue.pop();
-						nosEngine.WatchLog("Track Queue Size", std::to_string(DataQueue.size()).c_str());
-						if (restartOnFirstSuccess)
-						{
-							SetPinOrphanState()
-							restartOnFirstSuccess = false;
-							SignalRestart();
-						}
-					}
-				}
-			}
-			catch (const  asio::system_error& e)
-			{
-				nosEngine.LogW("Exception when listening on port %d: %s", Port.load(), e.what());
-				bool isOpen = sock->is_open();
-				if(!isOpen)
-					nosEngine.LogW("Socket is closed");
-				connectionFailed = true;
-			}
-		}
-		if (sock && sock->is_open())
-		{
-			sock->close();
+			SetPinOrphanState(NSN_Track, fb::PinOrphanStateType::ORPHAN, ("Could not open UDP socket " + std::to_string(Port.load()) + ": " + e.what()).c_str());
+			nosEngine.LogW("could not open UDP socket %d: %s", Port.load(), e.what());
+			std::this_thread::sleep_for(std::chrono::seconds(2));
 			sock = nullptr;
 		}
 	}
+	uint8_t buf[4096];
+	nosBuffer defaultTrackData;
+	nosEngine.GetDefaultValueOfType(NOS_NAME_STATIC("nos.fb.Track"), &defaultTrackData);
+	nos::Buffer defaultTrackBuffer = nos::Buffer((uint8_t*)defaultTrackData.Data, defaultTrackData.Size);
+	fb::TTrack defaultTrack = defaultTrackBuffer.As<fb::TTrack>();
+	bool reviveFromOrphanOnFirstSuccess = false;
+	while (!ShouldStop)
+	{
+		try
+		{
+			udp::endpoint sender_endpoint;
+			size_t len = sock->receive_from(asio::buffer(buf, 4096), sender_endpoint);
+			uint64_t nanoSeconds = std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count();
+			{
+				fb::TTrack data = defaultTrack;
+				if (Parse(std::vector<uint8_t>{buf, buf + len}, data))
+				{
+					std::unique_lock<std::mutex> guard(QMutex);
+					DataQueue.push({ data, nanoSeconds });
+
+					// Queue sisiyo mu?
+					// while (DataQueue.size() > Delay) DataQueue.pop();
+					nosEngine.WatchLog("Track Queue Size", std::to_string(DataQueue.size()).c_str());
+					if (reviveFromOrphanOnFirstSuccess)
+					{
+						reviveFromOrphanOnFirstSuccess = false;
+						SetPinOrphanState(NSN_Track, fb::PinOrphanStateType::ACTIVE);
+					}
+				}
+			}
+		}
+		catch (const  asio::system_error& e)
+		{
+			nosEngine.LogW("Exception when listening on port %d: %s", Port.load(), e.what());
+			SetPinOrphanState(NSN_Track, fb::PinOrphanStateType::ORPHAN, ("Exception when listening on port " + std::to_string(Port.load()) + ": " + e.what()).c_str());
+			reviveFromOrphanOnFirstSuccess = true;
+		}
+	}
+	if (sock && sock->is_open())
+	{
+		sock->close();
+		sock = nullptr;
+	}
+	SetPinOrphanState(NSN_Track, fb::PinOrphanStateType::ORPHAN, "UDP thread is not active");
 }
 glm::mat3 MakeRotation(glm::vec3 rot)
 {
