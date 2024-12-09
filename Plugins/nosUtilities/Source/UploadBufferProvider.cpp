@@ -12,7 +12,7 @@ NOS_REGISTER_NAME(QueueSize);
 NOS_REGISTER_NAME(BufferSize);
 NOS_REGISTER_NAME(Alignment);
 NOS_REGISTER_NAME(ForceHostMemory);
-
+NOS_REGISTER_NAME(UseHostCachedMemory);
 
 namespace nos::utilities
 {
@@ -115,6 +115,20 @@ namespace nos::utilities
 						memFlags = nosMemoryFlags(memFlags | NOS_MEMORY_FLAGS_FORCE_HOST_MEMORY);
 					else
 						memFlags = nosMemoryFlags(memFlags & ~NOS_MEMORY_FLAGS_FORCE_HOST_MEMORY);
+					Buffers.clear();
+					for (size_t i = 0; i < QueueSize; i++)
+						Buffers.emplace_back(SampleBuffer);
+				});
+			AddPinValueWatcher(NSN_UseHostCachedMemory, [this](nos::Buffer const& newVal, std::optional<nos::Buffer> oldVal)
+				{
+					bool newHostCached = *InterpretPinValue<bool>(newVal);
+					auto& memFlags = SampleBuffer.Info.Buffer.MemoryFlags;
+					if (!!(memFlags & NOS_MEMORY_FLAGS_DOWNLOAD) == newHostCached)
+						return;
+					if (newHostCached)
+						memFlags = nosMemoryFlags(memFlags | NOS_MEMORY_FLAGS_DOWNLOAD);
+					else
+						memFlags = nosMemoryFlags(memFlags & ~NOS_MEMORY_FLAGS_DOWNLOAD);
 					Buffers.clear();
 					for (size_t i = 0; i < QueueSize; i++)
 						Buffers.emplace_back(SampleBuffer);

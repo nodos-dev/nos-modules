@@ -56,7 +56,14 @@
 				"type_name": "bool",
 				"show_as": "PROPERTY",
 				"can_show_as": "INPUT_PIN_OR_PROPERTY",
-				"def": true 
+				"def": true
+			},
+			{
+				"name": "UseHostCachedMemory",
+				"type_name": "bool",
+				"show_as": "PROPERTY",
+				"can_show_as": "INPUT_PIN_OR_PROPERTY",
+				"def": false
 			}
 		]
 	}
