@@ -9,15 +9,6 @@ NOS_END_IMPORT_DEPS()
 namespace nos::track
 {
 
-void SetPinOrphanState(nosUUID const& pinId, bool newOrphan, std::string const& message = "")
-{
-	flatbuffers::FlatBufferBuilder fbb;
-
-	HandleEvent(CreateAppEvent(
-		fbb,
-		nos::CreatePartialPinUpdateDirect(fbb, &pinId, 0, nos::fb::CreateOrphanStateDirect)));
-}
-
 TrackNodeContext::TrackNodeContext(nos::fb::Node const* node) : NodeContext(node)
 {
 	bool enable = 0;
