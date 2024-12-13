@@ -326,10 +326,7 @@ struct MakeNode : NodeContext
 
 nosResult RegisterMake(nosNodeFunctions* fn)
 {
-    nosNodeFunctions* make = fn;
-    nosNodeFunctions* makeDynamic = fn + 1;
-	NOS_BIND_NODE_CLASS(NSN_Make, MakeNode, make);
-	NOS_BIND_NODE_CLASS(NSN_MakeDynamic, MakeNode, makeDynamic);
+	NOS_BIND_NODE_CLASS(NSN_Make, MakeNode, fn);
 	
 	std::vector<nosName> typeNames;
 	size_t count = 0;
@@ -383,6 +380,12 @@ nosResult RegisterMake(nosNodeFunctions* fn)
 	for (auto& buf : nodeInfos)
 		fbNodeInfos.push_back(flatbuffers::GetMutableRoot<nosFbNodeInfo>(buf.Data()));
 	nosEngine.RegisterNodeInfos(nosEngine.Module->Id, fbNodeInfos.size(), fbNodeInfos.data());
+	return NOS_RESULT_SUCCESS;
+}
+
+nosResult RegisterMakeDynamic(nosNodeFunctions* fn)
+{
+	NOS_BIND_NODE_CLASS(NSN_MakeDynamic, MakeNode, fn);
 	return NOS_RESULT_SUCCESS;
 }
 

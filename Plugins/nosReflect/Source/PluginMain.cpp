@@ -25,6 +25,7 @@ enum Nodes : size_t
 };
 
 nosResult RegisterMake(nosNodeFunctions* node);
+nosResult RegisterMakeDynamic(nosNodeFunctions* node);
 nosResult RegisterBreak(nosNodeFunctions* node);
 nosResult RegisterIndexer(nosNodeFunctions* node);
 nosResult RegisterArray(nosNodeFunctions* node);
@@ -51,6 +52,7 @@ nosResult NOSAPI_CALL ExportNodeFunctions(size_t* outCount, nosNodeFunctions** o
 		switch ((Nodes)i)
 		{
 			GEN_CASE_NODE(Make)
+			GEN_CASE_NODE(MakeDynamic)
 			GEN_CASE_NODE(Break)
 			GEN_CASE_NODE(Indexer)
 			GEN_CASE_NODE(Array)
