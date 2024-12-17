@@ -2,7 +2,7 @@
     "info": {
         "id": {
             "name": "nos.math",
-            "version": "1.4.0"
+            "version": "1.5.0"
         },
         "description": "Nodes for math operations.",
         "display_name": "Math",
@@ -13,7 +13,9 @@
         "Config/Math.nosdef",
         "Config/Eval.nosdef",
         "Config/Matrix.nosdef",
-        "Config/Round.nosdef"
+        "Config/Round.nosdef",
+        "Config/Boolean.nosdef",
+        "Config/Xor.nosdef"
     ],
     "binary_path": "Binaries/nosMath",
     "third_party_software": [
@@ -29,6 +31,26 @@
             "category": "Math",
             "class_name": "Eval",
             "display_name": "Eval"
+        },
+        {
+            "category": "Math|Boolean Logic",
+            "class_name": "And",
+            "display_name": "And"
+        },
+        {
+            "category": "Math|Boolean Logic",
+            "class_name": "Or",
+            "display_name": "Or"
+        },
+        {
+            "category": "Math|Boolean Logic",
+            "class_name": "Not",
+            "display_name": "Not"
+        },
+        {
+            "category": "Math|Boolean Logic",
+            "class_name": "Xor",
+            "display_name": "Xor"
         },
         {
             "category": "Math",

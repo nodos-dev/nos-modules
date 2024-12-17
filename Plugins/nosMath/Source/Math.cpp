@@ -201,6 +201,9 @@ enum class MathNodeTypes : int {
 	ToTransformMatrix,
 	Inverse,
 	Transpose,
+	And,
+	Or,
+	Not,
 	Count
 };
 
@@ -290,6 +293,9 @@ void RegisterTransform(nosNodeFunctions*);
 void RegisterToTransformMatrix(nosNodeFunctions*);
 void RegisterInverse(nosNodeFunctions*);
 void RegisterTranspose(nosNodeFunctions*);
+void RegisterAnd(nosNodeFunctions*);
+void RegisterOr(nosNodeFunctions*);
+void RegisterNot(nosNodeFunctions*);
 
 nosResult NOSAPI_CALL ExportNodeFunctions(size_t* outCount, nosNodeFunctions** outList)
 {
@@ -391,6 +397,18 @@ nosResult NOSAPI_CALL ExportNodeFunctions(size_t* outCount, nosNodeFunctions** o
 		}
 		case MathNodeTypes::Transpose: {
 			RegisterTranspose(node);
+			break;
+		}
+		case MathNodeTypes::And: {
+			RegisterAnd(node);
+			break;
+		}
+		case MathNodeTypes::Or: {
+			RegisterOr(node);
+			break;
+		}
+		case MathNodeTypes::Not: {
+			RegisterNot(node);
 			break;
 		}
 		default:
