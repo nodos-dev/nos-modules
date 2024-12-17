@@ -19,8 +19,6 @@ struct AndNode : NodeContext
 		result = A && B;
 		return NOS_RESULT_SUCCESS;
 	}
-
-	uint64_t frameCount = 0;
 };
 
 struct OrNode : NodeContext
@@ -36,8 +34,6 @@ struct OrNode : NodeContext
 		result = A || B;
 		return NOS_RESULT_SUCCESS;
 	}
-
-	uint64_t frameCount = 0;
 };
 
 struct NotNode : NodeContext
@@ -53,8 +49,6 @@ struct NotNode : NodeContext
 		notX = !X;
 		return NOS_RESULT_SUCCESS;
 	}
-
-	uint64_t frameCount = 0;
 };
 
 void RegisterAnd(nosNodeFunctions* fn)
