@@ -39,6 +39,7 @@ if (WIN32)
     add_subdirectory(nosPyUtils)
 endif()
 add_subdirectory(nosReflect)
+add_subdirectory(nosStrings)
 
 nos_get_targets(PLUGINS_COMMON_EXTERNAL_TARGETS "./External")
 nos_group_targets("${PLUGINS_COMMON_EXTERNAL_TARGETS}" "External")

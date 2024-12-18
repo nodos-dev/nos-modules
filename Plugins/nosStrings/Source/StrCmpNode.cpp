@@ -2,9 +2,8 @@
 
 #include <Nodos/PluginHelpers.hpp>
 
-namespace nos::utilities
+namespace nos::strings
 {
-NOS_REGISTER_NAME_SPACED(Nos_Utilities_IsSameString, "nos.utilities.IsSameString")
 struct IsSameStringNode : NodeContext
 {
 	using NodeContext::NodeContext;
@@ -20,9 +19,9 @@ struct IsSameStringNode : NodeContext
 };
 
 
-nosResult RegisterIsSameStringNode(nosNodeFunctions* fn)
+nosResult RegisterIsSameString(nosNodeFunctions* fn)
 {
-	NOS_BIND_NODE_CLASS(NSN_Nos_Utilities_IsSameString, IsSameStringNode, fn);
+	NOS_BIND_NODE_CLASS(NOS_NAME("IsSameString"), IsSameStringNode, fn);
 	return NOS_RESULT_SUCCESS;
 }
 

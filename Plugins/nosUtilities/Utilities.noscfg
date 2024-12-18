@@ -2,7 +2,7 @@
     "info": {
         "id": {
             "name": "nos.utilities",
-            "version": "2.13.0"
+            "version": "3.0.0"
         },
         "description": "Various utility nodes.",
         "display_name": "Utilities",
@@ -36,7 +36,6 @@
         "Config/UploadBuffer.nosdef",
         "Config/Buffer2Texture.nosdef",
         "Config/Texture2Buffer.nosdef",
-        "Config/IsSameStringNode.nosdef",
         "Config/ShowStatusNode.nosdef",
         "Config/SinkGraph.nosdef",
         "Config/Sink.nosdef",
@@ -46,9 +45,6 @@
         "Config/RingBuffer.nosdef",
         "Config/BoundedQueue.nosdef",
         "Config/Host.nosdef",
-        "Config/Regex.nosdef",
-        "Config/Pin2Json.nosdef",
-        "Config/Json2Pin.nosdef",
         "Config/AutoResize.nosdef",
         "Config/ExecDepend.nosdef"
     ],
@@ -177,12 +173,6 @@
     },
     {
       "category": "Utilities",
-      "class_name": "IsSameString",
-      "display_name": "Is Same String",
-      "name_aliases": [ "compare", "equal" ]
-    },
-    {
-      "category": "Utilities",
       "class_name": "ShowStatus",
       "display_name": "Show Status",
       "name_aliases": [ "print" ]
@@ -233,27 +223,6 @@
             "name_aliases": [ "hostname", "ip", "address", "port", "network", "socket", "connection", "client", "server", "device", "current pc", "active pc", "computer" ],
             "hide_in_context_menu": false
         },
-        {
-            "category": "String",
-            "class_name": "Regex",
-            "display_name": "Regex",
-          "hide_in_context_menu": false,
-          "name_aliases": ["regular expression", "match", "replace", "search", "find", "split", "filter"]
-        },
-      {
-        "category": "String",
-        "class_name": "Pin2Json",
-        "display_name": "Pin To JSON",
-        "hide_in_context_menu": false,
-        "name_aliases": [ "converter" ]
-      },
-      {
-        "category": "String",
-        "class_name": "Json2Pin",
-        "display_name": "JSON To Pin",
-        "hide_in_context_menu": false,
-        "name_aliases": [ "converter" ]
-      },
       {
         "category": "Execution",
         "class_name": "ExecDepend",

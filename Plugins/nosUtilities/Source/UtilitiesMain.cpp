@@ -36,7 +36,6 @@ enum Utilities : int
 	UploadBuffer,
 	Buffer2Texture,
 	Texture2Buffer,
-	IsSameStringNode,
 	ShowStatusNode,
 	Sink,
 	PropagateExecution,
@@ -44,9 +43,6 @@ enum Utilities : int
 	BoundedQueue,
 	RingBuffer,
 	Host,
-	Regex,
-	Pin2Json,
-	Json2Pin,
 	Count
 };
 
@@ -60,7 +56,6 @@ nosResult RegisterCPUSleep(nosNodeFunctions*);
 nosResult RegisterUploadBuffer(nosNodeFunctions*);
 nosResult RegisterBuffer2Texture(nosNodeFunctions*);
 nosResult RegisterTexture2Buffer(nosNodeFunctions*);
-nosResult RegisterIsSameStringNode(nosNodeFunctions*);
 nosResult RegisterShowStatusNode(nosNodeFunctions*);
 nosResult RegisterSink(nosNodeFunctions*);
 nosResult RegisterPropagateExecution(nosNodeFunctions*);
@@ -68,7 +63,6 @@ nosResult RegisterUploadBufferProvider(nosNodeFunctions*);
 nosResult RegisterBoundedQueue(nosNodeFunctions*);
 nosResult RegisterRingBuffer(nosNodeFunctions*);
 nosResult RegisterHost(nosNodeFunctions*);
-nosResult RegisterRegex(nosNodeFunctions*);
 nosResult RegisterPin2Json(nosNodeFunctions*);
 nosResult RegisterJson2Pin(nosNodeFunctions*);
 
@@ -102,7 +96,6 @@ nosResult NOSAPI_CALL ExportNodeFunctions(size_t* outSize, nosNodeFunctions** ou
 			GEN_CASE_NODE(UploadBuffer)
 			GEN_CASE_NODE(Buffer2Texture)
 			GEN_CASE_NODE(Texture2Buffer)
-			GEN_CASE_NODE(IsSameStringNode)
 			GEN_CASE_NODE(ShowStatusNode)
 			GEN_CASE_NODE(Sink)
 			GEN_CASE_NODE(PropagateExecution)
@@ -110,9 +103,6 @@ nosResult NOSAPI_CALL ExportNodeFunctions(size_t* outSize, nosNodeFunctions** ou
 			GEN_CASE_NODE(BoundedQueue)
 			GEN_CASE_NODE(RingBuffer)
 			GEN_CASE_NODE(Host)
-			GEN_CASE_NODE(Regex)
-			GEN_CASE_NODE(Pin2Json)
-			GEN_CASE_NODE(Json2Pin)
 		}
 	}
 	return NOS_RESULT_SUCCESS;

@@ -5,15 +5,11 @@
 // stl
 #include <regex>
 
-namespace nos::utilities
+namespace nos::strings
 {
 struct RegexNode : NodeContext
 {
 	RegexNode(const nosFbNode* node) : NodeContext(node)
-	{
-	}
-
-	~RegexNode() override
 	{
 	}
 
@@ -96,4 +92,4 @@ nosResult RegisterRegex(nosNodeFunctions* fn)
 	return NOS_RESULT_SUCCESS;
 }
 
-} // namespace nos::utilities
+} // namespace nos::strings

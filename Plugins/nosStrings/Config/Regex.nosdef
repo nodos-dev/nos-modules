@@ -1,7 +1,7 @@
 {
   "nodes": [
     {
-      "class_name": "nos.utilities.Regex",
+      "class_name": "Regex",
       "contents_type": "Job",
       "description": "Match string with regular expressions",
       "display_name": "Regex",
