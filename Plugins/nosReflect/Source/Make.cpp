@@ -7,10 +7,6 @@
 
 namespace nos::reflect
 {
-NOS_REGISTER_NAME(Value)
-NOS_REGISTER_NAME(Make)
-NOS_REGISTER_NAME(MakeDynamic)
-
 struct MakeNode : NodeContext
 {
     std::optional<nos::TypeInfo> Type = {};

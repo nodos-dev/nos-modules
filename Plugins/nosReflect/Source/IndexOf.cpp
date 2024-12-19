@@ -4,12 +4,6 @@
 
 namespace nos::reflect
 {
-NOS_REGISTER_NAME(IndexOf)
-NOS_REGISTER_NAME(InputArray)
-
-extern nos::Name NSN_Index;
-extern nos::Name NSN_Value;
-
 struct IndexOfNode : NodeContext
 {
 	std::optional<nos::TypeInfo> Type = std::nullopt;
@@ -129,9 +123,9 @@ struct IndexOfNode : NodeContext
 		auto pins = NodeExecuteParams(params);
 		auto indexPinId = *GetPinId(NSN_Index);
 
-		auto vec = (flatbuffers::Vector<uint8_t>*)(pins[NSN_InputArray].Data->Data);
+		auto vec = static_cast<flatbuffers::Vector<uint8_t>*>(pins[NSN_InputArray].Data->Data);
 		void* value = pins[NSN_Value].Data->Data;
-		if (!type->ByteSize)
+		if (!type->ByteSize && type->BaseType != NOS_BASE_TYPE_STRING)
 			value = (void*)flatbuffers::GetRoot<flatbuffers::Table>(value);
 		int index =	-1;
 		if (type->ByteSize)
@@ -147,11 +141,13 @@ struct IndexOfNode : NodeContext
 		}
 		else
 		{
-			auto vecOfTables = (flatbuffers::Vector<flatbuffers::Offset<flatbuffers::Table>>*)(vec);
+			auto vecOfTables = reinterpret_cast<flatbuffers::Vector<flatbuffers::Offset<flatbuffers::Table>>*>(vec);
 			for (size_t i = 0; i < vecOfTables->size(); ++i)
 			{
-				auto elem = vecOfTables->Get(i);
-				if (IsEqualTable(type, elem, (flatbuffers::Table*)value))
+				auto elem = (void*)vecOfTables->Get(i);
+				if (type->BaseType == NOS_BASE_TYPE_STRING)
+					elem = (void*)static_cast<flatbuffers::String*>(elem)->c_str(); 
+				if (AreFlatBuffersEqual(type, elem, value))
 				{
 					index = i;
 					break;

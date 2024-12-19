@@ -15,12 +15,6 @@ EnumVal* EnumDef::ReverseLookup(int64_t enum_idx,
 }
 namespace nos::reflect
 {
-
-NOS_REGISTER_NAME(Output)
-NOS_REGISTER_NAME(Input)
-NOS_REGISTER_NAME_SPACED(VOID, "nos.fb.Void")
-
-
 void CopyInline(
 	flatbuffers::FlatBufferBuilder& fbb, uint16_t offset, const uint8_t* data, size_t align, size_t size)
 {
@@ -279,112 +273,131 @@ flatbuffers::uoffset_t CopyTable(
 	}
 }
 
-bool IsEqualTable(const nosTypeInfo* type,
-                  const flatbuffers::Table* first,
-                  const flatbuffers::Table* second)
+bool AreFlatBuffersEqual(const nosTypeInfo* type,
+		                 void* first,
+		                 void* second)
 {
-	for (int i = 0; i < type->FieldCount; ++i)
+	switch (type->BaseType)
 	{
-		auto field = &type->Fields[i];
-		if (first->CheckField(field->Offset) != second->CheckField(field->Offset))
-			return false;
-		// Skip if field is not present in the source.
-		if (!first->CheckField(field->Offset))
-			continue;
-		switch (field->Type->BaseType)
+	case NOS_BASE_TYPE_STRUCT:
 		{
-		case NOS_BASE_TYPE_STRING:
-		{
-			auto firstString = first->GetPointer<const flatbuffers::String*>(field->Offset);
-			auto secondString = second->GetPointer<const flatbuffers::String*>(field->Offset);
-			if (strcmp(firstString->c_str(), secondString->c_str()) != 0)
-				return false;
-			break;
-		}
-		case NOS_BASE_TYPE_STRUCT:
-		{
-			if (!field->Type->ByteSize)
+			if (type->ByteSize)
 			{
-				if (!IsEqualTable(
-					field->Type,
-					first->GetPointer<flatbuffers::Table*>(field->Offset),
-					second->GetPointer<flatbuffers::Table*>(field->Offset)))
+				return memcmp(first, second, type->ByteSize) == 0;
+			}
+			// This is a table.
+			auto firstTable = static_cast<flatbuffers::Table*>(first);
+			auto secondTable = static_cast<flatbuffers::Table*>(second);
+			for (int i = 0; i < type->FieldCount; ++i)
+			{
+				auto field = &type->Fields[i];
+				auto field1Exists = firstTable->CheckField(field->Offset);
+				auto field2Exists = secondTable->CheckField(field->Offset);
+				if ((field1Exists ^ field2Exists) && (field->Type->BaseType == NOS_BASE_TYPE_STRING || field->Type->BaseType == NOS_BASE_TYPE_ARRAY))
+				{
+					// If one is present but the other is not, check the size is 0 for the present one.
+					// TODO: This might not be desired behaviour in some cases.
+					auto presentField = field1Exists ? firstTable : (field2Exists ? secondTable : nullptr);
+					if (!presentField)
+						continue;
+					auto presentVec = reinterpret_cast<flatbuffers::Vector<uint8_t>*>(presentField);
+					if (presentVec->size() != 0)
+						return false;
+					continue;
+				}
+				if (field1Exists != field2Exists)
 					return false;
+				// Skip if fields are not present in the source.
+				if (!field1Exists)
+					continue;
+				void* field1, *field2;
+				if (field->Type->ByteSize)
+				{
+					field1 = firstTable->GetStruct<void*>(field->Offset);
+					field2 = secondTable->GetStruct<void*>(field->Offset);
+				}
+				else
+				{
+					if (field->Type->BaseType == NOS_BASE_TYPE_STRING)
+					{
+						auto str1 = firstTable->GetPointer<const flatbuffers::String*>(field->Offset);
+						auto str2 = secondTable->GetPointer<const flatbuffers::String*>(field->Offset);
+						field1 = (void*)str1->c_str();
+						field2 = (void*)str2->c_str();
+					}
+					else
+					{
+						field1 = firstTable->GetPointer<flatbuffers::Table*>(field->Offset);
+						field2 = secondTable->GetPointer<flatbuffers::Table*>(field->Offset);	
+					}
+					
+				}
+				if (!AreFlatBuffersEqual(field->Type, field1, field2))
+					return false;
+			}
+			return true;
+		}
+	case NOS_BASE_TYPE_STRING:
+		{
+			auto firstString = static_cast<const char*>(first);
+			auto secondString = static_cast<const char*>(second);
+			return strcmp(firstString, secondString) == 0;
+		}
+	case NOS_BASE_TYPE_ARRAY:
+		{
+			auto vec1 = static_cast<const flatbuffers::Vector<uint8_t>*>(first);
+			auto vec2 = static_cast<const flatbuffers::Vector<uint8_t>*>(second);
+			if (vec1->size() != vec2->size())
+				return false;
+			auto elementType = type->ElementType;
+			if (elementType->ByteSize)
+			{
+				for (size_t i = 0; i < vec1->size(); ++i)
+				{
+					if (memcmp(vec1->data() + i * type->ByteSize, vec2->data() + i * type->ByteSize, type->ByteSize) != 0)
+						return false;
+				}
 			}
 			else
 			{
-				if (memcmp(first->GetStruct<const uint8_t*>(field->Offset),
-				           second->GetStruct<const uint8_t*>(field->Offset),
-				           field->Type->ByteSize) != 0)
-					return false;
-			}
-			break;
-		}
-		// TODO: Unions?
-		case NOS_BASE_TYPE_ARRAY:
-		{
-			auto vec1 = first->GetPointer<const flatbuffers::Vector<flatbuffers::Offset<flatbuffers::Table>>*>(field->Offset);
-			auto vec2 = second->GetPointer<const flatbuffers::Vector<flatbuffers::Offset<flatbuffers::Table>>*>(field->Offset);
-			auto element_base_type = field->Type->ElementType->BaseType;
-
-			if (vec1->size() != vec2->size())
-				return false;
-
-			switch (element_base_type)
-			{
-			case NOS_BASE_TYPE_STRING:
-			{
-				auto vecS1 = reinterpret_cast<const flatbuffers::Vector<
-					flatbuffers::Offset<flatbuffers::String>>*>(vec1);
-				auto vecS2 = reinterpret_cast<const flatbuffers::Vector<
-					flatbuffers::Offset<flatbuffers::String>>*>(vec2);
-				for (flatbuffers::uoffset_t i = 0; i < vecS1->size(); i++)
+				if (elementType->BaseType == NOS_BASE_TYPE_STRING)
 				{
-					if (strcmp(vecS1->Get(i)->c_str(), vecS2->Get(i)->c_str()) != 0)
-						return false;
-					break;
-				}
-				break;
-			}
-			case NOS_BASE_TYPE_STRUCT:
-			{
-				if (!field->Type->ElementType->ByteSize)
-				{
-					for (flatbuffers::uoffset_t i = 0; i < vec1->size(); i++)
+					auto vec1Vectors = reinterpret_cast<const flatbuffers::Vector<flatbuffers::Offset<flatbuffers::String>>*>(vec1);
+					auto vec2Vectors = reinterpret_cast<const flatbuffers::Vector<flatbuffers::Offset<flatbuffers::String>>*>(vec2);
+					for (size_t i = 0; i < vec1Vectors->size(); ++i)
 					{
-						if (!IsEqualTable(field->Type->ElementType, vec1->Get(i),
-						                  vec2->Get(i)))
+						auto elem1 = vec1Vectors->Get(i);
+						auto elem2 = vec2Vectors->Get(i);
+						if (!AreFlatBuffersEqual(elementType, (void*)elem1->c_str(), (void*)elem2->c_str()))
 							return false;
 					}
 				}
 				else
 				{
-					for (flatbuffers::uoffset_t i = 0; i < vec1->size(); i++)
+					auto vec1Tables = reinterpret_cast<const flatbuffers::Vector<flatbuffers::Offset<flatbuffers::Table>>*>(vec1);
+					auto vec2Tables = reinterpret_cast<const flatbuffers::Vector<flatbuffers::Offset<flatbuffers::Table>>*>(vec2);
+					for (size_t i = 0; i < vec1Tables->size(); ++i)
 					{
-						if (memcmp(vec1->Get(i), vec2->Get(i),
-						           field->Type->ElementType->ByteSize) != 0)
+						auto elem1 = vec1Tables->Get(i);
+						auto elem2 = vec2Tables->Get(i);
+						if (!AreFlatBuffersEqual(elementType, (void*)elem1, (void*)elem2))
 							return false;
 					}
 				}
-				break;
 			}
-			FLATBUFFERS_FALLTHROUGH(); // fall thru
-			default:
-			{
-				// Scalars and structs.
-				if (memcmp(first->GetStruct<const uint8_t*>(field->Offset),
-				           second->GetStruct<const uint8_t*>(field->Offset),
-				           field->Type->ByteSize) != 0)
-					return false;
-				break;
-			}
-			}
+			return true;
 		}
-		default: // Scalars.
-			if (memcmp(first->GetStruct<const uint8_t*>(field->Offset),
-					   second->GetStruct<const uint8_t*>(field->Offset),
-					   field->Type->ByteSize) != 0)
-				return false;
+	case NOS_BASE_TYPE_UNION:
+		{
+			nosEngine.LogE("Union comparison not implemented yet.");
+			break;
+		}
+	default: // Scalars
+		{
+			if (type->ByteSize)
+			{
+				return memcmp(first, second, type->ByteSize) == 0;
+			}
 			break;
 		}
 	}

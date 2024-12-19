@@ -4,8 +4,6 @@
 
 namespace nos::reflect
 {
-NOS_REGISTER_NAME(Break)
-
 struct BreakNode : NodeContext
 {
 	std::optional<nos::TypeInfo> Type = std::nullopt;

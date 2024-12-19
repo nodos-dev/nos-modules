@@ -61,6 +61,12 @@
 			"display_name": "Delay"
 		},
 		{
+			"category": "Type",
+			"class_name": "IsEqual",
+			"display_name": "Is Equal",
+			"name_aliases": [ "compare", "equal", "isequal" ]
+		},
+		{
 			"category": "Arithmetic",
 			"class_name": "Arithmetic",
 			"display_name": "Add",

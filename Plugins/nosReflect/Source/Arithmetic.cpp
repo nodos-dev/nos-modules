@@ -4,10 +4,6 @@
 
 namespace nos::reflect
 {
-NOS_REGISTER_NAME(Arithmetic)
-NOS_REGISTER_NAME(A)
-NOS_REGISTER_NAME(B)
-
 std::string CapitalizeFirstLetter(const char* str)
 {
 	std::string copy = str;

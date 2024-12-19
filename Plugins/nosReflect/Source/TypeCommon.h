@@ -5,11 +5,11 @@
 #pragma once
 
 #include <Nodos/PluginHelpers.hpp>
+
+#include "Names.h"
+
 namespace nos::reflect
 {
-extern nos::Name NSN_Output;
-extern nos::Name NSN_Input;
-extern nos::Name NSN_VOID;
 
 void CopyInline(flatbuffers::FlatBufferBuilder& fbb, decltype(nosTypeInfo::Fields) fielddef,
     const flatbuffers::Table* table, size_t align, size_t size);
@@ -53,7 +53,7 @@ std::vector<uint8_t> GenerateVector(
 	const nosTypeInfo* type, 
 	std::vector<const void*> inputs);
 
-bool IsEqualTable(const nosTypeInfo* type,
-				  const flatbuffers::Table* first,
-				  const flatbuffers::Table* second);
+bool AreFlatBuffersEqual(const nosTypeInfo* type,
+						 void* first,
+						 void* second);
 }

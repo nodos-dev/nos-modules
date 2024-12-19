@@ -4,8 +4,6 @@
 
 namespace nos::reflect
 {
-NOS_REGISTER_NAME(Array)
-
 struct ArrayNode : NodeContext
 {
 	std::optional<nos::TypeInfo> Type = std::nullopt;

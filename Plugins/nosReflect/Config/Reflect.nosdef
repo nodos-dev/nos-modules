@@ -184,6 +184,31 @@
                     "can_show_as": "OUTPUT_PIN_ONLY"
                 }
             ]
+        },
+        {
+            "class_name": "IsEqual",
+            "contents_type": "Job",
+            "pins": [
+                {
+                    "name": "A",
+                    "type_name": "nos.fb.Void",
+                    "show_as": "INPUT_PIN",
+                    "can_show_as": "INPUT_PIN_OR_PROPERTY"
+                },
+                {
+                    "name": "B",
+                    "type_name": "nos.fb.Void",
+                    "show_as": "INPUT_PIN",
+                    "can_show_as": "INPUT_PIN_OR_PROPERTY"
+                },
+                {
+                    "name": "IsEqual",
+                    "display_name": "Is Equal",
+                    "type_name": "bool",
+                    "show_as": "OUTPUT_PIN",
+                    "can_show_as": "OUTPUT_PIN_ONLY"
+                }
+            ]
         }
     ]
 }

@@ -7,10 +7,6 @@
 
 namespace nos::reflect
 {
-NOS_REGISTER_NAME(Delay)
-NOS_REGISTER_NAME_SPACED(TextureTypeName, "nos.sys.vulkan.Texture")
-NOS_REGISTER_NAME_SPACED(BufferTypeName, "nos.sys.vulkan.Buffer")
-
 template <typename T>
 struct RingBuffer {
 	std::deque<T> Ring;

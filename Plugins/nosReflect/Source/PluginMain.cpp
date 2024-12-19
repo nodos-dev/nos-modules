@@ -22,6 +22,7 @@ enum Nodes : size_t
 	Delay,
 	Arithmetic,
 	IndexOf,
+	IsEqual,
 	Count
 };
 
@@ -33,6 +34,7 @@ nosResult RegisterArray(nosNodeFunctions* node);
 nosResult RegisterDelay(nosNodeFunctions* node);
 nosResult RegisterArithmetic(nosNodeFunctions* node);
 nosResult RegisterIndexOf(nosNodeFunctions* node);
+nosResult RegisterIsEqual(nosNodeFunctions* node);
 
 nosResult NOSAPI_CALL ExportNodeFunctions(size_t* outCount, nosNodeFunctions** outFunctions)
 {
@@ -61,6 +63,7 @@ nosResult NOSAPI_CALL ExportNodeFunctions(size_t* outCount, nosNodeFunctions** o
 			GEN_CASE_NODE(Delay)
 			GEN_CASE_NODE(Arithmetic)
 			GEN_CASE_NODE(IndexOf)
+			GEN_CASE_NODE(IsEqual)
 		}
 	}
 

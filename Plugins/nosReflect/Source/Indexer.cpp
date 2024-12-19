@@ -4,9 +4,6 @@
 
 namespace nos::reflect
 {
-NOS_REGISTER_NAME(Index)
-NOS_REGISTER_NAME(Indexer)
-
 struct Indexer : NodeContext
 {
 	std::optional<nos::TypeInfo> Type = std::nullopt;
