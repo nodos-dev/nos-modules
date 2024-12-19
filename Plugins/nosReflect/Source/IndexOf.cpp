@@ -24,7 +24,12 @@ struct IndexOfNode : NodeContext
 			{
 				if (pin->type_name()->string_view() != NSN_VOID)
 				{
-					Type = nos::TypeInfo(nos::Name(pin->type_name()->string_view()));
+					auto arrayType = nos::TypeInfo(nos::Name(pin->type_name()->string_view()));
+					if (arrayType->BaseType == NOS_BASE_TYPE_ARRAY)
+					{
+						auto elementTypeName = arrayType->ElementType->TypeName;
+						Type = nos::TypeInfo(elementTypeName);
+					}
 				}
 			}
 			else if (pin->name()->string_view() == NSN_Index)
