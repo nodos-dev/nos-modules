@@ -53,4 +53,7 @@ std::vector<uint8_t> GenerateVector(
 	const nosTypeInfo* type, 
 	std::vector<const void*> inputs);
 
+bool IsEqualTable(const nosTypeInfo* type,
+				  const flatbuffers::Table* first,
+				  const flatbuffers::Table* second);
 }

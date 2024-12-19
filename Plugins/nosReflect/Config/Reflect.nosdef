@@ -159,6 +159,31 @@
                     "connection_conditions": "!resource"
                 }
             ]
+        },
+        {
+            "class_name": "IndexOf",
+            "contents_type": "Job",
+            "pins": [
+                {
+                    "name": "InputArray",
+                    "display_name": "Input Array",
+                    "type_name": "nos.fb.Void",
+                    "show_as": "INPUT_PIN",
+                    "can_show_as": "INPUT_PIN_OR_PROPERTY"
+                },
+                {
+                    "name": "Value",
+                    "type_name": "nos.fb.Void",
+                    "show_as": "INPUT_PIN",
+                    "can_show_as": "INPUT_PIN_OR_PROPERTY"
+                },
+                {
+                    "name": "Index",
+                    "type_name": "int",
+                    "show_as": "OUTPUT_PIN",
+                    "can_show_as": "OUTPUT_PIN_ONLY"
+                }
+            ]
         }
     ]
 }

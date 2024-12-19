@@ -164,10 +164,10 @@ flatbuffers::uoffset_t CopyTable2(
 }
 
 void CopyInline(flatbuffers::FlatBufferBuilder& fbb, decltype(nosTypeInfo::Fields) fielddef,
-    const flatbuffers::Table* table, size_t align, size_t size) {
-    fbb.Align(align);
-    fbb.PushBytes(table->GetStruct<const uint8_t*>(fielddef->Offset), size);
-    fbb.TrackField(fielddef->Offset, fbb.GetSize());
+	const flatbuffers::Table* table, size_t align, size_t size) {
+	fbb.Align(align);
+	fbb.PushBytes(table->GetStruct<const uint8_t*>(fielddef->Offset), size);
+	fbb.TrackField(fielddef->Offset, fbb.GetSize());
 }
 
 flatbuffers::uoffset_t CopyTable(
@@ -179,9 +179,9 @@ flatbuffers::uoffset_t CopyTable(
 	// subobjects, and collect their offsets.
 	std::vector<flatbuffers::uoffset_t> offsets;
 
-    for(int i = 0; i < type->FieldCount; ++i)
+	for(int i = 0; i < type->FieldCount; ++i)
 	{
-        auto field = &type->Fields[i];
+		auto field = &type->Fields[i];
 		// Skip if field is not present in the source.
 		if (!table->CheckField(field->Offset)) continue;
 		flatbuffers::uoffset_t offset = 0;
@@ -246,9 +246,9 @@ flatbuffers::uoffset_t CopyTable(
 		: fbb.StartTable();
 	size_t offset_idx = 0;
 
-    for (int i = 0; i < type->FieldCount; ++i)
-    {
-        auto field = &type->Fields[i];
+	for (int i = 0; i < type->FieldCount; ++i)
+	{
+		auto field = &type->Fields[i];
 		if (!table->CheckField(field->Offset)) continue;
 		auto base_type = field->Type->BaseType;
 		switch (base_type) {
@@ -264,7 +264,7 @@ flatbuffers::uoffset_t CopyTable(
 			fbb.AddOffset(field->Offset, flatbuffers::Offset<void>(offsets[offset_idx++]));
 			break;
 		default: {  // Scalars.
-            CopyInline(fbb, field, table, field->Type->Alignment, field->Type->ByteSize);
+			CopyInline(fbb, field, table, field->Type->Alignment, field->Type->ByteSize);
 			break;
 		}
 		}
@@ -277,6 +277,118 @@ flatbuffers::uoffset_t CopyTable(
 	else {
 		return fbb.EndTable(start);
 	}
+}
+
+bool IsEqualTable(const nosTypeInfo* type,
+                  const flatbuffers::Table* first,
+                  const flatbuffers::Table* second)
+{
+	for (int i = 0; i < type->FieldCount; ++i)
+	{
+		auto field = &type->Fields[i];
+		if (first->CheckField(field->Offset) != second->CheckField(field->Offset))
+			return false;
+		// Skip if field is not present in the source.
+		if (!first->CheckField(field->Offset))
+			continue;
+		switch (field->Type->BaseType)
+		{
+		case NOS_BASE_TYPE_STRING:
+		{
+			auto firstString = first->GetPointer<const flatbuffers::String*>(field->Offset);
+			auto secondString = second->GetPointer<const flatbuffers::String*>(field->Offset);
+			if (strcmp(firstString->c_str(), secondString->c_str()) != 0)
+				return false;
+			break;
+		}
+		case NOS_BASE_TYPE_STRUCT:
+		{
+			if (!field->Type->ByteSize)
+			{
+				if (!IsEqualTable(
+					field->Type,
+					first->GetPointer<flatbuffers::Table*>(field->Offset),
+					second->GetPointer<flatbuffers::Table*>(field->Offset)))
+					return false;
+			}
+			else
+			{
+				if (memcmp(first->GetStruct<const uint8_t*>(field->Offset),
+				           second->GetStruct<const uint8_t*>(field->Offset),
+				           field->Type->ByteSize) != 0)
+					return false;
+			}
+			break;
+		}
+		// TODO: Unions?
+		case NOS_BASE_TYPE_ARRAY:
+		{
+			auto vec1 = first->GetPointer<const flatbuffers::Vector<flatbuffers::Offset<flatbuffers::Table>>*>(field->Offset);
+			auto vec2 = second->GetPointer<const flatbuffers::Vector<flatbuffers::Offset<flatbuffers::Table>>*>(field->Offset);
+			auto element_base_type = field->Type->ElementType->BaseType;
+
+			if (vec1->size() != vec2->size())
+				return false;
+
+			switch (element_base_type)
+			{
+			case NOS_BASE_TYPE_STRING:
+			{
+				auto vecS1 = reinterpret_cast<const flatbuffers::Vector<
+					flatbuffers::Offset<flatbuffers::String>>*>(vec1);
+				auto vecS2 = reinterpret_cast<const flatbuffers::Vector<
+					flatbuffers::Offset<flatbuffers::String>>*>(vec2);
+				for (flatbuffers::uoffset_t i = 0; i < vecS1->size(); i++)
+				{
+					if (strcmp(vecS1->Get(i)->c_str(), vecS2->Get(i)->c_str()) != 0)
+						return false;
+					break;
+				}
+				break;
+			}
+			case NOS_BASE_TYPE_STRUCT:
+			{
+				if (!field->Type->ElementType->ByteSize)
+				{
+					for (flatbuffers::uoffset_t i = 0; i < vec1->size(); i++)
+					{
+						if (!IsEqualTable(field->Type->ElementType, vec1->Get(i),
+						                  vec2->Get(i)))
+							return false;
+					}
+				}
+				else
+				{
+					for (flatbuffers::uoffset_t i = 0; i < vec1->size(); i++)
+					{
+						if (memcmp(vec1->Get(i), vec2->Get(i),
+						           field->Type->ElementType->ByteSize) != 0)
+							return false;
+					}
+				}
+				break;
+			}
+			FLATBUFFERS_FALLTHROUGH(); // fall thru
+			default:
+			{
+				// Scalars and structs.
+				if (memcmp(first->GetStruct<const uint8_t*>(field->Offset),
+				           second->GetStruct<const uint8_t*>(field->Offset),
+				           field->Type->ByteSize) != 0)
+					return false;
+				break;
+			}
+			}
+		}
+		default: // Scalars.
+			if (memcmp(first->GetStruct<const uint8_t*>(field->Offset),
+					   second->GetStruct<const uint8_t*>(field->Offset),
+					   field->Type->ByteSize) != 0)
+				return false;
+			break;
+		}
+	}
+	return true;
 }
 
 flatbuffers::uoffset_t CopyArgs(
@@ -399,34 +511,34 @@ flatbuffers::uoffset_t CopyArgs(
 }
 
 flatbuffers::uoffset_t GenerateOffset(
-    flatbuffers::FlatBufferBuilder& fbb,
-    const nosTypeInfo* type,
-    const void* data)
+	flatbuffers::FlatBufferBuilder& fbb,
+	const nosTypeInfo* type,
+	const void* data)
 {
-    if(type->ByteSize) 
-        return 0;
-    switch (type->BaseType)
-    {
-    case NOS_BASE_TYPE_STRUCT:
-        return CopyTable(fbb, type, flatbuffers::GetRoot<flatbuffers::Table>(data));
-    case NOS_BASE_TYPE_STRING:
-        return fbb.CreateString((const flatbuffers::String*)data).o;
-    case NOS_BASE_TYPE_ARRAY: {
-        auto vec = (flatbuffers::Vector<void*>*)(data);
-        if(type->ElementType->ByteSize)
-        {
-            fbb.StartVector(vec->size(), type->ElementType->ByteSize, 1);
-            fbb.PushBytes(vec->Data(), type->ElementType->ByteSize * vec->size());
-            return fbb.EndVector(vec->size());
-        }
-        std::vector<flatbuffers::uoffset_t> elements(vec->size());
-        for (int i = 0; i < vec->size(); i++) {
-            elements[i] = GenerateOffset(fbb, type->ElementType, vec->Get(i));
-        }
-        return fbb.CreateVector(elements).o;
-    }
-    }
-    return 0;
+	if(type->ByteSize) 
+		return 0;
+	switch (type->BaseType)
+	{
+	case NOS_BASE_TYPE_STRUCT:
+		return CopyTable(fbb, type, flatbuffers::GetRoot<flatbuffers::Table>(data));
+	case NOS_BASE_TYPE_STRING:
+		return fbb.CreateString((const flatbuffers::String*)data).o;
+	case NOS_BASE_TYPE_ARRAY: {
+		auto vec = (flatbuffers::Vector<void*>*)(data);
+		if(type->ElementType->ByteSize)
+		{
+			fbb.StartVector(vec->size(), type->ElementType->ByteSize, 1);
+			fbb.PushBytes(vec->Data(), type->ElementType->ByteSize * vec->size());
+			return fbb.EndVector(vec->size());
+		}
+		std::vector<flatbuffers::uoffset_t> elements(vec->size());
+		for (int i = 0; i < vec->size(); i++) {
+			elements[i] = GenerateOffset(fbb, type->ElementType, vec->Get(i));
+		}
+		return fbb.CreateVector(elements).o;
+	}
+	}
+	return 0;
 }
 
 std::vector<uint8_t> GenerateBuffer(
@@ -439,9 +551,9 @@ std::vector<uint8_t> GenerateBuffer(
 		return std::vector<uint8_t>(type->ByteSize);
 	}
 	if(!data) return {};
-    flatbuffers::FlatBufferBuilder fbb;
-    fbb.Finish(flatbuffers::Offset<uint8_t>(GenerateOffset(fbb, type, data)));
-    return nos::Buffer(fbb.Release());
+	flatbuffers::FlatBufferBuilder fbb;
+	fbb.Finish(flatbuffers::Offset<uint8_t>(GenerateOffset(fbb, type, data)));
+	return nos::Buffer(fbb.Release());
 }
 
 flatbuffers::uoffset_t GenerateVector(
