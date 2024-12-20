@@ -297,10 +297,10 @@ bool AreFlatBuffersEqual(const nosTypeInfo* type,
 				{
 					// If one is present but the other is not, check the size is 0 for the present one.
 					// TODO: This might not be desired behaviour in some cases.
-					auto presentField = field1Exists ? firstTable : (field2Exists ? secondTable : nullptr);
-					if (!presentField)
+					auto presentVec = field1Exists ? firstTable->GetPointer<flatbuffers::Vector<uint8_t>*>(field->Offset) 
+						: (field2Exists ? secondTable->GetPointer<flatbuffers::Vector<uint8_t>*>(field->Offset) : nullptr);
+					if (!presentVec)
 						continue;
-					auto presentVec = reinterpret_cast<flatbuffers::Vector<uint8_t>*>(presentField);
 					if (presentVec->size() != 0)
 						return false;
 					continue;
