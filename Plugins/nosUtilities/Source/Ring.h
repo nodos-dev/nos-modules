@@ -53,7 +53,7 @@ struct ResourceInterface {
 	virtual void DestroyResource(ResourceBase* res) = 0;
 	virtual void Reset(ResourceBase* res) = 0;
 	virtual void WaitForDownloadToEnd(ResourceBase* res, const std::string& nodeTypeName, const std::string& nodeDisplayName, nosCopyInfo* cpy) = 0;
-	virtual void SendCopyCmdToGPU(ResourceBase* res, nosCopyInfo* cpy, nos::fb::UUID NodeId) = 0;
+	virtual void Copy(ResourceBase* res, nosCopyInfo* cpy, nos::fb::UUID NodeId) = 0;
 	virtual nosResult Push(ResourceBase* r, void* pinInfo, nosNodeExecuteParams* params, nos::Name ringExecuteName, bool pushEventForCopyFrom) = 0;
 	virtual void* GetPinInfo(nosPinInfo& pin, bool rejectFieldMismatch) = 0;
 	// Returns false if resource is compatible with the current sample
@@ -124,7 +124,7 @@ struct GPUTextureResource : ResourceInterface {
 		nosEngine.SetPinValue(cpy->ID, nos::Buffer::From(vkss::ConvertTextureInfo(res->ShareInfo)));
 	}
 
-	void SendCopyCmdToGPU(ResourceBase* r, nosCopyInfo* cpy, nos::fb::UUID NodeId) override {
+	void Copy(ResourceBase* r, nosCopyInfo* cpy, nos::fb::UUID NodeId) override {
 		Resource* res = GetResource<GPUTextureResource>(r);
 		nosResourceShareInfo outputResource = vkss::DeserializeTextureInfo(cpy->PinData->Data);
 		nosCmd cmd;
@@ -135,9 +135,8 @@ struct GPUTextureResource : ResourceInterface {
 		nosVulkan->End(cmd, &end);
 
 		nosTextureFieldType outFieldType = res->ShareInfo.Info.Texture.FieldType;
-		auto outputTextureDesc = static_cast<sys::vulkan::Texture*>(cpy->PinData->Data);
-		auto output = vkss::DeserializeTextureInfo(outputTextureDesc);
-		output.Info.Texture.FieldType = res->ShareInfo.Info.Texture.FieldType;
+		auto output = vkss::DeserializeTextureInfo(cpy->PinData->Data);
+		output.Info.Texture.FieldType = outFieldType;
 		sys::vulkan::TTexture texDef = vkss::ConvertTextureInfo(output);
 		texDef.unscaled = true;
 		nosEngine.SetPinValue(cpy->ID, Buffer::From(texDef));
@@ -303,7 +302,7 @@ struct GPUBufferResource : ResourceInterface {
 		nosEngine.SetPinValue(cpy->ID, nos::Buffer::From(vkss::ConvertBufferInfo(r->ShareInfo)));
 	}
 
-	void SendCopyCmdToGPU(ResourceBase* res, nosCopyInfo* cpy, nos::fb::UUID NodeId) override {
+	void Copy(ResourceBase* res, nosCopyInfo* cpy, nos::fb::UUID NodeId) override {
 		auto r = GetResource<GPUBufferResource>(res);
 		nosResourceShareInfo outputResource = vkss::ConvertToResourceInfo(*InterpretPinValue<sys::vulkan::Buffer>(cpy->PinData->Data));
 		nosCmd cmd;
@@ -453,7 +452,7 @@ struct CPUTrivialResource : ResourceInterface {
 		nosEngine.SetPinValue(cpy->ID, r->data);
 	}
 
-	void SendCopyCmdToGPU(ResourceBase* res, nosCopyInfo* cpy, nos::fb::UUID NodeId) override {
+	void Copy(ResourceBase* res, nosCopyInfo* cpy, nos::fb::UUID NodeId) override {
 		auto r = GetResource<CPUTrivialResource>(res);
 		nosEngine.SetPinValue(cpy->ID, r->data);
 	}

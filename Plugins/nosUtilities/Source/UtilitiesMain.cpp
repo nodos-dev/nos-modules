@@ -43,6 +43,7 @@ enum Utilities : int
 	BoundedQueue,
 	RingBuffer,
 	Host,
+	InterlacingBoundedTextureQueue,
 	Count
 };
 
@@ -65,6 +66,7 @@ nosResult RegisterRingBuffer(nosNodeFunctions*);
 nosResult RegisterHost(nosNodeFunctions*);
 nosResult RegisterPin2Json(nosNodeFunctions*);
 nosResult RegisterJson2Pin(nosNodeFunctions*);
+nosResult RegisterInterlacingBoundedTextureQueue(nosNodeFunctions*);
 
 nosResult NOSAPI_CALL ExportNodeFunctions(size_t* outSize, nosNodeFunctions** outList)
 {
@@ -103,6 +105,7 @@ nosResult NOSAPI_CALL ExportNodeFunctions(size_t* outSize, nosNodeFunctions** ou
 			GEN_CASE_NODE(BoundedQueue)
 			GEN_CASE_NODE(RingBuffer)
 			GEN_CASE_NODE(Host)
+			GEN_CASE_NODE(InterlacingBoundedTextureQueue)
 		}
 	}
 	return NOS_RESULT_SUCCESS;

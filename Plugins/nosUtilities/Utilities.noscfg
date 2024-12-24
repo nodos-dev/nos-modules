@@ -2,7 +2,7 @@
     "info": {
         "id": {
             "name": "nos.utilities",
-            "version": "3.0.0"
+            "version": "3.1.0"
         },
         "description": "Various utility nodes.",
         "display_name": "Utilities",
@@ -46,7 +46,8 @@
         "Config/BoundedQueue.nosdef",
         "Config/Host.nosdef",
         "Config/AutoResize.nosdef",
-        "Config/ExecDepend.nosdef"
+        "Config/ExecDepend.nosdef",
+        "Config/InterlacingBoundedTextureQueue.nosdef"
     ],
     "custom_types": [
         "Config/Merge.fbs",
@@ -215,6 +216,11 @@
           "class_name": "BoundedQueue",
           "display_name": "Bounded Queue",
           "name_aliases": [ "data structure", "algorithm", "circular" ]
+        },
+        {
+          "category": "Utilities",
+          "class_name": "InterlacingBoundedTextureQueue",
+          "display_name": "Interlacing Bounded Texture Queue"
         },
         {
             "category": "Utilities",

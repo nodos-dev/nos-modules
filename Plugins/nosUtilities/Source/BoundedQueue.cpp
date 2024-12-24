@@ -30,7 +30,7 @@ struct BoundedQueueNodeContext : RingNodeBase
 		if(beginResult != NOS_RESULT_SUCCESS || !slot)
 			return beginResult;
 
-		Ring->ResInterface->SendCopyCmdToGPU(slot, cpy, NodeId);
+		Ring->ResInterface->Copy(slot, cpy, NodeId);
 
 		cpy->CopyFromOptions.ShouldSetSourceFrameNumber = true;
 		cpy->FrameNumber = slot->FrameNumber;
