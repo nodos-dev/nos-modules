@@ -47,7 +47,7 @@
         "Config/Host.nosdef",
         "Config/AutoResize.nosdef",
         "Config/ExecDepend.nosdef",
-        "Config/InterlacingBoundedTextureQueue.nosdef"
+        "Config/DeinterlacedBoundedTextureQueue.nosdef"
     ],
     "custom_types": [
         "Config/Merge.fbs",
@@ -219,7 +219,7 @@
         },
         {
           "category": "Utilities",
-          "class_name": "InterlacingBoundedTextureQueue",
+          "class_name": "DeinterlacedBoundedTextureQueue",
           "display_name": "Interlacing Bounded Texture Queue"
         },
         {

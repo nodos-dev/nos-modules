@@ -59,6 +59,7 @@ struct ResourceInterface {
 	// Returns false if resource is compatible with the current sample
 	virtual bool CheckNewResource(nosName updateName, nosBuffer newVal, std::optional<nos::Buffer> oldVal, bool updateSample) = 0;
 	virtual bool BeginCopyFrom(ResourceBase* r, const nosBuffer& pinData, nos::Buffer& outPinVal) = 0;
+	virtual void OnPathStart() {}
 };
 
 struct GPUTextureResource : ResourceInterface {
@@ -108,6 +109,11 @@ struct GPUTextureResource : ResourceInterface {
 			nosVulkan->WaitGpuEvent(&res->Params.WaitEvent, UINT64_MAX);
 		res->Params = {};
 		res->FrameNumber = 0;
+	}
+
+	void OnPathStart() override
+	{
+		WantedField = NOS_TEXTURE_FIELD_TYPE_UNKNOWN;
 	}
 
 	void WaitForDownloadToEnd(ResourceBase* r, const std::string& nodeTypeName, const std::string& nodeDisplayName, nosCopyInfo* cpy) override {
@@ -286,6 +292,11 @@ struct GPUBufferResource : ResourceInterface {
 			nosVulkan->WaitGpuEvent(&r->Params.WaitEvent, UINT64_MAX);
 		r->Params = {};
 		r->FrameNumber = 0;
+	}
+
+	void OnPathStart() override
+	{
+		WantedField = NOS_TEXTURE_FIELD_TYPE_UNKNOWN;
 	}
 
 	void WaitForDownloadToEnd(ResourceBase* res, const std::string& nodeTypeName, const std::string& nodeDisplayName, nosCopyInfo* cpy) override {
@@ -1000,6 +1011,10 @@ struct RingNodeBase : NodeContext
 		nosScheduleNodeParams schedule{ .NodeId = NodeId, .AddScheduleCount = emptySlotCount };
 		nosEngine.ScheduleNode(&schedule);
 		Ring->Exit = false;
+		if (Ring)
+		{
+			Ring->ResInterface->OnPathStart();
+		}
 	}
 
 	void SendPathRestart()
