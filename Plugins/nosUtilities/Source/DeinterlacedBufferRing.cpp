@@ -63,21 +63,34 @@ struct DeinterlacedBufferRingNode : RingNodeBase
 
 	nosResult ExecuteNode(nosNodeExecuteParams* params) override {
 		nosResult res = NOS_RESULT_SUCCESS;
-		if (!ShouldDeinterlace || CurrentField == NOS_TEXTURE_FIELD_TYPE_ODD)
+		auto pins = NodeExecuteParams(params);
+		auto fieldType = *pins.GetPinData<nosTextureFieldType>(NOS_NAME("FieldType"));
+		if (ShouldDeinterlace)
+		{
+			if (LastFieldType == NOS_TEXTURE_FIELD_TYPE_UNKNOWN)
+				LastFieldType = fieldType;
+			else if (fieldType == LastFieldType)
+			{
+				nosEngine.LogW("Field mismatch. Waiting for a new frame.");
+				SendScheduleRequest(0);
+				return NOS_RESULT_FAILED;
+			}
+			LastFieldType = fieldType;
+		}
+		if (!ShouldDeinterlace || fieldType == NOS_TEXTURE_FIELD_TYPE_ODD)
 			res = ExecuteRingNode(params, true, NOS_NAME_STATIC("DeinterlacedBufferRing"), true);
 		else
 			SendScheduleRequest(1);
-		CurrentField = vkss::FlippedField(CurrentField);
 		return res;
 	}
 
 	std::atomic_bool ShouldDeinterlace = false;
-	nosTextureFieldType CurrentField = NOS_TEXTURE_FIELD_TYPE_UNKNOWN;
+	nosTextureFieldType LastFieldType = NOS_TEXTURE_FIELD_TYPE_UNKNOWN;
 
 	void OnPathStart() override
 	{
 		RingNodeBase::OnPathStart();
-		CurrentField = NOS_TEXTURE_FIELD_TYPE_EVEN;
+		LastFieldType = NOS_TEXTURE_FIELD_TYPE_UNKNOWN;
 	}
 
 	void OnEndFrame(nosUUID pinId, nosEndFrameCause cause) override

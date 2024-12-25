@@ -67,6 +67,14 @@
           "data": false,
           "show_as": "INPUT_PIN",
           "can_show_as": "INPUT_PIN_OR_PROPERTY"
+        },
+        {
+          "name": "FieldType",
+          "description": "Specifies the input field type",
+          "type_name": "nos.sys.vulkan.FieldType",
+          "data": "UNKNOWN",
+          "show_as": "INPUT_PIN",
+          "can_show_as": "INPUT_PIN_ONLY"
         }
       ]
     }
