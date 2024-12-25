@@ -27,12 +27,12 @@ struct DeinterlacedBoundedTextureQueueNode : RingNodeBase
 
 	void OnPinValueChanged(nos::Name pinName, nosUUID pinId, nosBuffer value) override
 	{
-		if (pinName == NOS_NAME("IsInterlaced"))
+		if (pinName == NOS_NAME("ShouldInterlace"))
 		{
-			auto& isInterlaced = *InterpretPinValue<bool>(value);
-			if (IsInterlaced != isInterlaced)
+			auto& shouldInterlace = *InterpretPinValue<bool>(value);
+			if (ShouldInterlace != shouldInterlace)
 			{
-				IsInterlaced = isInterlaced;
+				ShouldInterlace = shouldInterlace;
 				nosEngine.RecompilePath(NodeId);
 			}
 		}
@@ -59,7 +59,7 @@ struct DeinterlacedBoundedTextureQueueNode : RingNodeBase
 	std::mutex ArrivedFramesMutex;
 	std::queue<nosTextureFieldType> ArrivedFramesQueue;
 	std::condition_variable FrameArrivedCond;
-	std::atomic_bool IsInterlaced = false;
+	std::atomic_bool ShouldInterlace = false;
 	
 	nosResult CopyFrom(nosCopyInfo* cpy) override
 	{
@@ -91,10 +91,11 @@ struct DeinterlacedBoundedTextureQueueNode : RingNodeBase
 
 		cpy->CopyFromOptions.ShouldSetSourceFrameNumber = true;
 		LastServedFrameNumberBase = slot->FrameNumber;
-		cpy->FrameNumber = (IsInterlaced + 1) * LastServedFrameNumberBase;
+		cpy->FrameNumber = (ShouldInterlace + 1) * LastServedFrameNumberBase;
 
 		Ring->EndPop(slot);
-		vkss::SetFieldType(cpy->ID, *cpy->PinData, currentField);
+		if (currentField != NOS_TEXTURE_FIELD_TYPE_UNKNOWN)
+			vkss::SetFieldType(cpy->ID, *cpy->PinData, currentField);
 		SendScheduleRequest(1);
 		return NOS_RESULT_SUCCESS;
 	}
@@ -105,14 +106,14 @@ struct DeinterlacedBoundedTextureQueueNode : RingNodeBase
 		if (res == NOS_RESULT_SUCCESS)
 		{
 			std::unique_lock lock(ArrivedFramesMutex);
-			if (IsInterlaced)
+			if (ShouldInterlace)
 			{
 				ArrivedFramesQueue.push(NOS_TEXTURE_FIELD_TYPE_EVEN);
 				ArrivedFramesQueue.push(NOS_TEXTURE_FIELD_TYPE_ODD);
 			}
 			else
 			{
-				ArrivedFramesQueue.push(NOS_TEXTURE_FIELD_TYPE_PROGRESSIVE);
+				ArrivedFramesQueue.push(NOS_TEXTURE_FIELD_TYPE_UNKNOWN);
 			}
 			FrameArrivedCond.notify_one();
 		}

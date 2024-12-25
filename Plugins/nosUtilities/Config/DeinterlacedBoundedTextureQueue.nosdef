@@ -2,7 +2,7 @@
   "nodes": [
     {
       "class_name": "DeinterlacedBoundedTextureQueue",
-      "display_name": "Interlacing Bounded Texture Queue",
+      "display_name": "Deinterlaced Bounded Texture Queue",
       "contents_type": "Job",
       "description":  "",
       "pins": [
@@ -22,7 +22,8 @@
           "can_show_as": "PROPERTY_ONLY"
         },
         {
-          "name": "IsInterlaced",
+          "name": "ShouldInterlace",
+          "description": "If true, the output will be two times the frame rate the input has, with alternating fields",
           "type_name": "bool",
           "data": false,
           "show_as": "INPUT_PIN",

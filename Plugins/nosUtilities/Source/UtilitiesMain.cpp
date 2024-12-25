@@ -44,6 +44,7 @@ enum Utilities : int
 	RingBuffer,
 	Host,
 	DeinterlacedBoundedTextureQueue,
+	DeinterlacedBufferRing,
 	Count
 };
 
@@ -67,6 +68,7 @@ nosResult RegisterHost(nosNodeFunctions*);
 nosResult RegisterPin2Json(nosNodeFunctions*);
 nosResult RegisterJson2Pin(nosNodeFunctions*);
 nosResult RegisterDeinterlacedBoundedTextureQueue(nosNodeFunctions*);
+nosResult RegisterDeinterlacedBufferRing(nosNodeFunctions*);
 
 nosResult NOSAPI_CALL ExportNodeFunctions(size_t* outSize, nosNodeFunctions** outList)
 {
@@ -106,6 +108,7 @@ nosResult NOSAPI_CALL ExportNodeFunctions(size_t* outSize, nosNodeFunctions** ou
 			GEN_CASE_NODE(RingBuffer)
 			GEN_CASE_NODE(Host)
 			GEN_CASE_NODE(DeinterlacedBoundedTextureQueue)
+			GEN_CASE_NODE(DeinterlacedBufferRing)
 		}
 	}
 	return NOS_RESULT_SUCCESS;
