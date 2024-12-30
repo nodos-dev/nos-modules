@@ -1,6 +1,6 @@
 # Modules
 
-![build-badge](https://github.com/nodos-dev/modules/actions/workflows/release.yml/badge.svg)
+![build-badge](https://github.com/nodos-dev/modules/actions/workflows/build.yml/badge.svg)
 
 This folder contains the Nodos modules that are distributed with Nodos.
 
