@@ -2,7 +2,7 @@
     "info": {
         "id": {
             "name": "nos.math",
-            "version": "1.5.0"
+            "version": "1.6.0"
         },
         "description": "Nodes for math operations.",
         "display_name": "Math",
@@ -15,7 +15,8 @@
         "Config/Matrix.nosdef",
         "Config/Round.nosdef",
         "Config/Boolean.nosdef",
-        "Config/Xor.nosdef"
+        "Config/Xor.nosdef",
+        "Config/Random.nosdef"
     ],
     "binary_path": "Binaries/nosMath",
     "third_party_software": [
@@ -28,9 +29,14 @@
             "display_name": "Perspective View"
         },
         {
-            "category": "Math",
-            "class_name": "Eval",
-            "display_name": "Eval"
+          "category": "Math",
+          "class_name": "Eval",
+          "display_name": "Eval"
+        },
+        {
+          "category": "Math",
+          "class_name": "Random",
+          "display_name": "Random"
         },
         {
             "category": "Math|Boolean Logic",

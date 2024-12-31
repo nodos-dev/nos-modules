@@ -204,6 +204,7 @@ enum class MathNodeTypes : int {
 	And,
 	Or,
 	Not,
+	Random,
 	Count
 };
 
@@ -296,6 +297,7 @@ void RegisterTranspose(nosNodeFunctions*);
 void RegisterAnd(nosNodeFunctions*);
 void RegisterOr(nosNodeFunctions*);
 void RegisterNot(nosNodeFunctions*);
+void RegisterRandom(nosNodeFunctions*);
 
 nosResult NOSAPI_CALL ExportNodeFunctions(size_t* outCount, nosNodeFunctions** outList)
 {
@@ -408,7 +410,11 @@ nosResult NOSAPI_CALL ExportNodeFunctions(size_t* outCount, nosNodeFunctions** o
 			break;
 		}
 		case MathNodeTypes::Not: {
-			RegisterNot(node);
+					RegisterNot(node);
+					break;
+		}
+		case MathNodeTypes::Random: {
+			RegisterRandom(node);
 			break;
 		}
 		default:
