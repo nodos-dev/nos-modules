@@ -12,7 +12,7 @@
 #include "Window/WindowNode.h"
 #include <cstdint>
 
-NOS_INIT()
+NOS_INIT_WITH_MIN_REQUIRED_MINOR(13)
 
 NOS_REGISTER_NAME(in1)
 NOS_REGISTER_NAME(in2)
@@ -47,7 +47,8 @@ public:
 	{
 		nosEngine.LogI("TestNode: %s", __FUNCTION__);
 	}
-	void OnNodeUpdated(const nosFbNode* updatedNode) override { nosEngine.LogI("TestNode: %s", __FUNCTION__); }
+	void OnPartialNodeUpdated(const nosNodeUpdate* updatedNode) override { nosEngine.LogI("TestNode: %s", __FUNCTION__); }
+	void OnPinCreated(nosFbPin const* pin) override { nosEngine.LogI("TestNode: %s", __FUNCTION__); }
 	void OnPinValueChanged(nos::Name pinName, nosUUID pinId, nosBuffer value) override
 	{
 		nosEngine.LogI("TestNode: %s", __FUNCTION__);
@@ -58,7 +59,7 @@ public:
 	{
 		nosEngine.LogI("TestNode: %s", __FUNCTION__);
 	}
-	virtual void OnPathCommand(const nosPathCommand* command) override { nosEngine.LogI("TestNode: OnNodeUpdated"); }
+	virtual void OnPathCommand(const nosPathCommand* command) override { nosEngine.LogI("TestNode: %s", __FUNCTION__); }
 	virtual nosResult CanRemoveOrphanPin(nos::Name pinName, nosUUID pinId) override
 	{
 		nosEngine.LogI("TestNode: %s", __FUNCTION__);

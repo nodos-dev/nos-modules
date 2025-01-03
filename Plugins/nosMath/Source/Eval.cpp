@@ -33,12 +33,50 @@ struct EvalNodeContext : NodeContext
 	
 	EvalNodeContext(nosFbNode const* node) : NodeContext(node)
 	{
-		Resolve(node);
+		auto pinCount = node->pins()->size();
+		std::list<nosUUID> pinsToUnorphan;
+		for (auto i = 2; i < pinCount; i++)
+		{
+			auto pin = node->pins()->Get(i);
+			if (pin->show_as() == fb::ShowAs::INPUT_PIN
+				// Flag pins
+				&& pin->name()->string_view() != "Show_Expression")
+			{
+				auto uniqueName = pin->name()->str();
+				auto displayName = pin->display_name() ? pin->display_name()->str() : uniqueName;
+				Variables[nos::Name(uniqueName)] = 0.0;
+				Inputs.push_back(*pin->id());
+				if (auto orphanState = pin->orphan_state()) {
+					if (orphanState->type() == fb::PinOrphanStateType::ORPHAN)
+						pinsToUnorphan.push_back(*pin->id());
+				}
+			}
+		}
+		Compile();
+		for (auto const& pinId : pinsToUnorphan)
+			SetPinOrphanState(pinId, fb::PinOrphanStateType::ACTIVE);
 	}
 
-	void OnNodeUpdated(const fb::Node* updatedNode) override
+	void OnPartialNodeUpdated(nosNodeUpdate const* update) override
 	{
-		Resolve(updatedNode);
+		if (update->Type != NOS_NODE_UPDATE_PIN_DELETED)
+			return;
+		// Since pin is deleted from the NodeContext's pins map, we can't get its name from its id.
+		std::erase_if(Variables, [&](auto const& pair) {
+			return GetPin(pair.first) == nullptr;
+		});
+		Compile();
+	}
+
+	void OnPinCreated(const nosFbPin* pin) override
+	{
+		if (pin->show_as() == fb::ShowAs::INPUT_PIN)
+		{
+			auto uniqueName = nos::Name(pin->name()->str());
+			Variables.try_emplace(uniqueName, 0.0);
+			Inputs.push_back(*pin->id());
+			Compile();
+		}
 	}
 
 	void OnPinValueChanged(nos::Name pinName, nosUUID pinId, nosBuffer value) override
@@ -91,61 +129,9 @@ struct EvalNodeContext : NodeContext
 		if (update->UpdatedField != NOS_PIN_FIELD_DISPLAY_NAME)
 			return;
 		std::string newDisplayName = nos::Name(update->DisplayName).AsString();
-		for (auto [uniqueName, displayName] : DisplayNames)
-		{
-			if (displayName == newDisplayName)
-			{
-				SetStatus("Duplicate name: " + displayName, fb::NodeStatusMessageType::FAILURE);
-				return;
-			}
-		}
 		ClearNodeStatusMessages();
 		SetPinOrphanState(NOS_NAME("Result"), fb::PinOrphanStateType::ACTIVE);
-		DisplayNames[nos::Name(update->PinName)] = newDisplayName;
 		Compile();
-	}
-
-	void Resolve(const nosFbNode* node)
-	{
-		auto pinCount = node->pins()->size();
-		auto prevDisplayNames = std::move(DisplayNames);
-		decltype(Variables) newVariables;
-		std::list<nosUUID> pinsToUnorphan;
-		Inputs.clear();
-		for (auto i = 2; i < pinCount; i++)
-		{
-			auto pin = node->pins()->Get(i);
-			if (pin->show_as() == fb::ShowAs::INPUT_PIN
-				// Flag pins
-				&& pin->name()->string_view() != "Show_Expression")
-			{
-				auto uniqueName = pin->name()->str();
-				auto displayName = pin->display_name() ? pin->display_name()->str() : uniqueName;
-				auto value = InterpretPinValue<double>((void*)pin->data()->Data());
-				newVariables[nos::Name(uniqueName)] = *value;
-				DisplayNames[nos::Name(uniqueName)] = displayName;
-				Inputs.push_back(*pin->id());
-				if (auto orphanState = pin->orphan_state()) {
-					if (orphanState->type() == fb::PinOrphanStateType::ORPHAN)
-						pinsToUnorphan.push_back(*pin->id());
-				}
-			}
-		}
-		for (auto const& [uniqueName, value] : newVariables)
-		{
-			Variables.try_emplace(uniqueName, value);
-		}
-		for (auto it = Variables.begin(); it != Variables.end();)
-		{
-			if (newVariables.find(it->first) == newVariables.end())
-				it = Variables.erase(it);
-			else
-				++it;
-		}
-		if (prevDisplayNames != DisplayNames)
-			Compile();
-		for (auto const& pinId : pinsToUnorphan)
-			SetPinOrphanState(pinId, fb::PinOrphanStateType::ACTIVE);
 	}
 	
 	void OnNodeMenuRequested(const nosContextMenuRequest* request) override
@@ -233,15 +219,15 @@ struct EvalNodeContext : NodeContext
 		if (Expression.empty())
 			return true;
 		std::set<te_variable> vars;
-		std::unordered_set<std::string> displayNames;
+		std::unordered_set<nos::Name> displayNames;
 		for (auto const& [uniqueName, value] : Variables)
 		{
-			auto displayName = DisplayNames[uniqueName];
-			te_variable var(displayName.c_str(), &value);
+			auto* pin = GetPin(uniqueName);
+			te_variable var(pin->DisplayName.AsCStr(), &value);
 			vars.insert(std::move(var));
-			if (!displayNames.insert(displayName).second)
+			if (!displayNames.insert(pin->DisplayName).second)
 			{
-				SetStatus("Duplicate name: " + displayName, fb::NodeStatusMessageType::FAILURE);
+				SetStatus("Duplicate name: " + pin->DisplayName.AsString(), fb::NodeStatusMessageType::FAILURE);
 				return false;
 			}
 		}
@@ -287,7 +273,6 @@ struct EvalNodeContext : NodeContext
 	te_parser Parser;
 	std::string Expression;
 	std::unordered_map<nos::Name, double> Variables;
-	std::unordered_map<nos::Name, std::string> DisplayNames;
 
 	struct {
 		std::string Message;

@@ -38,7 +38,7 @@ struct ArrayNode : NodeContext
 		UpdateOutputVectorSize();
 	}
 
-	void OnNodeUpdated(const nosFbNode* inNode) override
+	void OnNodeUpdated(const nosFbNode* inNode)
 	{
 		auto oldPinCount = PinCount;
 		PinCount = GetInputs().size();
@@ -292,6 +292,8 @@ struct ArrayNode : NodeContext
 nosResult RegisterArray(nosNodeFunctions* fn)
 {
 	NOS_BIND_NODE_CLASS(NSN_Array, ArrayNode, fn);
+	// Keep the values in the context, or get them from the output pin instead of relying on the values provided from saved node
+	fn->OnNodeUpdated = [](void* ctx, const nosFbNode* node) { static_cast<ArrayNode*>(ctx)->OnNodeUpdated(node); };
 	return NOS_RESULT_SUCCESS;
 }
 
