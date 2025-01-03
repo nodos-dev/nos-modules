@@ -126,32 +126,40 @@ struct HostInfo
 
 	std::unordered_map<nosUUID, HostInfoPins> Listeners;
 
-	template <auto Member, auto PinMember, typename T>
-	void Set(T const& value)
+	template <auto PinIdMember, typename T>
+	void SetPinValue(HostInfoPins const& pinIds, T const& value)
+	{
+		if constexpr (std::is_same_v<T, std::string>)
+		{
+			nos::Buffer buf(value.c_str(), value.size() + 1);
+			nosEngine.SetPinValue(pinIds.*PinIdMember, buf);
+		}
+		else
+		{
+			auto size = sizeof(value);
+			nos::Buffer buf(reinterpret_cast<const char*>(&value), size);
+			nosEngine.SetPinValue(pinIds.*PinIdMember, buf);
+		}
+	}
+
+	template <auto Member, auto PinIdMember, typename T>
+	void SetIfChanged(T const& value)
 	{
 		auto& old = this->*Member;
 		if (old != value)
 		{
 			old = value;
-			if constexpr (std::is_same_v<T, std::string>)
-			{
-				nos::Buffer buf(value.c_str(), value.size() + 1);
-				for (auto& [_, listener] : Listeners)
-					nosEngine.SetPinValue(listener.*PinMember, buf);
-			}
-			else
-			{
-				auto size = sizeof(value);
-				nos::Buffer buf(reinterpret_cast<const char*>(&value), size);
-				for (auto& [_, listener] : Listeners)
-					nosEngine.SetPinValue(listener.*PinMember, buf);
-			}
+			for (auto& [nodeId, pins] : Listeners)
+				SetPinValue<PinIdMember>(pins, value);
 		}
 	}
 
 	void AddListener(nosUUID nodeId, HostInfoPins pins)
 	{
 		Listeners[nodeId] = std::move(pins);
+		SetPinValue<&HostInfoPins::HostNamePinId>(pins, HostName);
+		SetPinValue<&HostInfoPins::IpAddressPinId>(pins, IpAddress);
+		SetPinValue<&HostInfoPins::UptimeSecondsPinId>(pins, UptimeS);
 		if (!Listeners.empty() && !Worker.joinable())
 		{
 			nosEngine.LogD("Host: Starting worker thread");
@@ -162,10 +170,10 @@ struct HostInfo
 					auto hostName = GetHostName();
 					auto ip = GetIpv4Address();
 					auto uptime = GetUpTime();
-					Set<&HostInfo::HostName, &HostInfoPins::HostNamePinId>(hostName);
-					Set<&HostInfo::IpAddress, &HostInfoPins::IpAddressPinId>(ip);
+					SetIfChanged<&HostInfo::HostName, &HostInfoPins::HostNamePinId>(hostName);
+					SetIfChanged<&HostInfo::IpAddress, &HostInfoPins::IpAddressPinId>(ip);
 					if (uptime != -1)
-						Set<&HostInfo::UptimeS, &HostInfoPins::UptimeSecondsPinId>((uint32_t)uptime);
+						SetIfChanged<&HostInfo::UptimeS, &HostInfoPins::UptimeSecondsPinId>((uint32_t)uptime);
 					std::unique_lock lock(Mutex);
 					if (CV.wait_for(lock, std::chrono::seconds(1), [&stopToken] { return stopToken.stop_requested(); }))
 						break;
