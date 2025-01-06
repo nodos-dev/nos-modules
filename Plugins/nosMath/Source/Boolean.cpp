@@ -45,7 +45,6 @@ struct NotNode : NodeContext
 		NodeExecuteParams pins(params);
 		auto& X = *pins.GetPinData<bool>(NOS_NAME("X"));
 		auto& notX = *pins.GetPinData<bool>(NOS_NAME("NotX"));
-		auto& result = *pins.GetPinData<bool>(NOS_NAME("OrResult"));
 		notX = !X;
 		return NOS_RESULT_SUCCESS;
 	}
