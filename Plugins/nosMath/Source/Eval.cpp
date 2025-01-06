@@ -42,9 +42,7 @@ struct EvalNodeContext : NodeContext
 				// Flag pins
 				&& pin->name()->string_view() != "Show_Expression")
 			{
-				auto uniqueName = pin->name()->str();
-				auto displayName = pin->display_name() ? pin->display_name()->str() : uniqueName;
-				Variables[nos::Name(uniqueName)] = 0.0;
+				Variables[*pin->id()] = 0.0;
 				Inputs.push_back(*pin->id());
 				if (auto orphanState = pin->orphan_state()) {
 					if (orphanState->type() == fb::PinOrphanStateType::ORPHAN)
@@ -62,9 +60,8 @@ struct EvalNodeContext : NodeContext
 		if (update->Type == NOS_NODE_UPDATE_PIN_DELETED)
 		{
 			// Since pin is deleted from the NodeContext's pins map, we can't get its name from its id.
-			std::erase_if(Variables, [&](auto const& pair) {
-				return GetPin(pair.first) == nullptr;
-				});
+			Variables.erase(update->PinDeleted);
+			std::erase_if(Inputs, [&](auto id) {return id == update->PinDeleted; });
 			Compile();
 		}
 		else if (update->Type == NOS_NODE_UPDATE_PIN_CREATED)
@@ -72,8 +69,7 @@ struct EvalNodeContext : NodeContext
 			auto* pin = update->PinCreated;
 			if (pin->show_as() == fb::ShowAs::INPUT_PIN)
 			{
-				auto uniqueName = nos::Name(pin->name()->str());
-				Variables.try_emplace(uniqueName, 0.0);
+				Variables.try_emplace(*pin->id(), 0.0);
 				Inputs.push_back(*pin->id());
 				Compile();
 			}
@@ -182,12 +178,16 @@ struct EvalNodeContext : NodeContext
 				return;
 			}
 			// Find the first available variable name
+			
+			std::unordered_set<char> variableNames;
+			for (auto const& [pinId, value] : Variables)
+				variableNames.insert(*GetPinName(pinId)->AsCStr());
 			std::string pinName;
 			for (size_t i = 0; i < VARIABLE_NAMES.size(); i++)
 			{
-				if (Variables.find(nos::Name(std::string(1, VARIABLE_NAMES[i]))) == Variables.end())
+				if (variableNames.find(VARIABLE_NAMES[i]) == variableNames.end())
 				{
-					pinName = std::string(1, VARIABLE_NAMES[i]);
+					pinName = VARIABLE_NAMES[i];
 					break;
 				}
 			}
@@ -252,11 +252,8 @@ struct EvalNodeContext : NodeContext
 	{
 		nos::NodeExecuteParams pins(params);
 		
-		for (auto const& [uniqueName, value] : Variables)
-		{
-			auto pinValue = *InterpretPinValue<double>(pins[uniqueName].Data->Data);
-			Variables[uniqueName] = pinValue;
-		}
+		for (auto const& [pinId, value] : Variables)
+			Variables[pinId] = *InterpretPinValue<double>(pins[*GetPinName(pinId)].Data->Data);
 
 		try
 		{
@@ -273,7 +270,7 @@ struct EvalNodeContext : NodeContext
 
 	te_parser Parser;
 	std::string Expression;
-	std::unordered_map<nos::Name, double> Variables;
+	std::unordered_map<nosUUID, double> Variables;
 
 	struct {
 		std::string Message;
