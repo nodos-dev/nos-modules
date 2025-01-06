@@ -48,7 +48,6 @@ public:
 		nosEngine.LogI("TestNode: %s", __FUNCTION__);
 	}
 	void OnPartialNodeUpdated(const nosNodeUpdate* updatedNode) override { nosEngine.LogI("TestNode: %s", __FUNCTION__); }
-	void OnPinCreated(nosFbPin const* pin) override { nosEngine.LogI("TestNode: %s", __FUNCTION__); }
 	void OnPinValueChanged(nos::Name pinName, nosUUID pinId, nosBuffer value) override
 	{
 		nosEngine.LogI("TestNode: %s", __FUNCTION__);

@@ -59,23 +59,24 @@ struct EvalNodeContext : NodeContext
 
 	void OnPartialNodeUpdated(nosNodeUpdate const* update) override
 	{
-		if (update->Type != NOS_NODE_UPDATE_PIN_DELETED)
-			return;
-		// Since pin is deleted from the NodeContext's pins map, we can't get its name from its id.
-		std::erase_if(Variables, [&](auto const& pair) {
-			return GetPin(pair.first) == nullptr;
-		});
-		Compile();
-	}
-
-	void OnPinCreated(const nosFbPin* pin) override
-	{
-		if (pin->show_as() == fb::ShowAs::INPUT_PIN)
+		if (update->Type == NOS_NODE_UPDATE_PIN_DELETED)
 		{
-			auto uniqueName = nos::Name(pin->name()->str());
-			Variables.try_emplace(uniqueName, 0.0);
-			Inputs.push_back(*pin->id());
+			// Since pin is deleted from the NodeContext's pins map, we can't get its name from its id.
+			std::erase_if(Variables, [&](auto const& pair) {
+				return GetPin(pair.first) == nullptr;
+				});
 			Compile();
+		}
+		else if (update->Type == NOS_NODE_UPDATE_PIN_CREATED)
+		{
+			auto* pin = update->PinCreated;
+			if (pin->show_as() == fb::ShowAs::INPUT_PIN)
+			{
+				auto uniqueName = nos::Name(pin->name()->str());
+				Variables.try_emplace(uniqueName, 0.0);
+				Inputs.push_back(*pin->id());
+				Compile();
+			}
 		}
 	}
 
