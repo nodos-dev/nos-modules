@@ -9,7 +9,7 @@
 #include <chrono>
 #include <Nodos/PluginHelpers.hpp>
 
-NOS_INIT()
+NOS_INIT_WITH_MIN_REQUIRED_MINOR(13)
 
 NOS_BEGIN_IMPORT_DEPS()
 NOS_END_IMPORT_DEPS()
