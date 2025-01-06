@@ -7,7 +7,6 @@ namespace nos::reflect
 struct ArrayNode : NodeContext
 {
 	std::optional<nos::TypeInfo> Type = std::nullopt;
-	size_t PinCount = 0;
 	bool invalidNode = false;
 	ArrayNode(const nosFbNode* inNode) : NodeContext(inNode)
 	{
@@ -15,7 +14,6 @@ struct ArrayNode : NodeContext
 		{
 			if (pin.ShowAs == fb::ShowAs::INPUT_PIN)
 			{
-				PinCount++;
 				if (pin.TypeName != NSN_VOID)
 					Type = nos::TypeInfo(pin.TypeName);
 			}
@@ -38,17 +36,10 @@ struct ArrayNode : NodeContext
 		UpdateOutputVectorSize();
 	}
 
-	void OnNodeUpdated(const nosFbNode* inNode)
+	void OnPartialNodeUpdated(const nosNodeUpdate* update) override
 	{
-		auto oldPinCount = PinCount;
-		PinCount = GetInputs().size();
-		if (oldPinCount == PinCount)
-			return;
-		std::vector<const void*> values;
-		for (auto* pin : *inNode->pins())
-			if (pin->show_as() == fb::ShowAs::INPUT_PIN)
-				values.push_back((void*)pin->data()->data());
-		SendOutputArray(values);
+		if (update->Type == NOS_NODE_UPDATE_PIN_DELETED || update->Type == NOS_NODE_UPDATE_PIN_CREATED)
+			UpdateOutputVectorSize();
 	}
 
 	nosResult OnResolvePinDataTypes(nosResolvePinDataTypesParams* params) override
@@ -130,7 +121,6 @@ struct ArrayNode : NodeContext
 
 		auto outval = GenerateVector(*Type, values);
 
-		auto vec = (flatbuffers::Vector<flatbuffers::Offset<flatbuffers::Table>>*)(outval.data());
 		nosEngine.SetPinValue(outPin->Id, {outval.data(), outval.size()});
 		return true;
 	}
@@ -292,8 +282,6 @@ struct ArrayNode : NodeContext
 nosResult RegisterArray(nosNodeFunctions* fn)
 {
 	NOS_BIND_NODE_CLASS(NSN_Array, ArrayNode, fn);
-	// Keep the values in the context, or get them from the output pin instead of relying on the values provided from saved node
-	fn->OnNodeUpdated = [](void* ctx, const nosFbNode* node) { static_cast<ArrayNode*>(ctx)->OnNodeUpdated(node); };
 	return NOS_RESULT_SUCCESS;
 }
 
