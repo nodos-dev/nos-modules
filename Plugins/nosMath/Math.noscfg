@@ -2,7 +2,7 @@
     "info": {
         "id": {
             "name": "nos.math",
-            "version": "1.6.0"
+            "version": "1.7.0"
         },
         "description": "Nodes for math operations.",
         "display_name": "Math",
@@ -16,7 +16,8 @@
         "Config/Round.nosdef",
         "Config/Boolean.nosdef",
         "Config/Xor.nosdef",
-        "Config/Random.nosdef"
+        "Config/Random.nosdef",
+        "Config/Lerp.nosdef"
     ],
     "binary_path": "Binaries/nosMath",
     "third_party_software": [
@@ -32,6 +33,11 @@
           "category": "Math",
           "class_name": "Eval",
           "display_name": "Eval"
+        },
+        {
+            "category": "Math",
+            "class_name": "Lerp",
+            "display_name": "Lerp"
         },
         {
           "category": "Math",
