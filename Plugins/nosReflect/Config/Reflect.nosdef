@@ -209,6 +209,59 @@
                     "can_show_as": "OUTPUT_PIN_ONLY"
                 }
             ]
+        },
+        {
+            "class_name": "SetVariable",
+            "contents_type": "Job",
+
+            "pins": [
+                {
+                    "name": "Trigger",
+                    "type_name": "nos.exe",
+                    "show_as": "INPUT_PIN",
+                    "can_show_as": "INPUT_PIN_ONLY"
+                },
+                {
+                    "name": "Continue",
+                    "type_name": "nos.exe",
+                    "show_as": "OUTPUT_PIN",
+                    "can_show_as": "OUTPUT_PIN_ONLY"
+                },
+                {
+                    "name": "Name",
+                    "type_name": "string",
+                    "show_as": "INPUT_PIN",
+                    "can_show_as": "INPUT_PIN_OR_PROPERTY"
+                },
+                {
+                    "name": "Value",
+                    "type_name": "nos.fb.Void",
+                    "show_as": "INPUT_PIN",
+                    "can_show_as": "INPUT_PIN_OR_PROPERTY"
+                }
+            ]
+        },
+        {
+            "class_name": "GetVariable",
+            "contents_type": "Job",
+            "pins": [
+                {
+                    "name": "Name",
+                    "type_name": "string",
+                    "show_as": "PROPERTY",
+                    "can_show_as": "INPUT_PIN_OR_PROPERTY",
+                    "visualizer": {
+                        "type": "COMBO_BOX",
+                        "name": "nos.reflect.VariableNames"
+                    }
+                },
+                {
+                    "name": "Value",
+                    "type_name": "nos.fb.Void",
+                    "show_as": "OUTPUT_PIN",
+                    "can_show_as": "OUTPUT_PIN_ONLY"
+                }
+            ]
         }
     ]
 }
