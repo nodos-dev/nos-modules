@@ -22,22 +22,23 @@ struct VariableContainer
 			nosEngine.LogI("Creating variable %s", name.c_str());
 			Variables[name] = Variable{};
 			Variables[name].Users.insert(node);
+			UpdateStrings(lock);
 		}
 	}
 
-	void Disassociate(std::string const& name, nosUUID const& node)
+	void Disassociate(std::string const& name, nosUUID const& pinId)
 	{
 		std::unique_lock lock(VariablesMutex);
 		auto it = Variables.find(name);
 		if (it != Variables.end())
 		{
 			auto& variable = it->second;
-			variable.Users.erase(node);
+			variable.Users.erase(pinId);
 			if (variable.Users.empty())
 			{
 				nosEngine.LogI("Erasing variable %s", it->first.c_str());
-				Variables.erase(it->first);
-				UpdateStrings();
+				Variables.erase(it);
+				UpdateStrings(lock);
 			}
 		}
 	}
@@ -49,7 +50,7 @@ struct VariableContainer
 		auto& variable = Variables[name];
 		variable.Value = value;
 		if (update)
-			UpdateStrings();
+			UpdateStrings(lock);
 		for (auto const& user : variable.Users)
 		{
 			nosEngine.SetPinValue(user, value);
@@ -68,6 +69,29 @@ struct VariableContainer
 		return false;
 	}
 
+	void SetType(std::string const& name, nos::Name const& typeName)
+	{
+		std::unique_lock lock(VariablesMutex);
+		Variables[name].TypeName = typeName;
+		NotifyUsersAboutTypeChange(name, typeName);
+	}
+
+	std::optional<nos::Name> GetType(std::string const& name)
+	{
+		std::shared_lock lock(VariablesMutex);
+		auto it = Variables.find(name);
+		if (it != Variables.end())
+			return it->second.TypeName;
+		return std::nullopt;
+	}
+
+	void UpdateStrings()
+	{
+		std::unique_lock lock(VariablesMutex);
+		UpdateStrings(lock);
+	}
+	
+protected:
 	void NotifyUsersAboutTypeChange(std::string const& name, nos::Name const& typeName)
 	{
 		for (auto const& user : Variables[name].Users)
@@ -76,7 +100,7 @@ struct VariableContainer
 		}
 	}
 
-	void UpdateStrings()
+	void UpdateStrings(std::unique_lock<std::shared_mutex> &lock)
 	{
 		auto names = GetAllVariableNames();
 		UpdateStringList("nos.reflect.VariableNames", names);
@@ -96,22 +120,6 @@ struct VariableContainer
 			names.push_back(name);
 		}
 		return names;
-	}
-
-	void SetType(std::string const& name, nos::Name const& typeName)
-	{
-		std::unique_lock lock(VariablesMutex);
-		Variables[name].TypeName = typeName;
-		NotifyUsersAboutTypeChange(name, typeName);
-	}
-
-	std::optional<nos::Name> GetType(std::string const& name)
-	{
-		std::shared_lock lock(VariablesMutex);
-		auto it = Variables.find(name);
-		if (it != Variables.end())
-			return it->second.TypeName;
-		return std::nullopt;
 	}
 
 	struct Variable {
@@ -136,6 +144,7 @@ struct VariableNodeBase : NodeContext
 	VariableNodeBase(const nosFbNode* node) : NodeContext(node)
 	{
 		ValuePinId = nosUUID(*GetPinId(NOS_NAME("Value")));
+		GVariables.UpdateStrings();
 	}
 
 	~VariableNodeBase() override
@@ -187,23 +196,23 @@ struct SetVariableNode : VariableNodeBase
 		// Once we support this in the engine, we can move these to ExecuteNode function.
 		AddPinValueWatcher(NOS_NAME("Name"), [this](const nos::Buffer& value,  std::optional<nos::Buffer> oldValue)
 		{
+			if (oldValue)
+			{
+				std::string oldName = static_cast<const char*>(oldValue->Data());
+				GVariables.Disassociate(oldName, ValuePinId);
+			}
 			std::string newName = static_cast<const char*>(value.Data());
 			if (newName.empty() && oldValue)
 			{
 				SetPinValue(NOS_NAME("Name"), *oldValue);
 				return;
 			}
-			else if (newName.empty())
+			if (newName.empty())
 			{
 				SetStatus(SetVariableStatusItem::VariableName, fb::NodeStatusMessageType::WARNING, "Provide a name");
 				return;
 			}
 			Name = std::move(newName);
-			if (oldValue)
-			{
-				std::string oldName = static_cast<const char*>(oldValue->Data());
-				GVariables.Disassociate(oldName, ValuePinId);
-			}
 			GVariables.Associate(Name, ValuePinId);
 			GVariables.SetVariable(Name, Value);
 			CheckType();
@@ -253,18 +262,32 @@ struct GetVariableNode : VariableNodeBase
 	{
 		AddPinValueWatcher(NOS_NAME("Name"), [this](const nos::Buffer& value,  std::optional<nos::Buffer> oldValue)
 		{
-			Name = static_cast<const char*>(value.Data());
 			if (oldValue)
 			{
 				std::string oldName = static_cast<const char*>(oldValue->Data());
-				GVariables.Disassociate(oldName, NodeId);
+				GVariables.Disassociate(oldName, ValuePinId);
 			}
-			GVariables.Associate(Name, ValuePinId);
+			std::string newName = static_cast<const char*>(value.Data());
+			if (newName.empty())
+			{
+				SetStatus(SetVariableStatusItem::VariableName, fb::NodeStatusMessageType::WARNING, "Provide a name");
+				return;
+			}
+			if (newName == Name)
+				return;
+			Name = std::move(newName);
 			nos::Buffer outCopy;
 			if (GVariables.GetVariable(Name, outCopy))
 			{
 				SetPinValue(NOS_NAME("Value"), outCopy);
 			}
+			else
+			{
+				GVariables.UpdateStrings();
+				SetPinValue(NOS_NAME("Name"), "");
+				return;
+			}
+			GVariables.Associate(Name, ValuePinId);
 			CheckType();
 			SetNodeStatusMessage(Name, fb::NodeStatusMessageType::INFO);
 		});
