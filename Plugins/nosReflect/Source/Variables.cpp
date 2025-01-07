@@ -183,6 +183,8 @@ struct SetVariableNode : VariableNodeBase
 {
 	SetVariableNode(const nosFbNode* node) : VariableNodeBase(node)
 	{
+		// For editor to show changes without a scheduled node, we use pin value change callbacks.
+		// Once we support this in the engine, we can move these to ExecuteNode function.
 		AddPinValueWatcher(NOS_NAME("Name"), [this](const nos::Buffer& value,  std::optional<nos::Buffer> oldValue)
 		{
 			std::string newName = static_cast<const char*>(value.Data());
