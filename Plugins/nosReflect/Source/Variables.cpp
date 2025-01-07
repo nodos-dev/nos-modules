@@ -14,27 +14,29 @@ struct VariableContainer
 	void Associate(std::string const& name, nosUUID const& node)
 	{
 		std::unique_lock lock(VariablesMutex);
-		auto it = Users.find(name);
-		if (it != Users.end())
-			it->second.insert(node);
+		auto it = Variables.find(name);
+		if (it != Variables.end())
+			it->second.Users.insert(node);
 		else
-			Users.insert({name, {node}});
+		{
+			nosEngine.LogI("Creating variable %s", name.c_str());
+			Variables[name] = Variable{};
+			Variables[name].Users.insert(node);
+		}
 	}
 
 	void Disassociate(std::string const& name, nosUUID const& node)
 	{
 		std::unique_lock lock(VariablesMutex);
-		auto it = Users.find(name);
-		if (it != Users.end())
+		auto it = Variables.find(name);
+		if (it != Variables.end())
 		{
-			auto& users = it->second;
-			users.erase(node);
-			if (users.empty())
+			auto& variable = it->second;
+			variable.Users.erase(node);
+			if (variable.Users.empty())
 			{
 				nosEngine.LogI("Erasing variable %s", it->first.c_str());
 				Variables.erase(it->first);
-				Types.erase(it->first);
-				Users.erase(it);
 				UpdateStrings();
 			}
 		}
@@ -44,10 +46,11 @@ struct VariableContainer
 	{
 		std::unique_lock lock(VariablesMutex);
 		bool update = !Variables.contains(name);
-		Variables[name] = value;
+		auto& variable = Variables[name];
+		variable.Value = value;
 		if (update)
 			UpdateStrings();
-		for (auto const& user : Users[name])
+		for (auto const& user : variable.Users)
 		{
 			nosEngine.SetPinValue(user, value);
 		}
@@ -59,7 +62,7 @@ struct VariableContainer
 		auto it = Variables.find(name);
 		if (it != Variables.end())
 		{
-			outCopy = nos::Buffer(it->second);
+			outCopy = nos::Buffer(it->second.Value);
 			return true;
 		}
 		return false;
@@ -67,7 +70,7 @@ struct VariableContainer
 
 	void NotifyUsersAboutTypeChange(std::string const& name, nos::Name const& typeName)
 	{
-		for (auto const& user : Users[name])
+		for (auto const& user : Variables[name].Users)
 		{
 			NodeContext::SetPinType(user, typeName);
 		}
@@ -98,22 +101,25 @@ struct VariableContainer
 	void SetType(std::string const& name, nos::Name const& typeName)
 	{
 		std::unique_lock lock(VariablesMutex);
-		Types[name] = typeName;
+		Variables[name].TypeName = typeName;
 		NotifyUsersAboutTypeChange(name, typeName);
 	}
 
 	std::optional<nos::Name> GetType(std::string const& name)
 	{
 		std::shared_lock lock(VariablesMutex);
-		auto it = Types.find(name);
-		if (it != Types.end())
-			return it->second;
+		auto it = Variables.find(name);
+		if (it != Variables.end())
+			return it->second.TypeName;
 		return std::nullopt;
 	}
-	
-	std::unordered_map<std::string, nos::Buffer> Variables;
-	std::unordered_map<std::string, nos::Name> Types; // variable name -> type name
-	std::unordered_map<std::string, std::unordered_set<nosUUID>> Users;
+
+	struct Variable {
+		nos::Buffer Value;
+		std::optional<nos::Name> TypeName;
+		std::unordered_set<nosUUID> Users;
+	};
+	std::unordered_map<std::string, Variable> Variables;
 	std::shared_mutex VariablesMutex;
 	
 } GVariables = {};
