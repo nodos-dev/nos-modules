@@ -12,90 +12,62 @@ namespace nos::utilities
 NOS_REGISTER_NAME(Texture2Buffer)
 NOS_REGISTER_NAME(OutputBuffer)
 
-sys::vulkan::BufferElementType GetBufferElementTypeFromVulkanFormat(nosFormat format);
+nosBufferElementType GetBufferElementTypeFromVulkanFormat(nosFormat format);
 
-typedef struct BufferPin
+struct Texture2BufferNode : nos::NodeContext
 {
-	uint64_t Size;
-	uint64_t Address;
-	uint64_t Offset;
-} BufferPin;
-
-struct Texture2BufferNodeContext : nos::NodeContext
-{
-	BufferPin BufferPinProxy = {};
-	nosResourceShareInfo Buffer = {};
-	nosUUID NodeUUID = {}, InputUUID = {}, OutputBufferUUID = {};
-	Texture2BufferNodeContext(nosFbNode const* node) : NodeContext(node)
+	nosUUID InputPinId = {}, OutputBufferPinId = {};
+	Texture2BufferNode(nosFbNode const* node) : NodeContext(node)
 	{
-		NodeUUID = *node->id();
-
 		for (const auto& pin : *node->pins()) {
 			const char* currentPinName = pin->name()->c_str();
-			if (NSN_Input.Compare(pin->name()->c_str()) == 0) {
-				InputUUID = *pin->id();
+			if (NSN_Input.Compare(currentPinName) == 0) {
+				InputPinId = *pin->id();
 			}
-			else if (NSN_OutputBuffer.Compare(pin->name()->c_str()) == 0) {
-				OutputBufferUUID = *pin->id();
+			else if (NSN_OutputBuffer.Compare(currentPinName) == 0) {
+				OutputBufferPinId = *pin->id();
 			}
 		}
 	}
-
+	
 	nosResult ExecuteNode(nosNodeExecuteParams* params) override
 	{
-		auto pinIds = nos::GetPinIds(params);
-		auto pinValues = nos::GetPinValues(params);
-		nosResourceShareInfo inputTextureInfo = nos::vkss::DeserializeTextureInfo(pinValues[NSN_Input]);
-		PrepareResources(inputTextureInfo);
+		nos::NodeExecuteParams pins(params);
+		nosResourceShareInfo inputTextureDesc = nos::vkss::DeserializeTextureInfo(pins[NSN_Input].Data->Data);
+		const nosBuffer* outputBufferPinData = pins[NSN_OutputBuffer].Data;
+		nosResourceShareInfo outputBufferDesc = nos::vkss::ConvertToResourceInfo(*static_cast<sys::vulkan::Buffer*>(outputBufferPinData->Data));
+		uint64_t currentSize = inputTextureDesc.Memory.Size;
+		
+		if (currentSize != outputBufferDesc.Memory.Size) {
+			// Need to create a new buffer
+			outputBufferDesc.Info.Type = NOS_RESOURCE_TYPE_BUFFER;
+			outputBufferDesc.Info.Buffer.Size = currentSize;
+			outputBufferDesc.Info.Buffer.Usage = nosBufferUsage(NOS_BUFFER_USAGE_TRANSFER_SRC | NOS_BUFFER_USAGE_TRANSFER_SRC);
+			outputBufferDesc.Info.Buffer.ElementType = GetBufferElementTypeFromVulkanFormat(inputTextureDesc.Info.Texture.Format);
+		}
+
+		// Create buffer or update field type of existing buffer
+		outputBufferDesc.Info.Buffer.FieldType = inputTextureDesc.Info.Texture.FieldType;
+		nosEngine.SetPinValue(OutputBufferPinId, nos::Buffer::From(vkss::ConvertBufferInfo(outputBufferDesc)));
+
+		outputBufferDesc = nos::vkss::ConvertToResourceInfo(*static_cast<sys::vulkan::Buffer*>(outputBufferPinData->Data));
+		nosCmd cmd = {};
+		nosCmdBeginParams beginParams = {.Name = NOS_NAME("Texture2Buffer Copy"), .AssociatedNodeId = NodeId, .OutCmdHandle = &cmd};
+		nosVulkan->Begin2(&beginParams);
+		nosVulkan->Copy(cmd, &inputTextureDesc, &outputBufferDesc, 0);
+		nosVulkan->End(cmd, nullptr);
 		return NOS_RESULT_SUCCESS;
 	}
-
-	void PrepareResources(nosResourceShareInfo& in) {
-		uint64_t currentSize = in.Memory.Size;
-		
-		if (currentSize == Buffer.Memory.Size) {
-			nosCmd cmd = {};
-			nosCmdBeginParams beginParams = {.Name = NOS_NAME("Texture2Buffer Copy"), .AssociatedNodeId = NodeId, .OutCmdHandle = &cmd};
-			nosVulkan->Begin2(&beginParams);
-			nosVulkan->Copy(cmd, &in, &Buffer, 0);
-			nosVulkan->End(cmd, nullptr);
-			return;
-		}
-
-		if (Buffer.Memory.Handle != NULL) {
-			nosVulkan->DestroyResource(&Buffer);
-		}
-		Buffer.Info.Type = NOS_RESOURCE_TYPE_BUFFER;
-		Buffer.Info.Buffer.Size = currentSize;
-		Buffer.Info.Buffer.Usage = nosBufferUsage(NOS_BUFFER_USAGE_TRANSFER_SRC | NOS_BUFFER_USAGE_TRANSFER_SRC);
-		nosVulkan->CreateResource(&Buffer);
-
-		nos::sys::vulkan::Buffer buffer;
-		buffer.mutate_element_type(GetBufferElementTypeFromVulkanFormat(in.Info.Texture.Format));
-		buffer.mutate_handle(Buffer.Memory.Handle);
-		buffer.mutate_size_in_bytes(Buffer.Memory.Size);
-		buffer.mutate_offset(Buffer.Memory.ExternalMemory.Offset);
-
-		buffer.mutable_external_memory().mutate_allocation_size(Buffer.Memory.ExternalMemory.AllocationSize);
-		buffer.mutable_external_memory().mutate_handle(Buffer.Memory.ExternalMemory.Handle);
-		buffer.mutable_external_memory().mutate_handle_type(Buffer.Memory.ExternalMemory.HandleType);
-		buffer.mutable_external_memory().mutate_pid(Buffer.Memory.ExternalMemory.PID);
-
-		nos::Buffer bufPin = nos::Buffer::From(buffer);
-
-		nosEngine.SetPinValueDirect(OutputBufferUUID, bufPin);
-	}
-
 };
 
 nosResult RegisterTexture2Buffer(nosNodeFunctions* fn)
 {
-	NOS_BIND_NODE_CLASS(NSN_Texture2Buffer, Texture2BufferNodeContext, fn);
+	NOS_BIND_NODE_CLASS(NSN_Texture2Buffer, Texture2BufferNode, fn);
 	return NOS_RESULT_SUCCESS;
 }
 
 // TODO: Maybe move it to nos.sys.vulkan subsystem
-sys::vulkan::BufferElementType GetBufferElementTypeFromVulkanFormat(nosFormat format) {
+nosBufferElementType GetBufferElementTypeFromVulkanFormat(nosFormat format) {
 	switch (format) {
 		/*
 		* VK_FORMAT_R8G8B8A8_SRGB specifies a four-component, 32-bit unsigned normalized format that
@@ -123,7 +95,7 @@ sys::vulkan::BufferElementType GetBufferElementTypeFromVulkanFormat(nosFormat fo
 	case NOS_FORMAT_B8G8R8_SRGB:
 	case NOS_FORMAT_R8G8B8A8_SRGB:
 	case NOS_FORMAT_B8G8R8A8_SRGB:
-		return sys::vulkan::BufferElementType::ELEMENT_TYPE_UINT8;
+		return NOS_BUFFER_ELEMENT_TYPE_UINT8;
 
 	case NOS_FORMAT_R16_UNORM:
 	case NOS_FORMAT_R16G16_UNORM:
@@ -138,7 +110,7 @@ sys::vulkan::BufferElementType GetBufferElementTypeFromVulkanFormat(nosFormat fo
 	case NOS_FORMAT_R16G16_USCALED:
 	case NOS_FORMAT_R16G16B16_USCALED:
 	case NOS_FORMAT_R16G16B16A16_USCALED:
-		return sys::vulkan::BufferElementType::ELEMENT_TYPE_UINT16;
+		return NOS_BUFFER_ELEMENT_TYPE_UINT16;
 
 	case NOS_FORMAT_R16_SINT:
 	case NOS_FORMAT_R16G16_SINT:
@@ -152,35 +124,35 @@ sys::vulkan::BufferElementType GetBufferElementTypeFromVulkanFormat(nosFormat fo
 	case NOS_FORMAT_R16G16_SSCALED:
 	case NOS_FORMAT_R16G16B16_SSCALED:
 	case NOS_FORMAT_R16G16B16A16_SSCALED:
-		return sys::vulkan::BufferElementType::ELEMENT_TYPE_INT16;
+		return NOS_BUFFER_ELEMENT_TYPE_INT16;
 
 	case NOS_FORMAT_R16_SFLOAT:
 	case NOS_FORMAT_R16G16_SFLOAT:
 	case NOS_FORMAT_R16G16B16_SFLOAT:
 	case NOS_FORMAT_R16G16B16A16_SFLOAT:
-		return sys::vulkan::BufferElementType::ELEMENT_TYPE_FLOAT16;
+		return NOS_BUFFER_ELEMENT_TYPE_FLOAT16;
 
 	case NOS_FORMAT_R32_UINT:
 	case NOS_FORMAT_R32G32_UINT:
 	case NOS_FORMAT_R32G32B32_UINT:
 	case NOS_FORMAT_R32G32B32A32_UINT:
-		return sys::vulkan::BufferElementType::ELEMENT_TYPE_UINT32;
+		return NOS_BUFFER_ELEMENT_TYPE_UINT32;
 
 	case NOS_FORMAT_R32_SINT:
 	case NOS_FORMAT_R32G32_SINT:
 	case NOS_FORMAT_R32G32B32_SINT:
 	case NOS_FORMAT_R32G32B32A32_SINT:
-		return sys::vulkan::BufferElementType::ELEMENT_TYPE_INT32;
+		return NOS_BUFFER_ELEMENT_TYPE_INT32;
 
 	case NOS_FORMAT_R32_SFLOAT:
 	case NOS_FORMAT_R32G32_SFLOAT:
 	case NOS_FORMAT_R32G32B32_SFLOAT:
 	case NOS_FORMAT_R32G32B32A32_SFLOAT:
 	case NOS_FORMAT_D32_SFLOAT:
-		return sys::vulkan::BufferElementType::ELEMENT_TYPE_FLOAT;
+		return NOS_BUFFER_ELEMENT_TYPE_FLOAT;
 
 	default:
-		return sys::vulkan::BufferElementType::ELEMENT_TYPE_UNDEFINED;
+		return NOS_BUFFER_ELEMENT_TYPE_UNDEFINED;
 	}
 }
 }
