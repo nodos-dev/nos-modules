@@ -30,9 +30,11 @@ struct Buffer2TextureNodeContext : NodeContext
 				.Texture = {
 					.Width = size.x(),
 					.Height = size.y(),
-					.Format = nosFormat(format)
+					.Format = nosFormat(format),
+					.FieldType = (nosTextureFieldType)inputPinData.field_type()
 				}
 			}};
+			// Create resource
 			sys::vulkan::TTexture texDef = vkss::ConvertTextureInfo(tex);
 			nosEngine.SetPinValueByName(NodeId, NOS_NAME_STATIC("Output"), Buffer::From(texDef));
 		}
@@ -49,6 +51,12 @@ struct Buffer2TextureNodeContext : NodeContext
 		nosCmdEndParams endParams{.ForceSubmit = true, .OutGPUEventHandle = &event};
 		nosVulkan->End(cmd, &endParams);
 		nosVulkan->WaitGpuEvent(&event, UINT_MAX);
+
+		// Set field type
+		out.Info.Texture.FieldType = in.Info.Buffer.FieldType;
+		auto texDef = vkss::ConvertTextureInfo(out);
+		nosEngine.SetPinValueByName(NodeId, NOS_NAME("Output"), Buffer::From(texDef));
+		
 		return NOS_RESULT_SUCCESS;
 	}
 };
