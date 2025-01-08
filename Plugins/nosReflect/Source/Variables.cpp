@@ -11,17 +11,23 @@ NOS_REGISTER_NAME(GetVariable)
 
 struct VariableContainer
 {
-	void Associate(std::string const& name, nosUUID const& node)
+	enum class UserType
+	{
+		Broadcaster,
+		Listener,
+	};
+	
+	void Associate(std::string const& name, nosUUID const& pinId, UserType type)
 	{
 		std::unique_lock lock(VariablesMutex);
 		auto it = Variables.find(name);
 		if (it != Variables.end())
-			it->second.Users.insert(node);
+			it->second.Users.insert({pinId, type});
 		else
 		{
 			nosEngine.LogI("Creating variable %s", name.c_str());
 			Variables[name] = Variable{};
-			Variables[name].Users.insert(node);
+			Variables[name].Users.insert({pinId, type});
 			UpdateStrings(lock);
 		}
 	}
@@ -51,9 +57,10 @@ struct VariableContainer
 		variable.Value = value;
 		if (update)
 			UpdateStrings(lock);
-		for (auto const& user : variable.Users)
+		for (auto const& [user, type] : variable.Users)
 		{
-			nosEngine.SetPinValue(user, value);
+			if (type == UserType::Listener)
+				nosEngine.SetPinValue(user, value);
 		}
 	}
 
@@ -94,7 +101,7 @@ struct VariableContainer
 protected:
 	void NotifyUsersAboutTypeChange(std::string const& name, nos::Name const& typeName)
 	{
-		for (auto const& user : Variables[name].Users)
+		for (auto const& [user, listener] : Variables[name].Users)
 		{
 			NodeContext::SetPinType(user, typeName);
 		}
@@ -125,7 +132,7 @@ protected:
 	struct Variable {
 		nos::Buffer Value;
 		std::optional<nos::Name> TypeName;
-		std::unordered_set<nosUUID> Users;
+		std::unordered_map<nosUUID, UserType> Users;
 	};
 	std::unordered_map<std::string, Variable> Variables;
 	std::shared_mutex VariablesMutex;
@@ -213,15 +220,14 @@ struct SetVariableNode : VariableNodeBase
 				return;
 			}
 			Name = std::move(newName);
-			GVariables.Associate(Name, ValuePinId);
-			GVariables.SetVariable(Name, Value);
+			GVariables.Associate(Name, ValuePinId, VariableContainer::UserType::Broadcaster);
+			if (Value)
+				GVariables.SetVariable(Name, *Value);
 			CheckType();
 			SetStatus(SetVariableStatusItem::VariableName, fb::NodeStatusMessageType::INFO, Name);
 		});
 		AddPinValueWatcher(NOS_NAME("Value"), [this](const nos::Buffer& value,  std::optional<nos::Buffer> oldValue)
 		{
-			if (Value == value)
-				return;
 			Value = value;
 			if (Name.empty())
 				return;
@@ -250,7 +256,7 @@ struct SetVariableNode : VariableNodeBase
 		}
 	}
 
-	nos::Buffer Value;
+	std::optional<nos::Buffer> Value;
 	std::optional<nos::Name> TypeName;
 
 };
@@ -277,19 +283,16 @@ struct GetVariableNode : VariableNodeBase
 				return;
 			Name = std::move(newName);
 			nos::Buffer outCopy;
-			if (GVariables.GetVariable(Name, outCopy))
-			{
-				SetPinValue(NOS_NAME("Value"), outCopy);
-			}
-			else
+			if (!GVariables.GetVariable(Name, outCopy))
 			{
 				GVariables.UpdateStrings();
 				SetPinValue(NOS_NAME("Name"), "");
 				return;
 			}
-			GVariables.Associate(Name, ValuePinId);
-			CheckType();
+			GVariables.Associate(Name, ValuePinId, VariableContainer::UserType::Listener);
 			SetNodeStatusMessage(Name, fb::NodeStatusMessageType::INFO);
+			CheckType();
+			SetPinValue(NOS_NAME("Value"), outCopy);
 		});
 	}
 };
