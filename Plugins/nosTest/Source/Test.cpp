@@ -94,6 +94,8 @@ public:
 
 	virtual void OnPinDirtied(nosUUID pinID, uint64_t frameCount) override { nosEngine.LogI("TestNode: %s", __FUNCTION__); }
 	virtual void OnPathStateChanged(nosPathState pathState) override { nosEngine.LogI("TestNode: %s", __FUNCTION__); }
+	virtual void OnEnterRunnerThread(std::optional<nosUUID> runnerId) override { nosEngine.LogI("TestNode: %s", __FUNCTION__); }
+	virtual void OnExitRunnerThread(std::optional<nosUUID> runnerId) override { nosEngine.LogI("TestNode: %s", __FUNCTION__); }
 
 	static nosResult TestFunction(void* ctx, nosFunctionExecuteParams* params)
 	{
