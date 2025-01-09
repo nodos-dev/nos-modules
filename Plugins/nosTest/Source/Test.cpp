@@ -95,7 +95,6 @@ public:
 	virtual void OnPinDirtied(nosUUID pinID, uint64_t frameCount) override { nosEngine.LogI("TestNode: %s", __FUNCTION__); }
 	virtual void OnPathStateChanged(nosPathState pathState) override { nosEngine.LogI("TestNode: %s", __FUNCTION__); }
 
-
 	static nosResult TestFunction(void* ctx, nosFunctionExecuteParams* params)
 	{
 		auto args = nos::GetPinValues(params->FunctionNodeExecuteParams);
@@ -104,19 +103,56 @@ public:
 		auto b = *GetPinValue<double>(args, NSN_in2);
 		auto c = a + b;
 		nosEngine.SetPinValue(params->FunctionNodeExecuteParams->Pins[2].Id, { .Data = &c, .Size = sizeof(c) });
+		
+		TestNode* node = static_cast<TestNode*>(ctx);
+		if (node->SecondFunc)
+		{
+			TPartialNodeUpdate update{};
+			update.node_id = node->NodeId;
+			update.functions_to_delete = { *node->SecondFunc };
+			flatbuffers::FlatBufferBuilder fbb;
+			auto event = CreateAppEvent(fbb, CreatePartialNodeUpdate(fbb, &update));
+			HandleEvent(event);
+			node->SecondFunc = std::nullopt;
+		}
+		else
+		{
+			node->SecondFunc = nosEngine.GenerateID();
+			TPartialNodeUpdate update{};
+			update.node_id = node->NodeId;
+			std::unique_ptr<fb::TNode> functionNode = std::make_unique<fb::TNode>();
+			functionNode->id = *node->SecondFunc;
+			functionNode->class_name = NOS_NAME("DynamicFunction");
+			fb::TJob job{};
+			functionNode->contents.Set(job);
+			update.functions_to_add.push_back(std::move(functionNode));
+			flatbuffers::FlatBufferBuilder fbb;
+			auto event = CreateAppEvent(fbb, CreatePartialNodeUpdate(fbb, &update));
+			HandleEvent(event);
+		}
+		return NOS_RESULT_SUCCESS;
+	}
+
+	static nosResult DynamicFunction(void* ctx, nosFunctionExecuteParams* params) 
+	{
+		nosEngine.LogI("DynamicFunction executed");
 		return NOS_RESULT_SUCCESS;
 	}
 
 	static nosResult GetFunctions(size_t* outCount, nosName* pName, nosPfnNodeFunctionExecute* fns)
 	{
-		*outCount = 1;
+		*outCount = 2;
 		if (!pName || !fns)
 			return NOS_RESULT_SUCCESS;
 
-		*fns = TestFunction;
-		*pName = NOS_NAME_STATIC("TestFunction");
+		fns[0] = TestFunction;
+		pName[0] = NOS_NAME_STATIC("TestFunction");
+		fns[1] = DynamicFunction;
+		pName[1] = NOS_NAME_STATIC("DynamicFunction");
 		return NOS_RESULT_SUCCESS;
 	}
+
+	std::optional<nosUUID> SecondFunc = std::nullopt;
 };
 
 struct AlwaysDirtyNode : nos::NodeContext
