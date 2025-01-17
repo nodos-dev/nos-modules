@@ -1,0 +1,22 @@
+
+namespace nos.sys.config;
+
+attribute "hidden_property";
+attribute "units";
+attribute "builtin";
+attribute "skip_make";
+attribute "skip_break";
+attribute "skip_delay";
+attribute "dynamic";
+attribute "resource";
+attribute "strict_type";
+
+table ConfigEntry{
+    name_and_version:string(key);
+    data: string;
+}
+
+table ModuleConfigList {
+    configs: [ConfigEntry];
+    schema_version: string; // Version of this schema file
+}
