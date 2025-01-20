@@ -219,10 +219,10 @@ PYBIND11_EMBEDDED_MODULE(__nodos_internal__, m)
 		.def("__eq__", [](const nosUUID& self, const nosUUID& other) -> bool { return self == other; });
 
 	pyb::class_<nos::Name>(m, "Name")
-		.def(pyb::init<uint64_t>())
+		.def(pyb::init([](uint64_t arg) {return nos::Name(nosName{ arg }); }))
 		.def(pyb::init<const std::string&>())
 		.def("__str__", [](const nos::Name& name) -> std::string { return name.AsString(); })
-		.def("__hash__", [](const nos::Name& name) -> size_t { return name.ID; })
+		.def("__hash__", [](const nos::Name& name) -> size_t { return name.Inner.ID; })
 		.def("__eq__", [](const nos::Name& self, const nos::Name& other) -> bool { return self == other; });
 
 	pyb::class_<PyNativeNodeExecuteParams>(m, "NodeExecuteArgs")
@@ -277,7 +277,7 @@ PYBIND11_EMBEDDED_MODULE(__nodos_internal__, m)
 			return true;
 		});
 	m.def("get_name", [](const std::string& name) -> nos::Name { return nos::Name(name); });
-	m.def("get_string", [](uint64_t nameId) -> std::string { return nos::Name(nameId).AsString(); });
+	m.def("get_string", [](uint64_t nameId) -> std::string { return nos::Name(nosName{ nameId }).AsString(); });
 	m.def("send_context_menu_update", [](std::vector<pyb::object> const& items, PyNativeContextMenuRequest const& req) { 
 		app::TAppContextMenuUpdate update;
 		update.item_id = req.ItemId;
@@ -416,7 +416,7 @@ nosResult NOSAPI_CALL ExportSubsystemNodeFunctions(size_t* outSize, nosSubsystem
 	pyFuncs->OnNodeClassRegistered = nos::py::OnPyNodeRegistered;
 	pyFuncs->NodeType = NOS_NAME_STATIC("nos.py.PythonNode");
 	auto* functions = &pyFuncs->NodeFunctions;
-	NOS_BIND_NODE_CLASS(0, nos::py::PyNativeNode, functions);
+	NOS_BIND_NODE_CLASS(nosName{ 0 }, nos::py::PyNativeNode, functions);
 	return NOS_RESULT_SUCCESS;
 }
 

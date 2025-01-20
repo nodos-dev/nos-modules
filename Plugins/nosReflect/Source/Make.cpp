@@ -160,7 +160,7 @@ struct MakeNode : NodeContext
         std::vector<::flatbuffers::Offset<PartialPinUpdate>> pinsToUpdate = {};
         std::vector<fb::UUID> pinsToDelete = {};
 
-        std::set<nosName> pinNames = { NSN_Output };
+        std::unordered_set<nosName> pinNames = { NSN_Output };
 
         if (auto out = GetPin(NSN_Output))
 		{

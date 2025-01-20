@@ -44,7 +44,7 @@ struct PinDataAnimator
 			size_t operator()(InterpolatorKey const& t) const
 			{
 				size_t re = 0;
-				nos::hash_combine(re, t.Mode, t.TypeName.ID);
+				nos::hash_combine(re, t.Mode, t.TypeName);
 				return re;
 			}
 		};
