@@ -14,13 +14,18 @@ typedef enum nosSettingsFileDirectory {
 
 typedef void(*nosPfnSettingsItemUpdate)(nosName itemName, nosBuffer itemValue);
 
+#if NOS_HAS_CPLUSPLUS_20
+#include "EditorEvents_generated.h"
+typedef nos::sys::settings::editor::SettingsList nosSettingsList;
+#else
+typedef void* nosSettingsList;
+#endif
 
 struct nosSettingsSubsystem
 {
 	nosResult(__stdcall* ReadSettings)(nosName typeName, nosBuffer* buffer);
 	nosResult(__stdcall* WriteSettings)(nosName typeName, nosBuffer buffer, nosSettingsFileDirectory directory);
-	// buffer: It should be nos.sys.settings.editor.SettingsList fbs buffer.
-	nosResult(__stdcall* RegisterEditorSettings)(nosBuffer buffer, nosPfnSettingsItemUpdate itemUpdateCallback);
+	nosResult(__stdcall* RegisterEditorSettings)(const nosSettingsList* list, nosPfnSettingsItemUpdate itemUpdateCallback);
 	nosResult(__stdcall* UnregisterEditorSettings)();
 };
 
