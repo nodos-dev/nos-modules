@@ -144,7 +144,7 @@ struct SettingsDataManager {
 		}
 		case NOS_SETTINGS_FILE_DIRECTORY_WORKSPACE:
 		{
-			return std::filesystem::path(nosEngine.Module->RootFolderPath) / fileName;
+			return fileName;
 		}
 		case NOS_SETTINGS_FILE_DIRECTORY_GLOBAL:
 		{
