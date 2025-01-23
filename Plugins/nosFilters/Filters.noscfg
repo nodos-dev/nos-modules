@@ -2,14 +2,14 @@
     "info": {
         "id": {
             "name": "nos.filters",
-            "version": "1.2.0"
+            "version": "1.2.1"
         },
         "display_name": "Filters",
         "description": "Collection of image filters.",
         "dependencies": [
             {
                 "name": "nos.sys.vulkan",
-                "version": "5.8.0"
+                "version": "5.24.0"
             },
             {
                 "name": "nos.math",

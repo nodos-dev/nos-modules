@@ -12,7 +12,7 @@ if (NOT WITH_NODOS_WORKSPACE)
 endif()
 
 nos_find_sdk("1.3.0" NOS_PLUGIN_SDK_TARGET NOS_SUBSYSTEM_SDK_TARGET NOS_SDK_DIR)
-nos_get_module("nos.sys.vulkan" "5.8" NOS_SYS_VULKAN_TARGET_5_8)
+nos_get_module("nos.sys.vulkan" "5.24" NOS_SYS_VULKAN_TARGET)
 cmake_path(SET FLATC_EXECUTABLE "${NOS_SDK_DIR}/bin/flatc")
 
 set(TOOLS_DIR ${CMAKE_CURRENT_SOURCE_DIR}/Subsystems/nosShaderCompiler/Binaries/tools/${CMAKE_SYSTEM_NAME})
