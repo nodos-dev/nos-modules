@@ -8,7 +8,7 @@
 #include "SettingsEditorManager.h"
 #include "SettingsFileManager.h"
 #include "Globals.h"
-NOS_INIT()
+NOS_INIT_WITH_MIN_REQUIRED_MINOR(16)
 NOS_BEGIN_IMPORT_DEPS()
 NOS_END_IMPORT_DEPS()
 

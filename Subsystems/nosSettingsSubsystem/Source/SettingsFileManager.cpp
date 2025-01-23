@@ -132,7 +132,7 @@ nosResult SettingsFileManager::ReadSettings(nosSettingsEntryParams* params) {
 		}
 
 		auto typeName = nos::Name(entryData->first);
-		if (params->TypeName && params->TypeName != typeName) {
+		if (params->TypeName.ID && params->TypeName != typeName) {
 			nosEngine.LogE("Settings type mismatch for module %s for entry %s", nosEngine.GetString(module.Id.Name), params->EntryName);
 			return NOS_RESULT_FAILED;
 		}
