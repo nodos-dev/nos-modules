@@ -11,17 +11,21 @@
 namespace nos::sys::settings {
 std::filesystem::path GetAppDataFolder();
 NOS_REGISTER_NAME_SPACED(MODULE_SETTINGS_TYPENAME, nos::sys::settings::ModuleSettings::GetFullyQualifiedName());
+static constexpr char DEFAULT_SETTINGS_ENTRY_NAME[] = "default";
 
-static constexpr nosSettingsFileDirectory DirectoriesClosestToFarthest[] = {
+static constexpr nosSettingsFileDirectory DIRECTORIES_CLOSEST_TO_FARTHEST[] = {
 	NOS_SETTINGS_FILE_DIRECTORY_LOCAL,
 	NOS_SETTINGS_FILE_DIRECTORY_WORKSPACE,
 	NOS_SETTINGS_FILE_DIRECTORY_GLOBAL
 };
 
-std::string GetSettingsFileName(nosModuleInfo const& module) {
+std::string GetSettingsFileName(nosModuleInfo const& module)
+{
 	return std::string(nosEngine.GetString(module.Id.Name)) + "-" + std::string(nosEngine.GetString(module.Id.Version));
 }
-std::filesystem::path SettingsFileManager::GetSettingsFilePath(nosSettingsFileDirectory dir, const nosModuleInfo& moduleInfo) const {
+
+std::filesystem::path SettingsFileManager::GetSettingsFilePath(nosSettingsFileDirectory dir, const nosModuleInfo& moduleInfo) const
+{
 	std::string fileName = GetSettingsFileName(moduleInfo) + ".json";
 	switch (dir)
 	{
@@ -41,9 +45,10 @@ std::filesystem::path SettingsFileManager::GetSettingsFilePath(nosSettingsFileDi
 		nosEngine.LogE("The file location requested is not supported by nosSettingsSubsystem.");
 		return std::filesystem::path();
 	}
-
 }
-SettingsFileManager::SettingsFile& SettingsFileManager::FindOrCreateSettingsFile(nosModuleInfo const& module, nosSettingsFileDirectory dir) {
+
+SettingsFileManager::SettingsFile& SettingsFileManager::FindOrCreateSettingsFile(nosModuleInfo const& module, nosSettingsFileDirectory dir)
+{
 	std::string fileName = GetSettingsFileName(module);
 	auto& fileList = SettingsFiles[fileName];
 	auto it = std::find_if(fileList.begin(), fileList.end(), [dir](auto& file) { return file.Directory == dir; });
@@ -56,7 +61,8 @@ SettingsFileManager::SettingsFile& SettingsFileManager::FindOrCreateSettingsFile
 	}
 }
 
-nosResult SettingsFileManager::ReadSettingsFile(std::filesystem::path filePath, SettingsFile& file) {
+nosResult SettingsFileManager::ReadSettingsFile(std::filesystem::path filePath, SettingsFile& file)
+{
 	char* json = nullptr;
 	// Read to JSON
 	{
@@ -101,15 +107,17 @@ nosResult SettingsFileManager::ReadSettingsFile(std::filesystem::path filePath, 
 	free(json);
 	return NOS_RESULT_SUCCESS;
 }
-nosResult SettingsFileManager::ReadSettings(nosSettingsEntryParams* params) {
+
+nosResult SettingsFileManager::ReadSettings(nosSettingsEntryParams* params)
+{
 	nosModuleInfo module = {};
 	if (nosEngine.GetCallingModule(&module) != NOS_RESULT_SUCCESS)
 		return NOS_RESULT_FAILED;
 	auto fileName = GetSettingsFileName(module);
 	std::unique_lock lock(SettingsFilesMutex);
 	// From closest to farthest, try to read the settings file
-	for (uint32_t dirIndx = 0; dirIndx < sizeof(DirectoriesClosestToFarthest) / sizeof(DirectoriesClosestToFarthest[0]); dirIndx++) {
-		auto dir = DirectoriesClosestToFarthest[dirIndx];
+	for (uint32_t dirIndx = 0; dirIndx < sizeof(DIRECTORIES_CLOSEST_TO_FARTHEST) / sizeof(DIRECTORIES_CLOSEST_TO_FARTHEST[0]); dirIndx++) {
+		auto dir = DIRECTORIES_CLOSEST_TO_FARTHEST[dirIndx];
 		SettingsFile& settings = FindOrCreateSettingsFile(module, dir);
 
 		auto readFileResult = ReadSettingsFile(GetSettingsFilePath(dir, module), settings);
@@ -151,14 +159,16 @@ nosResult SettingsFileManager::ReadSettings(nosSettingsEntryParams* params) {
 	return NOS_RESULT_FAILED;
 }
 
-static constexpr char DEFAULT_SETTINGS_ENTRY_NAME[] = "default";
-nosResult SettingsFileManager::WriteSettings(const nosSettingsEntryParams* params) {
+nosResult SettingsFileManager::WriteSettings(const nosSettingsEntryParams* params)
+{
 	nosModuleInfo module = {};
 	if (nosEngine.GetCallingModule(&module) != NOS_RESULT_SUCCESS)
 		return NOS_RESULT_FAILED;
 	return WriteSettings(params, module);
 }
-nosResult SettingsFileManager::WriteSettings(const nosSettingsEntryParams* params, const nosModuleInfo& module) {
+
+nosResult SettingsFileManager::WriteSettings(const nosSettingsEntryParams* params, const nosModuleInfo& module)
+{
 	std::unique_lock lock(SettingsFilesMutex);
 	SettingsFile& settings = FindOrCreateSettingsFile(module, params->Directory);
 	auto& entry = settings.Entries[params->EntryName ? params->EntryName : DEFAULT_SETTINGS_ENTRY_NAME];
@@ -166,7 +176,9 @@ nosResult SettingsFileManager::WriteSettings(const nosSettingsEntryParams* param
 	entry.second = params->Buffer;
 	return WriteSettingsFile(settings, module);
 }
-nosResult SettingsFileManager::WriteSettingsFile(const SettingsFile& settingsFile, const nosModuleInfo& info) const {
+
+nosResult SettingsFileManager::WriteSettingsFile(const SettingsFile& settingsFile, const nosModuleInfo& info) const
+{
 	std::ofstream file(GetSettingsFilePath(settingsFile.Directory, info));
 	flatbuffers::FlatBufferBuilder builder;
 

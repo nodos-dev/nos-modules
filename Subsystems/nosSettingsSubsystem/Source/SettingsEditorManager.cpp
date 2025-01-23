@@ -8,8 +8,10 @@
 #include "SettingsEditorManager.h"
 #include "SettingsFileManager.h"
 
-namespace nos::sys::settings {
-nosResult SettingsEditorManager::RegisterEditorSettings(u64 itemCount, const nosSettingsEditorItem** itemList, nosPfnSettingsItemUpdate itemUpdateCallback, nosSettingsFileDirectory saveDirectory) {
+namespace nos::sys::settings
+{
+nosResult SettingsEditorManager::RegisterEditorSettings(u64 itemCount, const nosSettingsEditorItem** itemList, nosPfnSettingsItemUpdate itemUpdateCallback, nosSettingsFileDirectory saveDirectory)
+{
 	nosModuleInfo module = {};
 	if (nosEngine.GetCallingModule(&module) != NOS_RESULT_SUCCESS)
 		return NOS_RESULT_FAILED;
@@ -38,7 +40,9 @@ nosResult SettingsEditorManager::RegisterEditorSettings(u64 itemCount, const nos
 	nosEngine.SendCustomMessageToEditors(NOS_NAME_STATIC(NOS_SETTINGS_SUBSYSTEM_NAME), registeredModuleInfo.UpdateToEditor);
 	return NOS_RESULT_SUCCESS;
 }
-nosResult SettingsEditorManager::UnregisterEditorSettings() {
+
+nosResult SettingsEditorManager::UnregisterEditorSettings()
+{
 	nosModuleInfo module = {};
 	if (nosEngine.GetCallingModule(&module) != NOS_RESULT_SUCCESS)
 		return NOS_RESULT_FAILED;
@@ -55,12 +59,16 @@ nosResult SettingsEditorManager::UnregisterEditorSettings() {
 	nosEngine.LogE("Module %s is not registered for editor settings, but called UnregisterEditorSettings().", nosEngine.GetString(module.Id.Name));
 	return NOS_RESULT_FAILED;
 }
-void SettingsEditorManager::OnEditorConnected(uint64_t editorId) {
+
+void SettingsEditorManager::OnEditorConnected(uint64_t editorId)
+{
 	for (auto& [moduleName, registeredModuleInfo] : RegisteredModules) {
 		nosEngine.SendCustomMessageToEditors(NOS_NAME_STATIC(NOS_SETTINGS_SUBSYSTEM_NAME), registeredModuleInfo.UpdateToEditor);
 	}
 }
-void SettingsEditorManager::OnMessageFromEditor(uint64_t editorId, nosBuffer message) {
+
+void SettingsEditorManager::OnMessageFromEditor(uint64_t editorId, nosBuffer message)
+{
 	auto& regModules = RegisteredModules;
 	auto msg = flatbuffers::GetMutableRoot<nos::sys::settings::editor::SettingsUpdateFromEditor>(message.Data);
 	auto moduleName = msg->module_name()->c_str();
