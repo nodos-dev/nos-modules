@@ -9,10 +9,16 @@ attribute "skip_delay";
 attribute "dynamic";
 attribute "resource";
 attribute "strict_type";
+attribute "key";
 
 table SettingsEntry{
-    name:string;
-    version:string;
+    entry_name: string (key);
     type_name: string;
     data: [ubyte] (dynamic: "type_name");
+}
+
+table ModuleSettings{
+    module_name:string;
+    module_version:string;
+    settings: [SettingsEntry];
 }

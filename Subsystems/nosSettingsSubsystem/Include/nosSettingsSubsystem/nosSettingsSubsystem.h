@@ -12,22 +12,38 @@ typedef enum nosSettingsFileDirectory {
 	NOS_SETTINGS_FILE_DIRECTORY_GLOBAL	// AppData folder
 } nosSettingsFileDirectory;
 
-typedef void(*nosPfnSettingsItemUpdate)(nosName itemName, nosBuffer itemValue);
+typedef nosResult(*nosPfnSettingsItemUpdate)(const char* entryName, nosBuffer itemValue);
 
 #if NOS_HAS_CPLUSPLUS_20
 #include "EditorEvents_generated.h"
-typedef nos::sys::settings::editor::SettingsList nosSettingsList;
+typedef nos::sys::settings::editor::SettingsEditorItem nosSettingsEditorItem;
 #else
-typedef void* nosSettingsList;
+typedef void* nosSettingsEditorItem;
 #endif
 
-struct nosSettingsSubsystem
+typedef struct nosSettingsEntryParams {
+	nosName TypeName;
+	nosBuffer Buffer; // Don't forget to free this buffer
+	const char* EntryName; // If NULL, "default" will be used
+	nosSettingsFileDirectory Directory;
+} nosSettingsEntryParams;
+
+typedef struct nosSettingsSubsystem
 {
-	nosResult(__stdcall* ReadSettings)(nosName typeName, nosBuffer* buffer);
-	nosResult(__stdcall* WriteSettings)(nosName typeName, nosBuffer buffer, nosSettingsFileDirectory directory);
-	nosResult(__stdcall* RegisterEditorSettings)(const nosSettingsList* list, nosPfnSettingsItemUpdate itemUpdateCallback);
-	nosResult(__stdcall* UnregisterEditorSettings)();
-};
+	// parameters->directory will be set to found directory
+	// if parameters->typeName == 0, it will be set to first typename found in the closest file
+	// parameters->directory is ignored because closest one is chosen
+	nosResult(NOSAPI_CALL *ReadSettingsEntry)(nosSettingsEntryParams* parameters);
+	// parameters->typeName should be a valid typename
+	// if parameters->directory is not set, it will be set to NOS_SETTINGS_FILE_DIRECTORY_LOCAL
+	nosResult(NOSAPI_CALL *WriteSettingsEntry)(const nosSettingsEntryParams* parameters);
+
+
+	// Editor related functions
+
+	nosResult(NOSAPI_CALL *RegisterEditorSettings)(u64 itemCount, const nosSettingsEditorItem** itemList, nosPfnSettingsItemUpdate itemUpdateCallback, nosSettingsFileDirectory saveDirectory);
+	nosResult(NOSAPI_CALL *UnregisterEditorSettings)();
+} nosSettingsSubsystem;
 
 #pragma region Helper Declarations & Macros
 // Make sure these are same with nossys file.

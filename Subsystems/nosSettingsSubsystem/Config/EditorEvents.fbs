@@ -1,4 +1,5 @@
 include "Common.fbs";
+include "Types.fbs";
 namespace nos.sys.settings.editor;
 
 attribute "hidden_property";
@@ -13,21 +14,18 @@ attribute "strict_type";
 
 table SettingsUpdateFromEditor{
 	module_name: string;
-	item_name: string;
-	type_name: string;
-	data: [ubyte] (dynamic: "type_name");
+	entry: nos.sys.settings.SettingsEntry;
 }
 
 // Editor will use this structure to display settings
-table SettingsItem{
-    item_name:string (key);
+table SettingsEditorItem{
+    item_display_name:string (key);
     visualizer: nos.fb.Visualizer;
-	type_name: string;
-	data: [ubyte] (dynamic: "type_name");
+	entry: nos.sys.settings.SettingsEntry;
 }
 
 // List of items to be displayed in the editor
-table SettingsList{
-    module_name: string;
-	settings: [SettingsItem];
+table SettingsUpdateFromSubsystem{
+	module_name: string;
+	settings: [SettingsEditorItem];
 }
