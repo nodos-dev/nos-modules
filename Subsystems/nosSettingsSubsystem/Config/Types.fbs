@@ -1,0 +1,24 @@
+namespace nos.sys.settings;
+
+attribute "hidden_property";
+attribute "units";
+attribute "builtin";
+attribute "skip_make";
+attribute "skip_break";
+attribute "skip_delay";
+attribute "dynamic";
+attribute "resource";
+attribute "strict_type";
+attribute "key";
+
+table SettingsEntry{
+    entry_name: string (key);
+    type_name: string;
+    data: [ubyte] (dynamic: "type_name");
+}
+
+table ModuleSettings{
+    module_name:string;
+    module_version:string;
+    settings: [SettingsEntry];
+}
