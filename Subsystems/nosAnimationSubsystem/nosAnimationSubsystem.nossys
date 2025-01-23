@@ -2,7 +2,7 @@
     "info": {
         "id": {
             "name": "nos.sys.animation",
-            "version": "1.2.0"
+            "version": "1.2.1"
         },
         "display_name": "Animation Subsystem",
         "description": "",
