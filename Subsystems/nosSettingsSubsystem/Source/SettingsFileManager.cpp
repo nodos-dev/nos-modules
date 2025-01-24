@@ -9,7 +9,6 @@
 #include "Globals.h"
 
 namespace nos::sys::settings {
-std::filesystem::path GetAppDataFolder();
 NOS_REGISTER_NAME_SPACED(MODULE_SETTINGS_TYPENAME, nos::sys::settings::ModuleSettings::GetFullyQualifiedName());
 static constexpr char DEFAULT_SETTINGS_ENTRY_NAME[] = "default";
 
@@ -35,11 +34,11 @@ std::filesystem::path SettingsFileManager::GetSettingsFilePath(nosSettingsFileDi
 	}
 	case NOS_SETTINGS_FILE_DIRECTORY_WORKSPACE:
 	{
-		return fileName;
+		return std::filesystem::path(nosEngine.GetEnginePath(NOS_ENGINE_PATH_CONFIG)) / fileName;
 	}
 	case NOS_SETTINGS_FILE_DIRECTORY_GLOBAL:
 	{
-		return GetAppDataFolder() / fileName;
+		return std::filesystem::path(nosEngine.GetEnginePath(NOS_ENGINE_PATH_APPDATA)) / fileName;
 	}
 	default:
 		nosEngine.LogE("The file location requested is not supported by nosSettingsSubsystem.");
@@ -212,31 +211,5 @@ nosResult SettingsFileManager::WriteSettingsFile(const SettingsFile& settingsFil
 	file.close();
 	return NOS_RESULT_SUCCESS;
 };
-
-#if defined(_WIN32)
-std::filesystem::path GetAppDataFolder()
-{
-	std::filesystem::path appDataPath;
-	char* appData = nullptr;
-	size_t len = 0;
-	if (_dupenv_s(&appData, &len, "APPDATA") == 0 && appData != nullptr)
-	{
-		appDataPath = std::filesystem::path(appData);
-		free(appData);
-	}
-	return appDataPath;
-}
-#elif defined(__linux__)
-std::filesystem::path GetAppDataFolder()
-{
-	std::filesystem::path appDataPath;
-	const char* home = std::getenv("HOME");
-	if (home)
-	{
-		appDataPath = std::filesystem::path(home) / ".local" / "share";
-	}
-	return appDataPath;
-}
-#endif
 
 }

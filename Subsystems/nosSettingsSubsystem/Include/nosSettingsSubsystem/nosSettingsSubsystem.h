@@ -8,7 +8,7 @@
 
 typedef enum nosSettingsFileDirectory {
 	NOS_SETTINGS_FILE_DIRECTORY_LOCAL, // Module's root folder
-	NOS_SETTINGS_FILE_DIRECTORY_WORKSPACE, // Engine's binary folder
+	NOS_SETTINGS_FILE_DIRECTORY_WORKSPACE, // Engine's config folder
 	NOS_SETTINGS_FILE_DIRECTORY_GLOBAL	// AppData folder
 } nosSettingsFileDirectory;
 
