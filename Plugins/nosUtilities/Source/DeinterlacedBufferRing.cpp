@@ -104,6 +104,12 @@ struct DeinterlacedBufferRingNode : RingNodeBase
 			LastPopped = nullptr;
 		}
 	}
+
+	void OverrideConsumerDeltaSeconds(nosVec2u& inoutDeltaSeconds) override
+	{
+		if (ShouldDeinterlace)
+			inoutDeltaSeconds.y *= 2;
+	}
 };
 
 nosResult RegisterDeinterlacedBufferRing(nosNodeFunctions* functions)
