@@ -119,6 +119,12 @@ struct DeinterlacedBoundedTextureQueueNode : RingNodeBase
 		}
 		return res;
 	}
+
+	void OverrideConsumerDeltaSeconds(nosVec2u& inoutDeltaSeconds) override
+	{
+		if (ShouldInterlace)
+			inoutDeltaSeconds.y /= 2;
+	}
 };
 
 nosResult RegisterDeinterlacedBoundedTextureQueue(nosNodeFunctions* functions)
