@@ -1,0 +1,30 @@
+{
+	"info": {
+		"id": {
+			"name": "nos.animation",
+			"version": "0.1.0"
+		},
+		"display_name": "nos.animation",
+		"description": "Animation nodes for Nodos.",
+		"dependencies": [
+			{
+				"name": "nos.sys.vulkan",
+				"version": "5.24"
+			}
+		],
+		"category": "Animation"
+	},
+	"binary_path": "./Binaries/nosAnimation",
+	"node_definitions": [
+		"Config/Animate.nosdef"
+	],
+	"defaults": [],
+	"custom_types": [],
+	"associated_nodes": [
+		{
+			"category": "Animation",
+			"class_name": "Animate",
+			"display_name": "Animate"
+		}
+	]
+}
