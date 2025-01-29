@@ -15,6 +15,8 @@ struct AnimateNode : NodeContext
 		NodeExecuteParams args(params);
 		if (Running)
 		{
+			if(AnimationFrameCount == 0)
+				nosEngine.CallNodeFunction(NodeId, NOS_NAME("Started_Internal"));
 			float animationDuration = *args.GetPinData<float>(NOS_NAME("Duration"));
 			float out = (params->DeltaSeconds.x * AnimationFrameCount) / (params->DeltaSeconds.y * animationDuration);
 			if (out <= 1.0f)
@@ -24,7 +26,10 @@ struct AnimateNode : NodeContext
 				return NOS_RESULT_SUCCESS;
 			}
 			else
+			{
+				nosEngine.CallNodeFunction(NodeId, NOS_NAME("Finished_Internal"));
 				Running = false;
+			}
 		}
 		params->MarkAllOutsDirty = false;
 		return NOS_RESULT_SUCCESS;
@@ -37,22 +42,23 @@ struct AnimateNode : NodeContext
 		return NOS_RESULT_SUCCESS;
 	}
 
-	static nosResult GetFunctions(size_t* outCount, nosName* outFunctionNames, nosPfnNodeFunctionExecute* outFunctions) 
+	nosResult Pause(nosFunctionExecuteParams* functionExecParams)
 	{
-		if (!outFunctions)
-		{
-			*outCount = 1;
-			return NOS_RESULT_SUCCESS;
-		}
-		
-		outFunctionNames[0] = NOS_NAME("Start");
-		outFunctions[0] = [](void* ctx, nosFunctionExecuteParams* functionExecParams) -> nosResult
-			{
-				return static_cast<AnimateNode*>(ctx)->Start(functionExecParams);
-			};
-
-		return NOS_RESULT_SUCCESS; 
+		Running = false;
+		return NOS_RESULT_SUCCESS;
 	}
+
+	nosResult Continue(nosFunctionExecuteParams* functionExecParams)
+	{
+		Running = true;
+		return NOS_RESULT_SUCCESS;
+	}
+
+	NOS_DECLARE_FUNCTIONS(
+		NOS_ADD_FUNCTION(NOS_NAME("Start"), Start),
+		NOS_ADD_FUNCTION(NOS_NAME("Pause"), Pause),
+		NOS_ADD_FUNCTION(NOS_NAME("Continue"), Continue)
+	);
 };
 
 

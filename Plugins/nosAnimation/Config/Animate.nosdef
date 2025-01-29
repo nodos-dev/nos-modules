@@ -23,6 +23,38 @@
         {
           "class_name": "Start",
           "contents_type": "Job"
+        },
+        {
+          "class_name": "Pause",
+          "contents_type": "Job"
+        },
+        {
+          "class_name": "Continue",
+          "contents_type": "Job"
+        },
+        {
+          "class_name": "Started_Internal",
+          "contents_type": "Job",
+          "pins": [
+            {
+              "name": "Started",
+              "type_name": "nos.exe",
+              "show_as": "OUTPUT_PIN",
+              "can_show_as": "OUTPUT_PIN_OR_PROPERTY"
+            }
+          ]
+        },
+        {
+          "class_name": "Finished_Internal",
+          "contents_type": "Job",
+          "pins": [
+            {
+              "name": "Finished",
+              "type_name": "nos.exe",
+              "show_as": "OUTPUT_PIN",
+              "can_show_as": "OUTPUT_PIN_OR_PROPERTY"
+            }
+          ]
         }
       ]
     }
