@@ -209,6 +209,7 @@ nosResult SettingsFileManager::WriteSettingsFile(const SettingsFile& settingsFil
 
 	file << json;
 	file.close();
+	nosEngine.FreeString(json);
 	return NOS_RESULT_SUCCESS;
 };
 

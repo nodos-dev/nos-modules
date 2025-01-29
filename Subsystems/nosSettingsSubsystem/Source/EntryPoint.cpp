@@ -22,6 +22,7 @@ nosResult NOSAPI_CALL OnPreUnloadSubsystem()
 {
 	settings::GSettingsFileManager = nullptr;
 	settings::GSettingsEditorManager = nullptr;
+	settings::GExportedSubsystemVersions.clear();
 	return NOS_RESULT_SUCCESS;
 }
 
