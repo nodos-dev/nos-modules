@@ -410,8 +410,8 @@ nosResult NOSAPI_CALL ExportNodeFunctions(size_t* outCount, nosNodeFunctions** o
 			break;
 		}
 		case MathNodeTypes::Not: {
-					RegisterNot(node);
-					break;
+			RegisterNot(node);
+			break;
 		}
 		case MathNodeTypes::Random: {
 			RegisterRandom(node);

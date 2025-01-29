@@ -25,7 +25,7 @@ std::string ToLower(const char* str)
 	std::transform(s.begin(), s.end(), s.begin(), ::tolower);
 	return s;	
 }
-	
+
 static void MapScalarToT(nosTypeInfo ty, auto&& f)
 {
     switch(ty.BaseType)
@@ -58,8 +58,11 @@ static void MapScalarToT(nosTypeInfo ty, auto&& f)
     return;
 }
 
-static void DoOp(fb::BinaryOperator op, nosTypeInfo const& ty, uint8_t* lhs, uint8_t* rhs, uint8_t* dst)
+template<typename RightHandSide>
+requires std::is_scalar_v<RightHandSide> || std::is_same_v<RightHandSide, void>
+static void DoOp(fb::BinaryOperator op, nosTypeInfo const& ty, uint8_t* lhs, std::conditional_t<std::is_same_v<RightHandSide, void>, uint8_t, RightHandSide>* rhs, uint8_t* dst)
 {
+	constexpr bool isRightHandVoid = std::is_same_v<RightHandSide, void>;
     switch(ty.BaseType)
     {
         case NOS_BASE_TYPE_STRUCT:
@@ -68,8 +71,11 @@ static void DoOp(fb::BinaryOperator op, nosTypeInfo const& ty, uint8_t* lhs, uin
             for (int i = 0; i < ty.FieldCount; ++i)
             {
                 auto off = ty.Fields[i].Offset;
-                DoOp(op, *ty.Fields[i].Type, lhs + off, rhs + off, dst + off);
-            }
+				if constexpr (isRightHandVoid)
+					DoOp<RightHandSide>(op, *ty.Fields[i].Type, lhs + off, rhs + off, dst + off);
+				else
+					DoOp<RightHandSide>(op, *ty.Fields[i].Type, lhs + off, rhs, dst + off);
+			}
         }
         case NOS_BASE_TYPE_ARRAY:
         case NOS_BASE_TYPE_STRING:
@@ -78,20 +84,21 @@ static void DoOp(fb::BinaryOperator op, nosTypeInfo const& ty, uint8_t* lhs, uin
     }
 
     MapScalarToT(ty, [&]<class T>() -> void { 
+		using RightHandSideT = std::conditional_t<isRightHandVoid, T, RightHandSide>;
         switch(op)
         {
-            case fb::BinaryOperator::ADD: *(T*)dst = *(T*)lhs + *(T*)rhs; break;
-            case fb::BinaryOperator::SUB: *(T*)dst = *(T*)lhs - *(T*)rhs; break;
-            case fb::BinaryOperator::MUL: *(T*)dst = *(T*)lhs * *(T*)rhs; break;
+            case fb::BinaryOperator::ADD: *(T*)dst = *(T*)lhs + *(RightHandSideT*)rhs; break;
+            case fb::BinaryOperator::SUB: *(T*)dst = *(T*)lhs - *(RightHandSideT*)rhs; break;
+            case fb::BinaryOperator::MUL: *(T*)dst = *(T*)lhs * *(RightHandSideT*)rhs; break;
             case fb::BinaryOperator::DIV: 
             {
-                if (T(0) != *(T*)rhs)
-                    *(T*)dst = *(T*)lhs / *(T*)rhs; 
+                if (T(0) != *(RightHandSideT*)rhs)
+                    *(T*)dst = *(T*)lhs / *(RightHandSideT*)rhs;
                 else nosEngine.LogW("Division by zero!");
                 break;
             }
-            case fb::BinaryOperator::EXP: *(T*)dst = (T)std::pow(*(T*)lhs, *(T*)rhs); break;
-            case fb::BinaryOperator::LOG: *(T*)dst = (T)(std::log(*(T*)lhs) / std::log(*(T*)rhs)); break;
+            case fb::BinaryOperator::EXP: *(T*)dst = (T)std::pow(*(T*)lhs, *(RightHandSideT*)rhs); break;
+            case fb::BinaryOperator::LOG: *(T*)dst = (T)(std::log(*(T*)lhs) / std::log(*(RightHandSideT*)rhs)); break;
             default:
                 *(T*)dst = 0;
         }
@@ -107,6 +114,7 @@ const char* BinaryOpToDisplayName(fb::BinaryOperator op)
 	return names[op].c_str();
 }
 
+template<bool IsRightHandFloat>
 struct ArithmeticNodeContext : NodeContext
 {
     std::optional<nos::TypeInfo> Type = std::nullopt;
@@ -223,7 +231,14 @@ struct ArithmeticNodeContext : NodeContext
 		}
 		else
 		{
-			DoOp(*Operator, *Type, (uint8_t*)A.Data->Data, (uint8_t*)B.Data->Data, (uint8_t*)Output.Data->Data);
+			if constexpr (IsRightHandFloat)
+			{
+				float* bFloatPtr = static_cast<float*>(B.Data->Data);
+				DoOp<float>(*Operator, *Type, (uint8_t*)A.Data->Data, bFloatPtr, (uint8_t*)Output.Data->Data);
+			}
+			else
+				DoOp<void>(*Operator, *Type, (uint8_t*)A.Data->Data, (uint8_t*)B.Data->Data, (uint8_t*)Output.Data->Data);
+
 		}
 
 		return NOS_RESULT_SUCCESS;
@@ -252,7 +267,13 @@ struct ArithmeticNodeContext : NodeContext
 
 nosResult RegisterArithmetic(nosNodeFunctions* fn)
 {
-	NOS_BIND_NODE_CLASS(NSN_Arithmetic, ArithmeticNodeContext, fn);
+	NOS_BIND_NODE_CLASS(NSN_Arithmetic, ArithmeticNodeContext<false>, fn);
+	return NOS_RESULT_SUCCESS;
+}
+
+nosResult RegisterFloatArithmetic(nosNodeFunctions* fn)
+{
+	NOS_BIND_NODE_CLASS(NSN_FloatArithmetic, ArithmeticNodeContext<true>, fn);
 	return NOS_RESULT_SUCCESS;
 }
 

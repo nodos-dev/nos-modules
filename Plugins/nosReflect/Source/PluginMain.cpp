@@ -21,6 +21,7 @@ enum Nodes : size_t
 	Array,
 	Delay,
 	Arithmetic,
+	FloatArithmetic,
 	IndexOf,
 	IsEqual,
 	SetVariable,
@@ -35,6 +36,7 @@ nosResult RegisterIndexer(nosNodeFunctions* node);
 nosResult RegisterArray(nosNodeFunctions* node);
 nosResult RegisterDelay(nosNodeFunctions* node);
 nosResult RegisterArithmetic(nosNodeFunctions* node);
+nosResult RegisterFloatArithmetic(nosNodeFunctions* node);
 nosResult RegisterIndexOf(nosNodeFunctions* node);
 nosResult RegisterIsEqual(nosNodeFunctions* node);
 nosResult RegisterSetVariable(nosNodeFunctions* node);
@@ -66,6 +68,7 @@ nosResult NOSAPI_CALL ExportNodeFunctions(size_t* outCount, nosNodeFunctions** o
 			GEN_CASE_NODE(Array)
 			GEN_CASE_NODE(Delay)
 			GEN_CASE_NODE(Arithmetic)
+			GEN_CASE_NODE(FloatArithmetic)
 			GEN_CASE_NODE(IndexOf)
 			GEN_CASE_NODE(IsEqual)
 			GEN_CASE_NODE(SetVariable)
