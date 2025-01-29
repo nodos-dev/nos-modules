@@ -19,17 +19,25 @@ struct AnimateNode : NodeContext
 				nosEngine.CallNodeFunction(NodeId, NOS_NAME("Started_Internal"));
 			float animationDuration = *args.GetPinData<float>(NOS_NAME("Duration"));
 			float out = (params->DeltaSeconds.x * AnimationFrameCount) / (params->DeltaSeconds.y * animationDuration);
-			if (out <= 1.0f)
+			AnimationFrameCount++;
+			bool loop = *args.GetPinData<bool>(NOS_NAME("Loop"));
+			bool finished = false;
+			if (loop)
 			{
-				SetPinValue(NOS_NAME("t"), nos::Buffer::From(out));
-				AnimationFrameCount++;
-				return NOS_RESULT_SUCCESS;
+				out = out - static_cast<int64_t>(out);
 			}
-			else
+			else if (out >= 1.0f)
+			{
+				out = 1.0f;
+				finished = true;
+			}
+			SetPinValue(NOS_NAME("t"), nos::Buffer::From(out));
+			if (finished)
 			{
 				nosEngine.CallNodeFunction(NodeId, NOS_NAME("Finished_Internal"));
 				Running = false;
 			}
+			return NOS_RESULT_SUCCESS;
 		}
 		params->MarkAllOutsDirty = false;
 		return NOS_RESULT_SUCCESS;

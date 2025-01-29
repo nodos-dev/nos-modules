@@ -13,6 +13,13 @@
           "data": 1.0
         },
         {
+          "name": "Loop",
+          "type_name": "bool",
+          "show_as": "PROPERTY",
+          "can_show_as": "INPUT_PIN_OR_PROPERTY",
+          "data": false
+        },
+        {
           "name": "t",
           "type_name": "float",
           "show_as": "OUTPUT_PIN",
