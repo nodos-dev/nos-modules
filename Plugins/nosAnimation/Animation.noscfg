@@ -6,12 +6,6 @@
 		},
 		"display_name": "nos.animation",
 		"description": "Animation nodes for Nodos.",
-		"dependencies": [
-			{
-				"name": "nos.sys.vulkan",
-				"version": "5.24"
-			}
-		],
 		"category": "Animation"
 	},
 	"binary_path": "./Binaries/nosAnimation",
