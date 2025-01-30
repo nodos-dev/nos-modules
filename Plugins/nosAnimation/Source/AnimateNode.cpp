@@ -17,8 +17,8 @@ struct AnimateNode : NodeContext
 		{
 			if(AnimationFrameCount == 0)
 				nosEngine.CallNodeFunction(NodeId, NOS_NAME("Started_Internal"));
-			float animationDuration = *args.GetPinData<float>(NOS_NAME("Duration"));
-			float out = (params->DeltaSeconds.x * AnimationFrameCount) / (params->DeltaSeconds.y * animationDuration);
+			double animationDuration = *args.GetPinData<double>(NOS_NAME("Duration"));
+			double out = double(params->DeltaSeconds.x * AnimationFrameCount) / double(params->DeltaSeconds.y * animationDuration);
 			AnimationFrameCount++;
 			bool loop = *args.GetPinData<bool>(NOS_NAME("Loop"));
 			bool finished = false;

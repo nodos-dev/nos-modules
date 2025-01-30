@@ -7,7 +7,7 @@
       "pins": [
         {
           "name": "Duration",
-          "type_name": "float",
+          "type_name": "double",
           "show_as": "PROPERTY",
           "can_show_as": "INPUT_PIN_OR_PROPERTY",
           "data": 1.0
@@ -28,7 +28,7 @@
         },
         {
           "name": "t",
-          "type_name": "float",
+          "type_name": "double",
           "show_as": "OUTPUT_PIN",
           "can_show_as": "OUTPUT_PIN"
         }
