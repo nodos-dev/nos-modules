@@ -24,7 +24,13 @@ struct AnimateNode : NodeContext
 			bool finished = false;
 			if (loop)
 			{
-				out = out - static_cast<int64_t>(out);
+				bool swing = *args.GetPinData<bool>(NOS_NAME("Swing"));
+				int64_t loops = static_cast<int64_t>(out);
+				bool isEven = loops % 2 == 0;
+				if (swing && !isEven)
+					out = loops + 1 - out;
+				else
+					out = out - loops;
 			}
 			else if (out >= 1.0f)
 			{

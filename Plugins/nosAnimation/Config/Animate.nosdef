@@ -20,6 +20,13 @@
           "data": false
         },
         {
+          "name": "Swing",
+          "type_name": "bool",
+          "show_as": "PROPERTY",
+          "can_show_as": "INPUT_PIN_OR_PROPERTY",
+          "data": true
+        },
+        {
           "name": "t",
           "type_name": "float",
           "show_as": "OUTPUT_PIN",
