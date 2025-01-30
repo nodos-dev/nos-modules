@@ -13,6 +13,13 @@
           "data": 1.0
         },
         {
+          "name": "Reverse",
+          "type_name": "bool",
+          "show_as": "PROPERTY",
+          "can_show_as": "INPUT_PIN_OR_PROPERTY",
+          "data": false
+        },
+        {
           "name": "Loop",
           "type_name": "bool",
           "show_as": "PROPERTY",
@@ -44,6 +51,10 @@
         },
         {
           "class_name": "Continue",
+          "contents_type": "Job"
+        },
+        {
+          "class_name": "Reset",
           "contents_type": "Job"
         },
         {
