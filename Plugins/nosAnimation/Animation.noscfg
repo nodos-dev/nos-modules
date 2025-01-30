@@ -10,15 +10,23 @@
 	},
 	"binary_path": "./Binaries/nosAnimation",
 	"node_definitions": [
-		"Config/Animate.nosdef"
+		"Config/Animate.nosdef",
+    "Config/AnimationCurve.nosdef"
+	],
+	"named_values": [
+		"Config/AnimationExpressionPresets.json"
 	],
 	"defaults": [],
 	"custom_types": [],
 	"associated_nodes": [
 		{
 			"category": "Animation",
-			"class_name": "Animate",
-			"display_name": "Animate"
+			"class_name": "Animate"
+		},
+		{
+			"category": "AnimationCurve",
+			"class_name": "AnimationCurve",
+      "display_name": "Animation Curve"
 		}
 	]
 }

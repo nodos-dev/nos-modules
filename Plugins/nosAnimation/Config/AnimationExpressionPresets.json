@@ -1,0 +1,19 @@
+{
+    "name": "nos.animation.ExpressionPresets",
+    "values": [
+        {
+            "type_name": "string",
+            "pin_value": "t",
+            "value_name": "Linear"
+        },
+		{
+			"type_name": "string",
+            "pin_value": "t^2",
+            "value_name": "Squared"
+		},
+		{
+            "type_name": "string",
+            "value_name": "Custom"
+		}
+    ]
+}
