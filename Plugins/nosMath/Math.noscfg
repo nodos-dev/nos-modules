@@ -12,6 +12,7 @@
         "name": "nos.reflect",
         "version": "1.4"
       }
+    ]
   },
   "custom_types": [],
   "node_definitions": [
