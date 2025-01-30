@@ -186,7 +186,7 @@
 		{
 			"category": "Arithmetic",
 			"class_name": "ScalarArithmetic",
-			"display_name": "FloatLog",
+			"display_name": "ScalarLog",
 			"params": [
 				{
 					"type_name": "nos.fb.BinaryOperator",
