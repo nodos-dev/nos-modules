@@ -449,8 +449,6 @@ struct CPUTrivialResource : ResourceInterface {
 		return res;
 	}
 	void DestroyResource(ResourceBase* res) override {
-		auto r = GetResource<CPUTrivialResource>(res);
-		delete r;
 	}
 	void Reset(ResourceBase* res) override
 	{
@@ -496,7 +494,7 @@ struct CPUTrivialResource : ResourceInterface {
 
 struct TRing
 {
-	ResourceInterface* ResInterface;
+	std::shared_ptr<ResourceInterface> ResInterface;
 	bool RejectFieldMismatch = false;
 
     void Resize(uint32_t size)
@@ -516,7 +514,7 @@ struct TRing
         Size = size;
     }
     
-	TRing(uint32_t ringSize, ResourceInterface* resourceManager) : ResInterface(resourceManager)
+	TRing(uint32_t ringSize, std::shared_ptr<ResourceInterface> resourceManager) : ResInterface(std::move(resourceManager))
     {
         Resize(ringSize);
     }
@@ -748,19 +746,19 @@ struct RingNodeBase : NodeContext
 	TypeInfo TypeInfo;
 
 	void Init() {
-		ResourceInterface* resource = nullptr;
+		std::shared_ptr<ResourceInterface> resource;
 		if (TypeInfo->TypeName == vulkanBufferTypeName)
-			resource = new GPUBufferResource();
+			resource = std::make_unique<GPUBufferResource>();
 		else if (TypeInfo->TypeName == vulkanTextureTypeName)
-			resource = new GPUTextureResource();
+			resource = std::make_unique<GPUTextureResource>();
 		else
 		{
 			nosBuffer sample;
 			nosEngine.GetDefaultValueOfType(TypeInfo->TypeName, &sample);
-			resource = new CPUTrivialResource();
+			resource = std::make_unique<CPUTrivialResource>();
 		}
 
-		Ring = std::make_unique<TRing>(1, resource);
+		Ring = std::make_unique<TRing>(1, std::move(resource));
 
 		Ring->Stop();
 		AddPinValueWatcher(NOS_NAME_STATIC("Size"), [this](nos::Buffer const& newSize, std::optional<nos::Buffer> oldVal) {
