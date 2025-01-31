@@ -58,6 +58,14 @@
           "contents_type": "Job"
         },
         {
+          "class_name": "ReversedContinue",
+          "contents_type": "Job"
+        },
+        {
+          "class_name": "ForwardContinue",
+          "contents_type": "Job"
+        },
+        {
           "class_name": "Started_Internal",
           "contents_type": "Job",
           "pins": [

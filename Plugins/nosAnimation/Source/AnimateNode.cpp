@@ -93,11 +93,27 @@ struct AnimateNode : NodeContext
 		return NOS_RESULT_SUCCESS;
 	}
 
+	nosResult ForwardContinue(nosFunctionExecuteParams* functionExecParams)
+	{
+		SetPinValue(NOS_NAME("Reverse"), nos::Buffer::From(false));
+		Running = true;
+		return NOS_RESULT_SUCCESS;
+	}
+
+	nosResult ReversedContinue(nosFunctionExecuteParams* functionExecParams)
+	{
+		SetPinValue(NOS_NAME("Reverse"), nos::Buffer::From(true));
+		Running = true;
+		return NOS_RESULT_SUCCESS;
+	}
+
 	NOS_DECLARE_FUNCTIONS(
 		NOS_ADD_FUNCTION(NOS_NAME("Start"), Start),
 		NOS_ADD_FUNCTION(NOS_NAME("Pause"), Pause),
 		NOS_ADD_FUNCTION(NOS_NAME("Continue"), Continue),
-		NOS_ADD_FUNCTION(NOS_NAME("Reset"), Reset)
+		NOS_ADD_FUNCTION(NOS_NAME("Reset"), Reset),
+		NOS_ADD_FUNCTION(NOS_NAME("ForwardContinue"), ForwardContinue),
+		NOS_ADD_FUNCTION(NOS_NAME("ReversedContinue"), ReversedContinue),
 	);
 };
 
