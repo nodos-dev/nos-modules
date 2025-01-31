@@ -55,7 +55,7 @@
         },
         {
           "id": "4b7a5974-673a-4bf7-8363-b8c371cbc028",
-          "name": "Scalar",
+          "name": "t",
           "type_name": "nos.fb.Void",
           "show_as": "INPUT_PIN",
           "can_show_as": "INPUT_PIN_OR_PROPERTY",
@@ -454,7 +454,7 @@
           },
           {
             "id": "7262b1e1-b425-4e91-a201-d14ffa335c57",
-            "name": "Scalar",
+            "name": "t",
             "class_name": "nos.internal.GraphInput",
             "pins": [
               {
