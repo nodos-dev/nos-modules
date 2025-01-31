@@ -1,32 +1,33 @@
 {
-	"info": {
-		"id": {
-			"name": "nos.animation",
-			"version": "0.1.0"
-		},
-		"display_name": "nos.animation",
-		"description": "Animation nodes for Nodos.",
-		"category": "Animation"
-	},
-	"binary_path": "./Binaries/nosAnimation",
-	"node_definitions": [
-		"Config/Animate.nosdef",
+  "info": {
+    "id": {
+      "name": "nos.animation",
+      "version": "0.1.0"
+    },
+    "display_name": "nos.animation",
+    "description": "Animation nodes for Nodos.",
+    "category": "Animation"
+  },
+  "binary_path": "./Binaries/nosAnimation",
+  "node_definitions": [
+    "Config/Animate.nosdef",
     "Config/AnimationCurve.nosdef"
-	],
-	"named_values": [
-		"Config/AnimationExpressionPresets.json"
-	],
-	"defaults": [],
-	"custom_types": [],
-	"associated_nodes": [
-		{
-			"category": "Animation",
-			"class_name": "Animate"
-		},
-		{
-			"category": "AnimationCurve",
-			"class_name": "AnimationCurve",
+  ],
+  "named_values": [
+    "Config/AnimationExpressionPresets.json"
+  ],
+  "defaults": [],
+  "custom_types": [],
+  "associated_nodes": [
+    {
+      "category": "Animation",
+      "class_name": "Animate",
+      "display_name": "Animate"
+    },
+    {
+      "category": "Animation",
+      "class_name": "AnimationCurve",
       "display_name": "Animation Curve"
-		}
-	]
+    }
+  ]
 }
