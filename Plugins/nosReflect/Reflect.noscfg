@@ -2,7 +2,7 @@
     "info": {
         "id": {
             "name": "nos.reflect",
-            "version": "1.3.3"
+            "version": "1.4.0"
         },
         "display_name": "Reflect",
         "description": "Collection of type reflection nodes",
@@ -70,33 +70,58 @@
 			"category": "Arithmetic",
 			"class_name": "Arithmetic",
 			"display_name": "Add",
-			"params": [{"type_name":  "nos.fb.BinaryOperator", "value" :  "ADD"}],
+			"params": [
+				{
+					"type_name": "nos.fb.BinaryOperator",
+					"value": "ADD"
+				}
+			],
 			"name_aliases": [ "plus", "sum" ]
 		},
 		{
 			"category": "Arithmetic",
 			"class_name": "Arithmetic",
 			"display_name": "Div",
-			"params": [{"type_name":  "nos.fb.BinaryOperator", "value" :  "DIV"}]
+			"params": [
+				{
+					"type_name": "nos.fb.BinaryOperator",
+					"value": "DIV"
+				}
+			]
 		},
 		{
 			"category": "Arithmetic",
 			"class_name": "Arithmetic",
 			"display_name": "Mul",
-			"params": [{"type_name":  "nos.fb.BinaryOperator", "value" :  "MUL"}]
+			"params": [
+				{
+					"type_name": "nos.fb.BinaryOperator",
+					"value": "MUL"
+				}
+			]
 		},
 		{
 			"category": "Arithmetic",
 			"class_name": "Arithmetic",
 			"display_name": "Sub",
-			"params": [{"type_name":  "nos.fb.BinaryOperator", "value" :  "SUB"}],
+			"params": [
+				{
+					"type_name": "nos.fb.BinaryOperator",
+					"value": "SUB"
+				}
+			],
 			"name_aliases": [ "minus", "difference" ]
 		},
 		{
 			"category": "Arithmetic",
 			"class_name": "Arithmetic",
 			"display_name": "Log",
-			"params": [{"type_name":  "nos.fb.BinaryOperator", "value" :  "LOG"}],
+			"params": [
+				{
+					"type_name": "nos.fb.BinaryOperator",
+					"value": "LOG"
+				}
+			],
 			"name_aliases": [ "logarithm", "ln" ]
 		},
 		{
@@ -110,6 +135,65 @@
 			"class_name": "GetVariable",
 			"display_name": "Get Variable",
 			"name_aliases": [ "fetch", "retrieve" ]
+		},
+
+		{
+			"category": "Arithmetic",
+			"class_name": "ScalarArithmetic",
+			"display_name": "ScalarAdd",
+			"params": [
+				{
+					"type_name": "nos.fb.BinaryOperator",
+					"value": "ADD"
+				}
+			],
+			"name_aliases": [ "plus", "sum" ]
+		},
+		{
+			"category": "Arithmetic",
+			"class_name": "ScalarArithmetic",
+			"display_name": "ScalarDiv",
+			"params": [
+				{
+					"type_name": "nos.fb.BinaryOperator",
+					"value": "DIV"
+				}
+			]
+		},
+		{
+			"category": "Arithmetic",
+			"class_name": "ScalarArithmetic",
+			"display_name": "ScalarMul",
+			"params": [
+				{
+					"type_name": "nos.fb.BinaryOperator",
+					"value": "MUL"
+				}
+			]
+		},
+		{
+			"category": "Arithmetic",
+			"class_name": "ScalarArithmetic",
+			"display_name": "ScalarSub",
+			"params": [
+				{
+					"type_name": "nos.fb.BinaryOperator",
+					"value": "SUB"
+				}
+			],
+			"name_aliases": [ "minus", "difference" ]
+		},
+		{
+			"category": "Arithmetic",
+			"class_name": "ScalarArithmetic",
+			"display_name": "ScalarLog",
+			"params": [
+				{
+					"type_name": "nos.fb.BinaryOperator",
+					"value": "LOG"
+				}
+			],
+			"name_aliases": [ "logarithm", "ln" ]
 		}
 	]
 }
