@@ -8,8 +8,18 @@
         },
 		{
 			"type_name": "string",
-            "pin_value": "t^2",
-            "value_name": "Squared"
+			"pin_value": "t^3",
+			"value_name": "Ease In Cubic"
+		},
+		{
+			"type_name": "string",
+			"pin_value": "1 - (1 - t)^3",
+			"value_name": "Ease Out Cubic"
+		},
+		{
+			"type_name": "string",
+			"pin_value": "(t < 0.5) * 4 * t^3 + (t >= 0.5) * (1 - ((-2 * t + 2)^3) / 2)",
+			"value_name": "Ease In Out Cubic"
 		},
 		{
             "type_name": "string",

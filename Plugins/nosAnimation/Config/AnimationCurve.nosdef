@@ -44,9 +44,9 @@
           "can_show_as": "INPUT_PIN_OR_PROPERTY",
           "pin_category": "",
           "visualizer": { "type": "NAMED_VALUE", "name": "nos.animation.ExpressionPresets" },
-          "data": "t",
+          "data": "(t < 0.5) * 4 * t^3 + (t >= 0.5) * (1 - ((-2 * t + 2)^3) / 2)",
           "referred_by": [],
-          "def": "t",
+          "def": "(t < 0.5) * 4 * t^3 + (t >= 0.5) * (1 - ((-2 * t + 2)^3) / 2)",
           "meta_data_map": [],
           "contents_type": "PortalPin",
           "contents": { "source_id": "b5a6eef2-7303-4e39-91d7-91cd7cc5160e" },
@@ -69,7 +69,7 @@
                 "can_show_as": "INPUT_PIN_OR_PROPERTY",
                 "pin_category": "",
                 "visualizer": { "type": "NAMED_VALUE", "name": "nos.animation.ExpressionPresets" },
-                "data": "t",
+                "data": "(t < 0.5) * 4 * t^3 + (t >= 0.5) * (1 - ((-2 * t + 2)^3) / 2)",
                 "referred_by": [
                   "375f9939-7f59-405e-bc01-b02da47c9e40"
                 ],
