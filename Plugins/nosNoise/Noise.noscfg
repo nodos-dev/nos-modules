@@ -2,7 +2,7 @@
     "info": {
         "id": {
             "name": "nos.noise",
-            "version": "0.2.2"
+            "version": "0.2.3"
         },
         "display_name": "nos.noise",
         "description": "Noise utilities for Nodos.",

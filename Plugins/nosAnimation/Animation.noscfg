@@ -2,7 +2,7 @@
   "info": {
     "id": {
       "name": "nos.animation",
-      "version": "0.1.1"
+      "version": "0.1.2"
     },
     "display_name": "nos.animation",
     "description": "Animation nodes for Nodos.",
