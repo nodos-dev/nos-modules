@@ -22,7 +22,7 @@ struct AnimationSubsystemCtx
 {
 	AnimationSubsystemCtx() : InterpolatorManager(), Animator(InterpolatorManager), AnimationSubsystem{}
 	{
-		AnimationSubsystem.RegisterInterpolator = [](nosAnimInterpolator const* interpolator) {
+		AnimationSubsystem.RegisterInterpolator = [](nosAnimationInterpolator const* interpolator) {
 			nosModuleInfo callingModule{};
 			auto res = nosEngine.GetCallingModule(&callingModule);
 			if (res != NOS_RESULT_SUCCESS)

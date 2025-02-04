@@ -121,11 +121,11 @@ NOSAPI_ATTR nosResult NOSAPI_CALL nosExportPlugin(nosPluginFunctions* outFunctio
 {
 	outFunctions->ExportNodeFunctions = ExportNodeFunctions;
 
-	nosAnimInterpolator trackInterpolator = {
+	nosAnimationInterpolator trackInterpolator = {
 		.TypeName = NOS_NAME(fb::Track::GetFullyQualifiedName()), .InterpolateCallback = InterpolateTrack};
 	nosAnimation->RegisterInterpolator(&trackInterpolator);
 
-	nosAnimInterpolator transformInterpolator = {.TypeName = NOS_NAME(fb::Transform::GetFullyQualifiedName()),
+	nosAnimationInterpolator transformInterpolator = {.TypeName = NOS_NAME(fb::Transform::GetFullyQualifiedName()),
 											 .InterpolateCallback = InterpolateTransform};
 	nosAnimation->RegisterInterpolator(&trackInterpolator);
 

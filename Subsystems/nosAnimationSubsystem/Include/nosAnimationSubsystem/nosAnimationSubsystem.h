@@ -8,15 +8,15 @@
 
 typedef nosResult(*nosAnimationInterpolateCallback)(const nosBuffer from, const nosBuffer to, const double t, nosBuffer* outBuf);
 
-struct nosAnimInterpolator
+typedef struct nosAnimationInterpolator
 {
 	nosName TypeName;
 	nosAnimationInterpolateCallback InterpolateCallback;
-};
+} nosAnimationInterpolator;
 
 typedef struct nosAnimationSubsystem
 {
-	nosResult(NOSAPI_CALL* RegisterInterpolator)(nosAnimInterpolator const* interpolator);
+	nosResult(NOSAPI_CALL* RegisterInterpolator)(nosAnimationInterpolator const* interpolator);
 	nosResult(NOSAPI_CALL* HasInterpolator)(nosName typeName, bool* hasInterpolator);
 	/// If result is NOS_RESULT_SUCCESS, then outBuf is a buffer allocated using nosEngine.AllocateBuffer
 	/// which should be freed with nosEngine.FreeBuffer by the calling module.
