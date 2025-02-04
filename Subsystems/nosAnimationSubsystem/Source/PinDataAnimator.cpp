@@ -54,18 +54,16 @@ protected:
 	}
 };
 
+double EaseT(nos::fb::vec2 const& control1, nos::fb::vec2 const& control2, const double t)
+{
+	return CubicBezierEasing(reinterpret_cast<glm::vec2 const&>(control1), reinterpret_cast<glm::vec2 const&>(control2)).Get(t);
+}
+
 template <typename T>
 requires std::is_arithmetic_v<T>
 T Lerp(T start, T end, const double t)
 {
 	return start + (end - start) * t;
-}
-
-template <typename T>
-requires std::is_arithmetic_v<T>
-T Ease(T start, T end, nos::fb::vec2 const& control1, nos::fb::vec2 const& control2, const double t)
-{
-	return start + (end - start) * CubicBezierEasing(reinterpret_cast<glm::vec2 const&>(control1), reinterpret_cast<glm::vec2 const&>(control2)).Get(t);
 }
 
 template <typename T, size_t Dim>
@@ -82,185 +80,111 @@ T LerpVec(T start, T end, const double t)
 	return newData;
 }
 
+template <typename T>
+nos::Buffer ScalarInterpolator(const nosBuffer from, const nosBuffer to, const double t)
+{
+	T newData{};
+	T start = *reinterpret_cast<T const*>(from.Data);
+	T end = *reinterpret_cast<T const*>(to.Data);
+	newData = Lerp(start, end, t);
+	return nos::Buffer(&newData, sizeof(T));
+}
+
 template <typename T, size_t Dim>
-requires (Dim == 2 || Dim == 3 || Dim == 4)
-T EaseVec(T start, T end, nos::fb::vec2 const& control1, nos::fb::vec2 const& control2, const double t)
+nos::Buffer VectorInterpolator(const nosBuffer from, const nosBuffer to, const double t)
 {
 	T newData{};
-	newData.mutate_x(Ease(start.x(), end.x(), control1, control2, t));
-	newData.mutate_y(Ease(start.y(), end.y(), control1, control2, t));
-	if constexpr (Dim >= 3)
-		newData.mutate_z(Ease(start.z(), end.z(), control1, control2, t));
-	if constexpr (Dim == 4)
-		newData.mutate_w(Ease(start.w(), end.w(), control1, control2, t));
-	return newData;
-}
-
-template <editor::Interpolation Mode, typename T>
-nos::Buffer ScalarInterpolator(editor::InterpolationUnion const& interp, const double t)
-{
-	T newData{};
-	if constexpr (Mode == editor::Interpolation::Lerp)
-	{
-		auto* lerp = interp.AsLerp();
-		T start = *reinterpret_cast<T const*>(lerp->start.data());
-		T end = *reinterpret_cast<T const*>(lerp->end.data());
-		newData = Lerp(start, end, t);
-	}
-	else if constexpr (Mode == editor::Interpolation::CubicBezier)
-	{
-		auto* bezier = interp.AsCubicBezier();
-		T start = *reinterpret_cast<T const*>(bezier->start.data());
-		T end = *reinterpret_cast<T const*>(bezier->end.data());
-		newData = Ease(start, end, bezier->control1, bezier->control2, t);
-	}
+	T start = *reinterpret_cast<T const*>(from.Data);
+	T end = *reinterpret_cast<T const*>(to.Data);
+	newData = LerpVec<T, Dim>(start, end, t);
 	return nos::Buffer(&newData, sizeof(T));
 }
 
-template <editor::Interpolation Mode, typename T, size_t Dim>
-	requires(Mode == editor::Interpolation::Lerp || Mode == editor::Interpolation::CubicBezier)
-nos::Buffer VectorInterpolator(editor::InterpolationUnion const& interp, const double t)
+template <typename T>
+void AddScalarInterpolators(InterpolatorManager& interpManager, nos::Name name)
 {
-	T newData{};
-	if constexpr (Mode == editor::Interpolation::Lerp)
-	{
-		auto* lerp = interp.AsLerp();
-		T start = *reinterpret_cast<T const*>(lerp->start.data());
-		T end = *reinterpret_cast<T const*>(lerp->end.data());
-		newData = LerpVec<T, Dim>(start, end, t);
-	}
-	else if constexpr (Mode == editor::Interpolation::CubicBezier)
-	{
-		auto* bezier = interp.AsCubicBezier();
-		T start = *reinterpret_cast<T const*>(bezier->start.data());
-		T end = *reinterpret_cast<T const*>(bezier->end.data());
-		newData = EaseVec<T, Dim>(start, end, bezier->control1, bezier->control2, t);
-	}
-	return nos::Buffer(&newData, sizeof(T));
+	interpManager.AddBuiltinInterpolator(name, ScalarInterpolator<T>);
 }
 
-template <typename Vec3Type, typename ScalarType, typename T>
-Vec3Type InterpolateRotation(const Vec3Type& start, const Vec3Type& end, const T t)
+template <typename T, size_t Dim>
+void AddVectorInterpolators(InterpolatorManager& interpManager, nos::Name name)
 {
-    glm::vec<3, ScalarType> glmStart(start.x(), start.y(), start.z());
-    glm::vec<3, ScalarType> glmEnd(end.x(), end.y(), end.z());
-    glm::qua<ScalarType> startQuat = glm::quat(glm::radians(glmStart));
-    glm::qua<ScalarType> endQuat = glm::quat(glm::radians(glmEnd));
-    glm::qua<ScalarType> newQuat = glm::slerp(startQuat, endQuat, static_cast<ScalarType>(t));
-    glm::vec<3, ScalarType> newEuler = glm::degrees(glm::eulerAngles(newQuat));
-    return Vec3Type(newEuler.x, newEuler.y, newEuler.z);
+	interpManager.AddBuiltinInterpolator(name, VectorInterpolator<T, Dim>);
 }
 
-static nos::Buffer LerpTrack(const fb::Track* start, const fb::Track* end, const double t)
+InterpolatorManager::InterpolatorManager()
 {
-	nos::fb::TTrack interm;
-	interm.location = LerpVec<fb::vec3, 3>(*start->location(), *end->location(), t);
-	interm.rotation = InterpolateRotation<fb::vec3, float>(*start->rotation(), *end->rotation(), t); // quat
-	interm.fov = Lerp(start->fov(), end->fov(), t);
-	interm.focus = Lerp(start->focus(), end->focus(), t);
-	interm.zoom = Lerp(start->zoom(), end->zoom(), t);
-	interm.render_ratio = Lerp(start->render_ratio(), end->render_ratio(), t);
-	interm.sensor_size = LerpVec<fb::vec2, 2>(*start->sensor_size(), *end->sensor_size(), t);
-	interm.pixel_aspect_ratio = Lerp(start->pixel_aspect_ratio(), end->pixel_aspect_ratio(), t);
-	interm.nodal_offset = Lerp(start->nodal_offset(), end->nodal_offset(), t);
-	interm.focus_distance = Lerp(start->focus_distance(), end->focus_distance(), t);
-	auto distortionStart = *start->lens_distortion();
-	auto distortionEnd = *end->lens_distortion();
-	auto& distortion = interm.lens_distortion;
-	distortion.mutable_center_shift() = LerpVec<fb::vec2, 2>(distortionStart.center_shift(), distortionEnd.center_shift(), t);
-	distortion.mutable_k1k2() = LerpVec<fb::vec2, 2>(distortionStart.k1k2(), distortionEnd.k1k2(), t);
-	distortion.mutate_distortion_scale(Lerp(distortionStart.distortion_scale(), distortionEnd.distortion_scale(), t));
-	return nos::Buffer::From(interm);
+	AddScalarInterpolators<int>(*this, NOS_NAME("int"));
+	AddScalarInterpolators<float>(*this, NOS_NAME("float"));
+	AddScalarInterpolators<double>(*this, NOS_NAME("double"));
+	AddScalarInterpolators<char>(*this, NOS_NAME("byte"));
+	AddScalarInterpolators<short>(*this, NOS_NAME("short"));
+	AddScalarInterpolators<long>(*this, NOS_NAME("long"));
+	AddScalarInterpolators<long long>(*this, NOS_NAME("ulong"));
+	AddScalarInterpolators<unsigned char>(*this, NOS_NAME("ubyte"));
+	AddScalarInterpolators<unsigned short>(*this, NOS_NAME("ushort"));
+	AddVectorInterpolators<fb::vec2, 2>(*this, NOS_NAME("nos.fb.vec2"));
+	AddVectorInterpolators<fb::vec3, 3>(*this, NOS_NAME("nos.fb.vec3"));
+	AddVectorInterpolators<fb::vec4, 4>(*this, NOS_NAME("nos.fb.vec4"));
+	AddVectorInterpolators<fb::vec2d, 2>(*this, NOS_NAME("nos.fb.vec2d"));
+	AddVectorInterpolators<fb::vec3d, 3>(*this, NOS_NAME("nos.fb.vec3d"));
+	AddVectorInterpolators<fb::vec4d, 4>(*this, NOS_NAME("nos.fb.vec4d"));
+	AddVectorInterpolators<fb::vec2u, 2>(*this, NOS_NAME("nos.fb.vec2u"));
+	AddVectorInterpolators<fb::vec3u, 3>(*this, NOS_NAME("nos.fb.vec3u"));
+	AddVectorInterpolators<fb::vec4u, 4>(*this, NOS_NAME("nos.fb.vec4u"));
+	AddVectorInterpolators<fb::vec2i, 2>(*this, NOS_NAME("nos.fb.vec2i"));
+	AddVectorInterpolators<fb::vec3i, 3>(*this, NOS_NAME("nos.fb.vec3i"));
+	AddVectorInterpolators<fb::vec4i, 4>(*this, NOS_NAME("nos.fb.vec4i"));
+	AddVectorInterpolators<fb::vec4u8, 4>(*this, NOS_NAME("nos.fb.vec4u8"));
 }
 
-template <editor::Interpolation Mode>
-nos::Buffer TrackInterpolator(editor::InterpolationUnion const& interp, const double t)
+void InterpolatorManager::AddBuiltinInterpolator(nos::Name name, std::function<nos::Buffer(const nosBuffer from, const nosBuffer to, const double t)> fn)
 {
-	if constexpr (Mode == editor::Interpolation::Lerp)
-	{
-		auto* lerp = interp.AsLerp();
-		auto start = flatbuffers::GetRoot<fb::Track>(lerp->start.data());
-		auto end = flatbuffers::GetRoot<fb::Track>(lerp->end.data());
-		return LerpTrack(start, end, t);
-	}
-	else if constexpr (Mode == editor::Interpolation::CubicBezier)
-	{
-		auto* ease = interp.AsCubicBezier();
-		auto start = flatbuffers::GetRoot<fb::Track>(ease->start.data());
-		auto end = flatbuffers::GetRoot<fb::Track>(ease->end.data());
-		return LerpTrack(start, end, CubicBezierEasing((glm::vec2&)ease->control1, (glm::vec2&)ease->control2).Get(t));
-	}
+	std::unique_lock lock(InterpolatorsMutex);
+	Interpolators[name] = [fn = std::move(fn)](const nosBuffer from, const nosBuffer to, const double t, nosBuffer* out)
+		{
+			auto buf = fn(from, to, t);
+			nosEngine.AllocateBuffer(buf.Size(), out);
+			memcpy(out->Data, buf.Data(), buf.Size());
+			return NOS_RESULT_SUCCESS;
+		};
 }
 
-template <editor::Interpolation Mode>
-nos::Buffer TransformInterpolator(editor::InterpolationUnion const& interp, const double t)
+void InterpolatorManager::AddCustomInterpolator(nos::fb::TModuleIdentifier moduleId, nos::Name name, InterpolatorFn fn)
 {
-	if constexpr (Mode == editor::Interpolation::Lerp)
-	{
-		auto* lerp = interp.AsLerp();
-		auto start = flatbuffers::GetRoot<fb::Transform>(lerp->start.data());
-		auto end = flatbuffers::GetRoot<fb::Transform>(lerp->end.data());
-		nos::fb::Transform interm;
-		interm.mutable_position() = LerpVec<fb::vec3d, 3>(start->position(), end->position(), t);
-		interm.mutable_rotation() = InterpolateRotation<fb::vec3d, double>(start->rotation(), end->rotation(), t); // quat
-		interm.mutable_scale() = LerpVec<fb::vec3d, 3>(start->scale(), end->scale(), t);
-		return nos::Buffer::From(interm);
-	}
-	else if constexpr (Mode == editor::Interpolation::CubicBezier)
-	{
-		auto* ease = interp.AsCubicBezier();
-		auto start = flatbuffers::GetRoot<fb::Transform>(ease->start.data());
-		auto end = flatbuffers::GetRoot<fb::Transform>(ease->end.data());
-		nos::fb::Transform interm;
-		interm.mutable_position() = EaseVec<fb::vec3d, 3>(start->position(), end->position(), ease->control1, ease->control2, t);
-		interm.mutable_rotation() = InterpolateRotation<fb::vec3d, double>(start->rotation(), end->rotation(), CubicBezierEasing((glm::vec2&)ease->control1, (glm::vec2&)ease->control2).Get(t)); // quat
-		interm.mutable_scale() = EaseVec<fb::vec3d, 3>(start->scale(), end->scale(), ease->control1, ease->control2, t);
-		return nos::Buffer::From(interm);
-	}
+	std::unique_lock lock(InterpolatorsMutex);
+	Interpolators[name] = std::move(fn);
+	ModuleToAnimators[moduleId].push_back(name);
 }
 
-template <typename T, tmp::StrLiteral TypeName>
-void AddScalarInterpolators(PinDataAnimator* animator)
+bool InterpolatorManager::ModuleUnloaded(nos::fb::TModuleIdentifier moduleId)
 {
-	animator->AddInterpolator<editor::Interpolation::Lerp, TypeName>(ScalarInterpolator<editor::Interpolation::Lerp, T>);
-	animator->AddInterpolator<editor::Interpolation::CubicBezier, TypeName>(ScalarInterpolator<editor::Interpolation::CubicBezier, T>);
+	std::unique_lock lock(InterpolatorsMutex);
+	auto it = ModuleToAnimators.find(moduleId);
+	if (it == ModuleToAnimators.end())
+		return false;
+	for (auto const& name : it->second)
+		Interpolators.erase(name);
+	ModuleToAnimators.erase(it);
+	return true;
 }
 
-template <typename T, size_t Dim, tmp::StrLiteral TypeName>
-void AddVectorInterpolators(PinDataAnimator* animator)
+nosResult InterpolatorManager::Interpolate(nos::Name typeName, const nosBuffer from, const nosBuffer to, const double t, nosBuffer& outBuf)
 {
-	animator->AddInterpolator<editor::Interpolation::Lerp, TypeName>(VectorInterpolator<editor::Interpolation::Lerp, T, Dim>);
-	animator->AddInterpolator<editor::Interpolation::CubicBezier, TypeName>(VectorInterpolator<editor::Interpolation::CubicBezier, T, Dim>);
+	std::shared_lock lock(InterpolatorsMutex);
+	auto it = Interpolators.find(typeName);
+	if (it == Interpolators.end())
+		return NOS_RESULT_NOT_FOUND;
+	return it->second(from, to, t, &outBuf);
 }
 
-PinDataAnimator::PinDataAnimator()
+std::unordered_set<nos::Name> InterpolatorManager::GetAnimatableTypes()
 {
-	AddScalarInterpolators<int, "int">(this);
-	AddScalarInterpolators<float, "float">(this);
-	AddScalarInterpolators<double, "double">(this);
-	AddScalarInterpolators<char, "byte">(this);
-	AddScalarInterpolators<short, "short">(this);
-	AddScalarInterpolators<long, "long">(this);
-	AddScalarInterpolators<long long, "ulong">(this);
-	AddScalarInterpolators<unsigned char, "ubyte">(this);
-	AddScalarInterpolators<unsigned short, "ushort">(this);
-	AddVectorInterpolators<fb::vec2, 2, "nos.fb.vec2">(this);
-	AddVectorInterpolators<fb::vec3, 3, "nos.fb.vec3">(this);
-	AddVectorInterpolators<fb::vec4, 4, "nos.fb.vec4">(this);
-	AddVectorInterpolators<fb::vec2d, 2, "nos.fb.vec2d">(this);
-	AddVectorInterpolators<fb::vec3d, 3, "nos.fb.vec3d">(this);
-	AddVectorInterpolators<fb::vec4d, 4, "nos.fb.vec4d">(this);
-	AddVectorInterpolators<fb::vec2u, 2, "nos.fb.vec2u">(this);
-	AddVectorInterpolators<fb::vec3u, 3, "nos.fb.vec3u">(this);
-	AddVectorInterpolators<fb::vec4u, 4, "nos.fb.vec4u">(this);
-	AddVectorInterpolators<fb::vec2i, 2, "nos.fb.vec2i">(this);
-	AddVectorInterpolators<fb::vec3i, 3, "nos.fb.vec3i">(this);
-	AddVectorInterpolators<fb::vec4i, 4, "nos.fb.vec4i">(this);
-	AddVectorInterpolators<fb::vec4u8, 4, "nos.fb.vec4u8">(this);
-	AddInterpolator<editor::Interpolation::Lerp, "nos.fb.Track">(TrackInterpolator<editor::Interpolation::Lerp>);
-	AddInterpolator<editor::Interpolation::CubicBezier, "nos.fb.Track">(TrackInterpolator<editor::Interpolation::CubicBezier>);
-	AddInterpolator<editor::Interpolation::Lerp, "nos.fb.Transform">(TransformInterpolator<editor::Interpolation::Lerp>);
-	AddInterpolator<editor::Interpolation::CubicBezier, "nos.fb.Transform">(TransformInterpolator<editor::Interpolation::CubicBezier>);
+	std::shared_lock lock(InterpolatorsMutex);
+	std::unordered_set<nos::Name> types;
+	for (auto const& [key, _] : Interpolators)
+		types.insert(key);
+	return types;
 }
 
 bool PinDataAnimator::AddAnimation(nosUUID const& pinId,
@@ -287,7 +211,7 @@ bool PinDataAnimator::AddAnimation(nosUUID const& pinId,
 		Animations[pinId].push(std::move(data));
 		return true;
 	}
-	if (!Interpolators.contains({data.Interp.type, data.TypeName}))
+	if (!InterpManager.HasInterpolator(data.TypeName))
 	{
 		nosEngine.LogE("No interpolator found for %s and %s.", nos::Name(typeInfo.TypeName).AsCStr(), editor::EnumNameInterpolation(data.Interp.type));
 		return false;
@@ -341,16 +265,51 @@ void PinDataAnimator::UpdatePin(nosUUID const& pinId,
 		const_cast<AnimationData&>(animData).Started = true;
 	}
 	const double t = glm::clamp(static_cast<double>(diff) / MillisecondsToFrameNumber(animData.Duration, deltaSeconds), 0.0, 1.0);
+	nosResult result = NOS_RESULT_FAILED;
 	if (t >= 0.0)
 	{
-		nos::Buffer buf;
+		nosBuffer buf{};
 		if (animData.Interp.type == editor::Interpolation::Constant)
-			buf = nos::Buffer(animData.Interp.AsConstant()->value);
+		{
+			buf = nosBuffer{ .Data = (void*)animData.Interp.AsConstant()->value.data(), .Size = animData.Interp.AsConstant()->value.size() };
+			result = NOS_RESULT_SUCCESS;
+		}
 		else
-			buf = Interpolators[{animData.Interp.type, animData.TypeName}](animData.Interp, t);
-		nosEngine.SetPinValue(pinId, buf);
+		{
+			double interpolationT = t;
+			if (animData.Interp.type == editor::Interpolation::CubicBezier)
+				interpolationT = EaseT(animData.Interp.AsCubicBezier()->control1, animData.Interp.AsCubicBezier()->control2, t);
+			nosBuffer start{};
+			nosBuffer end{};
+			switch (animData.Interp.type) 
+			{
+			case editor::Interpolation::CubicBezier:
+			{
+				auto* cubic = animData.Interp.AsCubicBezier();
+				start = nosBuffer((void*)cubic->start.data(), cubic->start.size());
+				end = nosBuffer((void*)cubic->end.data(), cubic->end.size());
+				break;
+			}
+			case editor::Interpolation::Lerp:
+			{
+				auto* lerp = animData.Interp.AsLerp();
+				start = nosBuffer((void*)lerp->start.data(), lerp->start.size());
+				end = nosBuffer((void*)lerp->end.data(), lerp->end.size());
+				break;
+			}
+			}
+			result = InterpManager.Interpolate(animData.TypeName, start, end, interpolationT, buf);
+		}
+		if (result == NOS_RESULT_SUCCESS)
+		{
+			nosEngine.SetPinValue(pinId, buf);
+			if (animData.Interp.type != editor::Interpolation::Constant)
+				nosEngine.FreeBuffer(&buf);
+		}
 	}
-	if (t >= 1.0)
+	if (result != NOS_RESULT_SUCCESS)
+		nosEngine.LogE("Failed to animate pin %s", UUID2STR(pinId).c_str());
+	if (t >= 1.0 || result != NOS_RESULT_SUCCESS)
 	{
 		lock.unlock();
 		std::unique_lock ulock(AnimationsMutex);
@@ -364,7 +323,6 @@ void PinDataAnimator::UpdatePin(nosUUID const& pinId,
 	}
 }
 
-// TODO: AnimSys need to use this to check for should execute
 bool PinDataAnimator::IsPinAnimating(nosUUID const& pinId)
 {
 	std::shared_lock lock(AnimationsMutex);
@@ -375,14 +333,6 @@ void PinDataAnimator::OnPinDeleted(nosUUID const& pinId)
 {
 	std::unique_lock lock(AnimationsMutex);
 	Animations.erase(pinId);
-}
-
-std::unordered_set<nos::Name> PinDataAnimator::GetAnimatableTypes()
-{ 
-	std::unordered_set<nos::Name> types;
-	for (auto const& [key, _] : Interpolators)
-		types.insert(key.TypeName);
-	return types;
 }
 
 std::optional<PathInfo> PinDataAnimator::GetPathInfo(nosUUID const& scheduledNodeId) 

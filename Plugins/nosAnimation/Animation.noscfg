@@ -2,16 +2,25 @@
   "info": {
     "id": {
       "name": "nos.animation",
-      "version": "0.1.2"
+      "version": "0.2.0"
     },
     "display_name": "nos.animation",
     "description": "Animation nodes for Nodos.",
-    "category": "Animation"
+    "category": "Animation",
+    "dependencies": [
+      {
+        "name": "nos.sys.animation",
+        "version": "1.4"
+      }
+    ]
   },
   "binary_path": "./Binaries/nosAnimation",
   "node_definitions": [
     "Config/Animate.nosdef",
-    "Config/AnimationCurve.nosdef"
+    "Config/AnimationCurve.nosdef",
+    "Config/HasCustomInterpolator.nosdef",
+    "Config/InterpolateWithCustomInterpolator.nosdef",
+    "Config/Interpolate.nosdef"
   ],
   "named_values": [
     "Config/AnimationExpressionPresets.json"
@@ -22,12 +31,30 @@
     {
       "category": "Animation",
       "class_name": "Animate",
-      "display_name": "Animate"
+      "display_name": "Animate",
+      "name_aliases": [ "Animator" ]
     },
     {
       "category": "Animation",
       "class_name": "AnimationCurve",
-      "display_name": "Animation Curve"
+      "display_name": "Animation Curve",
+      "name_aliases": [ "Ease", "Easing", "Ease In", "Ease Out" ]
+    },
+    {
+      "category": "Animation|Internal",
+      "class_name": "HasCustomInterpolator",
+      "display_name": "Has Custom Interpolator"
+    },
+    {
+      "category": "Animation|Internal",
+      "class_name": "InterpolateWithCustomInterpolator",
+      "display_name": "Interpolate With Custom Interpolator"
+    },
+    {
+      "category": "Animation",
+      "class_name": "Interpolate",
+      "display_name": "Interpolate",
+      "name_aliases": [ "Animate", "Lerp" ]
     }
   ]
 }

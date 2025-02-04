@@ -1,0 +1,23 @@
+{
+  "nodes": [
+    {
+      "class_name": "HasCustomInterpolator",
+      "display_name": "Has Custom Interpolator",
+      "contents_type": "Job",
+      "pins": [
+        {
+          "name": "In",
+          "type_name": "nos.fb.Void",
+          "show_as": "INPUT_PIN",
+          "can_show_as": "INPUT_PIN_ONLY"
+        },
+        {
+          "name": "HasCustomInterpolator",
+          "type_name": "bool",
+          "show_as": "OUTPUT_PIN",
+          "can_show_as": "OUTPUT_PIN_ONLY"
+        }
+      ]
+    }
+  ]
+}

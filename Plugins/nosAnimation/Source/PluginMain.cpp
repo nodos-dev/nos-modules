@@ -5,13 +5,13 @@
 #include <Nodos/PluginHelpers.hpp>
 
 // Subsystem dependencies
-#include <nosVulkanSubsystem/nosVulkanSubsystem.h>
+#include <nosAnimationSubsystem/nosAnimationSubsystem.h>
 
 NOS_INIT()
-NOS_VULKAN_INIT()
+NOS_ANIMATION_INIT()
 
 NOS_BEGIN_IMPORT_DEPS()
-	NOS_VULKAN_IMPORT()
+	NOS_ANIMATION_IMPORT()
 NOS_END_IMPORT_DEPS()
 
 namespace nos::animation
@@ -19,10 +19,14 @@ namespace nos::animation
 enum Nodes : int
 {
     Animate = 0,
+	HasCustomInterpolator,
+	InterpolateWithCustomInterpolator,
     Count
 };
 
 nosResult RegisterAnimate(nosNodeFunctions*);
+nosResult RegisterHasCustomInterpolator(nosNodeFunctions*);
+nosResult RegisterInterpolateWithCustomInterpolator(nosNodeFunctions*);
 
 nosResult NOSAPI_CALL ExportNodeFunctions(size_t* outSize, nosNodeFunctions** outList)
 {
@@ -47,6 +51,8 @@ nosResult NOSAPI_CALL ExportNodeFunctions(size_t* outSize, nosNodeFunctions** ou
 		default:
 			break;
 			GEN_CASE_NODE(Animate)
+			GEN_CASE_NODE(HasCustomInterpolator)
+			GEN_CASE_NODE(InterpolateWithCustomInterpolator)
 		}
 	}
 	return NOS_RESULT_SUCCESS;
