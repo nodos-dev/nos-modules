@@ -16,7 +16,49 @@ namespace editor
 {
 	NOS_FBS_CREATE_FUNCTION_MAKE_FOR_UNION(nos::sys::animation::editor, FromAnimation)
 }
-static std::unique_ptr<PinDataAnimator> GAnimator = nullptr;
+static std::unique_ptr<struct AnimationSubsystemCtx> GAnimationSysContext;
+
+struct AnimationSubsystemCtx
+{
+	AnimationSubsystemCtx() : InterpolatorManager(), Animator(InterpolatorManager), AnimationSubsystem{}
+	{
+		AnimationSubsystem.RegisterInterpolator = [](nosAnimInterpolator const* interpolator) {
+			nosModuleInfo callingModule{};
+			auto res = nosEngine.GetCallingModule(&callingModule);
+			if (res != NOS_RESULT_SUCCESS)
+			{
+				nosEngine.LogE("Failed to get calling module info.");
+				return res;
+			}
+			GAnimationSysContext->InterpolatorManager.AddCustomInterpolator(
+				{.name = nos::Name(callingModule.Id.Name).AsString(),
+				 .version = nos::Name(callingModule.Id.Version).AsString()},
+				interpolator->TypeName,
+				interpolator->InterpolateCallback);
+			return NOS_RESULT_SUCCESS;
+		};
+		AnimationSubsystem.HasInterpolator = [](nosName typeName, bool* hasHandler) {
+			*hasHandler = GAnimationSysContext->InterpolatorManager.HasInterpolator(typeName);
+			return NOS_RESULT_SUCCESS;
+		};
+		AnimationSubsystem.Interpolate =
+			[](nosName typeName, const nosBuffer from, const nosBuffer to, const double t, nosBuffer* outBuf) {
+				return GAnimationSysContext->InterpolatorManager.Interpolate(typeName, from, to, t, *outBuf);
+			};
+	}
+
+	InterpolatorManager InterpolatorManager;
+	PinDataAnimator Animator;
+	nosAnimationSubsystem AnimationSubsystem;
+};
+
+
+
+nosResult OnRequest(uint32_t minorVersion, void** outSubsystemCtx)
+{
+	*outSubsystemCtx = &GAnimationSysContext->AnimationSubsystem;
+	return NOS_RESULT_NOT_IMPLEMENTED;
+}
 
 nosResult OnPreExecuteNode(nosNodeExecuteParams* params)
 {
@@ -24,7 +66,7 @@ nosResult OnPreExecuteNode(nosNodeExecuteParams* params)
 	if (nosEngine.GetCurrentRunnerPathInfo(&scheduledNodeId, nullptr) == NOS_RESULT_FAILED)
 		return NOS_RESULT_FAILED;
 
-	auto pathInfo = GAnimator->GetPathInfo(scheduledNodeId);
+	auto pathInfo = GAnimationSysContext->Animator.GetPathInfo(scheduledNodeId);
 
 	if(!pathInfo)
 		return NOS_RESULT_FAILED;
@@ -32,13 +74,13 @@ nosResult OnPreExecuteNode(nosNodeExecuteParams* params)
 	uint64_t curFrame = pathInfo->StartFSM + pathInfo->CurFrame;
 
 	for (size_t i = 0; i < params->PinCount; ++i)
-		GAnimator->UpdatePin(params->Pins[i].Id, params->DeltaSeconds, curFrame, params->Pins[i].Data);
+		GAnimationSysContext->Animator.UpdatePin(params->Pins[i].Id, params->DeltaSeconds, curFrame, params->Pins[i].Data);
 	return NOS_RESULT_SUCCESS;
 }
 
 void OnPinDeleted(nosUUID pinId)
 {
-	GAnimator->OnPinDeleted(pinId);
+	GAnimationSysContext->Animator.OnPinDeleted(pinId);
 }
 
 nosResult ShouldExecuteNodeWithoutDirty(nosNodeExecuteParams* params)
@@ -48,7 +90,7 @@ nosResult ShouldExecuteNodeWithoutDirty(nosNodeExecuteParams* params)
 		auto const& pinId = params->Pins[i].Id;
 		if(params->Pins[i].ShowAs == fb::ShowAs::OUTPUT_PIN)
 			continue;
-		if(GAnimator->IsPinAnimating(pinId))
+		if(GAnimationSysContext->Animator.IsPinAnimating(pinId))
 			return NOS_RESULT_SUCCESS;
 	}
 	return NOS_RESULT_NOT_FOUND;
@@ -58,17 +100,17 @@ void OnPathStart(nosUUID scheduledPinId)
 {
 	nosVec2u deltaSec;
 	nosEngine.GetCurrentRunnerPathInfo(nullptr, &deltaSec);
-	GAnimator->CreatePathInfo(scheduledPinId, deltaSec);
+	GAnimationSysContext->Animator.CreatePathInfo(scheduledPinId, deltaSec);
 }
 
 void OnPathStop(nosUUID scheduledPinId)
 {
-	GAnimator->DeletePathInfo(scheduledPinId);
+	GAnimationSysContext->Animator.DeletePathInfo(scheduledPinId);
 }
 
 void OnEndFrame(nosUUID scheduledPinId)
 {
-	GAnimator->PathExecutionFinished(scheduledPinId);
+	GAnimationSysContext->Animator.PathExecutionFinished(scheduledPinId);
 }
 
 void OnMessageFromEditor(uint64_t editorId, nosBuffer blob)
@@ -85,7 +127,7 @@ void OnMessageFromEditor(uint64_t editorId, nosBuffer blob)
 		{
 			nosUUID sourceId{};
 			if (nosEngine.GetSourcePinId(pinId, &sourceId) == NOS_RESULT_SUCCESS)
-				GAnimator->AddAnimation(sourceId, *animatePin);
+				GAnimationSysContext->Animator.AddAnimation(sourceId, *animatePin);
 		}
 		else
 		{
@@ -98,26 +140,37 @@ void OnMessageFromEditor(uint64_t editorId, nosBuffer blob)
 	}
 }
 
-void OnEditorConnected(uint64_t editorId)
+void BroadcastAnimationTypesToEditors()
 {
-	// TODO: AnimSys send animatable types to editor
-	auto names = GAnimator->GetAnimatableTypes();
-		
-	editor::TAnimatableTypes types;
+	auto names = GAnimationSysContext->InterpolatorManager.GetAnimatableTypes();
 
+	editor::TAnimatableTypes types;
 	for (auto& name : names)
 		types.types.push_back(name.AsString());
-
 	flatbuffers::FlatBufferBuilder fbb;
 	fbb.Finish(editor::MakeFromAnimation(fbb, editor::CreateAnimatableTypes(fbb, &types)));
 	nos::Buffer buf = fbb.Release();
-	nosEngine.SendCustomMessageToEditors(NOS_NAME("nos.sys.animation"), buf);
+	nosEngine.SendCustomMessageToEditors(NOS_NAME(NOS_ANIMATION_SUBSYSTEM_NAME), buf);
+}
+
+void OnEditorConnected(uint64_t editorId)
+{
+	BroadcastAnimationTypesToEditors();
 }
 
 nosResult NOSAPI_CALL OnPreUnloadSubsystem()
 {
-	nos::sys::animation::GAnimator = nullptr;
+	GAnimationSysContext = nullptr;
 	return NOS_RESULT_SUCCESS;
+}
+
+void NOSAPI_CALL OnPostOtherModuleUnloaded(nosModuleIdentifier moduleId)
+{
+	bool typesChanged = GAnimationSysContext->InterpolatorManager.ModuleUnloaded(
+		{ .name = nos::Name(moduleId.Name).AsString(), .version = nos::Name(moduleId.Version).AsString() });
+	if (!typesChanged)
+		return;
+	BroadcastAnimationTypesToEditors();
 }
 }
 
@@ -125,7 +178,7 @@ extern "C"
 {
 NOSAPI_ATTR nosResult NOSAPI_CALL nosExportSubsystem(nosSubsystemFunctions* subsystemFunctions)
 {
-		
+	subsystemFunctions->OnRequest = nos::sys::animation::OnRequest;
 	subsystemFunctions->OnPreExecuteNode = nos::sys::animation::OnPreExecuteNode;
 	subsystemFunctions->ShouldExecuteNodeWithoutDirty = nos::sys::animation::ShouldExecuteNodeWithoutDirty;
 	subsystemFunctions->OnPathStart = nos::sys::animation::OnPathStart;
@@ -137,8 +190,10 @@ NOSAPI_ATTR nosResult NOSAPI_CALL nosExportSubsystem(nosSubsystemFunctions* subs
 	subsystemFunctions->OnEditorConnected = nos::sys::animation::OnEditorConnected;
 
 	subsystemFunctions->OnPreUnloadSubsystem = nos::sys::animation::OnPreUnloadSubsystem;
-		
-	nos::sys::animation::GAnimator = std::make_unique<nos::sys::animation::PinDataAnimator>();
+
+	subsystemFunctions->OnPostOtherModuleUnloaded = nos::sys::animation::OnPostOtherModuleUnloaded;
+	
+	nos::sys::animation::GAnimationSysContext = std::make_unique<nos::sys::animation::AnimationSubsystemCtx>();
 	return NOS_RESULT_SUCCESS;
 }
 }

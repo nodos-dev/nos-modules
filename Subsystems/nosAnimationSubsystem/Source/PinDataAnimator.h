@@ -7,6 +7,7 @@
 #include <Nodos/SubsystemAPI.h>
 #include <nosAnimationSubsystem/AnimEditorTypes_generated.h>
 #include <Nodos/Helpers.hpp>
+#include "nosAnimationSubsystem/nosAnimationSubsystem.h"
 
 namespace nos::sys::animation
 {
@@ -15,6 +16,32 @@ inline uint64_t MillisecondsToFrameNumber(uint64_t ms, nosVec2u deltaSeconds)
 {
 	return (ms * (uint64_t)deltaSeconds.y) / (uint64_t)deltaSeconds.x / 1000ull;
 }
+
+struct InterpolatorManager
+{
+	InterpolatorManager();
+	using InterpolatorFn = std::function<nosResult(const nosBuffer from, const nosBuffer to, const double t, nosBuffer* outBuf)>;
+	void AddBuiltinInterpolator(nos::Name name, std::function<nos::Buffer(const nosBuffer from, const nosBuffer to, const double t)> fn);
+
+	void AddCustomInterpolator(nos::fb::TModuleIdentifier moduleId, nos::Name name, InterpolatorFn fn);
+
+	// Returns true if any interpolator was removed
+	bool ModuleUnloaded(nos::fb::TModuleIdentifier moduleId);
+
+	bool HasInterpolator(nos::Name name)
+	{
+		std::shared_lock lock(InterpolatorsMutex);
+		return Interpolators.contains(name);
+	}
+
+	nosResult Interpolate(nos::Name typeName, const nosBuffer from, const nosBuffer to, const double t, nosBuffer& outBuf);
+
+	std::unordered_set<nos::Name> GetAnimatableTypes();
+
+	std::shared_mutex InterpolatorsMutex;
+	std::unordered_map<nos::Name, InterpolatorFn> Interpolators;
+	std::unordered_map<nos::fb::TModuleIdentifier, std::vector<nos::Name>> ModuleToAnimators;
+};
 
 struct AnimationData
 {
@@ -34,46 +61,19 @@ struct PathInfo
 
 struct PinDataAnimator
 {
-	struct InterpolatorKey
-	{
-		editor::Interpolation Mode;
-		nos::Name TypeName;
-		InterpolatorKey(editor::Interpolation mode, nos::Name typeName) : Mode(mode), TypeName(typeName) {}
-		struct Hash
-		{
-			size_t operator()(InterpolatorKey const& t) const
-			{
-				size_t re = 0;
-				nos::hash_combine(re, t.Mode, t.TypeName);
-				return re;
-			}
-		};
+	PinDataAnimator(InterpolatorManager& interpManager) : InterpManager(interpManager) {}
 
-		bool operator==(InterpolatorKey const& rhs) const = default;
-	};
-	using InterpolatorFn = std::function<nos::Buffer(editor::InterpolationUnion const&, const double t)>;
-	using InterpolatorMap = std::unordered_map<InterpolatorKey, InterpolatorFn, InterpolatorKey::Hash>;
-
-	PinDataAnimator();
 	bool AddAnimation(nosUUID const& pinId,
 					  editor::AnimatePin const& animate);
 	void UpdatePin(nosUUID const& pinId, nosVec2u const& deltaSeconds, uint64_t curFSM, const nosBuffer* currentData);
 	bool IsPinAnimating(nosUUID const& pinId);
 	void OnPinDeleted(nosUUID const& pinId);
-	std::unordered_set<nos::Name> GetAnimatableTypes();
 	std::optional<PathInfo> GetPathInfo(nosUUID const& nodeId);
 
 	void CreatePathInfo(nosUUID const& scheduledNodeId, nosVec2u const& deltaSec);
 	void DeletePathInfo(nosUUID const& scheduledNodeId);
 	void PathExecutionFinished(nosUUID const& scheduledNodeId);
 
-	template <editor::Interpolation Mode, tmp::StrLiteral TypeName>
-	void AddInterpolator(InterpolatorFn fn)
-	{
-		Interpolators[InterpolatorKey(Mode, nos::Name::GetName<TypeName>())] = std::move(fn);
-	}
-
-	
 	struct TimeAscending
 	{
 		bool operator()(AnimationData const& lhs, AnimationData const& rhs) const
@@ -82,12 +82,14 @@ struct PinDataAnimator
 		}
 	};
 
+	InterpolatorManager& InterpManager;
+
 	std::shared_mutex PathInfosMutex;
 	std::unordered_map<nosUUID, PathInfo> PathInfos;
 
 	std::shared_mutex AnimationsMutex;
 	std::unordered_map<nosUUID, std::priority_queue<AnimationData, std::vector<AnimationData>, TimeAscending>> Animations;
-	InterpolatorMap Interpolators;
+
 };
 
 } // namespace nos::engine

@@ -6,19 +6,21 @@
 #define NOS_ANIMATION_SUBSYSTEM_H_INCLUDED
 #include "Nodos/Types.h"
 
-typedef nosResult(*nosPfnAnimateData)(const nosBuffer from, const nosBuffer to, double t, nosBuffer* outBuf);
+typedef nosResult(*nosAnimationInterpolateCallback)(const nosBuffer from, const nosBuffer to, const double t, nosBuffer* outBuf);
 
-struct nosAnimationHandler
+struct nosAnimInterpolator
 {
 	nosName TypeName;
-	nosPfnAnimateData AnimateData;
+	nosAnimationInterpolateCallback InterpolateCallback;
 };
 
 typedef struct nosAnimationSubsystem
 {
-	nosResult(NOSAPI_CALL* RegisterAnimationHandler)(nosAnimationHandler const* handler);
-	nosResult(NOSAPI_CALL* HasAnimationHandler)(nosName typeName, bool* hasHandler);
-	nosResult(NOSAPI_CALL* AnimateData)(nosName typeName, const nosBuffer from, const nosBuffer to, double t, nosBuffer* outBuf);
+	nosResult(NOSAPI_CALL* RegisterInterpolator)(nosAnimInterpolator const* interpolator);
+	nosResult(NOSAPI_CALL* HasInterpolator)(nosName typeName, bool* hasInterpolator);
+	/// If result is NOS_RESULT_SUCCESS, then outBuf is a buffer allocated using nosEngine.AllocateBuffer
+	/// which should be freed with nosEngine.FreeBuffer by the calling module.
+	nosResult(NOSAPI_CALL* Interpolate)(nosName typeName, const nosBuffer from, const nosBuffer to, const double t, nosBuffer* outBuf);
 } nosAnimationSubsystem;
 
 #pragma region Helper Declarations & Macros
