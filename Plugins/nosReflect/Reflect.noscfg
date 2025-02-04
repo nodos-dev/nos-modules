@@ -22,7 +22,7 @@
 			"category": "Type",
 			"class_name": "MakeDynamic",
 			"display_name": "Make",
-			"name_aliases": [ "variable", "create", "new" ]
+			"name_aliases": [ "variable", "create", "new", "Make *" ]
 		},
 		{
 			"category": "Type",
