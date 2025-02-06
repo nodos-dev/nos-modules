@@ -40,6 +40,8 @@ on:
         default: true
         type: boolean
 
+run-name: ${{ (github.event_name == 'push' || github.event.inputs.publish_mode == 'None') && 'Build Only' || (github.event.inputs.publish_mode == 'Only Changed' && 'Build & Release' || 'Build & Release (All)') }}
+
 concurrency:
   group: single
   cancel-in-progress: false
