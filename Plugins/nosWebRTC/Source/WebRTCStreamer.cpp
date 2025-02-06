@@ -406,6 +406,9 @@ struct WebRTCNodeContext : nos::NodeContext {
 
 	nosResult ExecuteNode(nosNodeExecuteParams* params) 
 	{
+		nosScheduleNodeParams scheduleParams{.NodeId = NodeId, .AddScheduleCount = 1};
+		nosEngine.ScheduleNode(&scheduleParams);
+		return NOS_RESULT_SUCCESS;
 		copyToLogger.LogStats();
 		int writeIndex = 0;
 		{
