@@ -1,7 +1,4 @@
 // Copyright MediaZ Teknoloji A.S. All Rights Reserved.
-
-#pragma once
-
 #include <Nodos/PluginHelpers.hpp>
 
 namespace nos::utilities
@@ -112,17 +109,9 @@ struct SyncMultiOutletNode : NodeContext
 		uint64_t lastOutFrameNum = outPin.ProcessedFrameNumber;
 		if (auto res = WaitInput(lastOutFrameNum + 1))
 			return res == EXIT ? NOS_RESULT_FAILED : NOS_RESULT_PENDING;
-		// This place is ok to not lock the input pin mutex, because we are sure that the input pin is not being written
-		// to since at least this out pin is still processing the frame.
-		outPin.ProcessedFrameNumber = InputPin.FrameNumber;
+		nosEngine.SetPinValue(cpy->ID, *InputPin.Data);
 		cpy->CopyFromOptions.ShouldSetSourceFrameNumber = true;
 		cpy->FrameNumber = InputPin.FrameNumber;
-
-		if (RequestNewInput())
-		{
-			nosScheduleNodeParams params = {.NodeId = NodeId, .AddScheduleCount = 1};
-			nosEngine.ScheduleNode(&params);
-		}
 		return NOS_RESULT_SUCCESS;
 	}
 
@@ -248,6 +237,25 @@ struct SyncMultiOutletNode : NodeContext
 			update.node_id = NodeId;
 			update.pins_to_delete = {itemID};
 			HandleEvent(CreateAppEvent(fbb, nos::CreatePartialNodeUpdate(fbb, &update)));
+		}
+	}
+
+	void OnEndFrame(nosUUID pinId, nosEndFrameCause cause) override { 
+		std::shared_lock outPinsLock(OutPinsMutex);
+		auto it = OutPins.find(pinId);
+		if (it == OutPins.end())
+			return;
+		auto& outPin = it->second;
+		{
+			std::unique_lock outLock(outPin.Mutex);
+			// This place is ok to not lock the input pin mutex, because we are sure that the input pin is not being
+			// written to since at least this out pin is still processing the frame.
+			outPin.ProcessedFrameNumber = InputPin.FrameNumber;
+		}
+		if (RequestNewInput())
+		{
+			nosScheduleNodeParams params = {.NodeId = NodeId, .AddScheduleCount = 1};
+			nosEngine.ScheduleNode(&params);
 		}
 	}
 
