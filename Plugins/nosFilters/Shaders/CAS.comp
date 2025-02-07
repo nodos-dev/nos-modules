@@ -1,0 +1,92 @@
+// Copyright MediaZ Teknoloji A.S. All Ds Reserved.
+
+#version 450
+layout (local_size_x = 8, local_size_y = 9) in;
+layout (binding = 0)  uniform sampler2D Input;
+layout (binding = 1, rgba16)  uniform writeonly image2D Output;
+layout (binding = 2) uniform CasParams
+{
+    float Sharpness;
+    vec3 LumaCoeffs;
+} Params;
+
+void main()
+{
+    const ivec2 D = ivec2(gl_NumWorkGroups * gl_WorkGroupSize).xy;
+    const ivec2 Q = textureSize(Input, 0);
+    const ivec2 N = Q / D;
+    const ivec2 LocalGroupCoord = ivec2(gl_GlobalInvocationID.xy) * N;
+
+    for (int i = 0; i < N.x; ++i)
+    {
+        for (int j = 0; j < N.y; j++)
+        {
+            const ivec2 ij = LocalGroupCoord + ivec2(i, j);
+
+            /*
+              A
+            B C D
+              E
+            */
+
+
+            vec4 C = texelFetch(Input, ij, 0);
+            vec4 B = texelFetch(Input, ij + ivec2(-1, 0), 0);
+            vec4 D = texelFetch(Input, ij + ivec2(1, 0), 0);
+            vec4 A = texelFetch(Input, ij + ivec2(0, -1), 0);
+            vec4 E = texelFetch(Input, ij + ivec2(0, 1), 0);
+            
+            float LumaC = dot(C.rgb, Params.LumaCoeffs);
+            float LumaB = dot(B.rgb, Params.LumaCoeffs);
+            float LumaD = dot(D.rgb, Params.LumaCoeffs);
+            float LumaA = dot(A.rgb, Params.LumaCoeffs);
+            float LumaE = dot(E.rgb, Params.LumaCoeffs);
+
+            float MinLuma = min(LumaC, min(LumaB, min(LumaD, min(LumaA, LumaE))));
+            float MaxLuma = max(LumaC, max(LumaB, max(LumaD, max(LumaA, LumaE))))   ;
+
+            float DMinLuma = 0 + MinLuma;
+            float DMaxLuma = 1 - MaxLuma;
+            float MinDistanceToSignalLimit = min(DMinLuma, DMaxLuma);
+            float BaseSharpeningAmount = MinDistanceToSignalLimit / MaxLuma;
+            BaseSharpeningAmount = sqrt(BaseSharpeningAmount);
+            float DeveloperMax = mix(-0.125, -0.2, Params.Sharpness);
+
+            float W = BaseSharpeningAmount * DeveloperMax;
+            
+            vec4 OutputColor = C;
+            OutputColor.rgb = (W * (A.rgb + B.rgb + D.rgb + E.rgb) + C.rgb) / (1 + 4 * W);
+
+            imageStore(Output, ij, OutputColor);
+        }
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

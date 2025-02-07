@@ -26,10 +26,7 @@ enum Filters : int
 NOSAPI_ATTR nosResult NOSAPI_CALL ExportNodeFunctions(size_t* outSize, nosNodeFunctions** outList)
 {
 	if (!outList)
-	{
 		*outSize = Filters::Count;
-		return NOS_RESULT_SUCCESS;
-	}
 	return NOS_RESULT_SUCCESS;
 }
 
