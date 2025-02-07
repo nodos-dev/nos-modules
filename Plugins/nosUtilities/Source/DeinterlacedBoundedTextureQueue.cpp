@@ -123,7 +123,7 @@ struct DeinterlacedBoundedTextureQueueNode : RingNodeBase
 	void OverrideConsumerDeltaSeconds(nosVec2u& inoutDeltaSeconds) override
 	{
 		if (ShouldInterlace)
-			inoutDeltaSeconds.y /= 2;
+			inoutDeltaSeconds.x *= 2;
 	}
 };
 
