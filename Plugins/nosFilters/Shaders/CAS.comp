@@ -7,6 +7,7 @@ layout (binding = 1, rgba16)  uniform writeonly image2D Output;
 layout (binding = 2) uniform CasParams
 {
     float Sharpness;
+    float Strength;
     vec3 LumaCoeffs;
 } Params;
 
@@ -43,7 +44,7 @@ void main()
             float LumaE = dot(E.rgb, Params.LumaCoeffs);
 
             float MinLuma = min(LumaC, min(LumaB, min(LumaD, min(LumaA, LumaE))));
-            float MaxLuma = max(LumaC, max(LumaB, max(LumaD, max(LumaA, LumaE))))   ;
+            float MaxLuma = max(LumaC, max(LumaB, max(LumaD, max(LumaA, LumaE))));
 
             float DMinLuma = 0 + MinLuma;
             float DMaxLuma = 1 - MaxLuma;
@@ -52,7 +53,7 @@ void main()
             BaseSharpeningAmount = sqrt(BaseSharpeningAmount);
             float DeveloperMax = mix(-0.125, -0.2, Params.Sharpness);
 
-            float W = BaseSharpeningAmount * DeveloperMax;
+            float W = BaseSharpeningAmount * DeveloperMax * Params.Strength;
             
             vec4 OutputColor = C;
             OutputColor.rgb = (W * (A.rgb + B.rgb + D.rgb + E.rgb) + C.rgb) / (1 + 4 * W);
@@ -61,32 +62,3 @@ void main()
         }
     }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
