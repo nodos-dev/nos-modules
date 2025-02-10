@@ -1,6 +1,7 @@
 // Copyright MediaZ Teknoloji A.S. All Ds Reserved.
 
 #version 450
+
 layout (local_size_x = 8, local_size_y = 9) in;
 layout (binding = 0)  uniform sampler2D Input;
 layout (binding = 1, rgba16)  uniform writeonly image2D Output;
@@ -50,11 +51,12 @@ void main()
             float DMaxLuma = 1 - MaxLuma;
             float MinDistanceToSignalLimit = min(DMinLuma, DMaxLuma);
             float BaseSharpeningAmount = MinDistanceToSignalLimit / MaxLuma;
+            BaseSharpeningAmount = clamp(BaseSharpeningAmount, 0.0, 1.0);
             BaseSharpeningAmount = sqrt(BaseSharpeningAmount);
             float DeveloperMax = mix(-0.125, -0.2, Params.Sharpness);
 
             float W = BaseSharpeningAmount * DeveloperMax * Params.Strength;
-            
+
             vec4 OutputColor = C;
             OutputColor.rgb = (W * (A.rgb + B.rgb + D.rgb + E.rgb) + C.rgb) / (1 + 4 * W);
 
