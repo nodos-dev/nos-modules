@@ -1,0 +1,33 @@
+include "Variable.fbs";
+
+namespace nos.sys.variables.editor;
+
+union FromSubsystemUnion {
+	VariableList,
+	nos.sys.variables.Variable
+}
+
+table FromSubsystem {
+	event:FromSubsystemUnion;
+}
+
+table VariableList {
+    variables: [nos.sys.variables.Variable];
+}
+
+table DeleteVariable {
+	name: string;
+}
+
+table SetVariable {
+	variable: nos.sys.variables.Variable;
+}
+
+union FromEditorUnion {
+	DeleteVariable,
+	SetVariable
+}
+
+table FromEditor {
+	event:FromEditorUnion;
+}

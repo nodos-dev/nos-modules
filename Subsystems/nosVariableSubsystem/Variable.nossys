@@ -1,0 +1,13 @@
+{
+    "info": {
+        "id": {
+            "name": "nos.sys.variables",
+            "version": "0.1.0"
+        },
+        "display_name": "Variable Subsystem",
+        "description": "",
+        "dependencies": []
+    },
+    "binary_path": "Binaries/nosVariableSubsystem",
+    "custom_types": [ "Types/Variable.fbs", "Types/EditorEvents.fbs" ]
+}
