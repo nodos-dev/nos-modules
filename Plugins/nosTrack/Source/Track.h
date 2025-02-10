@@ -99,7 +99,7 @@ public:
 	void PerformAutoSpare(uint64_t firstVBLTime);
 	nosResult ExecuteNode(nosNodeExecuteParams* params) override;
 	void SignalRestart();
-	void OnPinValueChanged(nos::Name pinName, nosUUID pinId, nosBuffer val)  override;
+	void OnPinValueChanged(nos::Name pinName, uuid const& pinId, nosBuffer val)  override;
 	void Restart();
 	fb::TTrack GetDefaultOrFirstTrack();
 	virtual nos::Buffer UpdateTrackOut(fb::TTrack& outTrack);

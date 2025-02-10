@@ -8,7 +8,7 @@ namespace nos::math
 {
 struct RandomNode : NodeContext
 {
-	RandomNode(nosFbNode const* node) : NodeContext(node)
+	RandomNode(nosFbNodePtr node) : NodeContext(node)
 	{
 		AddPinValueWatcher(NOS_NAME("Seed"), [this](nos::Buffer const& newVal, auto const& oldVal) {
 			auto& seed = *newVal.As<int>();

@@ -15,24 +15,24 @@ struct SyncMultiOutletNode : NodeContext
 		uint64_t ProcessedFrameNumber = 0;
 	};
 
-	SyncMultiOutletNode(nosFbNode const* node) : NodeContext(node), InputPin{}
+	SyncMultiOutletNode(nosFbNodePtr node) : NodeContext(node), InputPin{}
 	{ 
 		for (auto* pin : *node->pins())
 			if (pin->show_as() == nos::fb::ShowAs::OUTPUT_PIN)
 			{
 				SetPinOrphanState(*pin->id(), nos::fb::PinOrphanStateType::ACTIVE);
-				OutPins[nosUUID(*pin->id())];
-				OutPinIdsOrdered.push_back(nosUUID(*pin->id()));
+				OutPins[uuid(*pin->id())];
+				OutPinIdsOrdered.push_back(uuid(*pin->id()));
 			}
 	}
 
-	void OnPartialNodeUpdated(nosNodeUpdate const* update) override
+	void OnNodeUpdated(nosNodeUpdate const* update) override
 	{
 		if (update->Type == NOS_NODE_UPDATE_PIN_CREATED)
 		{
 			std::unique_lock lock(OutPinsMutex);
-			OutPins[nosUUID(*update->PinCreated->id())];
-			OutPinIdsOrdered.push_back(nosUUID(*update->PinCreated->id()));
+			OutPins[uuid(*update->PinCreated->id())];
+			OutPinIdsOrdered.push_back(uuid(*update->PinCreated->id()));
 		}
 		else if (update->Type == NOS_NODE_UPDATE_PIN_DELETED)
 		{
@@ -60,8 +60,8 @@ struct SyncMultiOutletNode : NodeContext
 	} InputPin;
 
 	std::shared_mutex OutPinsMutex;
-	std::unordered_map<nosUUID, SyncOutPin> OutPins;
-	std::vector<nosUUID> OutPinIdsOrdered;
+	std::unordered_map<uuid, SyncOutPin> OutPins;
+	std::vector<uuid> OutPinIdsOrdered;
 
 	enum WaitResult
 	{
@@ -149,7 +149,7 @@ struct SyncMultiOutletNode : NodeContext
 		nosEngine.ScheduleNode(&params);
 	}
 
-	void OnPinConnected(nos::Name pinName, nosUUID) override 
+	void OnPinConnected(nos::Name pinName, uuid const&) override 
 	{
 		auto& pin = *GetPin(pinName);
 		if (pin.ShowAs != nosFbShowAs::OUTPUT_PIN)
@@ -173,7 +173,7 @@ struct SyncMultiOutletNode : NodeContext
 		}
 	}
 
-	void OnMenuRequested(const nosContextMenuRequest* request) override
+	void OnMenuRequested(nosContextMenuRequestPtr request) override
 	{
 		flatbuffers::FlatBufferBuilder fbb;
 
@@ -199,7 +199,7 @@ struct SyncMultiOutletNode : NodeContext
 		HandleEvent(event);
 	}
 
-	void OnMenuCommand(nosUUID itemID, uint32_t cmd) override
+	void OnMenuCommand(uuid const& itemID, uint32_t cmd) override
 	{
 		flatbuffers::FlatBufferBuilder fbb;
 		if (itemID == NodeId)
@@ -218,7 +218,7 @@ struct SyncMultiOutletNode : NodeContext
 				return;
 			}
 			fb::TPin pin;
-			pin.id = nosEngine.GenerateID();
+			pin.id = uuid(nosEngine.GenerateID());
 			pin.name = "Out_" + std::to_string(lastPinIndex + 1);
 			pin.display_name = "Out";
 			pin.type_name = lastPin.TypeName.AsString();
@@ -245,7 +245,7 @@ struct SyncMultiOutletNode : NodeContext
 		}
 	}
 
-	void OnEndFrame(nosUUID pinId, nosEndFrameCause cause) override { 
+	void OnEndFrame(uuid const& pinId, nosEndFrameCause cause) override { 
 		std::shared_lock outPinsLock(OutPinsMutex);
 		auto it = OutPins.find(pinId);
 		if (it == OutPins.end())

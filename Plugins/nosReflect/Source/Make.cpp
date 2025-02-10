@@ -27,7 +27,7 @@ struct MakeNode : NodeContext
         }
     }
 
-    void OnPinConnected(nos::Name pinName, nosUUID connectedPin) override
+    void OnPinConnected(nos::Name pinName, uuid const& connectedPin) override
     {
         if (pinName == NSN_Value && Type)
         {
@@ -72,7 +72,7 @@ struct MakeNode : NodeContext
 
 	std::vector<nosName> AllTypeNames;
     
-    void OnMenuRequested(const nosContextMenuRequest* request) override
+    void OnMenuRequested(nosContextMenuRequestPtr request) override
     {
         if(Type) 
             return;
@@ -92,7 +92,7 @@ struct MakeNode : NodeContext
     	HandleEvent(CreateAppEvent(fbb, app::CreateAppContextMenuUpdateDirect(fbb, &NodeId, request->pos(), request->instigator(), &types)));
     }
 
-    void OnMenuCommand(nosUUID itemID, uint32_t cmd) override
+    void OnMenuCommand(uuid const& itemID, uint32_t cmd) override
     {
 		if(Type) 
 			return;
@@ -176,7 +176,7 @@ struct MakeNode : NodeContext
 		}
 		else
 		{
-			nosUUID id = nosEngine.GenerateID();
+			uuid id = nosEngine.GenerateID();
 			nos::fb::TPin outPin{};
             outPin.id = id;
             outPin.name = nos::Name(NSN_Output).AsCStr();
@@ -217,7 +217,7 @@ struct MakeNode : NodeContext
             }
             else
             {
-                nosUUID id = nosEngine.GenerateID();
+                uuid id = nosEngine.GenerateID();
                 std::vector<uint8_t> data(type->ByteSize);
                 if (type->BaseType == NOS_BASE_TYPE_STRING)
                 {
@@ -249,7 +249,7 @@ struct MakeNode : NodeContext
                 }
                 else
                 {
-                    nosUUID id = nosEngine.GenerateID();
+                    uuid id = nosEngine.GenerateID();
 					std::vector<uint8_t> data;
 					if (type->ByteSize)
 					{
@@ -372,9 +372,9 @@ nosResult RegisterMake(nosNodeFunctions* fn)
 		nos::Buffer buf = fbb.Release();
 		nodeInfos.push_back(std::move(buf));
 	}
-	std::vector<const nosFbNodeInfo*> fbNodeInfos;
+	std::vector<nosFbNodeInfoPtr> fbNodeInfos;
 	for (auto& buf : nodeInfos)
-		fbNodeInfos.push_back(flatbuffers::GetMutableRoot<nosFbNodeInfo>(buf.Data()));
+		fbNodeInfos.push_back(flatbuffers::GetMutableRoot<nos::fb::NodeInfo>(buf.Data()));
 	nosEngine.RegisterNodeInfos(nosEngine.Module->Id, fbNodeInfos.size(), fbNodeInfos.data());
 	return NOS_RESULT_SUCCESS;
 }

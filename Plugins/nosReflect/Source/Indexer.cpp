@@ -11,7 +11,7 @@ struct Indexer : NodeContext
     uint32_t Index = 0;
 	uint32_t ArraySize = 0;
     
-    Indexer(const nosFbNode* inNode) : NodeContext(inNode)
+    Indexer(nosFbNodePtr inNode) : NodeContext(inNode)
     {
         for (auto pin : *inNode->pins())
         {
@@ -187,7 +187,7 @@ struct Indexer : NodeContext
 		return NOS_RESULT_SUCCESS;
     }
 
-	void OnPinValueChanged(nos::Name pinName, nosUUID pinId, nosBuffer value) override
+	void OnPinValueChanged(nos::Name pinName, uuid const& pinId, nosBuffer value) override
     {
         if (pinName == NSN_Index)
         {

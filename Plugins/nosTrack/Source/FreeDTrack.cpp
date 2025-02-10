@@ -254,7 +254,7 @@ struct FreeDNodeContext : public TrackNodeContext
             return true;
         }
 
-        void OnPinValueChanged(nos::Name pinName, nosUUID pinId, nosBuffer val)  override
+        void OnPinValueChanged(nos::Name pinName, uuid const& pinId, nosBuffer val)  override
         {
             if(NSN_ZoomRange == pinName)
             {

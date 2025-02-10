@@ -53,7 +53,7 @@ struct ResourceInterface {
 	virtual void DestroyResource(ResourceBase* res) = 0;
 	virtual void Reset(ResourceBase* res) = 0;
 	virtual void WaitForDownloadToEnd(ResourceBase* res, const std::string& nodeTypeName, const std::string& nodeDisplayName, nosCopyInfo* cpy) = 0;
-	virtual void Copy(ResourceBase* res, nosCopyInfo* cpy, nos::fb::UUID NodeId) = 0;
+	virtual void Copy(ResourceBase* res, nosCopyInfo* cpy, uuid NodeId) = 0;
 	virtual nosResult Push(ResourceBase* r, void* pinInfo, nosNodeExecuteParams* params, nos::Name ringExecuteName, bool pushEventForCopyFrom) = 0;
 	virtual void* GetPinInfo(nosPinInfo& pin, bool rejectFieldMismatch) = 0;
 	// Returns false if resource is compatible with the current sample
@@ -130,12 +130,12 @@ struct GPUTextureResource : ResourceInterface {
 		nosEngine.SetPinValue(cpy->ID, nos::Buffer::From(vkss::ConvertTextureInfo(res->ShareInfo)));
 	}
 
-	void Copy(ResourceBase* r, nosCopyInfo* cpy, nos::fb::UUID NodeId) override {
+	void Copy(ResourceBase* r, nosCopyInfo* cpy, uuid NodeId) override {
 		Resource* res = GetResource<GPUTextureResource>(r);
 		nosResourceShareInfo outputResource = vkss::DeserializeTextureInfo(cpy->PinData->Data);
 		nosCmd cmd;
 		nosCmdBeginParams beginParams = { NOS_NAME("BoundedQueue"), NodeId, &cmd };
-		nosVulkan->Begin2(&beginParams);
+		nosVulkan->Begin(&beginParams);
 		nosVulkan->Copy(cmd, &res->ShareInfo, &outputResource, 0);
 		nosCmdEndParams end{ .ForceSubmit = NOS_TRUE, .OutGPUEventHandle = &res->Params.WaitEvent };
 		nosVulkan->End(cmd, &end);
@@ -194,7 +194,7 @@ struct GPUTextureResource : ResourceInterface {
 		nosCmdBeginParams beginParams;
 		beginParams = { ringExecuteName, params->NodeId, &cmd };
 
-		nosVulkan->Begin2(&beginParams);
+		nosVulkan->Begin(&beginParams);
 		nosVulkan->Copy(cmd, &input, &res->ShareInfo, 0);
 		nosCmdEndParams end{ .ForceSubmit = NOS_TRUE, .OutGPUEventHandle = pushEventForCopyFrom ? &res->Params.WaitEvent : nullptr };
 		nosVulkan->End(cmd, &end);
@@ -313,12 +313,12 @@ struct GPUBufferResource : ResourceInterface {
 		nosEngine.SetPinValue(cpy->ID, nos::Buffer::From(vkss::ConvertBufferInfo(r->ShareInfo)));
 	}
 
-	void Copy(ResourceBase* res, nosCopyInfo* cpy, nos::fb::UUID NodeId) override {
+	void Copy(ResourceBase* res, nosCopyInfo* cpy, uuid NodeId) override {
 		auto r = GetResource<GPUBufferResource>(res);
 		nosResourceShareInfo outputResource = vkss::ConvertToResourceInfo(*InterpretPinValue<sys::vulkan::Buffer>(cpy->PinData->Data));
 		nosCmd cmd;
 		nosCmdBeginParams beginParams = { NOS_NAME("BoundedQueue"), NodeId, &cmd };
-		nosVulkan->Begin2(&beginParams);
+		nosVulkan->Begin(&beginParams);
 		nosVulkan->Copy(cmd, &r->ShareInfo, &outputResource, 0);
 		nosCmdEndParams end{ .ForceSubmit = NOS_TRUE, .OutGPUEventHandle = &r->Params.WaitEvent };
 		nosVulkan->End(cmd, &end);
@@ -375,7 +375,7 @@ struct GPUBufferResource : ResourceInterface {
 		nosCmdBeginParams beginParams;
 		beginParams = { ringExecuteName, params->NodeId, &cmd };
 
-		nosVulkan->Begin2(&beginParams);
+		nosVulkan->Begin(&beginParams);
 		nosVulkan->Copy(cmd, &input, &res->ShareInfo, 0);
 		nosCmdEndParams end{ .ForceSubmit = NOS_TRUE, .OutGPUEventHandle = pushEventForCopyFrom ? &res->Params.WaitEvent : nullptr };
 		nosVulkan->End(cmd, &end);
@@ -461,7 +461,7 @@ struct CPUTrivialResource : ResourceInterface {
 		nosEngine.SetPinValue(cpy->ID, r->data);
 	}
 
-	void Copy(ResourceBase* res, nosCopyInfo* cpy, nos::fb::UUID NodeId) override {
+	void Copy(ResourceBase* res, nosCopyInfo* cpy, uuid NodeId) override {
 		auto r = GetResource<CPUTrivialResource>(res);
 		nosEngine.SetPinValue(cpy->ID, r->data);
 	}
@@ -802,7 +802,7 @@ struct RingNodeBase : NodeContext
 		});
 	}
 
-	RingNodeBase(const nosFbNode* node, OnRestartType onRestart) : NodeContext(node), OnRestart(onRestart), TypeInfo(voidTypeName) {
+	RingNodeBase(nosFbNodePtr node, OnRestartType onRestart) : NodeContext(node), OnRestart(onRestart), TypeInfo(voidTypeName) {
 		nosName typeName = voidTypeName;
 		if(auto* pins = node->pins())
 			for (auto* pin : *pins)
@@ -1020,7 +1020,7 @@ struct RingNodeBase : NodeContext
 		nosEngine.SendPathRestart(PinName2Id[NOS_NAME_STATIC("Input")]);
 	}
 
-	void OnEndFrame(nosUUID pinId, nosEndFrameCause cause) override
+	void OnEndFrame(uuid const& pinId, nosEndFrameCause cause) override
 	{
 		if (cause != NOS_END_FRAME_FAILED)
 			return;

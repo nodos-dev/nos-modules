@@ -55,13 +55,13 @@ struct AnySlot
 	AnySlot(const AnySlot&) = delete;
 	AnySlot& operator=(const AnySlot&) = delete;
 	AnySlot(nosBuffer const& buf) : Buffer(buf) {}
-	virtual void CopyFrom(nosBuffer const& buf, nosUUID const& nodeId) = 0;
+	virtual void CopyFrom(nosBuffer const& buf, uuid const& nodeId) = 0;
 };
 
 struct TriviallyCopyableSlot : AnySlot
 {
 	using AnySlot::AnySlot;
-	void CopyFrom(nosBuffer const& other, nosUUID const& nodeId) override
+	void CopyFrom(nosBuffer const& other, uuid const& nodeId) override
 	{
 		Buffer = other;
 	}
@@ -111,7 +111,7 @@ struct ResourceSlot : AnySlot
 			Res = std::make_unique<Resource<T>>(desc.Info.Texture);
 		}
 	}
-	void CopyFrom(nosBuffer const& other, nosUUID const& nodeId) override
+	void CopyFrom(nosBuffer const& other, uuid const& nodeId) override
 	{
 		// TODO: Interlaced.
 		nosCmd cmd{};
@@ -125,7 +125,7 @@ struct ResourceSlot : AnySlot
 			src = vkss::ConvertToResourceInfo(*InterpretPinValue<sys::vulkan::Buffer>(other.Data));
 		if constexpr (std::is_same_v<T, nosTextureInfo>)
 			src = vkss::DeserializeTextureInfo(other.Data);
-		nosVulkan->Begin2(&beginParams);
+		nosVulkan->Begin(&beginParams);
 		nosVulkan->Copy(cmd, &src, &Res->Desc, nullptr);
 		//nosCmdEndParams endParams{.ForceSubmit = NOS_FALSE, .OutGPUEventHandle = &Texture->Params.WaitEvent};
 		//nosVulkan->End(cmd, &endParams);
@@ -142,7 +142,7 @@ struct DelayNode : NodeContext
     nosName TypeName = NSN_VOID;
 	RingBuffer<std::unique_ptr<AnySlot>> Ring;
 
-	DelayNode(const nosFbNode* node) : NodeContext(node), Ring(0) {
+	DelayNode(nosFbNodePtr node) : NodeContext(node), Ring(0) {
 		for (auto pin : *node->pins())
 		{
 			auto name = nos::Name(pin->name()->c_str());
@@ -160,7 +160,7 @@ struct DelayNode : NodeContext
 	}
 
 
-	void OnPinValueChanged(nos::Name pinName, nosUUID pinId, nosBuffer value) override
+	void OnPinValueChanged(nos::Name pinName, uuid const& pinId, nosBuffer value) override
 	{
 		if(NSN_VOID == TypeName)
 			return;

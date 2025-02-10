@@ -309,7 +309,7 @@ struct ArithmeticNodeContext : NodeContext
 		return NOS_RESULT_SUCCESS;
 	}
 
-	void OnMenuRequested(const nosContextMenuRequest* request) override
+	void OnMenuRequested(nosContextMenuRequestPtr request) override
 	{
 		if (Operator)
 			return;
@@ -322,7 +322,7 @@ struct ArithmeticNodeContext : NodeContext
 		HandleEvent(CreateAppEvent(fbb, CreateAppContextMenuUpdateDirect(fbb, &NodeId, request->pos(), request->instigator(), &ops)));
 	}
 
-	void OnMenuCommand(nosUUID itemId, uint32_t cmd) override
+	void OnMenuCommand(uuid const& itemId, uint32_t cmd) override
 	{
 		if (Operator)
 			return;

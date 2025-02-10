@@ -8,7 +8,7 @@ NOS_REGISTER_NAME(Seconds);
 NOS_REGISTER_NAME_SPACED(Nos_Utilities_Time, "nos.utilities.Time")
 struct TimeNodeContext : NodeContext
 {
-	TimeNodeContext(nosFbNode const* node) : NodeContext(node) {}
+	TimeNodeContext(nosFbNodePtr node) : NodeContext(node) {}
 
 	nosResult ExecuteNode(nosNodeExecuteParams* params) override
 	{

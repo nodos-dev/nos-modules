@@ -33,7 +33,7 @@ namespace nos::test
 class TestNode : public nos::NodeContext
 {
 public:
-	TestNode(const nosFbNode* node) : nos::NodeContext(node)
+	TestNode(nosFbNodePtr node) : nos::NodeContext(node)
 	{
 		nosEngine.LogI("TestNode: %s", __FUNCTION__);
 		AddPinValueWatcher(NOS_NAME_STATIC("double_prop"), [this](nos::Buffer const& newVal, std::optional<nos::Buffer> oldVal) {
@@ -47,24 +47,15 @@ public:
 	{
 		nosEngine.LogI("TestNode: %s", __FUNCTION__);
 	}
-	void OnPartialNodeUpdated(const nosNodeUpdate* updatedNode) override { nosEngine.LogI("TestNode: %s", __FUNCTION__); }
-	void OnPinValueChanged(nos::Name pinName, nosUUID pinId, nosBuffer value) override
+	void OnNodeUpdated(const nosNodeUpdate* updatedNode) override { nosEngine.LogI("TestNode: %s", __FUNCTION__); }
+	void OnPinValueChanged(nos::Name pinName, uuid const& pinId, nosBuffer value) override
 	{
 		nosEngine.LogI("TestNode: %s", __FUNCTION__);
 	}
-	virtual void OnPinConnected(nos::Name pinName, nosUUID connectedPin) override { nosEngine.LogI("TestNode: %s", __FUNCTION__); }
+	virtual void OnPinConnected(nos::Name pinName, uuid const& connectedPin) override { nosEngine.LogI("TestNode: %s", __FUNCTION__); }
 	virtual void OnPinDisconnected(nos::Name pinName) override { nosEngine.LogI("TestNode: %s", __FUNCTION__); }
-	virtual void OnPinShowAsChanged(nos::Name pinName, nos::fb::ShowAs showAs) override
-	{
-		nosEngine.LogI("TestNode: %s", __FUNCTION__);
-	}
 	virtual void OnPathCommand(const nosPathCommand* command) override { nosEngine.LogI("TestNode: %s", __FUNCTION__); }
-	virtual nosResult CanRemoveOrphanPin(nos::Name pinName, nosUUID pinId) override
-	{
-		nosEngine.LogI("TestNode: %s", __FUNCTION__);
-		return NOS_RESULT_SUCCESS;
-	}
-	virtual nosResult OnOrphanPinRemoved(nos::Name pinName, nosUUID pinId) override
+	virtual nosResult CanRemoveOrphanPin(nos::Name pinName, uuid const& pinId) override
 	{
 		nosEngine.LogI("TestNode: %s", __FUNCTION__);
 		return NOS_RESULT_SUCCESS;
@@ -81,21 +72,31 @@ public:
 		nosEngine.LogI("TestNode: %s", __FUNCTION__);
 		return NOS_RESULT_SUCCESS;
 	}
-	virtual nosResult CopyTo(nosCopyInfo* copyInfo) override
-	{
-		nosEngine.LogI("TestNode: %s", __FUNCTION__);
-		return NOS_RESULT_SUCCESS;
-	}
 
 	// Menu & key events
-	virtual void OnMenuRequested(const nosContextMenuRequest* request) override { nosEngine.LogI("TestNode: %s", __FUNCTION__); }
-	virtual void OnMenuCommand(nosUUID itemID, uint32_t cmd) override { nosEngine.LogI("TestNode: %s", __FUNCTION__); }
+	virtual void OnMenuRequested(nosContextMenuRequestPtr request) override
+	{
+		nosEngine.LogI("TestNode: %s", __FUNCTION__);
+	}
+	virtual void OnMenuCommand(uuid const& itemID, uint32_t cmd) override
+	{
+		nosEngine.LogI("TestNode: %s", __FUNCTION__);
+	}
 	virtual void OnKeyEvent(const nosKeyEvent* keyEvent) override { nosEngine.LogI("TestNode: %s", __FUNCTION__); }
 
-	virtual void OnPinDirtied(nosUUID pinID, uint64_t frameCount) override { nosEngine.LogI("TestNode: %s", __FUNCTION__); }
+	virtual void OnPinDirtied(uuid const& pinID, uint64_t frameCount) override
+	{
+		nosEngine.LogI("TestNode: %s", __FUNCTION__);
+	}
 	virtual void OnPathStateChanged(nosPathState pathState) override { nosEngine.LogI("TestNode: %s", __FUNCTION__); }
-	virtual void OnEnterRunnerThread(std::optional<nosUUID> runnerId) override { nosEngine.LogI("TestNode: %s", __FUNCTION__); }
-	virtual void OnExitRunnerThread(std::optional<nosUUID> runnerId) override { nosEngine.LogI("TestNode: %s", __FUNCTION__); }
+	virtual void OnEnterRunnerThread(nosEnterRunnerThreadParams const& params) override
+	{
+		nosEngine.LogI("TestNode: %s", __FUNCTION__);
+	}
+	virtual void OnExitRunnerThread(nosExitRunnerThreadParams const& params) override
+	{
+		nosEngine.LogI("TestNode: %s", __FUNCTION__);
+	}
 
 	static nosResult TestFunction(void* ctx, nosFunctionExecuteParams* params)
 	{
@@ -154,13 +155,13 @@ public:
 		return NOS_RESULT_SUCCESS;
 	}
 
-	std::optional<nosUUID> SecondFunc = std::nullopt;
+	std::optional<uuid> SecondFunc = std::nullopt;
 };
 
 struct AlwaysDirtyNode : nos::NodeContext
 {
 	using NodeContext::NodeContext;
-	void OnPinValueChanged(nos::Name pinName, nosUUID pinId, nosBuffer value) override
+	void OnPinValueChanged(nos::Name pinName, uuid const& pinId, nosBuffer value) override
 	{
 		if (pinName == NOS_NAME_STATIC("OutLive"))
 			ChangePinLiveness(NOS_NAME_STATIC("Output"), *InterpretPinValue<bool>(value));
@@ -236,8 +237,7 @@ struct TestPluginFunctions : PluginFunctions
 		outFunctions[4]->ClassName = NOS_NAME_STATIC("nos.test.CopyTest");
 		outFunctions[4]->ExecuteNode = [](void* ctx, nosNodeExecuteParams* params)
 			{
-				nosCmd cmd;
-				nosVulkan->Begin("(nos.test.CopyTest) Copy", &cmd);
+				nosCmd cmd = nos::vkss::BeginCmd(NOS_NAME("(nos.test.CopyTest) Copy"), params->NodeId);
 				auto values = nos::GetPinValues(params);
 				nosResourceShareInfo input = nos::vkss::DeserializeTextureInfo(values[NOS_NAME_STATIC("Input")]);
 				nosResourceShareInfo output = nos::vkss::DeserializeTextureInfo(values[NOS_NAME_STATIC("Output")]);
@@ -247,16 +247,15 @@ struct TestPluginFunctions : PluginFunctions
 			};
 
 		outFunctions[5]->ClassName = NOS_NAME_STATIC("nos.test.CopyTestLicensed");
-		outFunctions[5]->OnNodeCreated = [](const nosFbNode* node, void** outCtxPtr) {
-			nosEngine.RegisterFeature(*node->id(), "Nodos.CopyTestLicensed", 1, "Nodos.CopyTestLicensed required");
+		outFunctions[5]->OnNodeCreated = [](nosFbNodePtr node, void** outCtxPtr) {
+			nosEngine.RegisterFeature(uuid(*node->id()), "Nodos.CopyTestLicensed", 1, "Nodos.CopyTestLicensed required");
 			};
-		outFunctions[5]->OnNodeDeleted = [](void* ctx, nosUUID nodeId) {
+		outFunctions[5]->OnNodeDeleted = [](void* ctx, nosCUUID nodeId) {
 			nosEngine.UnregisterFeature(nodeId, "Nodos.CopyTestLicensed");
 			};
 		outFunctions[5]->ExecuteNode = [](void* ctx, nosNodeExecuteParams* params)
 			{
-				nosCmd cmd;
-				nosVulkan->Begin("(nos.test.CopyTest) Copy", &cmd);
+				nosCmd cmd = nos::vkss::BeginCmd(NOS_NAME("(nos.test.CopyTest) Copy"), params->NodeId);
 				auto values = nos::GetPinValues(params);
 				nosResourceShareInfo input = nos::vkss::DeserializeTextureInfo(values[NOS_NAME_STATIC("Input")]);
 				nosResourceShareInfo output = nos::vkss::DeserializeTextureInfo(values[NOS_NAME_STATIC("Output")]);
@@ -280,8 +279,7 @@ struct TestPluginFunctions : PluginFunctions
 				auto newBuf = nos::Buffer::From(vkss::ConvertBufferInfo(out));
 				nosEngine.SetPinValue(params->Pins[1].Id, newBuf);
 			}
-			nosCmd cmd{};
-			nosVulkan->Begin("(nos.test.CopyBuffer) Copy", &cmd);
+			nosCmd cmd = nos::vkss::BeginCmd(NOS_NAME("(nos.test.CopyBuffer) Copy"), params->NodeId);
 			nosVulkan->Copy(cmd, &in, &out, 0);
 			nosVulkan->End(cmd, nullptr);
 			return NOS_RESULT_SUCCESS;

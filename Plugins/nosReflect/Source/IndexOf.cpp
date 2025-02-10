@@ -10,7 +10,7 @@ struct IndexOfNode : NodeContext
 
 	nos::Buffer Value;
 	
-	IndexOfNode(const nosFbNode* inNode) : NodeContext(inNode)
+	IndexOfNode(nosFbNodePtr inNode) : NodeContext(inNode)
 	{
 		for (auto pin : *inNode->pins())
 		{

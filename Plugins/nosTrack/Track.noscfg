@@ -2,14 +2,14 @@
   "info": {
     "id": {
       "name": "nos.track",
-      "version": "1.8.0"
+      "version": "1.9.0"
     },
     "display_name": "Track",
     "category": "Virtual Studio",
     "dependencies": [
       {
         "name": "nos.sys.animation",
-        "version": "1.4"
+        "version": "1.5"
       }
     ]
   },

@@ -20,7 +20,7 @@ enum class VariableStatusItem
 
 struct VariableNodeBase : NodeContext
 {
-	VariableNodeBase(const nosFbNode* node) : NodeContext(node)
+	VariableNodeBase(nosFbNodePtr node) : NodeContext(node)
 	{
 		TypeName = GetPin(NSN_Value)->TypeName;
 	}
@@ -81,7 +81,7 @@ struct VariableNodeBase : NodeContext
 	
 struct SetVariableNode : VariableNodeBase
 {
-	SetVariableNode(const nosFbNode* node) : VariableNodeBase(node)
+	SetVariableNode(nosFbNodePtr node) : VariableNodeBase(node)
 	{
 		CheckType();
 		// For editor to show changes without a scheduled node, we use pin value change callbacks.
@@ -231,7 +231,7 @@ struct SetVariableNode : VariableNodeBase
 
 struct GetVariableNode : VariableNodeBase
 {
-	GetVariableNode(const nosFbNode* node) : VariableNodeBase(node)
+	GetVariableNode(nosFbNodePtr node) : VariableNodeBase(node)
 	{
 		nos::Buffer initialValue;
 		for (auto* pin : *node->pins())

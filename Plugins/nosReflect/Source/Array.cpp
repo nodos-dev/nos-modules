@@ -8,7 +8,7 @@ struct ArrayNode : NodeContext
 {
 	std::optional<nos::TypeInfo> Type = std::nullopt;
 	bool invalidNode = false;
-	ArrayNode(const nosFbNode* inNode) : NodeContext(inNode)
+	ArrayNode(nosFbNodePtr inNode) : NodeContext(inNode)
 	{
 		for (auto& pin : Pins | std::views::values)
 		{
@@ -36,7 +36,7 @@ struct ArrayNode : NodeContext
 		UpdateOutputVectorSize();
 	}
 
-	void OnPartialNodeUpdated(const nosNodeUpdate* update) override
+	void OnNodeUpdated(const nosNodeUpdate* update) override
 	{
 		if (update->Type == NOS_NODE_UPDATE_PIN_DELETED || update->Type == NOS_NODE_UPDATE_PIN_CREATED)
 			UpdateOutputVectorSize();
@@ -175,7 +175,7 @@ struct ArrayNode : NodeContext
 		return SendOutputArray(values) ? NOS_RESULT_SUCCESS : NOS_RESULT_FAILED;
 	}
 
-	void OnMenuRequested(const nosContextMenuRequest* request) override
+	void OnMenuRequested(nosContextMenuRequestPtr request) override
 	{
 		auto inputs = GetInputs();
 
@@ -205,7 +205,7 @@ struct ArrayNode : NodeContext
 
 		auto outputType = "[" + typeName.AsString() + "]";
 		auto name = "Input " + std::to_string(inputs.size());
-		nosUUID id = nosEngine.GenerateID();
+		uuid id = nosEngine.GenerateID();
 
 		std::vector pins = {
 			nos::fb::CreatePinDirect(fbb,
@@ -237,7 +237,7 @@ struct ArrayNode : NodeContext
 		UpdateOutputVectorSize();
 	}
 
-	void OnMenuCommand(nosUUID itemID, uint32_t cmd) override
+	void OnMenuCommand(uuid const& itemID, uint32_t cmd) override
 	{
 		switch (cmd)
 		{

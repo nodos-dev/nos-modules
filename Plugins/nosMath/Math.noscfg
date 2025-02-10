@@ -2,7 +2,7 @@
   "info": {
     "id": {
       "name": "nos.math",
-      "version": "1.8.1"
+      "version": "1.9.0"
     },
     "description": "Nodes for math operations.",
     "display_name": "Math",
@@ -10,7 +10,7 @@
     "dependencies": [
       {
         "name": "nos.reflect",
-        "version": "1.4"
+        "version": "1.5"
       }
     ]
   },

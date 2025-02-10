@@ -67,7 +67,7 @@ namespace nos::utilities
 
 		size_t CurrentIndex = 0;
 
-		UploadBufferProviderNodeContext(const nosFbNode* node) : NodeContext(node)
+		UploadBufferProviderNodeContext(nosFbNodePtr node) : NodeContext(node)
 		{
 			AddPinValueWatcher(NSN_QueueSize, [this](nos::Buffer const& newVal, std::optional<nos::Buffer> oldVal) 
 				{

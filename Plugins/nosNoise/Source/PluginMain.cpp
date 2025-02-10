@@ -26,7 +26,7 @@ enum Nodes : int
 class DynamicSizedNoiseNode : public NodeContext
 {
 public:
-    DynamicSizedNoiseNode(const nosFbNode* node) : NodeContext(node)
+    DynamicSizedNoiseNode(nosFbNodePtr node) : NodeContext(node)
     {
     }
 

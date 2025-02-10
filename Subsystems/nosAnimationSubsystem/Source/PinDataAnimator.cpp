@@ -187,7 +187,7 @@ std::unordered_set<nos::Name> InterpolatorManager::GetAnimatableTypes()
 	return types;
 }
 
-bool PinDataAnimator::AddAnimation(nosUUID const& pinId,
+bool PinDataAnimator::AddAnimation(uuid const& pinId,
 								   editor::AnimatePin const& buf)
 {
 	editor::TAnimatePin animate;
@@ -216,13 +216,13 @@ bool PinDataAnimator::AddAnimation(nosUUID const& pinId,
 		nosEngine.LogE("No interpolator found for %s and %s.", nos::Name(typeInfo.TypeName).AsCStr(), editor::EnumNameInterpolation(data.Interp.type));
 		return false;
 	}
-	nosEngine.LogD("Animation added for pin %s", UUID2STR(pinId).c_str());
+	nosEngine.LogD("Animation added for pin %s", pinId.to_string().c_str());
 	std::unique_lock lock(AnimationsMutex);
 	Animations[pinId].push(std::move(data));
 	return true;
 }
 
-void PinDataAnimator::UpdatePin(nosUUID const& pinId, 
+void PinDataAnimator::UpdatePin(uuid const& pinId, 
 								nosVec2u const& deltaSeconds,
 								uint64_t curFSM,
 								const nosBuffer* currentData)
@@ -308,7 +308,7 @@ void PinDataAnimator::UpdatePin(nosUUID const& pinId,
 		}
 	}
 	if (result != NOS_RESULT_SUCCESS)
-		nosEngine.LogE("Failed to animate pin %s", UUID2STR(pinId).c_str());
+		nosEngine.LogE("Failed to animate pin %s", pinId.to_string().c_str());
 	if (t >= 1.0 || result != NOS_RESULT_SUCCESS)
 	{
 		lock.unlock();
@@ -323,19 +323,19 @@ void PinDataAnimator::UpdatePin(nosUUID const& pinId,
 	}
 }
 
-bool PinDataAnimator::IsPinAnimating(nosUUID const& pinId)
+bool PinDataAnimator::IsPinAnimating(uuid const& pinId)
 {
 	std::shared_lock lock(AnimationsMutex);
 	return Animations.contains(pinId);
 }
 
-void PinDataAnimator::OnPinDeleted(nosUUID const& pinId)
+void PinDataAnimator::OnPinDeleted(uuid const& pinId)
 {
 	std::unique_lock lock(AnimationsMutex);
 	Animations.erase(pinId);
 }
 
-std::optional<PathInfo> PinDataAnimator::GetPathInfo(nosUUID const& scheduledNodeId) 
+std::optional<PathInfo> PinDataAnimator::GetPathInfo(uuid const& scheduledNodeId) 
 {
 	std::shared_lock lock(AnimationsMutex);
 	auto it = PathInfos.find(scheduledNodeId);
@@ -344,7 +344,7 @@ std::optional<PathInfo> PinDataAnimator::GetPathInfo(nosUUID const& scheduledNod
 	return it->second;
 }
 
-void PinDataAnimator::CreatePathInfo(nosUUID const& scheduledNodeId, nosVec2u const& deltaSec)
+void PinDataAnimator::CreatePathInfo(uuid const& scheduledNodeId, nosVec2u const& deltaSec)
 {
 	std::unique_lock lock(PathInfosMutex);
 	uint64_t startFSM = MillisecondsToFrameNumber(std::chrono::duration_cast<std::chrono::milliseconds>(
@@ -354,13 +354,13 @@ void PinDataAnimator::CreatePathInfo(nosUUID const& scheduledNodeId, nosVec2u co
 	PathInfos[scheduledNodeId] = {.StartFSM = startFSM};
 }
 
-void PinDataAnimator::DeletePathInfo(nosUUID const& scheduledNodeId)
+void PinDataAnimator::DeletePathInfo(uuid const& scheduledNodeId)
 {
 	std::unique_lock lock(PathInfosMutex);
 	PathInfos.erase(scheduledNodeId);
 }
 
-void PinDataAnimator::PathExecutionFinished(nosUUID const& scheduledNodeId)
+void PinDataAnimator::PathExecutionFinished(uuid const& scheduledNodeId)
 {
 	std::unique_lock lock(PathInfosMutex);
 	PathInfos[scheduledNodeId].CurFrame++;

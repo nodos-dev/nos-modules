@@ -69,7 +69,7 @@ void WindowNode::DestroySwapchain()
 		return;
 	nosCmd cmd;
 	nosCmdBeginParams beginParams = {.Name = NOS_NAME("Window node flush cmd"), .AssociatedNodeId = NodeId, .OutCmdHandle = &cmd};
-	nosVulkan->Begin2(&beginParams);
+	nosVulkan->Begin(&beginParams);
 	nosGPUEvent wait;
 	nosCmdEndParams endParams = {.ForceSubmit = true, .OutGPUEventHandle = &wait};
 	nosVulkan->End(cmd, &endParams);
@@ -122,8 +122,7 @@ nosResult WindowNode::ExecuteNode(nosNodeExecuteParams* params)
 
 		uint32_t imageIndex;
 		nosVulkan->SwapchainAcquireNextImage(Swapchain, -1, &imageIndex, WaitSemaphore[CurrentFrame]);
-		nosCmd cmd;
-		nosVulkan->Begin("Window", &cmd);
+		nosCmd cmd = vkss::BeginCmd(NOS_NAME("Window"), NodeId);
 		nosVulkan->Copy(cmd, &input, &Images[imageIndex], 0);
 
 		nosVulkan->ImageStateToPresent(cmd, &Images[imageIndex]);
@@ -145,16 +144,16 @@ nosResult WindowNode::ExecuteNode(nosNodeExecuteParams* params)
 	return NOS_RESULT_SUCCESS;
 }
 
-void WindowNode::OnExitRunnerThread(std::optional<nosUUID> runnerId) 
+void WindowNode::OnExitRunnerThread(nosExitRunnerThreadParams const& params) 
 { 
-	if (!runnerId)
+	if (!params.RunnerId)
 		return;
 	Clear(); 
 }
 
-void WindowNode::OnEnterRunnerThread(std::optional<nosUUID> runnerId)
+void WindowNode::OnEnterRunnerThread(nosEnterRunnerThreadParams const& params)
 {
-	if (!runnerId)
+	if (!params.RunnerId)
 		return;
 	glfwInit();
 	glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
@@ -188,7 +187,7 @@ void WindowNode::OnPathStop()
 {
 	nosCmd cmd;
 	nosCmdBeginParams beginParams = { .Name = NOS_NAME("Window node flush cmd"), .AssociatedNodeId = NodeId, .OutCmdHandle = &cmd };
-	nosVulkan->Begin2(&beginParams);
+	nosVulkan->Begin(&beginParams);
 	nosGPUEvent wait;
 	nosCmdEndParams endParams = { .ForceSubmit = true, .OutGPUEventHandle = &wait };
 	nosVulkan->End(cmd, &endParams);

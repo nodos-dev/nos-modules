@@ -203,7 +203,7 @@ void TrackNodeContext::SignalRestart()
 	nosEngine.SendPathRestart(NodeId);
 }
 
-void TrackNodeContext::OnPinValueChanged(nos::Name pinName, nosUUID pinId, nosBuffer val)
+void TrackNodeContext::OnPinValueChanged(nos::Name pinName, uuid const& pinId, nosBuffer val)
 {
 #define SET_VALUE(ty, name, var) if(pinName == NOS_NAME_STATIC(#name)) Args.var = *(ty*)value;
 

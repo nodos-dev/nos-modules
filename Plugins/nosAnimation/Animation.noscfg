@@ -2,7 +2,7 @@
   "info": {
     "id": {
       "name": "nos.animation",
-      "version": "0.2.1"
+      "version": "0.3.0"
     },
     "display_name": "nos.animation",
     "description": "Animation nodes for Nodos.",
@@ -10,7 +10,7 @@
     "dependencies": [
       {
         "name": "nos.sys.animation",
-        "version": "1.4"
+        "version": "1.5"
       }
     ]
   },

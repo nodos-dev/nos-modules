@@ -19,8 +19,8 @@ void RegisterController(nosNodeFunctions* functions)
 		glm::vec3 v = {};
 		float impulse = 1.0;
 		float decay = 0;
-		nos::fb::UUID OutTrackId;
-		nos::fb::UUID InTrackId;
+		uuid OutTrackId;
+		uuid InTrackId;
 
 		fb::TTrack state;
 

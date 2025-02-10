@@ -51,7 +51,7 @@ static nosResult ExecuteNode(void* ctx, nosNodeExecuteParams* params)
 
 	nosCmd cmd;
 	nosCmdBeginParams beginParams {.Name = NOS_NAME("Resize"), .AssociatedNodeId = params->NodeId, .OutCmdHandle = &cmd};
-	nosVulkan->Begin2(&beginParams);
+	nosVulkan->Begin(&beginParams);
 	nosVulkan->RunPass(cmd, &resizeParam);
 	nosVulkan->End(cmd, nullptr);
 

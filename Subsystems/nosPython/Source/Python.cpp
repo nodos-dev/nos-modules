@@ -77,7 +77,7 @@ public:
 		return NOS_RESULT_SUCCESS;
 	}
 
-	void CreateNodeInstance(const nosFbNode* node)
+	void CreateNodeInstance(nosFbNodePtr node)
 	{
 		auto name = nos::Name(node->name()->str());
 		auto classNameStr = node->class_name()->str();
@@ -96,7 +96,7 @@ public:
 		}
 	}
 
-	void RemoveNodeInstance(nos::fb::UUID id)
+	void RemoveNodeInstance(uuid id)
 	{
 		if (NodeInstances.contains(id)) {
 			pyb::gil_scoped_acquire gil;
@@ -104,7 +104,7 @@ public:
 		}
 	}
 
-	std::shared_ptr<pyb::object> GetNodeInstance(nos::fb::UUID id)
+	std::shared_ptr<pyb::object> GetNodeInstance(uuid id)
 	{
 		auto it = NodeInstances.find(id);
 		if (it == NodeInstances.end())
@@ -115,7 +115,7 @@ public:
 protected:
 	pyb::scoped_interpreter ScopedInterpreter;
 	pyb::gil_scoped_release Release;
-	std::unordered_map<nos::fb::UUID, std::shared_ptr<pyb::object>> NodeInstances;
+	std::unordered_map<uuid, std::shared_ptr<pyb::object>> NodeInstances;
 	std::unordered_map<nos::Name, std::unique_ptr<pyb::module>> Modules;
 	std::unique_ptr<pyb::module> NodosInternalModule;
 };
@@ -136,7 +136,7 @@ public:
 		auto buf = it->second.Data;
 		return pyb::memoryview::from_memory(buf->Data, buf->Size);
 	}
-	std::optional<nosUUID> GetPinId(std::string pinName) const
+	std::optional<nosCUUID> GetPinId(std::string pinName) const
 	{
 		auto it = this->find(nos::Name(pinName));
 		if (it == this->end())
@@ -179,12 +179,12 @@ struct PyNativeContextMenuRequestInstigator
 	
 struct PyNativeContextMenuRequest
 {
-	PyNativeContextMenuRequest(const nosContextMenuRequest* request) : Instigator(request->instigator()->client_id(), request->instigator()->request_id())
+	PyNativeContextMenuRequest(nosContextMenuRequestPtr request) : Instigator(request->instigator()->client_id(), request->instigator()->request_id())
 	{
 		ItemId = *request->item_id();
 		Pos = *request->pos();
 	}
-	nosUUID ItemId {};
+	uuid ItemId {};
 	nos::fb::vec2 Pos {};
 	PyNativeContextMenuRequestInstigator Instigator;
 };
@@ -212,11 +212,11 @@ PYBIND11_EMBEDDED_MODULE(__nodos_internal__, m)
 		.def_property_readonly_static("FAILED", [](const pyb::object&) {return NOS_RESULT_FAILED; });
 
 	// Structs
-	pyb::class_<nosUUID>(m, "uuid")
+	pyb::class_<nosCUUID>(m, "uuid")
 		.def(pyb::init<>())
-		.def("__str__", [](const nosUUID& id) -> std::string { return nos::UUID2STR(id); })
-		.def("__hash__", [](const nosUUID& id) -> size_t { return nos::UUIDHash(id); })
-		.def("__eq__", [](const nosUUID& self, const nosUUID& other) -> bool { return self == other; });
+		.def("__str__", [](const nosCUUID& id) -> std::string { return std::string(uuid(id)); })
+		.def("__hash__", [](const nosCUUID& id) -> size_t { return std::hash<uuid>{}(uuid(id)); })
+		.def("__eq__", [](const nosCUUID& self, const nosCUUID& other) -> bool { return uuid(self) == other; });
 
 	pyb::class_<nos::Name>(m, "Name")
 		.def(pyb::init([](uint64_t arg) {return nos::Name(nosName{ arg }); }))
@@ -242,7 +242,7 @@ PYBIND11_EMBEDDED_MODULE(__nodos_internal__, m)
 		.def_property_readonly("pin_value", [](const PyNativeOnPinDisconnectedArgs& args) -> std::string_view { return args.PinName.AsCStr(); });
 
 	pyb::class_<PyNativeContextMenuRequest>(m, "ContextMenuRequest")
-		.def_property("item_id", [](const PyNativeContextMenuRequest& req) -> nosUUID { return req.ItemId; }, [](PyNativeContextMenuRequest& req, nosUUID id) { req.ItemId = id; })
+		.def_property("item_id", [](const PyNativeContextMenuRequest& req) -> nosCUUID { return req.ItemId; }, [](PyNativeContextMenuRequest& req, nosCUUID id) { req.ItemId = id; })
 		.def_property("position", [](const PyNativeContextMenuRequest& req) -> nos::fb::vec2 { return req.Pos; }, [](PyNativeContextMenuRequest& req, nos::fb::vec2 pos) { req.Pos = pos; })
 		.def_property("instigator", [](const PyNativeContextMenuRequest& req) -> PyNativeContextMenuRequestInstigator { return req.Instigator; }, [](PyNativeContextMenuRequest& req, PyNativeContextMenuRequestInstigator instigator) { req.Instigator = instigator; });
 
@@ -252,7 +252,7 @@ PYBIND11_EMBEDDED_MODULE(__nodos_internal__, m)
 
 	// Engine Services
 	m.def("set_pin_value",
-		[](const nosUUID& id, const pyb::buffer& buf) {
+		[](const nosCUUID& id, const pyb::buffer& buf) {
 			auto info = buf.request();
 			nosEngine.SetPinValue(id, nosBuffer{.Data = info.ptr, .Size = info.size < 0 ? 0ull : (size_t(info.size) * info.itemsize)});
 		});
@@ -325,7 +325,7 @@ nosResult NOSAPI_CALL OnPyNodeRegistered(nosModuleIdentifier pluginId, nosName c
 class PyNativeNode : public nos::NodeContext
 {
 public:
-	PyNativeNode(const nosFbNode* node) : NodeContext(node)
+	PyNativeNode(nosFbNodePtr node) : NodeContext(node)
 	{
 		GInterpreter->CreateNodeInstance(node);
 	}
@@ -376,27 +376,27 @@ public:
 		return CallMethod<nosResult>("execute_node", PyNativeNodeExecuteParams(params));
 	}
 
-	void OnPinValueChanged(nos::Name pinName, nosUUID pinId, nosBuffer value) override
+	void OnPinValueChanged(nos::Name pinName, uuid const& pinId, nosBuffer value) override
 	{
 		CallMethod<void>("on_pin_value_changed", PyNativeOnPinValueChangedArgs(pinName, value));
 	}
 
-	void OnNodeMenuRequested(const nosContextMenuRequest* request) override
+	void OnNodeMenuRequested(nosContextMenuRequestPtr request) override
 	{
 		CallMethod<void>("on_node_menu_requested", PyNativeContextMenuRequest(request));
 	}
 	
-	void OnPinMenuRequested(nos::Name pinName, const nosContextMenuRequest* request) override
+	void OnPinMenuRequested(nos::Name pinName, nosContextMenuRequestPtr request) override
 	{
 		CallMethod<void>("on_pin_menu_requested", nos::Name(pinName), PyNativeContextMenuRequest(request));
 	}
 
-	void OnMenuCommand(nosUUID itemID, uint32_t cmd) override
+	void OnMenuCommand(uuid const& itemID, uint32_t cmd) override
 	{
-		CallMethod<void>("on_menu_command", itemID, cmd);
+		CallMethod<void>("on_menu_command", nosCUUID(itemID), cmd);
 	}
 
-	void OnPinConnected(nos::Name pinName, nosUUID connectedPin) override
+	void OnPinConnected(nos::Name pinName, uuid const& connectedPin) override
 	{
 		CallMethod<void>("on_pin_connected", PyNativeOnPinConnectedArgs(pinName));
 	}

@@ -24,7 +24,7 @@ struct SinkNode : NodeContext
 	clock::time_point LastCopy = clock::now();
 	utilities::SinkMode Mode = utilities::SinkMode::Periodic;
 
-	SinkNode(const nosFbNode* inNode) : NodeContext(inNode)
+	SinkNode(nosFbNodePtr inNode) : NodeContext(inNode)
 	{
 	}
 
@@ -41,7 +41,7 @@ struct SinkNode : NodeContext
 		{
 			nosCmd cmd{};
 			nosCmdBeginParams beginParams = {.Name = NOS_NAME("Sink Submit"), .AssociatedNodeId = NodeId, .OutCmdHandle = &cmd};
-			nosVulkan->Begin2(&beginParams);
+			nosVulkan->Begin(&beginParams);
 			nosGPUEvent event{};
 			nosCmdEndParams endParams{ .ForceSubmit = true, .OutGPUEventHandle = Wait ? &event : nullptr };
 			nosVulkan->End(cmd, &endParams);
@@ -61,7 +61,7 @@ struct SinkNode : NodeContext
 		return NOS_RESULT_SUCCESS;
 	}
 
-	void OnPinValueChanged(nos::Name pinName, nosUUID pinId, nosBuffer value) override
+	void OnPinValueChanged(nos::Name pinName, uuid const& pinId, nosBuffer value) override
 	{
 		if (NOS_NAME("Sink FPS") == pinName)
 		{

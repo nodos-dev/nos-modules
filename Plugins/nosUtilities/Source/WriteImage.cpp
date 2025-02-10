@@ -30,7 +30,7 @@ struct WriteImage : NodeContext {
     std::atomic_bool Write = false;
     std::atomic_bool ShouldStop = false;
 
-    WriteImage(nosFbNode const* node) : NodeContext(node){
+    WriteImage(nosFbNodePtr node) : NodeContext(node){
         Worker = std::thread([this] {
             while (!ShouldStop) {
                 std::unique_lock<std::mutex> lock(Mutex);
@@ -67,9 +67,8 @@ struct WriteImage : NodeContext {
         std::unique_lock<std::mutex> lock(Mutex);
         Path = std::string((const char*)execParams[NSN_Path].Data->Data, execParams[NSN_Path].Data->Size);
         IncludeAlpha = *(bool*)execParams[NSN_IncludeAlpha].Data->Data;
-        nosCmd cmd;
         assert(Event == 0);
-        nosVulkan->Begin("Write Image Copy To", &cmd);
+        nosCmd cmd = vkss::BeginCmd(NOS_NAME("Write Image Copy To"), NodeId);
         auto inputTex = vkss::DeserializeTextureInfo(execParams[NSN_In].Data->Data);
         TempSrgbCopy = {};
         TempSrgbCopy.Info = inputTex.Info;

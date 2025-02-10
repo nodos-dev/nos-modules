@@ -16,7 +16,7 @@ namespace nos::utilities
 
 struct DeinterlacedBufferRingNode : RingNodeBase
 {
-	DeinterlacedBufferRingNode(nosFbNode const* node) : RingNodeBase(node, RingNodeBase::OnRestartType::WAIT_UNTIL_FULL)
+	DeinterlacedBufferRingNode(nosFbNodePtr node) : RingNodeBase(node, RingNodeBase::OnRestartType::WAIT_UNTIL_FULL)
 	{
 	}
 	~DeinterlacedBufferRingNode()
@@ -31,7 +31,7 @@ struct DeinterlacedBufferRingNode : RingNodeBase
 		return "DeinterlacedBufferRing";
 	}
 	
-	void OnPinValueChanged(nos::Name pinName, nosUUID pinId, nosBuffer value) override
+	void OnPinValueChanged(nos::Name pinName, uuid const& pinId, nosBuffer value) override
 	{
 		if (pinName == NOS_NAME("ShouldDeinterlace"))
 		{
@@ -93,7 +93,7 @@ struct DeinterlacedBufferRingNode : RingNodeBase
 		LastFieldType = NOS_TEXTURE_FIELD_TYPE_UNKNOWN;
 	}
 
-	void OnEndFrame(nosUUID pinId, nosEndFrameCause cause) override
+	void OnEndFrame(uuid const& pinId, nosEndFrameCause cause) override
 	{
 		RingNodeBase::OnEndFrame(pinId, cause);
 		if (pinId == PinName2Id[NOS_NAME_STATIC("Output")])

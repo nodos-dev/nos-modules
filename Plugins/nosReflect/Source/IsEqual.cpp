@@ -10,7 +10,7 @@ struct IsEqualNode : NodeContext
 
 	nos::Buffer Value;
 	
-	IsEqualNode(const nosFbNode* inNode) : NodeContext(inNode)
+	IsEqualNode(nosFbNodePtr inNode) : NodeContext(inNode)
 	{
 		for (auto pin : *inNode->pins())
 		{

@@ -62,7 +62,7 @@ nosResult OnRequest(uint32_t minorVersion, void** outSubsystemCtx)
 
 nosResult OnPreExecuteNode(nosNodeExecuteParams* params)
 {
-	nosUUID scheduledNodeId;
+	nosCUUID scheduledNodeId;
 	if (nosEngine.GetCurrentRunnerPathInfo(&scheduledNodeId, nullptr) == NOS_RESULT_FAILED)
 		return NOS_RESULT_FAILED;
 
@@ -78,7 +78,7 @@ nosResult OnPreExecuteNode(nosNodeExecuteParams* params)
 	return NOS_RESULT_SUCCESS;
 }
 
-void OnPinDeleted(nosUUID pinId)
+void NOSAPI_CALL OnPinDeleted(nosCUUID pinId)
 {
 	GAnimationSysContext->Animator.OnPinDeleted(pinId);
 }
@@ -96,19 +96,19 @@ nosResult ShouldExecuteNodeWithoutDirty(nosNodeExecuteParams* params)
 	return NOS_RESULT_NOT_FOUND;
 }
 
-void OnPathStart(nosUUID scheduledPinId)
+void NOSAPI_CALL OnPathStart(nosCUUID scheduledPinId)
 {
 	nosVec2u deltaSec;
 	nosEngine.GetCurrentRunnerPathInfo(nullptr, &deltaSec);
 	GAnimationSysContext->Animator.CreatePathInfo(scheduledPinId, deltaSec);
 }
 
-void OnPathStop(nosUUID scheduledPinId)
+void NOSAPI_CALL OnPathStop(nosCUUID scheduledPinId)
 {
 	GAnimationSysContext->Animator.DeletePathInfo(scheduledPinId);
 }
 
-void OnEndFrame(nosUUID scheduledPinId)
+void NOSAPI_CALL OnEndFrame(nosCUUID scheduledPinId)
 {
 	GAnimationSysContext->Animator.PathExecutionFinished(scheduledPinId);
 }
@@ -122,10 +122,10 @@ void OnMessageFromEditor(uint64_t editorId, nosBuffer blob)
 		auto animatePin = msg->event_as_AnimatePin();
 		if(!animatePin || !animatePin->pin_path())
 			return;
-		nosUUID pinId{};
+		nosCUUID pinId{};
 		if (nosEngine.ItemPathToItemId(animatePin->pin_path()->c_str(), &pinId) == NOS_RESULT_SUCCESS)
 		{
-			nosUUID sourceId{};
+			nosCUUID sourceId{};
 			if (nosEngine.GetSourcePinId(pinId, &sourceId) == NOS_RESULT_SUCCESS)
 				GAnimationSysContext->Animator.AddAnimation(sourceId, *animatePin);
 		}
@@ -150,7 +150,8 @@ void BroadcastAnimationTypesToEditors()
 	flatbuffers::FlatBufferBuilder fbb;
 	fbb.Finish(editor::MakeFromAnimation(fbb, editor::CreateAnimatableTypes(fbb, &types)));
 	nos::Buffer buf = fbb.Release();
-	nosEngine.SendCustomMessageToEditors(NOS_NAME(NOS_ANIMATION_SUBSYSTEM_NAME), buf);
+	nosSendEditorMessageParams params{.Message = buf, .DispatchType = NOS_SEND_MESSAGE_TO_EDITOR_TYPE_BROADCAST};
+	nosEngine.SendEditorMessage(&params);
 }
 
 void OnEditorConnected(uint64_t editorId)

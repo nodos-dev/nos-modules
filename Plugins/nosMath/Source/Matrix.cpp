@@ -71,7 +71,7 @@ enum class MatOp
 template <MatOp OpType>
 struct MatrixOperationNodeContext : NodeContext
 {
-	MatrixOperationNodeContext(const nosFbNode* node) : NodeContext(node)
+	MatrixOperationNodeContext(nosFbNodePtr node) : NodeContext(node)
 	{
 		for (auto& [id, pin] : Pins)
 		{

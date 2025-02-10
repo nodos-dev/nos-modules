@@ -1,5 +1,5 @@
 # Copyright MediaZ Teknoloji A.S. All Rights Reserved.
-set(MODULE_DEPENDENCIES "nos.sys.vulkan-5.25" "nos.sys.variables-0.1")
+set(MODULE_DEPENDENCIES "nos.sys.vulkan-6.0" "nos.sys.variables-0.1")
 set(dep_idx 0)
 foreach(module_name_version ${MODULE_DEPENDENCIES})
     # module_name_version: <MODULE_NAME>-<MODULE_VERSION>
