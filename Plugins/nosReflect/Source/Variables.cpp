@@ -4,141 +4,13 @@
 
 #include "Names.h"
 
+#include <nosVariableSubsystem/nosVariableSubsystem.h>
+
 namespace nos::reflect
 {
 NOS_REGISTER_NAME(SetVariable)
 NOS_REGISTER_NAME(GetVariable)
-
-struct VariableContainer
-{
-	enum class UserType
-	{
-		Broadcaster,
-		Listener,
-	};
-	
-	void Associate(std::string const& name, nosUUID const& pinId, UserType type)
-	{
-		std::unique_lock lock(VariablesMutex);
-		auto it = Variables.find(name);
-		if (it != Variables.end())
-			it->second.Users.insert({pinId, type});
-		else
-		{
-			nosEngine.LogI("Creating variable %s", name.c_str());
-			Variables[name] = Variable{};
-			Variables[name].Users.insert({pinId, type});
-			UpdateStrings(lock);
-		}
-	}
-
-	void Disassociate(std::string const& name, nosUUID const& pinId)
-	{
-		std::unique_lock lock(VariablesMutex);
-		auto it = Variables.find(name);
-		if (it != Variables.end())
-		{
-			auto& variable = it->second;
-			variable.Users.erase(pinId);
-			if (variable.Users.empty())
-			{
-				nosEngine.LogI("Erasing variable %s", it->first.c_str());
-				Variables.erase(it);
-				UpdateStrings(lock);
-			}
-		}
-	}
-
-	void SetVariable(std::string const& name, nos::Buffer const& value)
-	{
-		std::unique_lock lock(VariablesMutex);
-		bool update = !Variables.contains(name);
-		auto& variable = Variables[name];
-		variable.Value = value;
-		if (update)
-			UpdateStrings(lock);
-		for (auto const& [user, type] : variable.Users)
-		{
-			if (type == UserType::Listener)
-				nosEngine.SetPinValue(user, value);
-		}
-	}
-
-	bool GetVariable(std::string const& name, nos::Buffer& outCopy)
-	{
-		std::shared_lock lock(VariablesMutex);
-		auto it = Variables.find(name);
-		if (it != Variables.end())
-		{
-			outCopy = nos::Buffer(it->second.Value);
-			return true;
-		}
-		return false;
-	}
-
-	void SetType(std::string const& name, nos::Name const& typeName)
-	{
-		std::unique_lock lock(VariablesMutex);
-		Variables[name].TypeName = typeName;
-		NotifyUsersAboutTypeChange(name, typeName);
-	}
-
-	std::optional<nos::Name> GetType(std::string const& name)
-	{
-		std::shared_lock lock(VariablesMutex);
-		auto it = Variables.find(name);
-		if (it != Variables.end())
-			return it->second.TypeName;
-		return std::nullopt;
-	}
-
-	void UpdateStrings()
-	{
-		std::unique_lock lock(VariablesMutex);
-		UpdateStrings(lock);
-	}
-	
-protected:
-	void NotifyUsersAboutTypeChange(std::string const& name, nos::Name const& typeName)
-	{
-		for (auto const& [user, listener] : Variables[name].Users)
-		{
-			NodeContext::SetPinType(user, typeName);
-		}
-	}
-
-	void UpdateStrings(std::unique_lock<std::shared_mutex> &lock)
-	{
-		auto names = GetAllVariableNames();
-		UpdateStringList("nos.reflect.VariableNames", names);
-		std::stringstream s;
-		s << "List of variables:\n";
-		for (auto& name : names)
-			s << name << '\n';
-		nosEngine.LogDI(s.str().c_str(), "Variable list updated");
-	}
-
-	std::vector<std::string> GetAllVariableNames()
-	{
-		std::vector<std::string> names;
-		names.reserve(Variables.size());
-		for (auto const& [name, value] : Variables)
-		{
-			names.push_back(name);
-		}
-		return names;
-	}
-
-	struct Variable {
-		nos::Buffer Value;
-		std::optional<nos::Name> TypeName;
-		std::unordered_map<nosUUID, UserType> Users;
-	};
-	std::unordered_map<std::string, Variable> Variables;
-	std::shared_mutex VariablesMutex;
-	
-} GVariables = {};
-
+NOS_REGISTER_NAME(Name)
 
 enum class SetVariableStatusItem
 {
@@ -150,24 +22,18 @@ struct VariableNodeBase : NodeContext
 {
 	VariableNodeBase(const nosFbNode* node) : NodeContext(node)
 	{
-		ValuePinId = nosUUID(*GetPinId(NOS_NAME("Value")));
-		GVariables.UpdateStrings();
+		TypeName = GetPin(NSN_Value)->TypeName;
+		if (!HasType())
+			SetPinOrphanState(NSN_Value, fb::PinOrphanStateType::PASSIVE, "Data type not set");
+		else
+			SetPinOrphanState(NSN_Value, fb::PinOrphanStateType::ACTIVE);
 	}
 
 	~VariableNodeBase() override
 	{
-		GVariables.Disassociate(Name, ValuePinId);
-	}
-
-	void CheckType()
-	{
-		auto valuePin = GetPin(NOS_NAME("Value"));
-		if (auto existingType = GVariables.GetType(Name))
-			SetPinType(ValuePinId, existingType.value());
-		else if (valuePin->TypeName != NSN_VOID)
-			GVariables.SetType(Name, valuePin->TypeName);
-		else
-			SetStatus(SetVariableStatusItem::TypeName, fb::NodeStatusMessageType::WARNING, "Type not set");
+		uint64_t refCount{};
+		auto res = nosVariables->DecreaseRefCount(Name, &refCount);
+		NOS_SOFT_CHECK(res == NOS_RESULT_SUCCESS, "Failed to decrease ref count");
 	}
 
 	void UpdateStatus()
@@ -190,9 +56,25 @@ struct VariableNodeBase : NodeContext
 		UpdateStatus();
 	}
 	
+	void OnPinUpdated(const nosPinUpdate* pinUpdate) override
+	{
+		if (pinUpdate->UpdatedField != NOS_PIN_FIELD_TYPE_NAME)
+			return;
+		ClearStatus(SetVariableStatusItem::TypeName);
+		if (TypeName != NSN_VOID && TypeName == pinUpdate->TypeName)
+			return;
+		TypeName = pinUpdate->TypeName;
+	}
+
+	bool HasType() const
+	{
+		return TypeName != NSN_VOID;
+	}
+
 	std::unordered_map<SetVariableStatusItem,  fb::TNodeStatusMessage> StatusMessages;
-	nosUUID ValuePinId;
-	std::string Name;
+	nos::Name Name;
+	nos::Name TypeName = NSN_VOID;
+	int32_t CallbackId = -1;
 };
 	
 struct SetVariableNode : VariableNodeBase
@@ -205,8 +87,10 @@ struct SetVariableNode : VariableNodeBase
 		{
 			if (oldValue)
 			{
-				std::string oldName = static_cast<const char*>(oldValue->Data());
-				GVariables.Disassociate(oldName, ValuePinId);
+				nos::Name oldName(static_cast<const char*>(oldValue->Data()));
+				nosVariables->DecreaseRefCount(oldName, nullptr);
+				nosVariables->UnregisterVariableUpdateCallback(oldName, CallbackId);
+				CallbackId = -1;
 			}
 			std::string newName = static_cast<const char*>(value.Data());
 			if (newName.empty() && oldValue)
@@ -219,46 +103,80 @@ struct SetVariableNode : VariableNodeBase
 				SetStatus(SetVariableStatusItem::VariableName, fb::NodeStatusMessageType::WARNING, "Provide a name");
 				return;
 			}
-			Name = std::move(newName);
-			GVariables.Associate(Name, ValuePinId, VariableContainer::UserType::Broadcaster);
-			if (Value)
-				GVariables.SetVariable(Name, *Value);
+			Name = nos::Name(newName);
+			if (Value && HasType())
+			{
+				nosVariables->Set(Name, TypeName, Value->GetInternal());
+				nosVariables->IncreaseRefCount(Name, nullptr);
+				CallbackId = nosVariables->RegisterVariableUpdateCallback(Name, &SetVariableNode::VariableUpdateCallback, this);
+			}
 			CheckType();
-			SetStatus(SetVariableStatusItem::VariableName, fb::NodeStatusMessageType::INFO, Name);
+			SetStatus(SetVariableStatusItem::VariableName, fb::NodeStatusMessageType::INFO, Name.AsString());
 		});
 		AddPinValueWatcher(NOS_NAME("Value"), [this](const nos::Buffer& value,  std::optional<nos::Buffer> oldValue)
 		{
 			Value = value;
-			if (Name.empty())
+			if (!Name.IsValid())
 				return;
-			GVariables.SetVariable(Name, value);
+			if (HasType())
+				nosVariables->Set(Name, TypeName, value.GetInternal());
 		});
 	}
 
-	void OnPinUpdated(const nosPinUpdate* pinUpdate) override
+	void OnVariableUpdated(nos::Name name, nos::Name typeName, const nosBuffer* value)
 	{
-		if (pinUpdate->UpdatedField != NOS_PIN_FIELD_TYPE_NAME)
-			return;
-		ClearStatus(SetVariableStatusItem::TypeName);
-		if (Name.empty())
-			return;
-		if (TypeName && *TypeName == pinUpdate->TypeName)
-			return;
-		TypeName = pinUpdate->TypeName;
-		if (auto existingType = GVariables.GetType(Name))
-		{
-			if (existingType.value() != pinUpdate->TypeName)
-				SetPinType(ValuePinId, existingType.value());
-		}
-		else
-		{
-			GVariables.SetType(Name, pinUpdate->TypeName);
-		}
+		if (!HasType())
+			SetPinType(NOS_NAME("Value"), typeName);
 	}
 
-	std::optional<nos::Buffer> Value;
-	std::optional<nos::Name> TypeName;
+	static void VariableUpdateCallback(nosName name, void* userData, nosName typeName, const nosBuffer* value)
+	{
+		auto* node = static_cast<SetVariableNode*>(userData);
+		node->OnVariableUpdated(name, typeName, value);
+	}
 
+	void OnNodeMenuRequested(const nosContextMenuRequest* request) override
+	{
+		if (HasType()) 
+			return;
+		flatbuffers::FlatBufferBuilder fbb;
+		size_t count = 0;
+		auto res = nosEngine.GetPinDataTypeNames(nullptr, &count);
+		if (NOS_RESULT_FAILED == res)
+			return;
+		AllTypeNames.resize(count);
+		res = nosEngine.GetPinDataTypeNames(AllTypeNames.data(), &count);
+		if (NOS_RESULT_FAILED == res)
+			return;
+		std::vector<flatbuffers::Offset<nos::ContextMenuItem>> types;
+		uint32_t index = 0;
+		for (auto ty : AllTypeNames)
+			types.push_back(nos::CreateContextMenuItemDirect(fbb, nos::Name(ty).AsCStr(), index++));
+		std::vector<flatbuffers::Offset<nos::ContextMenuItem>> items;
+		items.push_back(nos::CreateContextMenuItemDirect(fbb, "Set Type", -1, &types));
+		HandleEvent(CreateAppEvent(fbb, app::CreateAppContextMenuUpdateDirect(fbb, &NodeId, request->pos(), request->instigator(), &items)));
+	}
+
+	void OnMenuCommand(nosUUID itemID, uint32_t cmd) override
+	{
+		if (HasType()) 
+			return;
+		if (cmd >= AllTypeNames.size())
+			return;
+		auto tyName = AllTypeNames[cmd];
+		SetPinType(NOS_NAME("Value"), tyName);
+	}
+
+	void CheckType()
+	{
+		if (!HasType())
+			SetStatus(SetVariableStatusItem::TypeName, fb::NodeStatusMessageType::WARNING, "Type not set");
+		else
+			ClearStatus(SetVariableStatusItem::TypeName);
+	}
+	
+	std::optional<nos::Buffer> Value;
+	std::vector<nosName> AllTypeNames;
 };
 
 
@@ -270,8 +188,10 @@ struct GetVariableNode : VariableNodeBase
 		{
 			if (oldValue)
 			{
-				std::string oldName = static_cast<const char*>(oldValue->Data());
-				GVariables.Disassociate(oldName, ValuePinId);
+				nos::Name oldName(static_cast<const char*>(oldValue->Data()));
+				nosVariables->DecreaseRefCount(oldName, nullptr);
+				nosVariables->UnregisterVariableUpdateCallback(oldName, CallbackId);
+				CallbackId = -1;
 			}
 			std::string newName = static_cast<const char*>(value.Data());
 			if (newName.empty())
@@ -281,19 +201,33 @@ struct GetVariableNode : VariableNodeBase
 			}
 			if (newName == Name)
 				return;
-			Name = std::move(newName);
+			Name = nos::Name(newName);
 			nos::Buffer outCopy;
-			if (!GVariables.GetVariable(Name, outCopy))
+			nosName outTypeName{};
+			nosBuffer outValue{};
+			auto res = nosVariables->Get(Name, &outTypeName, &outValue);
+			if (res != NOS_RESULT_NOT_FOUND)
 			{
-				GVariables.UpdateStrings();
+				SetStatus(SetVariableStatusItem::VariableName, fb::NodeStatusMessageType::FAILURE, res == NOS_RESULT_FAILED ? "Failed to get variable " + newName : "Variable not found");
 				SetPinValue(NOS_NAME("Name"), "");
 				return;
 			}
-			GVariables.Associate(Name, ValuePinId, VariableContainer::UserType::Listener);
-			SetNodeStatusMessage(Name, fb::NodeStatusMessageType::INFO);
-			CheckType();
+			SetPinType(NOS_NAME("Value"), outTypeName);
 			SetPinValue(NOS_NAME("Value"), outCopy);
+			SetNodeStatusMessage(Name.AsString(), fb::NodeStatusMessageType::INFO);
 		});
+	}
+
+	void OnVariableUpdated(nos::Name name, nos::Name typeName, const nosBuffer* value)
+	{
+		if (!HasType())
+			SetPinType(NOS_NAME("Value"), typeName);
+	}
+
+	static void VariableUpdateCallback(nosName name, void* userData, nosName typeName, const nosBuffer* value)
+	{
+		auto* node = static_cast<SetVariableNode*>(userData);
+		node->OnVariableUpdated(name, typeName, value);
 	}
 };
 	

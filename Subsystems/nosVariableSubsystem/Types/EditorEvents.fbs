@@ -2,9 +2,15 @@ include "Variable.fbs";
 
 namespace nos.sys.variables.editor;
 
+table VariableDeleted
+{
+	name: string;
+}
+
 union FromSubsystemUnion {
 	VariableList,
-	nos.sys.variables.Variable
+	nos.sys.variables.Variable,
+	VariableDeleted
 }
 
 table FromSubsystem {

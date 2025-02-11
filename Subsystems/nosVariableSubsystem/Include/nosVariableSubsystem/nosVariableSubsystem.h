@@ -26,18 +26,18 @@ typedef struct nosVariableSubsystem {
 #pragma region Helper Declarations & Macros
 
 // Make sure these are same with nossys file.
-#define NOS_SYS_VARIABLES_SUBSYSTEM_NAME "nos.sys.variables"
-#define NOS_SYS_VARIABLES_SUBSYSTEM_VERSION_MAJOR 0
-#define NOS_SYS_VARIABLES_SUBSYSTEM_VERSION_MINOR 1
+#define NOS_SYS_VARIABLES_NAME "nos.sys.variables"
+#define NOS_SYS_VARIABLES_VERSION_MAJOR 0
+#define NOS_SYS_VARIABLES_VERSION_MINOR 1
 
 extern struct nosModuleInfo nosVariablesSubsystemModuleInfo;
 extern nosVariableSubsystem* nosVariables;
 
-#define NOS_SYS_VARIABLES_SUBSYSTEM_INIT()         \
-	nosModuleInfo nosVariablesSubsystemModuleInfo; \
-	nosVariablesSubsystem* nosVariables = nullptr;
+#define NOS_SYS_VARIABLES_INIT()         \
+	nosModuleInfo nosVariableSubsystemModuleInfo; \
+	nosVariableSubsystem* nosVariables = nullptr;
 
-#define NOS_SYS_VARIABLES_SUBSYSTEM_IMPORT() NOS_IMPORT_DEP(NOS_SYS_VARIABLES_SUBSYSTEM_NAME, nosVariablesSubsystemModuleInfo, nosVariables)
+#define NOS_SYS_VARIABLES_IMPORT() NOS_IMPORT_DEP(NOS_SYS_VARIABLES_NAME, nosVariableSubsystemModuleInfo, nosVariables)
 
 #pragma endregion
 

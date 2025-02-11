@@ -67,6 +67,14 @@ struct ReadImageContext : NodeContext
 	{
 		FlushImageDecRefCallbacks();
 	}
+	
+	void OnPinValueChanged(nos::Name pinName, nosUUID pinId, nosBuffer value) override 
+	{
+		if (pinName == NOS_NAME("Out"))
+		{
+			nosEngine.LogE("AAOOAAOAOOAOA");
+		}
+	}
 
 	void UpdateStatus(State newState)
 	{

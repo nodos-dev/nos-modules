@@ -37,7 +37,9 @@ struct VariableManager
 		auto it = Variables.find(name);
 		if (it == Variables.end())
 		{
-			Variables[name] = VariableInfo{name, typeName, *inValue};
+			nos::Name newName = name;
+			nosEngine.LogI("Creating variable %s", newName.AsCStr());
+			Variables[newName] = VariableInfo{newName, typeName, *inValue};
 			OnVariableListUpdated();
 		}
 		else
@@ -234,6 +236,7 @@ nosResult NOSAPI_CALL Export(uint32_t minorVersion, void** outSubsystemContext)
 	subsystem->IncreaseRefCount = IncreaseRefCount;
 	subsystem->DecreaseRefCount = DecreaseRefCount;
 	subsystem->RegisterVariableUpdateCallback = RegisterVariableUpdateCallback;
+	subsystem->UnregisterVariableUpdateCallback = UnregisterVariableUpdateCallback;
 	*outSubsystemContext = subsystem;
 	GExportedSubsystemVersions[minorVersion] = subsystem;
 	return NOS_RESULT_SUCCESS;
