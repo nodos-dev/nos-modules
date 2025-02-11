@@ -39,7 +39,7 @@ struct ReadImageContext : NodeContext
 	std::filesystem::path FilePath;
 
 	std::mutex OutImageDecRefCallbacksMutex;
-	std::queue<std::function<void()>> OutImageDecRefCallbacks;
+	std::vector<vkss::Resource> OutPendingImageRefs;
 
 	ReadImageContext(nosFbNodePtr node) : 
 		NodeContext(node), 
@@ -102,11 +102,7 @@ struct ReadImageContext : NodeContext
 	void FlushImageDecRefCallbacks()
 	{
 		std::lock_guard<std::mutex> lock(OutImageDecRefCallbacksMutex);
-		while (!OutImageDecRefCallbacks.empty())
-		{
-			OutImageDecRefCallbacks.front()();
-			OutImageDecRefCallbacks.pop();
-		}
+		OutPendingImageRefs.clear();
 	}
 
 	nosResult LoadImage(std::filesystem::path path, nosCUUID outPinId, bool sRGB)

@@ -190,7 +190,7 @@ struct WebRTCNodeContext : nos::NodeContext {
 		InputRGBA8.Info.Texture.Width = 1280;
 		InputRGBA8.Info.Texture.Height = 720;
 
-		nosVulkan->CreateResource(&InputRGBA8);
+		nosVulkan->CreateResource(&InputRGBA8, "WebRTC Streamer Input RGBA8 Texture");
 
 		DummyInput.Info.Texture.Format = NOS_FORMAT_B8G8R8A8_SRGB;
 		DummyInput.Info.Type = NOS_RESOURCE_TYPE_TEXTURE;
@@ -208,14 +208,14 @@ struct WebRTCNodeContext : nos::NodeContext {
 			PlaneY.Info.Texture.Usage = nosImageUsage(NOS_IMAGE_USAGE_TRANSFER_SRC | NOS_IMAGE_USAGE_TRANSFER_DST);
 			PlaneY.Info.Texture.Width = InputRGBA8.Info.Texture.Width;
 			PlaneY.Info.Texture.Height = InputRGBA8.Info.Texture.Height + InputRGBA8.Info.Texture.Height / 2;
-			nosVulkan->CreateResource(&PlaneY);
+			nosVulkan->CreateResource(&PlaneY, "WebRTC Streamer Y Plane");
 			
 			nosResourceShareInfo BufY  = {};
 			BufY.Info.Type = NOS_RESOURCE_TYPE_BUFFER;
 			BufY.Info.Buffer.Size = PlaneY.Info.Texture.Width * PlaneY.Info.Texture.Height * sizeof(uint8_t);
 			BufY.Info.Buffer.Usage = nosBufferUsage(NOS_BUFFER_USAGE_TRANSFER_SRC | NOS_BUFFER_USAGE_TRANSFER_DST);
 			BufY.Info.Buffer.MemoryFlags = nosMemoryFlags(NOS_MEMORY_FLAGS_HOST_VISIBLE);
-			nosVulkan->CreateResource(&BufY);
+			nosVulkan->CreateResource(&BufY, "WebRTC Streamer Y Buffer");
 
 			nosResourceShareInfo Input = {};
 			Input.Info.Texture.Format = NOS_FORMAT_B8G8R8A8_SRGB;
@@ -223,7 +223,7 @@ struct WebRTCNodeContext : nos::NodeContext {
 			Input.Info.Texture.Usage = nosImageUsage(NOS_IMAGE_USAGE_TRANSFER_SRC | NOS_IMAGE_USAGE_TRANSFER_DST);
 			Input.Info.Texture.Width = InputRGBA8.Info.Texture.Width;
 			Input.Info.Texture.Height = InputRGBA8.Info.Texture.Height;
-			nosVulkan->CreateResource(&Input);
+			nosVulkan->CreateResource(&Input, "WebRTC Streamer Input RGBA8 Texture");
 
 			YUVBuffers.push_back(std::move(BufY));
 			YUVPlanes.push_back(std::move(PlaneY));

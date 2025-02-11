@@ -30,6 +30,7 @@ struct ResourceInterface {
 	ResourceType Type;
 
 	struct ResourceBase {
+		virtual ~ResourceBase() = default;
 		ResourceType ResourceType;
 		std::atomic_uint64_t FrameNumber;
 	};
@@ -50,7 +51,6 @@ struct ResourceInterface {
 
 	ResourceInterface(ResourceType type) : Type(type) {}
 	virtual rc<ResourceBase> CreateResource() = 0;
-	virtual void DestroyResource(ResourceBase* res) = 0;
 	virtual void Reset(ResourceBase* res) = 0;
 	virtual void WaitForDownloadToEnd(ResourceBase* res, const std::string& nodeTypeName, const std::string& nodeDisplayName, nosCopyInfo* cpy) = 0;
 	virtual void Copy(ResourceBase* res, nosCopyInfo* cpy, uuid NodeId) = 0;
@@ -65,12 +65,17 @@ struct ResourceInterface {
 struct GPUTextureResource : ResourceInterface {
 	static constexpr ResourceType RESOURCE_TYPE = ResourceInterface::ResourceType::GPUTexture;
 	struct Resource : ResourceBase {
-		nosResourceShareInfo ShareInfo = {};
+		vkss::Resource VkRes;
 		struct {
 			nosTextureFieldType FieldType = NOS_TEXTURE_FIELD_TYPE_UNKNOWN;
 			nosGPUEvent WaitEvent = 0;
 		} Params{};
-		Resource() { ResourceType = RESOURCE_TYPE; }
+		Resource(vkss::Resource res) : VkRes(std::move(res)) { ResourceType = RESOURCE_TYPE; }
+		~Resource()
+		{ 
+			if (Params.WaitEvent)
+				nosVulkan->WaitGpuEvent(&Params.WaitEvent, UINT64_MAX);  
+		}
 	};
 	typedef nosResourceShareInfo PinData;
 	nosTextureFieldType WantedField = NOS_TEXTURE_FIELD_TYPE_UNKNOWN;
@@ -89,18 +94,7 @@ struct GPUTextureResource : ResourceInterface {
 	}
 	rc<ResourceBase> CreateResource() override
 	{
-		rc<Resource> res = MakeShared<Resource>();
-		res->ShareInfo.Info.Type = NOS_RESOURCE_TYPE_TEXTURE;
-		res->ShareInfo.Info.Texture = vkss::DeserializeTextureInfo(Sample.Data()).Info.Texture;
-		nosVulkan->CreateResource(&res->ShareInfo);
-		return res;
-	}
-	void DestroyResource(ResourceBase* r) override
-	{
-		Resource* res = GetResource<GPUTextureResource>(r);
-		if (res->Params.WaitEvent)
-			nosVulkan->WaitGpuEvent(&res->Params.WaitEvent, UINT64_MAX);
-		nosVulkan->DestroyResource(&res->ShareInfo);
+		return MakeShared<Resource>(*vkss::Resource::CreateWithSameInfo(vkss::DeserializeTextureInfo(Sample.Data()), "Texture Ring Resource"));
 	}
 	void Reset(ResourceBase* r) override
 	{
@@ -127,7 +121,7 @@ struct GPUTextureResource : ResourceInterface {
 				nos::util::Stopwatch::ElapsedString(elapsed).c_str());
 		}
 
-		nosEngine.SetPinValue(cpy->ID, nos::Buffer::From(vkss::ConvertTextureInfo(res->ShareInfo)));
+		nosEngine.SetPinValue(cpy->ID, nos::Buffer::From(vkss::ConvertTextureInfo(res->VkRes)));
 	}
 
 	void Copy(ResourceBase* r, nosCopyInfo* cpy, uuid NodeId) override {
@@ -136,11 +130,11 @@ struct GPUTextureResource : ResourceInterface {
 		nosCmd cmd;
 		nosCmdBeginParams beginParams = { NOS_NAME("BoundedQueue"), NodeId, &cmd };
 		nosVulkan->Begin(&beginParams);
-		nosVulkan->Copy(cmd, &res->ShareInfo, &outputResource, 0);
+		nosVulkan->Copy(cmd, &res->VkRes, &outputResource, 0);
 		nosCmdEndParams end{ .ForceSubmit = NOS_TRUE, .OutGPUEventHandle = &res->Params.WaitEvent };
 		nosVulkan->End(cmd, &end);
 
-		nosTextureFieldType outFieldType = res->ShareInfo.Info.Texture.FieldType;
+		nosTextureFieldType outFieldType = res->VkRes.Info.Texture.FieldType;
 		auto output = vkss::DeserializeTextureInfo(cpy->PinData->Data);
 		output.Info.Texture.FieldType = outFieldType;
 		sys::vulkan::TTexture texDef = vkss::ConvertTextureInfo(output);
@@ -180,7 +174,7 @@ struct GPUTextureResource : ResourceInterface {
 
 		nosResourceShareInfo input = vkss::DeserializeTextureInfo(pinInfo);
 		nosTextureFieldType incomingField = input.Info.Texture.FieldType;
-		res->ShareInfo.Info.Texture.FieldType = incomingField;
+		res->VkRes.Info.Texture.FieldType = incomingField;
 
 		if (res->Params.WaitEvent)
 		{
@@ -195,7 +189,7 @@ struct GPUTextureResource : ResourceInterface {
 		beginParams = { ringExecuteName, params->NodeId, &cmd };
 
 		nosVulkan->Begin(&beginParams);
-		nosVulkan->Copy(cmd, &input, &res->ShareInfo, 0);
+		nosVulkan->Copy(cmd, &input, &res->VkRes, 0);
 		nosCmdEndParams end{ .ForceSubmit = NOS_TRUE, .OutGPUEventHandle = pushEventForCopyFrom ? &res->Params.WaitEvent : nullptr };
 		nosVulkan->End(cmd, &end);
 		return NOS_RESULT_SUCCESS;
@@ -227,13 +221,12 @@ struct GPUTextureResource : ResourceInterface {
 		auto outputTextureDesc = static_cast<sys::vulkan::Texture*>(pinData.Data);
 		auto output = vkss::DeserializeTextureInfo(outputTextureDesc);
 		outPinVal = Buffer::From(vkss::ConvertTextureInfo(output));
-		if (res->ShareInfo.Info.Texture.Height != output.Info.Texture.Height ||
-			res->ShareInfo.Info.Texture.Width != output.Info.Texture.Width ||
-			res->ShareInfo.Info.Texture.Format != output.Info.Texture.Format)
+		if (res->VkRes.Info.Texture.Height != output.Info.Texture.Height ||
+			res->VkRes.Info.Texture.Width != output.Info.Texture.Width ||
+			res->VkRes.Info.Texture.Format != output.Info.Texture.Format)
 		{
 			output.Memory = {};
-			output.Info.Type = NOS_RESOURCE_TYPE_TEXTURE;
-			output.Info.Texture = res->ShareInfo.Info.Texture;
+			output.Info = res->VkRes.Info;
 			output.Info.Texture.Usage = nosImageUsage(NOS_IMAGE_USAGE_TRANSFER_SRC | NOS_IMAGE_USAGE_TRANSFER_DST | NOS_IMAGE_USAGE_SAMPLED);
 
 			sys::vulkan::TTexture texDef = vkss::ConvertTextureInfo(output);
@@ -250,12 +243,17 @@ struct GPUBufferResource : ResourceInterface {
 	typedef nosResourceShareInfo PinData;
 	struct Resource : ResourceBase
 	{
-		nosResourceShareInfo ShareInfo = {};
+		Resource(vkss::Resource bufferRes) : VkRes(std::move(bufferRes)) { ResourceType = RESOURCE_TYPE; }
+		~Resource()
+		{
+			if (Params.WaitEvent)
+				nosVulkan->WaitGpuEvent(&Params.WaitEvent, UINT64_MAX);
+		}
+		vkss::Resource VkRes;
 		struct {
 			nosTextureFieldType FieldType = NOS_TEXTURE_FIELD_TYPE_UNKNOWN;
 			nosGPUEvent WaitEvent = 0;
 		} Params{};
-		Resource() { ResourceType = RESOURCE_TYPE; }
 	};
 	nosTextureFieldType WantedField = NOS_TEXTURE_FIELD_TYPE_UNKNOWN;
 	static constexpr nosBufferInfo SampleBuffer =
@@ -272,18 +270,10 @@ struct GPUBufferResource : ResourceInterface {
 		Sample = nos::Buffer::From(vkss::ConvertBufferInfo(shareInfo));
 	}
 	rc<ResourceBase> CreateResource() override {
-		rc<Resource> res = MakeShared<Resource>();
-		res->ShareInfo.Info.Type = NOS_RESOURCE_TYPE_BUFFER;
-		res->ShareInfo.Info.Buffer = vkss::ConvertToResourceInfo(*(sys::vulkan::Buffer*)Sample.Data()).Info.Buffer;
-		res->ShareInfo.Info.Buffer.Usage = nosBufferUsage(res->ShareInfo.Info.Buffer.Usage | NOS_BUFFER_USAGE_STORAGE_BUFFER);
-		nosVulkan->CreateResource(&res->ShareInfo);
-		return res;
-	}
-	void DestroyResource(ResourceBase* res) override {
-		auto r = GetResource<GPUBufferResource>(res);
-		if (r->Params.WaitEvent)
-			nosVulkan->WaitGpuEvent(&r->Params.WaitEvent, UINT64_MAX);
-		nosVulkan->DestroyResource(&r->ShareInfo);
+		nosResourceShareInfo bufInfo = vkss::ConvertToResourceInfo(*(sys::vulkan::Buffer*)Sample.Data());
+		bufInfo.Memory = {};
+		bufInfo.Info.Buffer.Usage = nosBufferUsage(bufInfo.Info.Buffer.Usage | NOS_BUFFER_USAGE_STORAGE_BUFFER);
+		return MakeShared<Resource>(*vkss::Resource::Create(bufInfo, ""));
 	}
 	void Reset(ResourceBase* res) override
 	{
@@ -310,7 +300,7 @@ struct GPUBufferResource : ResourceInterface {
 				nos::util::Stopwatch::ElapsedString(elapsed).c_str());
 		}
 
-		nosEngine.SetPinValue(cpy->ID, nos::Buffer::From(vkss::ConvertBufferInfo(r->ShareInfo)));
+		nosEngine.SetPinValue(cpy->ID, r->VkRes.ToPinData());
 	}
 
 	void Copy(ResourceBase* res, nosCopyInfo* cpy, uuid NodeId) override {
@@ -319,11 +309,11 @@ struct GPUBufferResource : ResourceInterface {
 		nosCmd cmd;
 		nosCmdBeginParams beginParams = { NOS_NAME("BoundedQueue"), NodeId, &cmd };
 		nosVulkan->Begin(&beginParams);
-		nosVulkan->Copy(cmd, &r->ShareInfo, &outputResource, 0);
+		nosVulkan->Copy(cmd, &r->VkRes, &outputResource, 0);
 		nosCmdEndParams end{ .ForceSubmit = NOS_TRUE, .OutGPUEventHandle = &r->Params.WaitEvent };
 		nosVulkan->End(cmd, &end);
 
-		nosTextureFieldType outFieldType = r->ShareInfo.Info.Buffer.FieldType;
+		nosTextureFieldType outFieldType = r->VkRes.Info.Buffer.FieldType;
 		auto outputBufferDesc = *static_cast<sys::vulkan::Buffer*>(cpy->PinData->Data);
 		outputBufferDesc.mutate_field_type((sys::vulkan::FieldType)outFieldType);
 		nosEngine.SetPinValue(cpy->ID, nos::Buffer::From(outputBufferDesc));
@@ -361,7 +351,7 @@ struct GPUBufferResource : ResourceInterface {
 		res->FrameNumber = params->FrameNumber;
 
 		nosResourceShareInfo input = vkss::ConvertToResourceInfo(*InterpretPinValue<sys::vulkan::Buffer>(pinInfo));
-		res->ShareInfo.Info.Buffer.FieldType = input.Info.Buffer.FieldType;
+		res->VkRes.Info.Buffer.FieldType = input.Info.Buffer.FieldType;
 
 		if (res->Params.WaitEvent)
 		{
@@ -376,7 +366,7 @@ struct GPUBufferResource : ResourceInterface {
 		beginParams = { ringExecuteName, params->NodeId, &cmd };
 
 		nosVulkan->Begin(&beginParams);
-		nosVulkan->Copy(cmd, &input, &res->ShareInfo, 0);
+		nosVulkan->Copy(cmd, &input, &res->VkRes, 0);
 		nosCmdEndParams end{ .ForceSubmit = NOS_TRUE, .OutGPUEventHandle = pushEventForCopyFrom ? &res->Params.WaitEvent : nullptr };
 		nosVulkan->End(cmd, &end);
 		return NOS_RESULT_SUCCESS;
@@ -417,11 +407,11 @@ struct GPUBufferResource : ResourceInterface {
 		auto outputBufferDesc = *static_cast<sys::vulkan::Buffer*>(pinData.Data);
 		auto output = vkss::ConvertToResourceInfo(outputBufferDesc);
 		outPinVal = Buffer::From(vkss::ConvertBufferInfo(output));
-		if (res->ShareInfo.Info.Buffer.Size != output.Info.Buffer.Size)
+		if (res->VkRes.Info.Buffer.Size != output.Info.Buffer.Size)
 		{
 			output.Memory = {};
 			output.Info.Type = NOS_RESOURCE_TYPE_BUFFER;
-			output.Info.Buffer = res->ShareInfo.Info.Buffer;
+			output.Info.Buffer = res->VkRes.Info.Buffer;
 			outPinVal = Buffer::From(vkss::ConvertBufferInfo(output));
 			return true;
 		}
@@ -447,8 +437,6 @@ struct CPUTrivialResource : ResourceInterface {
 		rc<Resource> res = MakeShared<Resource>();
 		res->data = Sample;
 		return res;
-	}
-	void DestroyResource(ResourceBase* res) override {
 	}
 	void Reset(ResourceBase* res) override
 	{
@@ -501,8 +489,6 @@ struct TRing
     {
         Write.Pool = {};
         Read.Pool = {};
-		for (auto& res : Resources)
-			ResInterface->DestroyResource(res.get());
         Resources.clear();
         for (uint32_t i = 0; i < size; ++i)
 		{
@@ -536,8 +522,6 @@ struct TRing
     ~TRing()
     {
         Stop();
-		for (auto& res : Resources)
-			ResInterface->DestroyResource(res.get());
         Resources.clear();
     }
 

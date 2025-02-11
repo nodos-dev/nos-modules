@@ -18,21 +18,17 @@ namespace nos::utilities
 {
 	struct UploadBuffer
 	{
-		nosResourceShareInfo BufferInfo = {};
+		vkss::Resource BufferInfo;
 		nosGPUEventResource Event = 0;
-		UploadBuffer(nosResourceShareInfo sampleBufferInfo) : BufferInfo(sampleBufferInfo)
+		UploadBuffer(nosResourceShareInfo sampleBufferInfo) : BufferInfo(*vkss::Resource::Create(sampleBufferInfo, "UploadBuffer"))
 		{
 			nosVulkan->CreateGPUEventResource(&Event);
-			nosVulkan->CreateResource(&BufferInfo);
 		}
 		UploadBuffer(const UploadBuffer& other) = delete;
 		UploadBuffer& operator=(const UploadBuffer& other) = delete;
-		UploadBuffer(UploadBuffer&& other) 
+		UploadBuffer(UploadBuffer&& other) noexcept : BufferInfo(std::move(other.BufferInfo)), Event(other.Event)
 		{
-			BufferInfo = other.BufferInfo;
-			Event = other.Event;
 			other.Event = 0;
-			other.BufferInfo = {};
 		}
 
 		~UploadBuffer()
@@ -45,7 +41,6 @@ namespace nos::utilities
 				if (res == NOS_RESULT_SUCCESS && *event)
 					nosVulkan->WaitGpuEvent(event, UINT64_MAX);
 			}
-			nosVulkan->DestroyResource(&BufferInfo);
 			nosVulkan->DestroyGPUEventResource(&Event);
 		}
 	};
@@ -152,7 +147,7 @@ namespace nos::utilities
 				nosEngine.WatchLog("UploadBufferProvider Wait", sw.ElapsedString().c_str());
 			}
 
-			nosEngine.SetPinValue(execParams[NSN_Buffer].Id, Buffer::From(vkss::ConvertBufferInfo(nextBuf.BufferInfo)));
+			nosEngine.SetPinValue(execParams[NSN_Buffer].Id, nextBuf.BufferInfo.ToPinData());
 			nosEngine.SetPinValue(execParams[NSN_GPUEventRef].Id, Buffer::From(nos::sys::vulkan::GPUEventResource(nextBuf.Event)));
 
 			return NOS_RESULT_SUCCESS;

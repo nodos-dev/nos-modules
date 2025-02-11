@@ -7,7 +7,7 @@
 
 #include <nosVulkanSubsystem/nosVulkanSubsystem.h>
 
-NOS_INIT_WITH_MIN_REQUIRED_MINOR(17)
+NOS_INIT()
 NOS_VULKAN_INIT()
 
 NOS_BEGIN_IMPORT_DEPS()

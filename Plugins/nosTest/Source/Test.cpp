@@ -12,7 +12,7 @@
 #include "Window/WindowNode.h"
 #include <cstdint>
 
-NOS_INIT_WITH_MIN_REQUIRED_MINOR(13)
+NOS_INIT()
 
 NOS_REGISTER_NAME(in1)
 NOS_REGISTER_NAME(in2)
@@ -178,12 +178,20 @@ struct TestPluginFunctions : PluginFunctions
 		auto res  = nosEngine.GetTypeInfo(NOS_NAME_STATIC("nos.test.TestStruct"), &leakedTypeInfo);
 		assert(res == NOS_RESULT_SUCCESS);
 
-		nosResourceShareInfo leakedTextureInfo{.Info={.Type = NOS_RESOURCE_TYPE_TEXTURE, .Texture={.Width = 1, .Height = 1, .Format = NOS_FORMAT_R8G8B8A8_UNORM}}};
-		res = nosVulkan->CreateResource(&leakedTextureInfo);
-		assert(res == NOS_RESULT_SUCCESS);
-		nosResourceShareInfo leakedBufferInfo{ .Info = {.Type = NOS_RESOURCE_TYPE_BUFFER, .Buffer = {.Size = 1, .Usage = NOS_BUFFER_USAGE_TRANSFER_DST}} };
-		res = nosVulkan->CreateResource(&leakedBufferInfo);
-		assert(res == NOS_RESULT_SUCCESS);
+		auto vkResOpt = vkss::Resource::Create(
+			{.Info = {.Type = NOS_RESOURCE_TYPE_TEXTURE,
+					  .Texture = {.Width = 1, .Height = 1, .Format = NOS_FORMAT_R8G8B8A8_UNORM}}},
+			"Leaked Texture");
+
+		assert(vkResOpt);
+		vkResOpt->Release();
+
+		vkResOpt = vkss::Resource::Create(
+			{.Info = {.Type = NOS_RESOURCE_TYPE_BUFFER, .Buffer = {.Size = 1, .Usage = NOS_BUFFER_USAGE_TRANSFER_DST}}},
+			"Leaked Buffer");
+		assert(vkResOpt);
+		vkResOpt->Release();
+
 		nosGPUEventResource leakedEventResource{};
 		res = nosVulkan->CreateGPUEventResource(&leakedEventResource);
 		assert(res == NOS_RESULT_SUCCESS);
@@ -274,10 +282,10 @@ struct TestPluginFunctions : PluginFunctions
 			if (out.Info.Buffer.Size != in.Info.Buffer.Size)
 			{
 				out = in;
-				nosVulkan->CreateResource(&out);
 				out.Info.Buffer.Usage = nosBufferUsage(out.Info.Buffer.Usage | NOS_BUFFER_USAGE_TRANSFER_DST);
-				auto newBuf = nos::Buffer::From(vkss::ConvertBufferInfo(out));
-				nosEngine.SetPinValue(params->Pins[1].Id, newBuf);
+				auto outRes = vkss::Resource::CreateWithSameInfo(out, "CopyBuffer");
+				out = *outRes;
+				nosEngine.SetPinValue(params->Pins[1].Id, outRes->ToPinData());
 			}
 			nosCmd cmd = nos::vkss::BeginCmd(NOS_NAME("(nos.test.CopyBuffer) Copy"), params->NodeId);
 			nosVulkan->Copy(cmd, &in, &out, 0);
