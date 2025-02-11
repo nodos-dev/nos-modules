@@ -23,17 +23,13 @@ struct VariableNodeBase : NodeContext
 	VariableNodeBase(const nosFbNode* node) : NodeContext(node)
 	{
 		TypeName = GetPin(NSN_Value)->TypeName;
-		if (!HasType())
-			SetPinOrphanState(NSN_Value, fb::PinOrphanStateType::PASSIVE, "Data type not set");
-		else
-			SetPinOrphanState(NSN_Value, fb::PinOrphanStateType::ACTIVE);
 	}
 
 	~VariableNodeBase() override
 	{
 		uint64_t refCount{};
 		auto res = nosVariables->DecreaseRefCount(Name, &refCount);
-		NOS_SOFT_CHECK(res == NOS_RESULT_SUCCESS, "Failed to decrease ref count");
+		NOS_SOFT_CHECK(res == NOS_RESULT_SUCCESS);
 	}
 
 	void UpdateStatus()
@@ -64,6 +60,7 @@ struct VariableNodeBase : NodeContext
 		if (TypeName != NSN_VOID && TypeName == pinUpdate->TypeName)
 			return;
 		TypeName = pinUpdate->TypeName;
+		SetPinOrphanState(NSN_Value, fb::PinOrphanStateType::ACTIVE);
 	}
 
 	bool HasType() const
@@ -81,6 +78,7 @@ struct SetVariableNode : VariableNodeBase
 {
 	SetVariableNode(const nosFbNode* node) : VariableNodeBase(node)
 	{
+		CheckType();
 		// For editor to show changes without a scheduled node, we use pin value change callbacks.
 		// Once we support this in the engine, we can move these to ExecuteNode function.
 		AddPinValueWatcher(NOS_NAME("Name"), [this](const nos::Buffer& value,  std::optional<nos::Buffer> oldValue)
@@ -170,9 +168,15 @@ struct SetVariableNode : VariableNodeBase
 	void CheckType()
 	{
 		if (!HasType())
+		{
 			SetStatus(SetVariableStatusItem::TypeName, fb::NodeStatusMessageType::WARNING, "Type not set");
+			SetPinOrphanState(NSN_Value, fb::PinOrphanStateType::PASSIVE, "Data type not set");
+		}
 		else
+		{
 			ClearStatus(SetVariableStatusItem::TypeName);
+			SetPinOrphanState(NSN_Value, fb::PinOrphanStateType::ACTIVE);
+		}
 	}
 	
 	std::optional<nos::Buffer> Value;
@@ -202,18 +206,19 @@ struct GetVariableNode : VariableNodeBase
 			if (newName == Name)
 				return;
 			Name = nos::Name(newName);
-			nos::Buffer outCopy;
+			nosVariables->IncreaseRefCount(Name, nullptr);
+			CallbackId = nosVariables->RegisterVariableUpdateCallback(Name, &GetVariableNode::VariableUpdateCallback, this);
 			nosName outTypeName{};
 			nosBuffer outValue{};
 			auto res = nosVariables->Get(Name, &outTypeName, &outValue);
-			if (res != NOS_RESULT_NOT_FOUND)
+			if (res != NOS_RESULT_SUCCESS)
 			{
 				SetStatus(SetVariableStatusItem::VariableName, fb::NodeStatusMessageType::FAILURE, res == NOS_RESULT_FAILED ? "Failed to get variable " + newName : "Variable not found");
 				SetPinValue(NOS_NAME("Name"), "");
 				return;
 			}
 			SetPinType(NOS_NAME("Value"), outTypeName);
-			SetPinValue(NOS_NAME("Value"), outCopy);
+			SetPinValue(NOS_NAME("Value"), outValue);
 			SetNodeStatusMessage(Name.AsString(), fb::NodeStatusMessageType::INFO);
 		});
 	}
@@ -222,11 +227,12 @@ struct GetVariableNode : VariableNodeBase
 	{
 		if (!HasType())
 			SetPinType(NOS_NAME("Value"), typeName);
+		SetPinValue(NOS_NAME("Value"), *value);
 	}
 
 	static void VariableUpdateCallback(nosName name, void* userData, nosName typeName, const nosBuffer* value)
 	{
-		auto* node = static_cast<SetVariableNode*>(userData);
+		auto* node = static_cast<GetVariableNode*>(userData);
 		node->OnVariableUpdated(name, typeName, value);
 	}
 };
