@@ -1,10 +1,10 @@
 // Copyright MediaZ Teknoloji A.S. All Rights Reserved.
 #include <Nodos/PluginHelpers.hpp>
 
+#include <nosVulkanSubsystem/nosVulkanSubsystem.h>
+
 namespace nos::utilities
 {
-
-
 
 struct SyncMultiOutletNode : NodeContext
 {
@@ -124,6 +124,11 @@ struct SyncMultiOutletNode : NodeContext
 		++InputPin.FrameNumber;
 		InputPin.Requested = false;
 		InputPin.CV.notify_all();
+		nosCmd cmd{};
+		nosCmdBeginParams beginParams = {.Name = NOS_NAME("SyncMultiOutlet Submit"), .AssociatedNodeId = NodeId, .OutCmdHandle = &cmd};
+		nosVulkan->Begin2(&beginParams);
+		nosCmdEndParams endParams = {.ForceSubmit = NOS_TRUE};
+		nosVulkan->End(cmd, &endParams);
 		return NOS_RESULT_SUCCESS;
 	}
 
