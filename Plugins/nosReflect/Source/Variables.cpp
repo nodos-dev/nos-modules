@@ -171,7 +171,7 @@ struct SetVariableNode : VariableNodeBase
 		node->OnVariableUpdated(name, typeName, value);
 	}
 
-	void OnNodeMenuRequested(const nosContextMenuRequest* request) override
+	void OnNodeMenuRequested(nosContextMenuRequestPtr request) override
 	{
 		if (HasType()) 
 			return;
@@ -193,7 +193,7 @@ struct SetVariableNode : VariableNodeBase
 		HandleEvent(CreateAppEvent(fbb, app::CreateAppContextMenuUpdateDirect(fbb, &NodeId, request->pos(), request->instigator(), &items)));
 	}
 
-	void OnMenuCommand(nosUUID itemID, uint32_t cmd) override
+	void OnMenuCommand(uuid const& itemID, uint32_t cmd) override
 	{
 		if (HasType()) 
 			return;
