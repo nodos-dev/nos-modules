@@ -118,6 +118,8 @@ public:
 
 	bool IsWriteable() {
 		std::unique_lock lock(RingMutex);
+		if (!IsFulledOnce)
+			return true;
 		assert(!(FreeCount == 0 && NextReadableFrame != NextWritableFrame));
 		return FreeCount > 0;
 	}
