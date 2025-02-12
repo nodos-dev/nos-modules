@@ -12,7 +12,7 @@ NOS_REGISTER_NAME(SetVariable)
 NOS_REGISTER_NAME(GetVariable)
 NOS_REGISTER_NAME(Name)
 
-enum class SetVariableStatusItem
+enum class VariableStatusItem
 {
 	VariableName,
 	TypeName,
@@ -40,13 +40,13 @@ struct VariableNodeBase : NodeContext
 		SetNodeStatusMessages(messages);
 	}
 
-	void  SetStatus(SetVariableStatusItem item, fb::NodeStatusMessageType msgType, std::string text)
+	void  SetStatus(VariableStatusItem item, fb::NodeStatusMessageType msgType, std::string text)
 	{
 		StatusMessages[item] = fb::TNodeStatusMessage{{}, std::move(text), msgType};
 		UpdateStatus();
 	}
 
-	void ClearStatus(SetVariableStatusItem item)
+	void ClearStatus(VariableStatusItem item)
 	{
 		StatusMessages.erase(item);
 		UpdateStatus();
@@ -56,7 +56,7 @@ struct VariableNodeBase : NodeContext
 	{
 		if (pinUpdate->UpdatedField != NOS_PIN_FIELD_TYPE_NAME)
 			return;
-		ClearStatus(SetVariableStatusItem::TypeName);
+		ClearStatus(VariableStatusItem::TypeName);
 		if (TypeName != NSN_VOID && TypeName == pinUpdate->TypeName)
 			return;
 		TypeName = pinUpdate->TypeName;
@@ -68,7 +68,7 @@ struct VariableNodeBase : NodeContext
 		return TypeName != NSN_VOID;
 	}
 
-	std::unordered_map<SetVariableStatusItem,  fb::TNodeStatusMessage> StatusMessages;
+	std::unordered_map<VariableStatusItem,  fb::TNodeStatusMessage> StatusMessages;
 	nos::Name Name;
 	nos::Name TypeName = NSN_VOID;
 	int32_t CallbackId = -1;
@@ -98,18 +98,25 @@ struct SetVariableNode : VariableNodeBase
 			}
 			if (newName.empty())
 			{
-				SetStatus(SetVariableStatusItem::VariableName, fb::NodeStatusMessageType::WARNING, "Provide a name");
+				SetStatus(VariableStatusItem::VariableName, fb::NodeStatusMessageType::WARNING, "Provide a name");
 				return;
 			}
 			Name = nos::Name(newName);
-			if (Value && HasType())
+			SetStatus(VariableStatusItem::VariableName, fb::NodeStatusMessageType::INFO, Name.AsString());
+			// Check if already exists
 			{
-				nosVariables->Set(Name, TypeName, Value->GetInternal());
-				nosVariables->IncreaseRefCount(Name, nullptr);
-				CallbackId = nosVariables->RegisterVariableUpdateCallback(Name, &SetVariableNode::VariableUpdateCallback, this);
+				nosName outTypeName{};
+				nosBuffer outValue{};
+				auto res = nosVariables->Get(Name, &outTypeName, &outValue);
+				if (res == NOS_RESULT_SUCCESS)
+				{
+					nosVariables->IncreaseRefCount(Name, nullptr);
+					CallbackId = nosVariables->RegisterVariableUpdateCallback(Name, &SetVariableNode::VariableUpdateCallback, this);
+					return;
+				}
 			}
-			CheckType();
-			SetStatus(SetVariableStatusItem::VariableName, fb::NodeStatusMessageType::INFO, Name.AsString());
+			if (Value && HasType())
+				nosVariables->Set(Name, TypeName, Value->GetInternal());
 		});
 		AddPinValueWatcher(NOS_NAME("Value"), [this](const nos::Buffer& value,  std::optional<nos::Buffer> oldValue)
 		{
@@ -169,12 +176,12 @@ struct SetVariableNode : VariableNodeBase
 	{
 		if (!HasType())
 		{
-			SetStatus(SetVariableStatusItem::TypeName, fb::NodeStatusMessageType::WARNING, "Type not set");
+			SetStatus(VariableStatusItem::TypeName, fb::NodeStatusMessageType::WARNING, "Type not set");
 			SetPinOrphanState(NSN_Value, fb::PinOrphanStateType::PASSIVE, "Data type not set");
 		}
 		else
 		{
-			ClearStatus(SetVariableStatusItem::TypeName);
+			ClearStatus(VariableStatusItem::TypeName);
 			SetPinOrphanState(NSN_Value, fb::PinOrphanStateType::ACTIVE);
 		}
 	}
@@ -200,23 +207,24 @@ struct GetVariableNode : VariableNodeBase
 			std::string newName = static_cast<const char*>(value.Data());
 			if (newName.empty())
 			{
-				SetStatus(SetVariableStatusItem::VariableName, fb::NodeStatusMessageType::WARNING, "Provide a name");
+				SetStatus(VariableStatusItem::VariableName, fb::NodeStatusMessageType::WARNING, "Provide a name");
 				return;
 			}
 			if (newName == Name)
 				return;
 			Name = nos::Name(newName);
-			nosVariables->IncreaseRefCount(Name, nullptr);
-			CallbackId = nosVariables->RegisterVariableUpdateCallback(Name, &GetVariableNode::VariableUpdateCallback, this);
 			nosName outTypeName{};
 			nosBuffer outValue{};
 			auto res = nosVariables->Get(Name, &outTypeName, &outValue);
 			if (res != NOS_RESULT_SUCCESS)
 			{
-				SetStatus(SetVariableStatusItem::VariableName, fb::NodeStatusMessageType::FAILURE, res == NOS_RESULT_FAILED ? "Failed to get variable " + newName : "Variable not found");
+				SetStatus(VariableStatusItem::VariableName, fb::NodeStatusMessageType::FAILURE, res == NOS_RESULT_FAILED ? "Failed to get variable " + newName : "Variable not found");
 				SetPinValue(NOS_NAME("Name"), "");
 				return;
 			}
+			nosVariables->IncreaseRefCount(Name, nullptr);
+			CallbackId = nosVariables->RegisterVariableUpdateCallback(Name, &GetVariableNode::VariableUpdateCallback, this);
+			ClearStatus(VariableStatusItem::VariableName);
 			SetPinType(NOS_NAME("Value"), outTypeName);
 			SetPinValue(NOS_NAME("Value"), outValue);
 			SetNodeStatusMessage(Name.AsString(), fb::NodeStatusMessageType::INFO);

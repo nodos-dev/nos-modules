@@ -97,6 +97,7 @@ struct VariableManager
 		auto& variable = it->second;
 		variable.NextCallbackId++;
 		variable.UpdateCallbacks[variable.NextCallbackId] = {callback, userData};
+		callback(name, userData, variable.TypeName, variable.Value.GetInternal());
 		return variable.NextCallbackId;
 	}
 
