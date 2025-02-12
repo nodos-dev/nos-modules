@@ -20,8 +20,6 @@ struct VariableInfo
 	nos::Name Name;
 	nos::Name TypeName;
 	nos::Buffer Value;
-	std::unordered_map<int32_t, std::pair<nosVariableUpdateCallback, void*>> UpdateCallbacks;
-	int32_t NextCallbackId = 0;
 	uint64_t RefCount;
 };
 	
@@ -108,27 +106,24 @@ struct VariableManager
 	int32_t RegisterVariableUpdateCallback(nosName name, nosVariableUpdateCallback callback, void* userData)
 	{
 		std::unique_lock lock(VariablesMutex);
+		VariableUpdateCallbacks[name][++NextCallbackId] = { callback, userData };
 		auto it = Variables.find(name);
-		if (it == Variables.end())
-			return -1;
-		auto& variable = it->second;
-		variable.NextCallbackId++;
-		variable.UpdateCallbacks[variable.NextCallbackId] = {callback, userData};
-		callback(name, userData, variable.TypeName, variable.Value.GetInternal());
-		return variable.NextCallbackId;
+		if (it != Variables.end())
+			callback(name, userData, it->second.TypeName, it->second.Value.GetInternal());
+		return NextCallbackId;
 	}
 
 	nosResult UnregisterVariableUpdateCallback(nosName name, int32_t callbackId)
 	{
 		std::unique_lock lock(VariablesMutex);
-		auto it = Variables.find(name);
-		if (it == Variables.end())
+		auto it = VariableUpdateCallbacks.find(name);
+		if (it == VariableUpdateCallbacks.end())
 			return NOS_RESULT_NOT_FOUND;
-		auto& variable = it->second;
-		auto cbIt = variable.UpdateCallbacks.find(callbackId);
-		if (cbIt == variable.UpdateCallbacks.end())
+		auto& callbacks = it->second;
+		auto cbIt = callbacks.find(callbackId);
+		if (cbIt == callbacks.end())
 			return NOS_RESULT_NOT_FOUND;
-		variable.UpdateCallbacks.erase(cbIt);
+		callbacks.erase(cbIt);
 		return NOS_RESULT_SUCCESS;
 	}
 
@@ -207,7 +202,10 @@ protected:
 
 	void SendVariableToListeners(VariableInfo& variable)
 	{
-		for (auto& [id, pr] : variable.UpdateCallbacks)
+		auto it = VariableUpdateCallbacks.find(variable.Name);
+		if (it == VariableUpdateCallbacks.end())
+			return;
+		for (auto& [id, pr] : it->second)
 		{
 			auto& [callback, userData] = pr;
 			callback(variable.Name, userData, variable.TypeName, variable.Value.GetInternal());
@@ -218,6 +216,8 @@ protected:
 
 	std::shared_mutex VariablesMutex;
 	std::unordered_map<nos::Name, VariableInfo> Variables;
+	std::unordered_map<nos::Name, std::unordered_map<int32_t, std::pair<nosVariableUpdateCallback, void*>>> VariableUpdateCallbacks;
+	int32_t NextCallbackId = 0;
 };
 
 VariableManager VariableManager::Instance{};
