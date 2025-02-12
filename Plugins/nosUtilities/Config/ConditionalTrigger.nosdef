@@ -1,0 +1,53 @@
+{
+	"nodes": [
+		{
+			"class_name": "ConditionalTrigger",
+			"display_name": "Conditional Trigger",
+			"contents_type": "Job",
+			"functions": [
+				{
+					"class_name": "Branch",
+					"contents_type": "Job",
+					"pins": [
+						{
+							"name": "InExe",
+							"type_name": "nos.exe",
+							"show_as": "INPUT_PIN",
+							"can_show_as": "INPUT_PIN_OR_PROPERTY"
+						},
+						{
+							"name": "Condition",
+							"type_name": "bool",
+							"show_as": "INPUT_PIN",
+							"can_show_as": "INPUT_PIN_OR_PROPERTY"
+						}
+					]
+				},
+				{
+					"class_name": "True",
+					"contents_type": "Job",
+					"pins": [
+						{
+							"name": "Continue",
+							"type_name": "nos.exe",
+							"show_as": "OUTPUT_PIN",
+							"can_show_as": "OUTPUT_PIN_OR_PROPERTY"
+						}
+					]
+				},
+				{
+					"class_name": "False",
+					"contents_type": "Job",
+					"pins": [
+						{
+							"name": "Continue",
+							"type_name": "nos.exe",
+							"show_as": "OUTPUT_PIN",
+							"can_show_as": "OUTPUT_PIN_OR_PROPERTY"
+						}
+					]
+				}
+			]
+		}
+	]
+}
