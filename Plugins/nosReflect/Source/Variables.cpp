@@ -40,7 +40,7 @@ struct VariableNodeBase : NodeContext
 		SetNodeStatusMessages(messages);
 	}
 
-	void  SetStatus(VariableStatusItem item, fb::NodeStatusMessageType msgType, std::string text)
+	void SetStatus(VariableStatusItem item, fb::NodeStatusMessageType msgType, std::string text)
 	{
 		StatusMessages[item] = fb::TNodeStatusMessage{{}, std::move(text), msgType};
 		UpdateStatus();
@@ -52,7 +52,7 @@ struct VariableNodeBase : NodeContext
 		UpdateStatus();
 	}
 	
-	void OnPinUpdated(const nosPinUpdate* pinUpdate) override
+	virtual void OnPinUpdated(const nosPinUpdate* pinUpdate) override
 	{
 		if (pinUpdate->UpdatedField != NOS_PIN_FIELD_TYPE_NAME)
 			return;
@@ -91,18 +91,10 @@ struct SetVariableNode : VariableNodeBase
 				CallbackId = -1;
 			}
 			std::string newName = static_cast<const char*>(value.Data());
-			if (newName.empty() && oldValue)
-			{
-				SetPinValue(NOS_NAME("Name"), *oldValue);
-				return;
-			}
-			if (newName.empty())
-			{
-				SetStatus(VariableStatusItem::VariableName, fb::NodeStatusMessageType::WARNING, "Provide a name");
-				return;
-			}
 			Name = nos::Name(newName);
-			SetStatus(VariableStatusItem::VariableName, fb::NodeStatusMessageType::INFO, Name.AsString());
+			CheckName();
+			if (!HasName())
+				return;
 			// Check if already exists
 			{
 				nosName outTypeName{};
@@ -115,17 +107,45 @@ struct SetVariableNode : VariableNodeBase
 					return;
 				}
 			}
-			if (Value && HasType())
-				nosVariables->Set(Name, TypeName, Value->GetInternal());
+			if (HasType())
+			{
+				if (Value)
+					nosVariables->Set(Name, TypeName, Value->GetInternal());
+				else
+					SetDefaultValue();
+			}
 		});
 		AddPinValueWatcher(NOS_NAME("Value"), [this](const nos::Buffer& value,  std::optional<nos::Buffer> oldValue)
 		{
-			Value = value;
-			if (!Name.IsValid())
+			if (!HasType())
 				return;
-			if (HasType())
-				nosVariables->Set(Name, TypeName, value.GetInternal());
+			Value = value;
+			if (!HasName())
+				return;
+			nosVariables->Set(Name, TypeName, Value->GetInternal());
 		});
+	}
+
+	void OnPinUpdated(const nosPinUpdate* pinUpdate) override
+	{
+		VariableNodeBase::OnPinUpdated(pinUpdate);
+		if (pinUpdate->UpdatedField != NOS_PIN_FIELD_TYPE_NAME)
+			return;
+		CheckType();
+		if (HasName() && HasType())
+		{
+			if (!Value)
+				SetDefaultValue();
+			else
+				nosVariables->Set(Name, TypeName, Value->GetInternal());
+		}
+	}
+
+	void SetDefaultValue()
+	{
+		nosBuffer def{};
+		nosEngine.GetDefaultValueOfType(TypeName, &def);
+		SetPinValue(NOS_NAME("Value"), def);
 	}
 
 	void OnVariableUpdated(nos::Name name, nos::Name typeName, const nosBuffer* value)
@@ -184,6 +204,19 @@ struct SetVariableNode : VariableNodeBase
 			ClearStatus(VariableStatusItem::TypeName);
 			SetPinOrphanState(NSN_Value, fb::PinOrphanStateType::ACTIVE);
 		}
+	}
+
+	bool HasName() const
+	{
+		return Name.IsValid() && !Name.AsString().empty();
+	}
+
+	void CheckName()
+	{
+		if (!HasName())
+			SetStatus(VariableStatusItem::VariableName, fb::NodeStatusMessageType::WARNING, "Provide a name");
+		else
+			SetStatus(VariableStatusItem::VariableName, fb::NodeStatusMessageType::INFO, Name.AsString());
 	}
 	
 	std::optional<nos::Buffer> Value;

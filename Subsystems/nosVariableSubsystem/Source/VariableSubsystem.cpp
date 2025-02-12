@@ -35,20 +35,19 @@ struct VariableManager
 	{
 		std::unique_lock lock(VariablesMutex);
 		auto it = Variables.find(name);
-		VariableInfo* variable = nullptr;
 		if (it == Variables.end())
 		{
 			nos::Name newName = name;
 			nosEngine.LogI("Creating variable %s", newName.AsCStr());
-			variable = &(Variables[newName] = VariableInfo{ newName, typeName, *inValue });
+			auto& variable = (Variables[newName] = VariableInfo{ newName, typeName, *inValue });
+			OnVariableAdded(variable);
 		}
 		else
 		{
 			it->second.TypeName = typeName;
 			it->second.Value = *inValue;
-			variable = &it->second;
+			OnVariableUpdated(it->second);
 		}
-		OnVariableUpdated(*variable);
 		return NOS_RESULT_SUCCESS;
 	}
 
@@ -146,6 +145,12 @@ protected:
 	{
 		SendVariableListToEditors();
 		SendVariableNameStringListUpdate();
+	}
+
+	void OnVariableAdded(VariableInfo& variable)
+	{
+		SendVariableNameStringListUpdate();
+		OnVariableUpdated(variable);
 	}
 
 	void OnVariableUpdated(VariableInfo& variable)
