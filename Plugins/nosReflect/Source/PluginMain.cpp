@@ -1,12 +1,16 @@
 #include <Nodos/PluginHelpers.hpp>
 #include <Nodos/Helpers.hpp>
+
 #include <nosVulkanSubsystem/nosVulkanSubsystem.h>
+#include <nosVariableSubsystem/nosVariableSubsystem.h>
 
 NOS_INIT()
 NOS_VULKAN_INIT()
+NOS_SYS_VARIABLES_INIT()
 
 NOS_BEGIN_IMPORT_DEPS()
 	NOS_VULKAN_IMPORT()
+	NOS_SYS_VARIABLES_IMPORT()
 NOS_END_IMPORT_DEPS()
 
 namespace nos::reflect

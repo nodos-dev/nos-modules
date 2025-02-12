@@ -225,7 +225,7 @@
           "can_show_as": "INPUT_PIN_OR_PROPERTY",
           "visualizer": {
             "type": "COMBO_BOX",
-            "name": "nos.reflect.VariableNames"
+            "name": "nos.sys.variables.Names"
           }
         },
         {

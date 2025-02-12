@@ -1,4 +1,5 @@
-set(MODULE_DEPENDENCIES "nos.sys.vulkan-5.25") # nos.sys.vulkan is a soft dependency.
+# Copyright MediaZ Teknoloji A.S. All Rights Reserved.
+set(MODULE_DEPENDENCIES "nos.sys.vulkan-5.25" "nos.sys.variables-0.1")
 set(dep_idx 0)
 foreach(module_name_version ${MODULE_DEPENDENCIES})
     # module_name_version: <MODULE_NAME>-<MODULE_VERSION>
@@ -15,7 +16,3 @@ nos_add_plugin("nosReflect" "${MODULE_DEPENDENCIES_TARGETS}" "${INCLUDE_FOLDERS}
 
 # Helpers need C++20
 set_target_properties("nosReflect" PROPERTIES CXX_STANDARD 20)
-
-# # Link flatbuffers.lib
-# target_link_directories("nosReflect" PRIVATE "${NOS_SDK_DIR}/lib")
-# target_link_libraries("nosReflect" PRIVATE flatbuffers)

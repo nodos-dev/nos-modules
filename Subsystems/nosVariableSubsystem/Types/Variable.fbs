@@ -1,0 +1,9 @@
+namespace nos.sys.variables;
+attribute dynamic;
+
+table Variable {
+	name: string;
+	type_name: string;
+	value: [ubyte] (dynamic: "type_name");
+}
+
