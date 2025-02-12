@@ -108,8 +108,10 @@ void NOSAPI_CALL OnPathStop(nosCUUID scheduledPinId)
 	GAnimationSysContext->Animator.DeletePathInfo(scheduledPinId);
 }
 
-void NOSAPI_CALL OnEndFrame(nosCUUID scheduledPinId)
+void NOSAPI_CALL OnEndFrame(nosCUUID scheduledPinId, nosEndFrameCause cause)
 {
+	if (cause != NOS_END_FRAME_FINISHED)
+		return;
 	GAnimationSysContext->Animator.PathExecutionFinished(scheduledPinId);
 }
 
