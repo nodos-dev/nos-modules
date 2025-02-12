@@ -35,19 +35,20 @@ struct VariableManager
 	{
 		std::unique_lock lock(VariablesMutex);
 		auto it = Variables.find(name);
+		VariableInfo* variable = nullptr;
 		if (it == Variables.end())
 		{
 			nos::Name newName = name;
 			nosEngine.LogI("Creating variable %s", newName.AsCStr());
-			Variables[newName] = VariableInfo{newName, typeName, *inValue};
-			OnVariableListUpdated();
+			variable = &(Variables[newName] = VariableInfo{ newName, typeName, *inValue });
 		}
 		else
 		{
 			it->second.TypeName = typeName;
 			it->second.Value = *inValue;
-			OnVariableUpdated(it->second);
+			variable = &it->second;
 		}
+		OnVariableUpdated(*variable);
 		return NOS_RESULT_SUCCESS;
 	}
 
@@ -85,6 +86,23 @@ struct VariableManager
 		it->second.RefCount--;
 		if (outOptRefCount)
 			*outOptRefCount = it->second.RefCount;
+		return NOS_RESULT_SUCCESS;
+	}
+
+	nosResult DeleteVariable(nos::Name name)
+	{
+		std::unique_lock lock(VariablesMutex);
+		auto it = Variables.find(name);
+		if (it == Variables.end())
+			return NOS_RESULT_NOT_FOUND;
+		if (it->second.RefCount > 0)
+		{
+			nosEngine.LogE("Cannot delete variable %s, it still has %d references", name.AsCStr(), it->second.RefCount);
+			return NOS_RESULT_FAILED;
+		}
+		nosEngine.LogI("Deleting variable %s", name.AsCStr());
+		Variables.erase(it);
+		OnVariableDeleted(name);
 		return NOS_RESULT_SUCCESS;
 	}
 
@@ -134,6 +152,16 @@ protected:
 	{
 		SendVariableToEditors(variable);
 		SendVariableToListeners(variable);
+	}
+
+	void OnVariableDeleted(nos::Name name)
+	{
+		flatbuffers::FlatBufferBuilder fbb;
+		auto offset= editor::CreateVariableDeletedDirect(fbb, name.AsCStr());
+		auto event = editor::CreateFromSubsystem(fbb, editor::FromSubsystemUnion::VariableDeleted, offset.Union());
+		fbb.Finish(event);
+		nos::Buffer buf = fbb.Release();
+		nosEngine.SendCustomMessageToEditors(nosEngine.Module->Id.Name, buf);
 	}
 
 	void SendVariableListToEditors(std::optional<uint64_t> optEditorId = std::nullopt)
@@ -253,6 +281,41 @@ nosResult NOSAPI_CALL UnloadSubsystem()
 	return NOS_RESULT_SUCCESS;
 }
 
+namespace editor
+{
+void NOSAPI_CALL OnMessageFromEditor(uint64_t editorId, nosBuffer message)
+{
+	auto msg = flatbuffers::GetRoot<FromEditor>(message.Data);
+	switch (msg->event_type())
+	{
+	case FromEditorUnion::SetVariable:
+	{
+		auto setVar = msg->event_as_SetVariable();
+		if (auto variable = setVar->variable())
+		{
+			nos::Name name(variable->name()->c_str());
+			nos::Name typeName(variable->type_name()->c_str());
+			nosBuffer value{(void*)variable->value()->data(), variable->value()->size()};
+			VariableManager::GetInstance().Set(name, typeName, &value);
+		}
+		break;
+	}
+	case FromEditorUnion::DeleteVariable:
+	{
+		auto delVar = msg->event_as_DeleteVariable();
+		if (auto name = delVar->name())
+		{
+			nos::Name varName(name->c_str());
+			VariableManager::GetInstance().DeleteVariable(varName);
+		}
+		break;
+	}
+	default:
+		break;
+	}
+}
+}
+
 extern "C"
 {
 NOSAPI_ATTR nosResult NOSAPI_CALL nosExportSubsystem(nosSubsystemFunctions* subsystemFunctions)
@@ -264,6 +327,7 @@ NOSAPI_ATTR nosResult NOSAPI_CALL nosExportSubsystem(nosSubsystemFunctions* subs
 	{
 		VariableManager::GetInstance().OnEditorConnected(editorId);
 	};
+	subsystemFunctions->OnMessageFromEditor = editor::OnMessageFromEditor;
 	return NOS_RESULT_SUCCESS;
 }
 }

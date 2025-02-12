@@ -67,14 +67,6 @@ struct ReadImageContext : NodeContext
 	{
 		FlushImageDecRefCallbacks();
 	}
-	
-	void OnPinValueChanged(nos::Name pinName, nosUUID pinId, nosBuffer value) override 
-	{
-		if (pinName == NOS_NAME("Out"))
-		{
-			nosEngine.LogE("AAOOAAOAOOAOA");
-		}
-	}
 
 	void UpdateStatus(State newState)
 	{
@@ -175,10 +167,8 @@ struct ReadImageContext : NodeContext
 					};
 					nosVulkan->Begin2(&beginParams);
 					nosVulkan->ImageLoad(cmd, img, nosVec2u(w, h), NOS_FORMAT_R8G8B8A8_SRGB, &outRes);
-					nosGPUEvent gpuEvent{};
-					nosCmdEndParams endParams{ .ForceSubmit = true, .OutGPUEventHandle = &gpuEvent };
+					nosCmdEndParams endParams{ .ForceSubmit = true };
 					nosVulkan->End(cmd, &endParams);
-					nosVulkan->WaitGpuEvent(&gpuEvent, UINT64_MAX);
 
 					nosEngine.SetPinValue(outPinId, nos::Buffer::From(vkss::ConvertTextureInfo(outRes)));
 
