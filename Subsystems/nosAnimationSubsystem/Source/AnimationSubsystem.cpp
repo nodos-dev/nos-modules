@@ -57,7 +57,7 @@ struct AnimationSubsystemCtx
 nosResult OnRequest(uint32_t minorVersion, void** outSubsystemCtx)
 {
 	*outSubsystemCtx = &GAnimationSysContext->AnimationSubsystem;
-	return NOS_RESULT_NOT_IMPLEMENTED;
+	return NOS_RESULT_SUCCESS;
 }
 
 nosResult OnPreExecuteNode(nosNodeExecuteParams* params)

@@ -7,6 +7,7 @@
 
 namespace nos::reflect
 {
+NOS_REGISTER_NAME(Type)
 struct MakeNode : NodeContext
 {
     std::optional<nos::TypeInfo> Type = {};
@@ -110,7 +111,8 @@ struct MakeNode : NodeContext
         flatbuffers::FlatBufferBuilder fbb;
         
         std::vector<uint8_t> data = nos::Buffer(nos::Name(typeInfo->TypeName).AsCStr(), 1 + nos::Name(typeInfo->TypeName).AsString().size());
-        std::vector <flatbuffers::Offset<fb::TemplateParameter>> params = { fb::CreateTemplateParameterDirect(fbb, "string", &data) };
+		std::vector<flatbuffers::Offset<fb::TemplateParameter>> params = {
+			fb::CreateTemplateParameterDirect(fbb, NSN_Type.AsCStr(), "string", &data)};
         auto paramsOffset = fbb.CreateVector(params);
 		auto typeNameOffset = fbb.CreateString(nos::Name(typeInfo->TypeName).AsCStr());
         
@@ -279,7 +281,7 @@ struct MakeNode : NodeContext
 			std::vector<uint8_t> data =
 				nos::Buffer(nos::Name(Type->TypeName).AsCStr(), 1 + nos::Name(Type->TypeName).AsString().size());
 			std::vector<flatbuffers::Offset<fb::TemplateParameter>> params = {
-				fb::CreateTemplateParameterDirect(fbb, "string", &data)};
+				fb::CreateTemplateParameterDirect(fbb, NSN_Type.AsCStr(), "string", &data)};
 			HandleEvent(CreateAppEvent(fbb,
 												  CreatePartialNodeUpdateDirect(fbb,
 																				&NodeId,
@@ -366,7 +368,7 @@ nosResult RegisterMake(nosNodeFunctions* fn)
 		info.display_name = "Make " + name.substr(idx);
 		std::vector<uint8_t> data(1 + name.size());
 		memcpy(data.data(), name.data(), name.size());
-		info.params.emplace_back(new fb::TTemplateParameter{ {},"string", std::move(data) });
+		info.params.emplace_back(new fb::TTemplateParameter{{}, NSN_Type.AsString(), "string", std::move(data)});
 		flatbuffers::FlatBufferBuilder fbb;
 		fbb.Finish(CreateNodeInfo(fbb, &info));
 		nos::Buffer buf = fbb.Release();

@@ -193,7 +193,6 @@ enum class MathNodeTypes : int {
 	SineWave,
 	Clamp,
 	Absolute,
-	AddTrack,
 	AddTransform,
 	PerspectiveView,
 	Eval,
@@ -225,33 +224,6 @@ void FieldIterator(F&& f)
 		using Type = std::remove_pointer_t<typename T::Traits::template FieldType<i>>;
 		f.template operator() < i, Type > (ref->values ? ref->values[i] : 0);
 	});
-}
-
-nosResult AddTrack(void* ctx, nosNodeExecuteParams* params)
-{
-	auto pins = GetPinValues(params);
-	auto ids = GetPinIds(params);
-	// TODO: Remove these once generic table aritmetic ops are supported
-	auto* xTrack = flatbuffers::GetMutableRoot<fb::Track>(pins[NSN_X]);
-	auto* yTrack = flatbuffers::GetMutableRoot<fb::Track>(pins[NSN_Y]);
-	fb::TTrack sumTrack;
-	xTrack->UnPackTo(&sumTrack);
-	reinterpret_cast<glm::vec3&>(sumTrack.location) += reinterpret_cast<const glm::vec3&>(*yTrack->location());
-	reinterpret_cast<glm::vec3&>(sumTrack.rotation) += reinterpret_cast<const glm::vec3&>(*yTrack->rotation());
-	sumTrack.fov += yTrack->fov();
-	sumTrack.focus += yTrack->focus();
-	sumTrack.zoom += yTrack->zoom();
-	sumTrack.render_ratio += yTrack->render_ratio();
-	reinterpret_cast<glm::vec2&>(sumTrack.sensor_size) += reinterpret_cast<const glm::vec2&>(*yTrack->sensor_size());
-	sumTrack.pixel_aspect_ratio += yTrack->pixel_aspect_ratio();
-	sumTrack.nodal_offset += yTrack->nodal_offset();
-	sumTrack.focus_distance += yTrack->focus_distance();
-	auto& sumDistortion = sumTrack.lens_distortion;
-	auto& yDistortion = *yTrack->lens_distortion();
-	reinterpret_cast<glm::vec2&>(sumDistortion.mutable_center_shift()) += reinterpret_cast<const glm::vec2&>(yDistortion.center_shift());
-	reinterpret_cast<glm::vec2&>(sumDistortion.mutable_k1k2()) += reinterpret_cast<const glm::vec2&>(yDistortion.k1k2());
-	sumDistortion.mutate_distortion_scale(sumDistortion.distortion_scale() + yDistortion.distortion_scale());
-	return nosEngine.SetPinValue(ids[NSN_Z], nos::Buffer::From(sumTrack));
 }
 
 nosResult AddTransform(void* ctx, nosNodeExecuteParams* params)
@@ -344,11 +316,6 @@ nosResult NOSAPI_CALL ExportNodeFunctions(size_t* outCount, nosNodeFunctions** o
 				*(static_cast<float*>(outBuf->Data)) = std::abs(value);
 				return NOS_RESULT_SUCCESS;
 				};
-			break;
-		}
-		case MathNodeTypes::AddTrack: {
-			node->ClassName = NOS_NAME_STATIC("nos.math.Add_Track");
-			node->ExecuteNode = AddTrack;
 			break;
 		}
 		case MathNodeTypes::AddTransform: {

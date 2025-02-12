@@ -90,6 +90,13 @@ extern "C"
 NOSAPI_ATTR nosResult NOSAPI_CALL nosExportPlugin(nosPluginFunctions* outPluginFunctions)
 {
 	outPluginFunctions->ExportNodeFunctions = ExportNodeFunctions;
+	outPluginFunctions->GetRenamedTypes = [](nosName* outRenamedFrom, nosName* outRenamedTo, size_t* outCount) {
+		*outCount = 1;
+		if (!outRenamedFrom)
+			return;
+		outRenamedFrom[0] = NOS_NAME("nos.fb.BinaryOperator");
+		outRenamedTo[0] = NOS_NAME("nos.reflect.BinaryOperator");
+	};
 	return NOS_RESULT_SUCCESS;
 }
 }

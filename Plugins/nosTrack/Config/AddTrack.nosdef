@@ -1,0 +1,127 @@
+{
+	"nodes": [
+		{
+			"class_name": "AddTrack",
+			"contents_type": "Job",
+			"pins": [
+				{
+					"name": "X",
+					"type_name": "nos.track.Track",
+					"show_as": "INPUT_PIN",
+					"can_show_as": "INPUT_PIN_OR_PROPERTY",
+					"data": {
+						"location": {
+							"x": 0,
+							"y": 0,
+							"z": 0
+						},
+						"rotation": {
+							"x": 0,
+							"y": 0,
+							"z": 0
+						},
+						"fov": 0,
+						"focus": 0.0,
+						"zoom": 0.0,
+						"render_ratio": 0.0,
+						"sensor_size": {
+							"x": 0.0,
+							"y": 0.0
+						},
+						"pixel_aspect_ratio": 0.0,
+						"nodal_offset": 0.0,
+						"lens_distortion": {
+							"distortion_scale": 0.0,
+							"k1k2": {
+								"x": 0.0,
+								"y": 0.0
+							},
+							"center_shift": {
+								"x": 0.0,
+								"y": 0.0
+							}
+						}
+					}
+				},
+				{
+					"name": "Y",
+					"type_name": "nos.track.Track",
+					"show_as": "INPUT_PIN",
+					"can_show_as": "INPUT_PIN_OR_PROPERTY",
+					"data": {
+						"location": {
+							"x": 0,
+							"y": 0,
+							"z": 0
+						},
+						"rotation": {
+							"x": 0,
+							"y": 0,
+							"z": 0
+						},
+						"fov": 0,
+						"focus": 0.0,
+						"zoom": 0.0,
+						"render_ratio": 0.0,
+						"sensor_size": {
+							"x": 0.0,
+							"y": 0.0
+						},
+						"pixel_aspect_ratio": 0.0,
+						"nodal_offset": 0.0,
+						"lens_distortion": {
+							"distortion_scale": 0.0,
+							"k1k2": {
+								"x": 0.0,
+								"y": 0.0
+							},
+							"center_shift": {
+								"x": 0.0,
+								"y": 0.0
+							}
+						}
+					}
+				},
+				{
+					"name": "Z",
+					"type_name": "nos.track.Track",
+					"show_as": "OUTPUT_PIN",
+					"can_show_as": "OUTPUT_PIN_OR_PROPERTY",
+					"data": {
+						"location": {
+							"x": 0,
+							"y": 0,
+							"z": 0
+						},
+						"rotation": {
+							"x": 0,
+							"y": 0,
+							"z": 0
+						},
+						"fov": 0,
+						"focus": 0.0,
+						"zoom": 0.0,
+						"render_ratio": 0.0,
+						"sensor_size": {
+							"x": 0.0,
+							"y": 0.0
+						},
+						"pixel_aspect_ratio": 0.0,
+						"nodal_offset": 0.0,
+						"lens_distortion": {
+							"distortion_scale": 0.0,
+							"k1k2": {
+								"x": 0.0,
+								"y": 0.0
+							},
+							"center_shift": {
+								"x": 0.0,
+								"y": 0.0
+							}
+						}
+					}
+				}
+			]
+		}
+	]
+}

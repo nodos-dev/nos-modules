@@ -18,7 +18,10 @@ struct BreakNode : NodeContext
             auto typeName = nos::Name(pin->type_name()->string_view());
 			if (NSN_VOID == typeName)
 				break;
-			Type = nos::TypeInfo(typeName);
+			auto ty = nos::TypeInfo(typeName);
+			if (!ty)
+				return;
+			Type = std::move(ty);
 			LoadPins(false);
             break;
         }

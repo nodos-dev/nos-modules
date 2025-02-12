@@ -15,9 +15,12 @@
   },
   "node_definitions": [
     "Config/FreeD.nosdef",
-    "Config/UserTrack.nosdef"
+    "Config/UserTrack.nosdef",
+	"Config/AddTrack.nosdef"
   ],
-  "custom_types": [],
+    "custom_types": [
+        "Config/Track.fbs"
+    ],
   "binary_path": "Binaries/nosTrack",
   "associated_nodes": [
     {
@@ -27,10 +30,15 @@
       "name_aliases": [ "virtual camera", "udp port" ]
     },
     {
-      "category": "nosTrack",
-      "class_name": "UserTrack",
-      "display_name": "User Track",
-      "name_aliases": [ "virtual camera" ]
+        "category": "nosTrack",
+        "class_name": "UserTrack",
+        "display_name": "User Track",
+        "name_aliases": [ "virtual camera" ]
+    },
+    {
+		"category": "Math|Addition",
+		"class_name": "AddTrack",
+		"display_name": "Add Track"
     }
   ]
 }

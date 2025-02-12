@@ -1,0 +1,11 @@
+namespace nos.reflect;
+
+enum BinaryOperator : uint
+{
+    ADD,
+    SUB,
+    MUL,
+    DIV,
+    EXP,
+    LOG,
+}

@@ -1,0 +1,44 @@
+include "Builtins.fbs";
+
+
+
+namespace nos.track;
+
+struct LensDistortion {
+    k1k2:               nos.fb.vec2(native_inline, id: 0);
+    center_shift:       nos.fb.vec2(native_inline, id: 1);
+    distortion_scale:   float(id: 2);
+}
+
+table Track
+{
+    location:               nos.fb.vec3     (native_inline, id: 0);
+    rotation:               nos.fb.vec3     (native_inline, id: 1);
+    fov:                    float           (id: 2);
+    zoom:                   float           (id: 3);
+    focus:                  float           (id: 4);
+    render_ratio:           float           (id: 5);
+    sensor_size:            nos.fb.vec2     (native_inline, id: 6);
+    pixel_aspect_ratio:     float           (id: 7);
+    nodal_offset:           float           (id: 8);
+    focus_distance:         float           (id: 9);
+    lens_distortion:        LensDistortion  (native_inline, id: 10);
+}
+
+enum CoordinateSystem : uint {
+    XYZ = 0, // Identity
+    ZYX = 1, // Reverse
+    YZX = 2, // Left Shift
+    ZXY = 4, // Right Shift
+    YXZ = 3, // Do 1 then 2
+    XZY = 5, // Do 1 then 4
+}
+
+enum RotationSystem : uint {
+  PTR = 0,
+  RTP = 1,
+  TRP = 2,
+  TPR = 3,
+  RPT = 4,
+  PRT = 5,
+}

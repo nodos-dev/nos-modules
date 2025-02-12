@@ -1,9 +1,12 @@
 // Copyright MediaZ Teknoloji A.S. All Rights Reserved.
 
 #include "TypeCommon.h"
+#include "Reflect_generated.h"
 
 namespace nos::reflect
 {
+NOS_REGISTER_NAME(Type)
+NOS_REGISTER_NAME(Operator)
 std::string CapitalizeFirstLetter(const char* str)
 {
 	std::string copy = str;
@@ -60,7 +63,7 @@ static void MapScalarToT(nosTypeInfo ty, auto&& f)
 
 template<typename RightHandSide>
 requires std::is_scalar_v<RightHandSide> || std::is_same_v<RightHandSide, void>
-static void DoOp(fb::BinaryOperator op, nosTypeInfo const& ty, uint8_t* lhs, std::conditional_t<std::is_same_v<RightHandSide, void>, uint8_t, RightHandSide>* rhs, uint8_t* dst)
+static void DoOp(reflect::BinaryOperator op, nosTypeInfo const& ty, uint8_t* lhs, std::conditional_t<std::is_same_v<RightHandSide, void>, uint8_t, RightHandSide>* rhs, uint8_t* dst)
 {
 	constexpr bool isRightHandVoid = std::is_same_v<RightHandSide, void>;
     switch(ty.BaseType)
@@ -87,37 +90,37 @@ static void DoOp(fb::BinaryOperator op, nosTypeInfo const& ty, uint8_t* lhs, std
 		using RightHandSideT = std::conditional_t<isRightHandVoid, T, RightHandSide>;
         switch(op)
         {
-            case fb::BinaryOperator::ADD: *(T*)dst = *(T*)lhs + *(RightHandSideT*)rhs; break;
-            case fb::BinaryOperator::SUB: *(T*)dst = *(T*)lhs - *(RightHandSideT*)rhs; break;
-            case fb::BinaryOperator::MUL: *(T*)dst = *(T*)lhs * *(RightHandSideT*)rhs; break;
-            case fb::BinaryOperator::DIV: 
+            case reflect::BinaryOperator::ADD: *(T*)dst = *(T*)lhs + *(RightHandSideT*)rhs; break;
+            case reflect::BinaryOperator::SUB: *(T*)dst = *(T*)lhs - *(RightHandSideT*)rhs; break;
+            case reflect::BinaryOperator::MUL: *(T*)dst = *(T*)lhs * *(RightHandSideT*)rhs; break;
+            case reflect::BinaryOperator::DIV: 
             {
                 if (T(0) != *(RightHandSideT*)rhs)
                     *(T*)dst = *(T*)lhs / *(RightHandSideT*)rhs;
                 else nosEngine.LogW("Division by zero!");
                 break;
             }
-            case fb::BinaryOperator::EXP: *(T*)dst = (T)std::pow(*(T*)lhs, *(RightHandSideT*)rhs); break;
-            case fb::BinaryOperator::LOG: *(T*)dst = (T)(std::log(*(T*)lhs) / std::log(*(RightHandSideT*)rhs)); break;
+            case reflect::BinaryOperator::EXP: *(T*)dst = (T)std::pow(*(T*)lhs, *(RightHandSideT*)rhs); break;
+            case reflect::BinaryOperator::LOG: *(T*)dst = (T)(std::log(*(T*)lhs) / std::log(*(RightHandSideT*)rhs)); break;
             default:
                 *(T*)dst = 0;
         }
     });
 }
 
-void DoScalarOp(fb::BinaryOperator op, nosTypeInfo const& ty, uint8_t* lhs, nosTypeInfo const& scalarTy, void* rhs, uint8_t* dst)
+void DoScalarOp(reflect::BinaryOperator op, nosTypeInfo const& ty, uint8_t* lhs, nosTypeInfo const& scalarTy, void* rhs, uint8_t* dst)
 {
 	MapScalarToT(scalarTy, [&]<class T>() -> void {
 		DoOp<T>(op, ty, lhs, static_cast<T*>(rhs), dst);
 	});
 }
 
-const char* BinaryOpToDisplayName(fb::BinaryOperator op)
+const char* BinaryOpToDisplayName(reflect::BinaryOperator op)
 {
-	static std::unordered_map<fb::BinaryOperator, std::string> names;
+	static std::unordered_map<reflect::BinaryOperator, std::string> names;
 	auto it = names.find(op);
 	if (it == names.end())
-		names[op] = CapitalizeFirstLetter(ToLower(fb::EnumNameBinaryOperator(op)).c_str());
+		names[op] = CapitalizeFirstLetter(ToLower(reflect::EnumNameBinaryOperator(op)).c_str());
 	return names[op].c_str();
 }
 
@@ -125,7 +128,7 @@ template<bool IsScalarArithmetic>
 struct ArithmeticNodeContext : NodeContext
 {
 	std::optional<nos::TypeInfo> Type = std::nullopt;
-	std::optional<fb::BinaryOperator> Operator;
+	std::optional<reflect::BinaryOperator> Operator;
 	std::conditional_t<IsScalarArithmetic, std::optional<nos::TypeInfo>, std::tuple<>> ScalarType =
 		[]() {
 		if constexpr (IsScalarArithmetic)
@@ -140,16 +143,18 @@ struct ArithmeticNodeContext : NodeContext
 
 		if (flatbuffers::IsFieldPresent(node, fb::Node::VT_TEMPLATE_PARAMETERS))
 		{
-			for (auto p : *node->template_parameters())
+			for (auto templateParam : *node->template_parameters())
 			{
-				if ("string" == p->type_name()->str())
+				if ("string" == templateParam->name()->string_view() ||
+					NSN_Type == templateParam->name()->string_view())
 				{
-					newTypeName = nos::Name((const char*)p->value()->Data());
+					newTypeName = nos::Name((const char*)templateParam->value()->Data());
 					continue;
 				}
-				if ("nos.fb.BinaryOperator" == p->type_name()->str())
+				if ("nos.reflect.BinaryOperator" == templateParam->name()->string_view() ||
+					NSN_Operator == templateParam->name()->string_view())
 				{
-					Operator = *(fb::BinaryOperator*)p->value()->Data();
+					Operator = *(reflect::BinaryOperator*)templateParam->value()->Data();
 					continue;
 				}
 			}
@@ -178,14 +183,17 @@ struct ArithmeticNodeContext : NodeContext
 			SetOperator(*Operator, false);
 	}
 
-	void SetOperator(fb::BinaryOperator op, bool addTemplateParams)
+	void SetOperator(reflect::BinaryOperator op, bool addTemplateParams)
 	{
 		Operator = op;
 		flatbuffers::FlatBufferBuilder fbb;
-		auto displayName = fbb.CreateString(BinaryOpToDisplayName(op));
+		std::string displayNameStr = BinaryOpToDisplayName(op);
+		if constexpr (IsScalarArithmetic)
+			displayNameStr += " (Scalar)";
+		auto displayName = fbb.CreateString(displayNameStr);
 		std::vector<uint8_t> opData = nos::Buffer::From(*Operator);
 		std::vector params = {
-			fb::CreateTemplateParameterDirect(fbb, "nos.fb.BinaryOperator", &opData)
+			fb::CreateTemplateParameterDirect(fbb, NSN_Operator.AsCStr(), "nos.reflect.BinaryOperator", &opData)
 		};
 		auto templateParamsOffset = fbb.CreateVector(params);
 		PartialNodeUpdateBuilder update(fbb);
@@ -201,8 +209,7 @@ struct ArithmeticNodeContext : NodeContext
 		Type = nos::TypeInfo(typeName);
 		flatbuffers::FlatBufferBuilder fbb;
 		std::vector<uint8_t> typeData = nos::Buffer(nos::Name(Type->TypeName).AsCStr(), 1 + nos::Name(Type->TypeName).AsString().size());
-		std::vector params = {
-			fb::CreateTemplateParameterDirect(fbb, "string", &typeData)
+		std::vector params = {fb::CreateTemplateParameterDirect(fbb, NSN_Type.AsCStr(), "string", &typeData)
 		};
 		auto templateParamsOffset = fbb.CreateVector(params);
 		PartialNodeUpdateBuilder update(fbb);
@@ -316,7 +323,7 @@ struct ArithmeticNodeContext : NodeContext
 		flatbuffers::FlatBufferBuilder fbb;
 		std::vector<flatbuffers::Offset<nos::ContextMenuItem>> ops;
 
-		for (auto op : fb::EnumValuesBinaryOperator())
+		for (auto op : reflect::EnumValuesBinaryOperator())
 			ops.push_back(nos::CreateContextMenuItemDirect(fbb, BinaryOpToDisplayName(op), uint32_t(op)));
 
 		HandleEvent(CreateAppEvent(fbb, CreateAppContextMenuUpdateDirect(fbb, &NodeId, request->pos(), request->instigator(), &ops)));
@@ -326,7 +333,7 @@ struct ArithmeticNodeContext : NodeContext
 	{
 		if (Operator)
 			return;
-		SetOperator(fb::BinaryOperator(cmd), true);
+		SetOperator(reflect::BinaryOperator(cmd), true);
 	}
 };
 

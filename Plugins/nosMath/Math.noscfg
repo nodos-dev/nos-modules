@@ -112,11 +112,6 @@
     },
     {
       "category": "Math|Addition",
-      "class_name": "Add_Track",
-      "display_name": "Add Track"
-    },
-    {
-      "category": "Math|Addition",
       "class_name": "Add_Transform",
       "display_name": "Add Transform"
     },

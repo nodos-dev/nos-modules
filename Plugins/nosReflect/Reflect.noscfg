@@ -20,7 +20,9 @@
     "binary_path": "Binaries/nosReflect",
     "node_definitions": ["Config/Reflect.nosdef"],
     "defaults": [],
-    "custom_types": [],
+	"custom_types": [
+		"Config/Reflect.fbs"
+	],
 	"associated_nodes": [
 		{
 			"category": "Type",
@@ -76,6 +78,7 @@
 			"display_name": "Add",
 			"params": [
 				{
+					"name": "Operator",
 					"type_name": "nos.fb.BinaryOperator",
 					"value": "ADD"
 				}
@@ -88,6 +91,7 @@
 			"display_name": "Div",
 			"params": [
 				{
+					"name": "Operator",
 					"type_name": "nos.fb.BinaryOperator",
 					"value": "DIV"
 				}
@@ -99,6 +103,7 @@
 			"display_name": "Mul",
 			"params": [
 				{
+					"name": "Operator",
 					"type_name": "nos.fb.BinaryOperator",
 					"value": "MUL"
 				}
@@ -110,6 +115,7 @@
 			"display_name": "Sub",
 			"params": [
 				{
+					"name": "Operator",
 					"type_name": "nos.fb.BinaryOperator",
 					"value": "SUB"
 				}
@@ -122,6 +128,7 @@
 			"display_name": "Log",
 			"params": [
 				{
+					"name": "Operator",
 					"type_name": "nos.fb.BinaryOperator",
 					"value": "LOG"
 				}
@@ -147,6 +154,7 @@
 			"display_name": "ScalarAdd",
 			"params": [
 				{
+					"name": "Operator",
 					"type_name": "nos.fb.BinaryOperator",
 					"value": "ADD"
 				}
@@ -159,6 +167,7 @@
 			"display_name": "ScalarDiv",
 			"params": [
 				{
+					"name": "Operator",
 					"type_name": "nos.fb.BinaryOperator",
 					"value": "DIV"
 				}
@@ -170,6 +179,7 @@
 			"display_name": "ScalarMul",
 			"params": [
 				{
+					"name": "Operator",
 					"type_name": "nos.fb.BinaryOperator",
 					"value": "MUL"
 				}
@@ -181,6 +191,7 @@
 			"display_name": "ScalarSub",
 			"params": [
 				{
+					"name": "Operator",
 					"type_name": "nos.fb.BinaryOperator",
 					"value": "SUB"
 				}
@@ -193,6 +204,7 @@
 			"display_name": "ScalarLog",
 			"params": [
 				{
+					"name": "Operator",
 					"type_name": "nos.fb.BinaryOperator",
 					"value": "LOG"
 				}
