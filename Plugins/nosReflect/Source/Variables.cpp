@@ -288,6 +288,7 @@ struct GetVariableNode : VariableNodeBase
 	{
 		auto* node = static_cast<GetVariableNode*>(userData);
 		node->OnVariableUpdated(name, typeName, value);
+		nosEngine.CallNodeFunction(node->NodeId, NOS_NAME("OnVariableUpdated_Event"));
 	}
 };
 	
