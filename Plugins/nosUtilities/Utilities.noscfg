@@ -2,7 +2,7 @@
 	"info": {
 		"id": {
 			"name": "nos.utilities",
-			"version": "3.5.0"
+			"version": "3.6.0"
 		},
 		"description": "Various utility nodes.",
 		"display_name": "Utilities",
@@ -52,7 +52,8 @@
 		"Config/SyncMultiOutlet.nosdef",
 		"Config/ThreadedSyncMultiOutlet.nosdef",
 		"Config/ConditionalTrigger.nosdef",
-		"Config/TriggerOnAnyInput.nosdef"
+		"Config/TriggerOnAnyInput.nosdef",
+		"Config/TextureMonitor.nosdef"
 	],
 	"custom_types": [
 		"Config/Merge.fbs",
@@ -129,6 +130,12 @@
 			"class_name": "QuadMerge",
 			"display_name": "Quad Merge",
 			"name_aliases": [ "combine", "concatenate", "add", "quarter", "texture" ]
+		},
+		{
+			"category": "Utilities",
+			"class_name": "TextureMonitor",
+			"display_name": "Texture Monitor",
+			"name_aliases": [ "compare", "switch", "watch", "display" ]
 		},
 		{
 			"category": "Utilities",
