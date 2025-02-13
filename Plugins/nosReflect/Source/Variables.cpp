@@ -281,6 +281,8 @@ struct GetVariableNode : VariableNodeBase
 	{
 		if (!HasType())
 			SetPinType(NOS_NAME("Value"), typeName);
+		// This is here to force the pin's frame number to update, hacky.
+		nosEngine.SetNodeDirty(NodeId);
 		SetPinValue(NOS_NAME("Value"), *value);
 	}
 
