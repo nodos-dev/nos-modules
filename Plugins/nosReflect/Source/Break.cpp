@@ -192,7 +192,6 @@ struct BreakNode : NodeContext
 				fbb, CreatePartialNodeUpdateDirect(fbb, &NodeId, ClearFlags::NONE, &pinsToDelete, &pinsToCreate)));
     }
 
-
 	std::unordered_map<uuid, nos::Buffer> LastServedPinValues;
 
 	void SetPinValueCached(const uuid& pinId, nosBuffer value)
