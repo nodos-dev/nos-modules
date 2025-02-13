@@ -34,10 +34,17 @@
           "data": true
         },
         {
-          "name": "t",
-          "type_name": "double",
-          "show_as": "OUTPUT_PIN",
-          "can_show_as": "OUTPUT_PIN"
+            "name": "t",
+            "type_name": "double",
+            "show_as": "OUTPUT_PIN",
+            "can_show_as": "OUTPUT_PIN"
+        },
+        {
+            "name": "AnimationFrame",
+            "type_name": "ulong",
+            "show_as": "PROPERTY",
+            "can_show_as": "OUTPUT_PIN_OR_PROPERTY",
+            "readonly": true
         }
       ],
       "functions": [

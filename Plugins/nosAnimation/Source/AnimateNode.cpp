@@ -4,12 +4,13 @@
 namespace nos::animation
 {
 NOS_REGISTER_NAME(t)
+NOS_REGISTER_NAME(AnimationFrame)
 struct AnimateNode : NodeContext
 {
 	using NodeContext::NodeContext;
 	bool StartNextFrame = false;
 	bool Running = false;
-	int64_t AnimationFrameCount = 0;
+	bool TransientReverse = false;
 
 	nosResult ExecuteNode(nosNodeExecuteParams* params)
 	{
@@ -17,15 +18,16 @@ struct AnimateNode : NodeContext
 		if (StartNextFrame)
 		{
 			StartNextFrame = false;
-			AnimationFrameCount = 0;
+			TransientReverse = false;
 			Running = true;
+			ResetAnimationFrameNum();
 			nosEngine.CallNodeFunction(NodeId, NOS_NAME("Started_Internal"));
 		}
 		if (Running)
 		{
-			bool reverse = *args.GetPinData<bool>(NOS_NAME("Reverse"));
+			bool reverse = *args.GetPinData<bool>(NOS_NAME("Reverse")) || TransientReverse;
 			double animationDuration = *args.GetPinData<double>(NOS_NAME("Duration"));
-			double out = double(params->DeltaSeconds.x * AnimationFrameCount) / double(params->DeltaSeconds.y * animationDuration);
+			double out = double(params->DeltaSeconds.x * *args.GetPinData<uint64_t>(NSN_AnimationFrame)) / double(params->DeltaSeconds.y * animationDuration);
 			bool loop = *args.GetPinData<bool>(NOS_NAME("Loop"));
 			bool finished = false;
 			if (loop)
@@ -47,7 +49,8 @@ struct AnimateNode : NodeContext
 				}
 				if (reverse && out <= 0.0f)
 				{
-					AnimationFrameCount = 0;
+					TransientReverse = false;
+					ResetAnimationFrameNum();
 					out = 0.0f;
 					finished = true;
 				}
@@ -57,9 +60,10 @@ struct AnimateNode : NodeContext
 			{
 				nosEngine.CallNodeFunction(NodeId, NOS_NAME("Finished_Internal"));
 				Running = false;
+				TransientReverse = false;
 			}
 			else
-				AnimationFrameCount = AnimationFrameCount + (reverse ? -1 : 1);
+				SetPinValue(NSN_AnimationFrame, nos::Buffer::From(*args.GetPinData<uint64_t>(NSN_AnimationFrame) + (reverse ? -1 : 1)));
 			return NOS_RESULT_SUCCESS;
 		}
 		params->MarkAllOutsDirty = false;
@@ -74,6 +78,7 @@ struct AnimateNode : NodeContext
 
 	nosResult Pause(nosFunctionExecuteParams* functionExecParams)
 	{
+		TransientReverse = false;
 		Running = false;
 		return NOS_RESULT_SUCCESS;
 	}
@@ -84,9 +89,14 @@ struct AnimateNode : NodeContext
 		return NOS_RESULT_SUCCESS;
 	}
 
+	void ResetAnimationFrameNum()
+	{
+		SetPinValue(NSN_AnimationFrame, nos::Buffer::From(0ull));
+	}
+
 	nosResult Reset(nosFunctionExecuteParams* functionExecParams)
 	{
-		AnimationFrameCount = 0;
+		ResetAnimationFrameNum();
 		Running = false;
 		double out = 0.0f;
 		SetPinValue(NSN_t, nos::Buffer::From(out));
@@ -96,13 +106,14 @@ struct AnimateNode : NodeContext
 	nosResult ForwardContinue(nosFunctionExecuteParams* functionExecParams)
 	{
 		SetPinValue(NOS_NAME("Reverse"), nos::Buffer::From(false));
+		TransientReverse = false;
 		Running = true;
 		return NOS_RESULT_SUCCESS;
 	}
 
 	nosResult ReversedContinue(nosFunctionExecuteParams* functionExecParams)
 	{
-		SetPinValue(NOS_NAME("Reverse"), nos::Buffer::From(true));
+		TransientReverse = true;
 		Running = true;
 		return NOS_RESULT_SUCCESS;
 	}
