@@ -47,6 +47,7 @@ enum Utilities : int
 	DeinterlacedBufferRing,
 	SyncMultiOutlet,
 	ConditionalTrigger,
+	TriggerOnAnyInput,
 	Count
 };
 
@@ -73,6 +74,7 @@ nosResult RegisterDeinterlacedBoundedTextureQueue(nosNodeFunctions*);
 nosResult RegisterDeinterlacedBufferRing(nosNodeFunctions*);
 nosResult RegisterSyncMultiOutlet(nosNodeFunctions*);
 nosResult RegisterConditionalTrigger(nosNodeFunctions*);
+nosResult RegisterTriggerOnAnyInput(nosNodeFunctions*);
 
 nosResult NOSAPI_CALL ExportNodeFunctions(size_t* outSize, nosNodeFunctions** outList)
 {
@@ -115,6 +117,7 @@ nosResult NOSAPI_CALL ExportNodeFunctions(size_t* outSize, nosNodeFunctions** ou
 			GEN_CASE_NODE(DeinterlacedBufferRing)
 			GEN_CASE_NODE(SyncMultiOutlet)
 			GEN_CASE_NODE(ConditionalTrigger)
+			GEN_CASE_NODE(TriggerOnAnyInput)
 		}
 	}
 	return NOS_RESULT_SUCCESS;
