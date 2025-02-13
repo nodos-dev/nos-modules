@@ -18,17 +18,13 @@ struct Json2PinNode : NodeContext
 			SetNodeStatusMessage("Out pin is not connected to typed pin", fb::NodeStatusMessageType::FAILURE);
 			return NOS_RESULT_FAILED;
 		}
-		nosBuffer outBuffer;
-		auto ret = nosEngine.GenerateBufferFromJson(outPin.TypeName, (const char*)(*jsonPin.Data).Data, &outBuffer);
-		if (ret == NOS_RESULT_SUCCESS)
+		if (auto buf = GenerateBufferFromJson(outPin.TypeName, (const char*)(*jsonPin.Data).Data))
 		{
-			SetPinValue(outPin.Name, outBuffer);
+			SetPinValue(outPin.Name, *buf);
 			ClearNodeStatusMessages();
 		}
 		else
-		{
 			SetNodeStatusMessage("Unable to convert data to JSON", fb::NodeStatusMessageType::FAILURE);
-		}
 		return NOS_RESULT_SUCCESS;
 	}
 

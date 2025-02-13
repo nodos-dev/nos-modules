@@ -100,9 +100,7 @@ nosResult NOSAPI_CALL InterpolateTrack(const nosBuffer from, const nosBuffer to,
 	distortion.mutable_k1k2() = LerpVec<fb::vec2, 2>(distortionStart.k1k2(), distortionEnd.k1k2(), t);
 	distortion.mutate_distortion_scale(glm::mix(distortionStart.distortion_scale(), distortionEnd.distortion_scale(), t));
 
-	nos::Table<track::Track> result = nos::Buffer::From(interm);
-	nosEngine.AllocateBuffer(result.Size(), out);
-	memcpy(out->Data, result.Data(), result.Size());
+	*out = EngineBuffer::From(interm).Release();
 	return NOS_RESULT_SUCCESS;
 }
 
@@ -115,8 +113,7 @@ nosResult NOSAPI_CALL InterpolateTransform(const nosBuffer from, const nosBuffer
 	interm.mutable_rotation() = InterpolateRotation(start->rotation(), end->rotation(), t); // quat
 	interm.mutable_scale() = LerpVec<fb::vec3d, 3>(start->scale(), end->scale(), t);
 
-	nosEngine.AllocateBuffer(sizeof(interm), out);
-	memcpy(out->Data, &interm, sizeof(interm));
+	*out = EngineBuffer::From(interm).Release();
 	return NOS_RESULT_SUCCESS;
 }
 

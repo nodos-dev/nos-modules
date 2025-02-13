@@ -34,7 +34,7 @@ struct InterpolatorManager
 		return Interpolators.contains(name);
 	}
 
-	nosResult Interpolate(nos::Name typeName, const nosBuffer from, const nosBuffer to, const double t, nosBuffer& outBuf);
+	nosResult Interpolate(nos::Name typeName, const nosBuffer from, const nosBuffer to, const double t, std::optional<EngineBuffer>& outBuf);
 
 	std::unordered_set<nos::Name> GetAnimatableTypes();
 

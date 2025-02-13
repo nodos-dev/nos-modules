@@ -79,7 +79,7 @@
 			"params": [
 				{
 					"name": "Operator",
-					"type_name": "nos.fb.BinaryOperator",
+					"type_name": "nos.reflect.BinaryOperator",
 					"value": "ADD"
 				}
 			],
@@ -92,7 +92,7 @@
 			"params": [
 				{
 					"name": "Operator",
-					"type_name": "nos.fb.BinaryOperator",
+					"type_name": "nos.reflect.BinaryOperator",
 					"value": "DIV"
 				}
 			]
@@ -104,7 +104,7 @@
 			"params": [
 				{
 					"name": "Operator",
-					"type_name": "nos.fb.BinaryOperator",
+					"type_name": "nos.reflect.BinaryOperator",
 					"value": "MUL"
 				}
 			]
@@ -116,7 +116,7 @@
 			"params": [
 				{
 					"name": "Operator",
-					"type_name": "nos.fb.BinaryOperator",
+					"type_name": "nos.reflect.BinaryOperator",
 					"value": "SUB"
 				}
 			],
@@ -129,7 +129,7 @@
 			"params": [
 				{
 					"name": "Operator",
-					"type_name": "nos.fb.BinaryOperator",
+					"type_name": "nos.reflect.BinaryOperator",
 					"value": "LOG"
 				}
 			],
@@ -155,7 +155,7 @@
 			"params": [
 				{
 					"name": "Operator",
-					"type_name": "nos.fb.BinaryOperator",
+					"type_name": "nos.reflect.BinaryOperator",
 					"value": "ADD"
 				}
 			],
@@ -168,7 +168,7 @@
 			"params": [
 				{
 					"name": "Operator",
-					"type_name": "nos.fb.BinaryOperator",
+					"type_name": "nos.reflect.BinaryOperator",
 					"value": "DIV"
 				}
 			]
@@ -180,7 +180,7 @@
 			"params": [
 				{
 					"name": "Operator",
-					"type_name": "nos.fb.BinaryOperator",
+					"type_name": "nos.reflect.BinaryOperator",
 					"value": "MUL"
 				}
 			]
@@ -192,7 +192,7 @@
 			"params": [
 				{
 					"name": "Operator",
-					"type_name": "nos.fb.BinaryOperator",
+					"type_name": "nos.reflect.BinaryOperator",
 					"value": "SUB"
 				}
 			],
@@ -205,7 +205,7 @@
 			"params": [
 				{
 					"name": "Operator",
-					"type_name": "nos.fb.BinaryOperator",
+					"type_name": "nos.reflect.BinaryOperator",
 					"value": "LOG"
 				}
 			],

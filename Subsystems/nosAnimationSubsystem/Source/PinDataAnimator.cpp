@@ -143,9 +143,7 @@ void InterpolatorManager::AddBuiltinInterpolator(nos::Name name, std::function<n
 	std::unique_lock lock(InterpolatorsMutex);
 	Interpolators[name] = [fn = std::move(fn)](const nosBuffer from, const nosBuffer to, const double t, nosBuffer* out)
 		{
-			auto buf = fn(from, to, t);
-			nosEngine.AllocateBuffer(buf.Size(), out);
-			memcpy(out->Data, buf.Data(), buf.Size());
+			*out = EngineBuffer::From(fn(from, to, t)).Release();
 			return NOS_RESULT_SUCCESS;
 		};
 }
@@ -169,13 +167,17 @@ bool InterpolatorManager::ModuleUnloaded(nos::fb::TModuleIdentifier moduleId)
 	return true;
 }
 
-nosResult InterpolatorManager::Interpolate(nos::Name typeName, const nosBuffer from, const nosBuffer to, const double t, nosBuffer& outBuf)
+nosResult InterpolatorManager::Interpolate(nos::Name typeName, const nosBuffer from, const nosBuffer to, const double t, std::optional<EngineBuffer>& outBuf)
 {
 	std::shared_lock lock(InterpolatorsMutex);
 	auto it = Interpolators.find(typeName);
 	if (it == Interpolators.end())
 		return NOS_RESULT_NOT_FOUND;
-	return it->second(from, to, t, &outBuf);
+	nosBuffer outNosBuf{};
+	auto res = it->second(from, to, t, &outNosBuf);
+	if (res == NOS_RESULT_SUCCESS)
+		outBuf = EngineBuffer::FromExisting(outNosBuf);
+	return res;
 }
 
 std::unordered_set<nos::Name> InterpolatorManager::GetAnimatableTypes()
@@ -268,10 +270,11 @@ void PinDataAnimator::UpdatePin(uuid const& pinId,
 	nosResult result = NOS_RESULT_FAILED;
 	if (t >= 0.0)
 	{
-		nosBuffer buf{};
 		if (animData.Interp.type == editor::Interpolation::Constant)
 		{
-			buf = nosBuffer{ .Data = (void*)animData.Interp.AsConstant()->value.data(), .Size = animData.Interp.AsConstant()->value.size() };
+			nosEngine.SetPinValue(pinId,
+								  nosBuffer{.Data = (void*)animData.Interp.AsConstant()->value.data(),
+											.Size = animData.Interp.AsConstant()->value.size()});
 			result = NOS_RESULT_SUCCESS;
 		}
 		else
@@ -298,13 +301,10 @@ void PinDataAnimator::UpdatePin(uuid const& pinId,
 				break;
 			}
 			}
+			std::optional<EngineBuffer> buf;
 			result = InterpManager.Interpolate(animData.TypeName, start, end, interpolationT, buf);
-		}
-		if (result == NOS_RESULT_SUCCESS)
-		{
-			nosEngine.SetPinValue(pinId, buf);
-			if (animData.Interp.type != editor::Interpolation::Constant)
-				nosEngine.FreeBuffer(&buf);
+			if (result == NOS_RESULT_SUCCESS && buf)
+				nosEngine.SetPinValue(pinId, *buf); 
 		}
 	}
 	if (result != NOS_RESULT_SUCCESS)

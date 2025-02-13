@@ -43,7 +43,11 @@ struct AnimationSubsystemCtx
 		};
 		AnimationSubsystem.Interpolate =
 			[](nosName typeName, const nosBuffer from, const nosBuffer to, const double t, nosBuffer* outBuf) {
-				return GAnimationSysContext->InterpolatorManager.Interpolate(typeName, from, to, t, *outBuf);
+				std::optional<EngineBuffer> buf;
+				auto res = GAnimationSysContext->InterpolatorManager.Interpolate(typeName, from, to, t, buf);
+				if (res == NOS_RESULT_SUCCESS)
+					*outBuf = buf->Release();
+				return res;
 			};
 	}
 

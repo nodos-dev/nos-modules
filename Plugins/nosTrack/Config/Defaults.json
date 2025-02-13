@@ -1,0 +1,54 @@
+{
+	"defaults": [
+		{
+			"type_name": "nos.track.Track",
+			"def": {
+				"location": {
+					"x": 600,
+					"y": 50,
+					"z": 100
+				},
+				"rotation": {
+					"x": 0,
+					"y": 0,
+					"z": 180
+				},
+				"fov": 74,
+				"focus": 0.0,
+				"zoom": 0.0,
+				"render_ratio": 1.0,
+				"sensor_size": {
+					"x": 9.590,
+					"y": 5.394
+				},
+				"pixel_aspect_ratio": 1.0,
+				"nodal_offset": 0.0,
+				"lens_distortion": {
+					"distortion_scale": 1.0,
+					"k1k2": {
+						"x": 0.0,
+						"y": 0.0
+					},
+					"center_shift": {
+						"x": 0.0,
+						"y": 0.0
+					}
+				}
+			}
+		},
+		{
+			"type_name": "nos.track.LensDistortion",
+			"def": {
+				"distortion_scale": 1.0,
+				"k1k2": {
+					"x": 0.0,
+					"y": 0.0
+				},
+				"center_shift": {
+					"x": 0.0,
+					"y": 0.0
+				}
+			}
+		}
+	]
+}

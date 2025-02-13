@@ -1,44 +1,47 @@
 {
-  "info": {
-    "id": {
-      "name": "nos.track",
-      "version": "1.9.0"
-    },
-    "display_name": "Track",
-    "category": "Virtual Studio",
-    "dependencies": [
-      {
-        "name": "nos.sys.animation",
-        "version": "1.5"
-      }
-    ]
-  },
-  "node_definitions": [
-    "Config/FreeD.nosdef",
-    "Config/UserTrack.nosdef",
-	"Config/AddTrack.nosdef"
-  ],
-    "custom_types": [
-        "Config/Track.fbs"
-    ],
-  "binary_path": "Binaries/nosTrack",
-  "associated_nodes": [
-    {
-      "category": "nosTrack",
-      "class_name": "FreeD",
-      "display_name": "FreeD",
-      "name_aliases": [ "virtual camera", "udp port" ]
-    },
-    {
-        "category": "nosTrack",
-        "class_name": "UserTrack",
-        "display_name": "User Track",
-        "name_aliases": [ "virtual camera" ]
-    },
-    {
-		"category": "Math|Addition",
-		"class_name": "AddTrack",
-		"display_name": "Add Track"
-    }
-  ]
+	"info": {
+		"id": {
+			"name": "nos.track",
+			"version": "1.9.0"
+		},
+		"display_name": "Track",
+		"category": "Virtual Studio",
+		"dependencies": [
+			{
+				"name": "nos.sys.animation",
+				"version": "1.5"
+			}
+		]
+	},
+	"node_definitions": [
+		"Config/FreeD.nosdef",
+		"Config/UserTrack.nosdef",
+		"Config/AddTrack.nosdef"
+	],
+	"custom_types": [
+		"Config/Track.fbs"
+	],
+	"defaults": [
+		"Config/Defaults.json"
+	],
+	"binary_path": "Binaries/nosTrack",
+	"associated_nodes": [
+		{
+			"category": "nosTrack",
+			"class_name": "FreeD",
+			"display_name": "FreeD",
+			"name_aliases": [ "virtual camera", "udp port" ]
+		},
+		{
+			"category": "nosTrack",
+			"class_name": "UserTrack",
+			"display_name": "User Track",
+			"name_aliases": [ "virtual camera" ]
+		},
+		{
+			"category": "Math|Addition",
+			"class_name": "AddTrack",
+			"display_name": "Add Track"
+		}
+	]
 }
