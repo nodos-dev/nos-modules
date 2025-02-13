@@ -113,89 +113,67 @@ struct ReadImageContext : NodeContext
 	{
 		UpdateStatus(State::Loading);
 		FilePath = path.string();
-		try
-		{
-			if (!std::filesystem::exists(path))
+		std::thread([this, outPinId, path, sRGB]() mutable {
+			try
 			{
-				nosEngine.LogE("Read Image cannot load file %s", path.string().c_str());
-				UpdateStatus(State::Failed);
-				return NOS_RESULT_FAILED;
-			}
-
-			int w, h, n;
-			stbi_info(path.string().c_str(), &w, &h, &n);
-
-			if (w < 0 || h < 0 || n < 0) {
-				nosEngine.LogE("STBI couldn't load image from %s.", path.string().c_str());
-				UpdateStatus(State::Failed);
-				return NOS_RESULT_FAILED;
-			}
-
-			nosResourceShareInfo outRes = {
-				.Info = {.Type = NOS_RESOURCE_TYPE_TEXTURE,
-							.Texture = {.Width = (uint32_t)w, .Height = (uint32_t)h, .Format = NOS_FORMAT_R8G8B8A8_UNORM, .FieldType = NOS_TEXTURE_FIELD_TYPE_PROGRESSIVE}} };
-
-			// unless reading raw bytes, this is useless since samplers convert to linear space automatically
-			if (sRGB)
-				outRes.Info.Texture.Format = NOS_FORMAT_R8G8B8A8_SRGB;
-
-			std::thread([this, outPinId, path, outRes]() mutable {
-				try
+				if (!std::filesystem::exists(path))
 				{
-					if (!std::filesystem::exists(path))
-					{
-						nosEngine.LogE("Read Image cannot load file %s", path.string().c_str());
-						return;
-					}
+					nosEngine.LogE("Read Image cannot load file %s", path.string().c_str());
+					UpdateStatus(State::Failed);
+					return;
+				}
 
-					int w, h, n;
-					uint8_t* img = stbi_load(path.string().c_str(), &w, &h, &n, 4);
-					if (!img)
-					{
-						nosEngine.LogE("Couldn't load image from %s.", path.string().c_str());
-						return;
-					}
-
-					nosVulkan->CreateResource(&outRes);
-					nosVulkan->SetResourceTag(&outRes, "ReadImage Texture");
-
-					nosCmd cmd{};
-					nosCmdBeginParams beginParams {
-						.Name = NOS_NAME("ReadImage Load"),
-						.AssociatedNodeId = this->NodeId,
-						.OutCmdHandle = &cmd
-					};
-					nosVulkan->Begin2(&beginParams);
-					nosVulkan->ImageLoad(cmd, img, nosVec2u(w, h), NOS_FORMAT_R8G8B8A8_SRGB, &outRes);
-					nosCmdEndParams endParams{ .ForceSubmit = true };
-					nosVulkan->End(cmd, &endParams);
-
-					nosEngine.SetPinValue(outPinId, nos::Buffer::From(vkss::ConvertTextureInfo(outRes)));
-
-					{
-						std::lock_guard<std::mutex> lock(this->OutImageDecRefCallbacksMutex);
-						this->OutImageDecRefCallbacks.push([this, outRes]() {
-							nosVulkan->DestroyResource(&outRes);
-						});
-					}
+				int w, h, n;
+				uint8_t* img = stbi_load(path.string().c_str(), &w, &h, &n, 4);
+				if (!img)
+				{
+					nosEngine.LogE("Couldn't load image from %s.", path.string().c_str());
+					UpdateStatus(State::Failed);
+					return;
+				}
 					
-					nosEngine.CallNodeFunction(this->NodeId, NOS_NAME_STATIC("OnImageLoaded"));
+				nosResourceShareInfo outRes = {
+					.Info = {.Type = NOS_RESOURCE_TYPE_TEXTURE,
+						.Texture = {.Width = (uint32_t)w, .Height = (uint32_t)h, .Format = NOS_FORMAT_R8G8B8A8_UNORM, .FieldType = NOS_TEXTURE_FIELD_TYPE_PROGRESSIVE}} };
 
-					free(img);
-				}
-				catch (const std::exception& e)
+				// unless reading raw bytes, this is useless since samplers convert to linear space automatically
+				if (sRGB)
+					outRes.Info.Texture.Format = NOS_FORMAT_R8G8B8A8_SRGB;
+				nosVulkan->CreateResource(&outRes);
+				nosVulkan->SetResourceTag(&outRes, "ReadImage Texture");
+
+				nosCmd cmd{};
+				nosCmdBeginParams beginParams {
+					.Name = NOS_NAME("ReadImage Load"),
+					.AssociatedNodeId = this->NodeId,
+					.OutCmdHandle = &cmd
+				};
+				nosVulkan->Begin2(&beginParams);
+				nosVulkan->ImageLoad(cmd, img, nosVec2u(w, h), NOS_FORMAT_R8G8B8A8_SRGB, &outRes);
+				nosCmdEndParams endParams{ .ForceSubmit = true };
+				nosVulkan->End(cmd, &endParams);
+
+				nosEngine.SetPinValue(outPinId, nos::Buffer::From(vkss::ConvertTextureInfo(outRes)));
+
 				{
-					nosEngine.LogE("Error while loading image: %s", e.what());
+					std::lock_guard<std::mutex> lock(this->OutImageDecRefCallbacksMutex);
+					this->OutImageDecRefCallbacks.push([this, outRes]() {
+						nosVulkan->DestroyResource(&outRes);
+					});
 				}
+					
+				nosEngine.CallNodeFunction(this->NodeId, NOS_NAME_STATIC("OnImageLoaded"));
 
+				free(img);
 				UpdateStatus(State::Idle);
-			}).detach();
-		}
-		catch (const std::exception& e)
-		{
-			nosEngine.LogE("Error while loading image: %s", e.what());
-			UpdateStatus(State::Failed);
-		}
+			}
+			catch (const std::exception& e)
+			{
+				nosEngine.LogE("Error while loading image: %s", e.what());
+				UpdateStatus(State::Failed);
+			}
+
+		}).detach();
 		return NOS_RESULT_SUCCESS;
 	}
 
