@@ -143,7 +143,7 @@ void InterpolatorManager::AddBuiltinInterpolator(nos::Name name, std::function<n
 	std::unique_lock lock(InterpolatorsMutex);
 	Interpolators[name] = [fn = std::move(fn)](const nosBuffer from, const nosBuffer to, const double t, nosBuffer* out)
 		{
-			*out = EngineBuffer::From(fn(from, to, t)).Release();
+			*out = EngineBuffer::CopyFrom(fn(from, to, t)).Release();
 			return NOS_RESULT_SUCCESS;
 		};
 }
