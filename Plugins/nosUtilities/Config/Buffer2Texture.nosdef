@@ -1,40 +1,48 @@
 {
-  "nodes": [
-    {
-      "class_name": "Buffer2Texture",
-      "contents_type": "Job",
-      "description": "Converts the given buffer to a texture",
-      "pins": [
-        {
-          "name": "Output",
-          "type_name": "nos.sys.vulkan.Texture",
-          "show_as": "OUTPUT_PIN",
-          "can_show_as": "OUTPUT_PIN_ONLY"
-        },
-        {
-          "name": "Format",
-          "type_name": "nos.sys.vulkan.Format",
-          "show_as": "PROPERTY",
-          "can_show_as": "INPUT_PIN_OR_PROPERTY",
-          "data": "R16G16B16A16_SFLOAT"
-        },
-        {
-          "name": "Size",
-          "type_name": "nos.fb.vec2u",
-          "show_as": "PROPERTY",
-          "can_show_as": "INPUT_PIN_OR_PROPERTY",
-          "data": {
-            "x": 1920,
-            "y": 1080
-          }
-        },
-        {
-          "name": "Input",
-          "type_name": "nos.sys.vulkan.Buffer",
-          "show_as": "INPUT_PIN",
-          "can_show_as": "INPUT_PIN_ONLY"
-        }
-      ]
-    }
-  ]
+	"nodes": [
+		{
+			"class_name": "Buffer2Texture",
+			"menu_info": {
+				"category": "Utilities",
+				"display_name": "Buffer To Texture",
+				"name_aliases": [ "converter", "image" ]
+			},
+			"node": {
+				"class_name": "Buffer2Texture",
+				"contents_type": "Job",
+				"description": "Converts the given buffer to a texture",
+				"pins": [
+					{
+						"name": "Output",
+						"type_name": "nos.sys.vulkan.Texture",
+						"show_as": "OUTPUT_PIN",
+						"can_show_as": "OUTPUT_PIN_ONLY"
+					},
+					{
+						"name": "Format",
+						"type_name": "nos.sys.vulkan.Format",
+						"show_as": "PROPERTY",
+						"can_show_as": "INPUT_PIN_OR_PROPERTY",
+						"data": "R16G16B16A16_SFLOAT"
+					},
+					{
+						"name": "Size",
+						"type_name": "nos.fb.vec2u",
+						"show_as": "PROPERTY",
+						"can_show_as": "INPUT_PIN_OR_PROPERTY",
+						"data": {
+							"x": 1920,
+							"y": 1080
+						}
+					},
+					{
+						"name": "Input",
+						"type_name": "nos.sys.vulkan.Buffer",
+						"show_as": "INPUT_PIN",
+						"can_show_as": "INPUT_PIN_ONLY"
+					}
+				]
+			}
+		}
+	]
 }

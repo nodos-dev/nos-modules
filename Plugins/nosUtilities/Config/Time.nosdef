@@ -1,17 +1,25 @@
 {
-    "nodes": [
-        {
-            "class_name": "Time",
-            "contents_type": "Job",
-            "always_execute": true,
-            "pins": [
-                {
-                    "name": "Seconds",
-                    "type_name": "float",
-                    "show_as": "OUTPUT_PIN",
-                    "can_show_as": "OUTPUT_PIN_OR_PROPERTY"
-                }
-            ]
-        }
-    ]
+	"nodes": [
+		{
+			"class_name": "Time",
+			"menu_info": {
+				"category": "Utilities",
+				"display_name": "Time",
+				"name_aliases": [ "timer", "clock", "delta", "elapsed" ]
+			},
+			"node": {
+				"class_name": "Time",
+				"contents_type": "Job",
+				"always_execute": true,
+				"pins": [
+					{
+						"name": "Seconds",
+						"type_name": "float",
+						"show_as": "OUTPUT_PIN",
+						"can_show_as": "OUTPUT_PIN_OR_PROPERTY"
+					}
+				]
+			}
+		}
+	]
 }

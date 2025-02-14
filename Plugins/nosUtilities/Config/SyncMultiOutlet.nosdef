@@ -2,39 +2,45 @@
 	"nodes": [
 		{
 			"class_name": "SyncMultiOutlet",
-			"display_name": "Sync Multi Outlet",
-			"contents_type": "Job",
-			"pins": [
-				{
-					"name": "Thread",
-					"type_name": "nos.exe",
-					"show_as": "INPUT_PIN",
-					"can_show_as": "INPUT_PIN_ONLY"
-				},
-				{
-					"name": "Input",
-					"type_name": "nos.Generic",
-					"show_as": "INPUT_PIN",
-					"can_show_as": "INPUT_PIN_ONLY"
-				},
-				{
-					"name": "Out_0",
-					"display_name": "Out",
-					"type_name": "nos.Generic",
-					"show_as": "OUTPUT_PIN",
-					"can_show_as": "OUTPUT_PIN_ONLY",
-					"live": true
-				},
-				{
-					"name": "Out_1",
-					"display_name": "Out",
-					"type_name": "nos.Generic",
-					"show_as": "OUTPUT_PIN",
-					"can_show_as": "OUTPUT_PIN_ONLY",
-					"live": true
-				}
-			],
-			"functions": []
+			"menu_info": {
+				"category": "Execution",
+				"display_name": "Sync Multi Outlet"
+			},
+			"node": {
+				"class_name": "SyncMultiOutlet",
+				"display_name": "Sync Multi Outlet",
+				"contents_type": "Job",
+				"pins": [
+					{
+						"name": "Thread",
+						"type_name": "nos.exe",
+						"show_as": "INPUT_PIN",
+						"can_show_as": "INPUT_PIN_ONLY"
+					},
+					{
+						"name": "Input",
+						"type_name": "nos.Generic",
+						"show_as": "INPUT_PIN",
+						"can_show_as": "INPUT_PIN_ONLY"
+					},
+					{
+						"name": "Out_0",
+						"display_name": "Out",
+						"type_name": "nos.Generic",
+						"show_as": "OUTPUT_PIN",
+						"can_show_as": "OUTPUT_PIN_ONLY",
+						"live": true
+					},
+					{
+						"name": "Out_1",
+						"display_name": "Out",
+						"type_name": "nos.Generic",
+						"show_as": "OUTPUT_PIN",
+						"can_show_as": "OUTPUT_PIN_ONLY",
+						"live": true
+					}
+				]
+			}
 		}
 	]
 }

@@ -1,40 +1,48 @@
 ﻿{
-  "nodes": [
-    {
-      "class_name": "BoundedQueue",
-      "display_name": "Bounded Queue",
-      "contents_type": "Job",
-      "description":  "",
-      "pins": [
-        {
-          "name": "Thread",
-          "type_name": "nos.exe",
-          "show_as": "INPUT_PIN",
-          "can_show_as": "INPUT_PIN_ONLY"
-        },
-        {
-          "name": "Size",
-          "type_name": "uint",
-          "data": 2,
-          "max": 120,
-          "min": 1,
-          "show_as": "PROPERTY",
-          "can_show_as": "PROPERTY_ONLY"
-        },
-        {
-          "name": "Input",
-          "type_name": "nos.Generic",
-          "show_as": "INPUT_PIN",
-          "can_show_as": "INPUT_PIN_ONLY"
-        },
-        {
-          "name": "Output",
-          "type_name": "nos.Generic",
-          "show_as": "OUTPUT_PIN",
-          "can_show_as": "OUTPUT_PIN_ONLY",
-          "live": true
-        }
-      ]
-    }
-  ]
+	"nodes": [
+		{
+			"class_name": "BoundedQueue",
+			"menu_info": {
+				"category": "Utilities",
+				"display_name": "Bounded Queue",
+				"name_aliases": [ "data structure", "algorithm", "circular" ]
+			},
+			"node": {
+				"class_name": "BoundedQueue",
+				"display_name": "Bounded Queue",
+				"contents_type": "Job",
+				"description": "",
+				"pins": [
+					{
+						"name": "Thread",
+						"type_name": "nos.exe",
+						"show_as": "INPUT_PIN",
+						"can_show_as": "INPUT_PIN_ONLY"
+					},
+					{
+						"name": "Size",
+						"type_name": "uint",
+						"data": 2,
+						"max": 120,
+						"min": 1,
+						"show_as": "PROPERTY",
+						"can_show_as": "PROPERTY_ONLY"
+					},
+					{
+						"name": "Input",
+						"type_name": "nos.Generic",
+						"show_as": "INPUT_PIN",
+						"can_show_as": "INPUT_PIN_ONLY"
+					},
+					{
+						"name": "Output",
+						"type_name": "nos.Generic",
+						"show_as": "OUTPUT_PIN",
+						"can_show_as": "OUTPUT_PIN_ONLY",
+						"live": true
+					}
+				]
+			}
+		}
+	]
 }

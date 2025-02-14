@@ -1,59 +1,66 @@
 {
-  "nodes": [
-    {
-      "class_name": "Sink",
-      "contents_type": "Job",
-      "pins": [
-        {
-          "name": "InExe",
-          "type_name": "nos.exe",
-          "show_as": "INPUT_PIN",
-          "can_show_as": "INPUT_PIN_ONLY"
-        },
-        {
-          "name": "Sink Input",
-          "type_name": "nos.Generic",
-          "show_as": "INPUT_PIN",
-          "can_show_as": "INPUT_PIN_ONLY"
-        },
-        {
-          "name": "Sink FPS",
-          "type_name": "float",
-          "show_as": "PROPERTY",
-          "can_show_as": "PROPERTY_ONLY",
-          "data": 60.0,
-          "def": 60.0,
-          "min": 0.01,
-          "max": 1000.0
-        },
-        {
-          "name": "Wait",
-          "type_name": "bool",
-          "show_as": "PROPERTY",
-          "can_show_as": "PROPERTY_ONLY",
-          "data": true,
-          "description": "Wait until GPU tasks are completed",
-          "advanced_property": true
-        },
-        {
-          "name": "AcceptsRepeat",
-          "display_name": "Accepts Repeat",
-          "type_name": "bool",
-          "show_as": "PROPERTY",
-          "can_show_as": "PROPERTY_ONLY",
-          "data": false,
-          "advanced_property": true
-        },
-        {
-          "name": "SinkMode",
-          "display_name": "Mode",
-          "type_name": "nos.utilities.SinkMode",
-          "show_as": "PROPERTY",
-          "can_show_as": "PROPERTY_ONLY",
-          "description": "Whether to schedule nodes at an unlimited or fixed rate",
-          "data": "Periodic"
-        }
-      ]
-    }
-  ]
+	"nodes": [
+		{
+			"class_name": "Sink",
+			"menu_info": {
+				"category": "Utilities",
+				"display_name": "Sink"
+			},
+			"node": {
+				"class_name": "Sink",
+				"contents_type": "Job",
+				"pins": [
+					{
+						"name": "InExe",
+						"type_name": "nos.exe",
+						"show_as": "INPUT_PIN",
+						"can_show_as": "INPUT_PIN_ONLY"
+					},
+					{
+						"name": "Sink Input",
+						"type_name": "nos.Generic",
+						"show_as": "INPUT_PIN",
+						"can_show_as": "INPUT_PIN_ONLY"
+					},
+					{
+						"name": "Sink FPS",
+						"type_name": "float",
+						"show_as": "PROPERTY",
+						"can_show_as": "PROPERTY_ONLY",
+						"data": 60.0,
+						"def": 60.0,
+						"min": 0.01,
+						"max": 1000.0
+					},
+					{
+						"name": "Wait",
+						"type_name": "bool",
+						"show_as": "PROPERTY",
+						"can_show_as": "PROPERTY_ONLY",
+						"data": true,
+						"description": "Wait until GPU tasks are completed",
+						"advanced_property": true
+					},
+					{
+						"name": "AcceptsRepeat",
+						"display_name": "Accepts Repeat",
+						"type_name": "bool",
+						"show_as": "PROPERTY",
+						"can_show_as": "PROPERTY_ONLY",
+						"data": false,
+						"advanced_property": true
+					},
+					{
+						"name": "SinkMode",
+						"display_name": "Mode",
+						"type_name": "nos.utilities.SinkMode",
+						"show_as": "PROPERTY",
+						"can_show_as": "PROPERTY_ONLY",
+						"description": "Whether to schedule nodes at an unlimited or fixed rate",
+						"data": "Periodic"
+					}
+				]
+			}
+		}
+	]
 }

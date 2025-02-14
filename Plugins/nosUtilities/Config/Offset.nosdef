@@ -1,36 +1,43 @@
 {
-    "nodes": [
-        {
-            "class_name": "Offset",
-            "contents_type": "Job",
-            "contents": {
-                "type": "nos.sys.vulkan.GPUNode",
-                "options": {
-                    "shader": "Shaders/Offset.frag"
-                }
-            },
-            "description": "Translates the input image using a 2D offset",
-            "pins": [
-                {
-                    "name": "Input",
-                    "type_name": "nos.sys.vulkan.Texture",
-                    "show_as": "INPUT_PIN",
-                    "can_show_as": "INPUT_PIN_OR_PROPERTY"
-                },
-                {
-                    "name": "Offset",
-                    "type_name": "nos.fb.vec2",
-                    "show_as": "INPUT_PIN",
-                    "can_show_as": "INPUT_PIN_OR_PROPERTY",
-                    "description": "Horizontal, vertical offset amount in normalized (0.0...1.0) coordinates"
-                },
-                {
-                    "name": "Output",
-                    "type_name": "nos.sys.vulkan.Texture",
-                    "show_as": "OUTPUT_PIN",
-                    "can_show_as": "OUTPUT_PIN_OR_PROPERTY"
-                }
-            ]
-        }
-    ]
+	"nodes": [
+		{
+			"class_name": "Offset",
+			"menu_info": {
+				"category": "Utilities",
+				"display_name": "Offset"
+			},
+			"node": {
+				"class_name": "Offset",
+				"contents_type": "Job",
+				"contents": {
+					"type": "nos.sys.vulkan.GPUNode",
+					"options": {
+						"shader": "Shaders/Offset.frag"
+					}
+				},
+				"description": "Translates the input image using a 2D offset",
+				"pins": [
+					{
+						"name": "Input",
+						"type_name": "nos.sys.vulkan.Texture",
+						"show_as": "INPUT_PIN",
+						"can_show_as": "INPUT_PIN_OR_PROPERTY"
+					},
+					{
+						"name": "Offset",
+						"type_name": "nos.fb.vec2",
+						"show_as": "INPUT_PIN",
+						"can_show_as": "INPUT_PIN_OR_PROPERTY",
+						"description": "Horizontal, vertical offset amount in normalized (0.0...1.0) coordinates"
+					},
+					{
+						"name": "Output",
+						"type_name": "nos.sys.vulkan.Texture",
+						"show_as": "OUTPUT_PIN",
+						"can_show_as": "OUTPUT_PIN_OR_PROPERTY"
+					}
+				]
+			}
+		}
+	]
 }

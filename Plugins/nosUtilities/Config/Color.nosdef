@@ -1,33 +1,49 @@
 {
-    "nodes": [
-        {
-            "class_name": "Color",
-            "contents_type": "Job",
-            "contents": {
-                "type": "nos.sys.vulkan.GPUNode",
-                "options": {
-                  "shader": "Shaders/Color.frag"
-                }
-            },
-            "description": "Generates a solid colored image using selected RGBA value",
-            "pins": [
-                {
-                    "name": "Color",
-                    "type_name": "nos.fb.vec4",
-                    "show_as": "PROPERTY",
-                    "can_show_as" : "INPUT_PIN_OR_PROPERTY",
-                    "data": { "x": 1.0, "y": 1.0, "z": 1.0, "w" : 1.0 },
-                    "visualizer" : {"type": "COLOR_PICKER"},
-                    "step": 0.01
-                },
-                {
-                    "name": "Output",
-                    "type_name": "nos.sys.vulkan.Texture",
-                    "show_as": "OUTPUT_PIN",
-                    "can_show_as" : "OUTPUT_PIN_ONLY",
-                    "data" : {"width" : 1, "height" : 1}
-                }
-            ]
-        }
-    ]
+	"nodes": [
+		{
+			"class_name": "Color",
+			"menu_info": {
+				"category": "Utilities",
+				"display_name": "Color",
+				"name_aliases": [ "texture", "rgba" ]
+			},
+			"node": {
+				"class_name": "Color",
+				"contents_type": "Job",
+				"contents": {
+					"type": "nos.sys.vulkan.GPUNode",
+					"options": {
+						"shader": "Shaders/Color.frag"
+					}
+				},
+				"description": "Generates a solid colored image using selected RGBA value",
+				"pins": [
+					{
+						"name": "Color",
+						"type_name": "nos.fb.vec4",
+						"show_as": "PROPERTY",
+						"can_show_as": "INPUT_PIN_OR_PROPERTY",
+						"data": {
+							"x": 1.0,
+							"y": 1.0,
+							"z": 1.0,
+							"w": 1.0
+						},
+						"visualizer": { "type": "COLOR_PICKER" },
+						"step": 0.01
+					},
+					{
+						"name": "Output",
+						"type_name": "nos.sys.vulkan.Texture",
+						"show_as": "OUTPUT_PIN",
+						"can_show_as": "OUTPUT_PIN_ONLY",
+						"data": {
+							"width": 1,
+							"height": 1
+						}
+					}
+				]
+			}
+		}
+	]
 }

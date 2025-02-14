@@ -1,75 +1,83 @@
 {
-    "nodes": [
-        {
-          "class_name": "TextureMonitor",
-          "contents_type": "Job",
-          "contents": {
-              "type": "nos.sys.vulkan.GPUNode",
-              "options": {
-                "shader": "Shaders/TextureMonitor.frag"
-              }
-          },
-          "description": "Compare 2 textures with a slider that can rotate.\nClick on point to move.\nClick on empty space to rotate",
-          "pins": [
-            {
-              "name": "A",
-              "type_name": "nos.sys.vulkan.Texture",
-              "show_as": "INPUT_PIN",
-              "can_show_as": "INPUT_PIN_OR_PROPERTY",
-              "description": "Texture A: Left"
-            },
-            {
-              "name": "B",
-              "type_name": "nos.sys.vulkan.Texture",
-              "show_as": "INPUT_PIN",
-              "can_show_as": "INPUT_PIN_OR_PROPERTY",
-              "description": "Texture B: Right"
-            },
-            {
-              "name": "Center",
-              "type_name": "nos.fb.vec2",
-              "show_as": "PROPERTY",
-              "can_show_as": "INPUT_PIN_OR_PROPERTY",
-              "description": "Center position of the slider",
-              "data": {
-                "x": 0.50,
-                "y": 0.50
-              },
-              "min": {
-                "x": 0.0,
-                "y": 0.0
-              },
-              "max": {
-                "x": 1.0,
-                "y": 1.0
-              }
-            },
-            {
-              "name": "Direction",
-              "type_name": "nos.fb.vec2",
-              "show_as": "PROPERTY",
-              "can_show_as": "INPUT_PIN_OR_PROPERTY",
-              "description": "Direction of the slider. Texture B will be shown at the right of it",
-              "data": {
-                "x": 0.00,
-                "y": 1.00
-              },
-              "min": {
-                "x": -1.0,
-                "y": -1.0
-              },
-              "max": {
-                "x": 1.0,
-                "y": 1.0
-              }
-            },
-            {
-              "name": "Output",
-              "type_name": "nos.sys.vulkan.Texture",
-              "show_as": "OUTPUT_PIN",
-              "can_show_as": "OUTPUT_PIN_OR_PROPERTY"
-            }
-          ]
-        }
-    ]
+	"nodes": [
+		{
+			"class_name": "TextureMonitor",
+			"menu_info": {
+				"category": "Utilities",
+				"display_name": "Texture Monitor",
+				"name_aliases": [ "compare", "switch", "watch", "display" ]
+			},
+			"node": {
+				"class_name": "TextureMonitor",
+				"contents_type": "Job",
+				"contents": {
+					"type": "nos.sys.vulkan.GPUNode",
+					"options": {
+						"shader": "Shaders/TextureMonitor.frag"
+					}
+				},
+				"description": "Compare 2 textures with a slider that can rotate.\nClick on point to move.\nClick on empty space to rotate",
+				"pins": [
+					{
+						"name": "A",
+						"type_name": "nos.sys.vulkan.Texture",
+						"show_as": "INPUT_PIN",
+						"can_show_as": "INPUT_PIN_OR_PROPERTY",
+						"description": "Texture A: Left"
+					},
+					{
+						"name": "B",
+						"type_name": "nos.sys.vulkan.Texture",
+						"show_as": "INPUT_PIN",
+						"can_show_as": "INPUT_PIN_OR_PROPERTY",
+						"description": "Texture B: Right"
+					},
+					{
+						"name": "Center",
+						"type_name": "nos.fb.vec2",
+						"show_as": "PROPERTY",
+						"can_show_as": "INPUT_PIN_OR_PROPERTY",
+						"description": "Center position of the slider",
+						"data": {
+							"x": 0.50,
+							"y": 0.50
+						},
+						"min": {
+							"x": 0.0,
+							"y": 0.0
+						},
+						"max": {
+							"x": 1.0,
+							"y": 1.0
+						}
+					},
+					{
+						"name": "Direction",
+						"type_name": "nos.fb.vec2",
+						"show_as": "PROPERTY",
+						"can_show_as": "INPUT_PIN_OR_PROPERTY",
+						"description": "Direction of the slider. Texture B will be shown at the right of it",
+						"data": {
+							"x": 0.00,
+							"y": 1.00
+						},
+						"min": {
+							"x": -1.0,
+							"y": -1.0
+						},
+						"max": {
+							"x": 1.0,
+							"y": 1.0
+						}
+					},
+					{
+						"name": "Output",
+						"type_name": "nos.sys.vulkan.Texture",
+						"show_as": "OUTPUT_PIN",
+						"can_show_as": "OUTPUT_PIN_OR_PROPERTY"
+					}
+				]
+			}
+		}
+	]
 }
