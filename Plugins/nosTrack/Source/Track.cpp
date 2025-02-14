@@ -311,11 +311,7 @@ track::TTrack TrackNodeContext::GetDefaultOrFirstTrack()
 		if (!DataQueue.empty())
 			return DataQueue.front().first;
 	}
-	track::TTrack track;
-	nosBuffer defaultTrackData;
-	nosEngine.GetDefaultValueOfType(NOS_NAME_STATIC("nos.fb.Track"), &defaultTrackData);
-	flatbuffers::GetRoot<track::Track>(defaultTrackData.Data)->UnPackTo(&track);
-	return track;
+	return GetDefaultValueOfType(NOS_NAME_STATIC(nos::track::Track::GetFullyQualifiedName()))->As<track::TTrack>();
 }
 
 double CalculateR(double R, glm::dvec2 k1k2)
@@ -436,10 +432,8 @@ void TrackNodeContext::Run()
 		}
 	}
 	uint8_t buf[4096];
-	nosBuffer defaultTrackData;
-	nosEngine.GetDefaultValueOfType(NOS_NAME_STATIC("nos.fb.Track"), &defaultTrackData);
-	nos::Buffer defaultTrackBuffer = nos::Buffer((uint8_t*)defaultTrackData.Data, defaultTrackData.Size);
-	track::TTrack defaultTrack = defaultTrackBuffer.As<track::TTrack>();
+	auto defaultTrackData = GetDefaultValueOfType(NOS_NAME_STATIC(nos::track::Track::GetFullyQualifiedName()));
+	auto defaultTrack = defaultTrackData->As<track::TTrack>();
 	bool reviveFromOrphanOnFirstSuccess = false;
 	while (!ShouldStop)
 	{

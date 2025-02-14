@@ -164,11 +164,10 @@ struct BreakNode : NodeContext
     		{
     			uuid newPinId = nosEngine.GenerateID();
     			std::vector<uint8_t> vec{};
-    			nosBuffer defVal{};
 				auto& type = *Type;
-    			if (nosEngine.GetDefaultValueOfType(type->ElementType->TypeName, &defVal) == NOS_RESULT_SUCCESS)
+    			if (auto buf = GetDefaultValueOfType(type->ElementType->TypeName))
     			{
-    				vec = std::vector((const uint8_t*)defVal.Data, (const uint8_t*)defVal.Data + defVal.Size);
+					vec = std::vector((const uint8_t*)buf->Data(), (const uint8_t*)buf->Data() + buf->Size());
     			}
 
     			std::vector<uint8_t> data = std::vector<uint8_t>(type->ByteSize);

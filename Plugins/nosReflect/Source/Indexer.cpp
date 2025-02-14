@@ -120,12 +120,11 @@ struct Indexer : NodeContext
 	}
 
 	bool UpdateInputVectorSize() {
-		nosBuffer value;
 		std::vector<uint8_t> data;
 
-		if (NOS_RESULT_SUCCESS == nosEngine.GetDefaultValueOfType(Type->TypeName, &value))
+		if (auto buf = GetDefaultValueOfType(Type->TypeName))
 		{
-			data = std::vector<uint8_t>{ (uint8_t*)value.Data, (uint8_t*)value.Data + value.Size };
+			data = std::vector<uint8_t>{(uint8_t*)buf->Data(), (uint8_t*)buf->Data() + buf->Size()};
 		}
 
 		std::vector<const void*> datas = { data.data() };

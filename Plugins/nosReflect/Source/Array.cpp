@@ -146,19 +146,14 @@ struct ArrayNode : NodeContext
 		if (!Type)
 			return;
 
-		nosBuffer value;
-		std::vector<uint8_t> data;
 
-		if (NOS_RESULT_SUCCESS == nosEngine.GetDefaultValueOfType(Type->TypeName, &value))
+		if (auto buf = GetDefaultValueOfType(Type->TypeName))
 		{
-			data = std::vector<uint8_t>{(uint8_t*)value.Data, (uint8_t*)value.Data + value.Size};
+			std::vector<const void*> datas;
+			for (unsigned int i = 0; i < GetInputs().size(); i++)
+				datas.push_back(buf->Data());
+			SendOutputArray(datas);
 		}
-
-		std::vector<const void*> datas;
-		for (unsigned int i = 0; i < GetInputs().size(); i++) {
-			datas.push_back(data.data());
-		}
-		SendOutputArray(datas);
 	}
 
 	nosResult ExecuteNode(nosNodeExecuteParams* params) override
@@ -197,11 +192,10 @@ struct ArrayNode : NodeContext
 		auto inputs = GetInputs();
 		flatbuffers::FlatBufferBuilder fbb;
 
-		nosBuffer value;
 		std::vector<uint8_t> data;
 		nos::Name typeName = Type ? Name(Type->TypeName) : NSN_TypeNameGeneric;
-		if (NOS_RESULT_SUCCESS == nosEngine.GetDefaultValueOfType(typeName, &value))
-			data = std::vector<uint8_t>{ (uint8_t*)value.Data, (uint8_t*)value.Data + value.Size };
+		if (auto buf = GetDefaultValueOfType(typeName))
+			data = std::vector<uint8_t>{(uint8_t*)buf->Data(), (uint8_t*)buf->Data() + buf->Size()};
 
 		auto outputType = "[" + typeName.AsString() + "]";
 		auto name = "Input " + std::to_string(inputs.size());

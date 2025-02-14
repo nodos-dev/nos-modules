@@ -179,12 +179,9 @@ struct MergeContext : NodeContext
 		if (cmd == 1)
 		{
 			auto count = std::to_string(GetTextureCount());
-			nosBuffer buffer;
-			nosEngine.GetDefaultValueOfType(NOS_NAME_STATIC("nos.sys.vulkan.Texture"), &buffer);
 
 			std::string texPinName = "Texture_" + count;
 			uuid texId = nosEngine.GenerateID();
-			std::vector<uint8_t> texData((uint8_t*)buffer.Data, (uint8_t*)buffer.Data + buffer.Size);
 
 			std::string opacityPinName = "Opacity_" + count;
 			uuid opacityId = nosEngine.GenerateID();
@@ -208,9 +205,7 @@ struct MergeContext : NodeContext
 				                    "nos.sys.vulkan.Texture",
 				                    fb::ShowAs::INPUT_PIN,
 				                    fb::CanShowAs::INPUT_PIN_ONLY,
-				                    pinCategory.c_str(),
-				                    0,
-				                    &texData),
+				                    pinCategory.c_str()),
 				fb::CreatePinDirect(fbb,
 				                    &opacityId,
 				                    opacityPinName.c_str(),

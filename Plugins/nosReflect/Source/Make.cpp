@@ -150,12 +150,11 @@ struct MakeNode : NodeContext
     void LoadPins(const char* updatedDisplayName = nullptr)
     {
 		assert((*Type)->BaseType != NOS_BASE_TYPE_NONE);
-    	nosBuffer defBuf{};
 		auto& type = *Type;
-    	nosEngine.GetDefaultValueOfType(type->TypeName, &defBuf); // TODO: This can be freed after type is unloaded, so beware.
-		if (!defBuf.Data)
+    	auto defBuf = GetDefaultValueOfType(type->TypeName); // TODO: This can be freed after type is unloaded, so beware.
+		if (!defBuf)
 			return;
-    	auto buf = nos::Buffer(defBuf);
+    	nos::Buffer buf = defBuf->GetBuffer();
     	std::vector<uint8_t> data = buf;
         flatbuffers::FlatBufferBuilder fbb;
         std::vector<flatbuffers::Offset<nos::fb::Pin>> pinsToAdd = {};

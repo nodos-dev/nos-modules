@@ -154,9 +154,8 @@ struct SetVariableNode : VariableNodeBase
 
 	void SetDefaultValue()
 	{
-		nosBuffer def{};
-		nosEngine.GetDefaultValueOfType(TypeName, &def);
-		SetPinValue(NOS_NAME("Value"), def);
+		if (auto def = GetDefaultValueOfType(TypeName))
+			SetPinValue(NOS_NAME("Value"), *def);
 	}
 
 	void OnVariableUpdated(nos::Name name, nos::Name typeName, const nosBuffer* value)

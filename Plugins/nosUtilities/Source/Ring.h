@@ -429,9 +429,9 @@ struct CPUTrivialResource : ResourceInterface {
 	};
 
 	CPUTrivialResource() : ResourceInterface(RESOURCE_TYPE) {
-		nosBuffer defaultVal;
-		nosEngine.GetDefaultValueOfType(voidTypeName, &defaultVal);
-		Sample = defaultVal;
+		auto defaultVal = GetDefaultValueOfType(voidTypeName);
+		if (defaultVal)
+			Sample = defaultVal->GetBuffer();
 	}
 	rc<ResourceBase> CreateResource() override {
 		rc<Resource> res = MakeShared<Resource>();
@@ -736,11 +736,7 @@ struct RingNodeBase : NodeContext
 		else if (TypeInfo->TypeName == vulkanTextureTypeName)
 			resource = std::make_unique<GPUTextureResource>();
 		else
-		{
-			nosBuffer sample;
-			nosEngine.GetDefaultValueOfType(TypeInfo->TypeName, &sample);
 			resource = std::make_unique<CPUTrivialResource>();
-		}
 
 		Ring = std::make_unique<TRing>(1, std::move(resource));
 
