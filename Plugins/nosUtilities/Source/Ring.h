@@ -12,7 +12,7 @@
 
 #define inputPinName NOS_NAME_STATIC("Input")
 #define outputPinName NOS_NAME_STATIC("Output")
-#define voidTypeName NOS_NAME_STATIC("nos.fb.Void")
+#define voidTypeName NOS_NAME_STATIC("nos.Generic")
 #define vulkanBufferTypeName NOS_NAME_STATIC("nos.sys.vulkan.Buffer")
 #define vulkanTextureTypeName NOS_NAME_STATIC("nos.sys.vulkan.Texture")
 

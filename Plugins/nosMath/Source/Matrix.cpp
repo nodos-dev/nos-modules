@@ -75,7 +75,7 @@ struct MatrixOperationNodeContext : NodeContext
 	{
 		for (auto& [id, pin] : Pins)
 		{
-			if (pin.TypeName != NOS_NAME("nos.fb.Void"))
+			if (pin.TypeName != NOS_NAME("nos.Generic"))
 			{
 				TypeName = pin.TypeName;
 				break;

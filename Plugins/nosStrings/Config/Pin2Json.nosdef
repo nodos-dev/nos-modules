@@ -7,7 +7,7 @@
       "display_name": "Pin2Json",
       "pins": [
         {
-          "type_name": "nos.fb.Void",
+          "type_name": "nos.Generic",
           "name": "Data",
           "show_as": "INPUT_PIN",
           "can_show_as": "INPUT_PIN_ONLY",

@@ -19,7 +19,7 @@
 				},
 				{
 					"name": "Dependency",
-					"type_name": "nos.fb.Void",
+					"type_name": "nos.Generic",
 					"show_as": "INPUT_PIN",
 					"can_show_as": "INPUT_PIN_ONLY"
 				}

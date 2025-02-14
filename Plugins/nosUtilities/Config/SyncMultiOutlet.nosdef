@@ -13,14 +13,14 @@
 				},
 				{
 					"name": "Input",
-					"type_name": "nos.fb.Void",
+					"type_name": "nos.Generic",
 					"show_as": "INPUT_PIN",
 					"can_show_as": "INPUT_PIN_ONLY"
 				},
 				{
 					"name": "Out_0",
 					"display_name": "Out",
-					"type_name": "nos.fb.Void",
+					"type_name": "nos.Generic",
 					"show_as": "OUTPUT_PIN",
 					"can_show_as": "OUTPUT_PIN_ONLY",
 					"live": true
@@ -28,7 +28,7 @@
 				{
 					"name": "Out_1",
 					"display_name": "Out",
-					"type_name": "nos.fb.Void",
+					"type_name": "nos.Generic",
 					"show_as": "OUTPUT_PIN",
 					"can_show_as": "OUTPUT_PIN_ONLY",
 					"live": true

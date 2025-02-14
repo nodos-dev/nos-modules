@@ -7,7 +7,7 @@
         {
           "id": "6bacba35-bfb9-4159-a045-157cbba9c91f",
           "name": "Output",
-          "type_name": "nos.fb.Void",
+          "type_name": "nos.Generic",
           "show_as": "OUTPUT_PIN",
           "can_show_as": "OUTPUT_PIN_ONLY",
           "pin_category": "",
@@ -24,7 +24,7 @@
         {
           "id": "29c7d762-c5f2-426a-b002-0a0bd4bc1d5a",
           "name": "A",
-          "type_name": "nos.fb.Void",
+          "type_name": "nos.Generic",
           "show_as": "INPUT_PIN",
           "can_show_as": "INPUT_PIN_OR_PROPERTY",
           "pin_category": "",
@@ -40,7 +40,7 @@
         {
           "id": "2b5f0700-6389-4ac8-be10-dc12d50106dd",
           "name": "B",
-          "type_name": "nos.fb.Void",
+          "type_name": "nos.Generic",
           "show_as": "INPUT_PIN",
           "can_show_as": "INPUT_PIN_OR_PROPERTY",
           "pin_category": "",
@@ -56,7 +56,7 @@
         {
           "id": "4b7a5974-673a-4bf7-8363-b8c371cbc028",
           "name": "t",
-          "type_name": "nos.fb.Void",
+          "type_name": "nos.Generic",
           "show_as": "INPUT_PIN",
           "can_show_as": "INPUT_PIN_OR_PROPERTY",
           "pin_category": "",
@@ -81,7 +81,7 @@
               {
                 "id": "217315e2-f709-40a5-a756-21ffb78e978e",
                 "name": "Output",
-                "type_name": "nos.fb.Void",
+                "type_name": "nos.Generic",
                 "show_as": "OUTPUT_PIN",
                 "can_show_as": "OUTPUT_PIN_ONLY",
                 "pin_category": "",
@@ -98,7 +98,7 @@
               {
                 "id": "89f24f9c-2f3d-46e0-a4f9-28632fd01d88",
                 "name": "A",
-                "type_name": "nos.fb.Void",
+                "type_name": "nos.Generic",
                 "show_as": "INPUT_PIN",
                 "can_show_as": "INPUT_PIN_OR_PROPERTY",
                 "pin_category": "",
@@ -115,7 +115,7 @@
               {
                 "id": "d03c6990-a495-42e1-b765-1917e8f214cd",
                 "name": "Scalar",
-                "type_name": "nos.fb.Void",
+                "type_name": "nos.Generic",
                 "show_as": "INPUT_PIN",
                 "can_show_as": "INPUT_PIN_OR_PROPERTY",
                 "pin_category": "",
@@ -153,7 +153,7 @@
               {
                 "id": "a3b71278-4839-4621-b71c-a3ccccb08a55",
                 "name": "Output",
-                "type_name": "nos.fb.Void",
+                "type_name": "nos.Generic",
                 "show_as": "OUTPUT_PIN",
                 "can_show_as": "OUTPUT_PIN_ONLY",
                 "pin_category": "",
@@ -169,7 +169,7 @@
               {
                 "id": "d6d5ba2d-ba1b-4f35-bb84-75c58bff47ed",
                 "name": "Input",
-                "type_name": "nos.fb.Void",
+                "type_name": "nos.Generic",
                 "show_as": "INPUT_PIN",
                 "can_show_as": "INPUT_PIN_OR_PROPERTY",
                 "pin_category": "",
@@ -206,7 +206,7 @@
               {
                 "id": "c0424ddf-dfaa-4536-aedf-2cef85cdb005",
                 "name": "Output",
-                "type_name": "nos.fb.Void",
+                "type_name": "nos.Generic",
                 "show_as": "OUTPUT_PIN",
                 "can_show_as": "OUTPUT_PIN_ONLY",
                 "pin_category": "",
@@ -223,7 +223,7 @@
               {
                 "id": "182e80e1-e489-4c09-b05c-76c2ad5a7b81",
                 "name": "A",
-                "type_name": "nos.fb.Void",
+                "type_name": "nos.Generic",
                 "show_as": "INPUT_PIN",
                 "can_show_as": "INPUT_PIN_OR_PROPERTY",
                 "pin_category": "",
@@ -240,7 +240,7 @@
               {
                 "id": "5addd5ac-ceaa-4178-b4c1-675f02c00ac7",
                 "name": "B",
-                "type_name": "nos.fb.Void",
+                "type_name": "nos.Generic",
                 "show_as": "INPUT_PIN",
                 "can_show_as": "INPUT_PIN_OR_PROPERTY",
                 "pin_category": "",
@@ -279,7 +279,7 @@
               {
                 "id": "56a789fd-0f71-4b42-a26d-0afd7abe3fa3",
                 "name": "Output",
-                "type_name": "nos.fb.Void",
+                "type_name": "nos.Generic",
                 "show_as": "OUTPUT_PIN",
                 "can_show_as": "OUTPUT_PIN_ONLY",
                 "pin_category": "",
@@ -296,7 +296,7 @@
               {
                 "id": "404cc7ab-0fd8-4a4a-a540-a933102f66c2",
                 "name": "A",
-                "type_name": "nos.fb.Void",
+                "type_name": "nos.Generic",
                 "show_as": "INPUT_PIN",
                 "can_show_as": "INPUT_PIN_OR_PROPERTY",
                 "pin_category": "",
@@ -313,7 +313,7 @@
               {
                 "id": "a3f0cc49-b024-49ea-96e1-1271d73d025b",
                 "name": "B",
-                "type_name": "nos.fb.Void",
+                "type_name": "nos.Generic",
                 "show_as": "INPUT_PIN",
                 "can_show_as": "INPUT_PIN_OR_PROPERTY",
                 "pin_category": "",
@@ -352,7 +352,7 @@
               {
                 "id": "1a356c67-fa57-4c87-b3a1-1a62a6dc84e7",
                 "name": "Output",
-                "type_name": "nos.fb.Void",
+                "type_name": "nos.Generic",
                 "show_as": "OUTPUT_PIN",
                 "can_show_as": "OUTPUT_PIN_ONLY",
                 "pin_category": "",
@@ -368,7 +368,7 @@
               {
                 "id": "2836dbad-7bdb-440d-ac4f-7bece6b5beca",
                 "name": "Input",
-                "type_name": "nos.fb.Void",
+                "type_name": "nos.Generic",
                 "show_as": "INPUT_PIN",
                 "can_show_as": "INPUT_PIN_OR_PROPERTY",
                 "pin_category": "",
@@ -405,7 +405,7 @@
               {
                 "id": "492e4bbb-3cba-4e31-b69c-e43589fd71c1",
                 "name": "Input",
-                "type_name": "nos.fb.Void",
+                "type_name": "nos.Generic",
                 "show_as": "INPUT_PIN",
                 "can_show_as": "INPUT_PIN_ONLY",
                 "pin_category": "",
@@ -422,7 +422,7 @@
               {
                 "id": "8240fba0-55d1-459e-9584-f389f3e92f5c",
                 "name": "Output",
-                "type_name": "nos.fb.Void",
+                "type_name": "nos.Generic",
                 "show_as": "OUTPUT_PIN",
                 "can_show_as": "OUTPUT_PIN_ONLY",
                 "pin_category": "",
@@ -460,7 +460,7 @@
               {
                 "id": "5a696a2a-e4a6-44bd-8e02-e228b112bf2a",
                 "name": "Output",
-                "type_name": "nos.fb.Void",
+                "type_name": "nos.Generic",
                 "show_as": "OUTPUT_PIN",
                 "can_show_as": "OUTPUT_PIN_ONLY",
                 "pin_category": "",
@@ -476,7 +476,7 @@
               {
                 "id": "c16dce66-a3c8-45c4-bb06-d49765c32ef3",
                 "name": "Input",
-                "type_name": "nos.fb.Void",
+                "type_name": "nos.Generic",
                 "show_as": "INPUT_PIN",
                 "can_show_as": "INPUT_PIN_OR_PROPERTY",
                 "pin_category": "",

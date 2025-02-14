@@ -7,7 +7,7 @@
         {
           "id": "4c75ff3d-45a2-49fd-a48d-da6e9813bb98",
           "name": "Sink Input",
-          "type_name": "nos.fb.Void",
+          "type_name": "nos.Generic",
           "show_as": "INPUT_PIN",
           "can_show_as": "INPUT_PIN_ONLY",
           "pin_category": "",
@@ -161,7 +161,7 @@
               {
                 "id": "f762c472-cb25-4fb2-adcf-047cdd19d3b6",
                 "name": "Sink Input",
-                "type_name": "nos.fb.Void",
+                "type_name": "nos.Generic",
                 "show_as": "INPUT_PIN",
                 "can_show_as": "INPUT_PIN_ONLY",
                 "pin_category": "",
@@ -279,7 +279,7 @@
               {
                 "id": "0256925e-33d3-4d28-897f-64eabb6c23cb",
                 "name": "Output",
-                "type_name": "nos.fb.Void",
+                "type_name": "nos.Generic",
                 "show_as": "OUTPUT_PIN",
                 "can_show_as": "OUTPUT_PIN_ONLY",
                 "pin_category": "",
@@ -296,7 +296,7 @@
               {
                 "id": "b2e60afd-48ab-4f80-89dc-4c7c4323d326",
                 "name": "Input",
-                "type_name": "nos.fb.Void",
+                "type_name": "nos.Generic",
                 "show_as": "INPUT_PIN",
                 "can_show_as": "INPUT_PIN_ONLY",
                 "pin_category": "",

@@ -15,7 +15,7 @@
         },
         {
           "name": "Out",
-          "type_name": "nos.fb.Void",
+          "type_name": "nos.Generic",
           "show_as": "OUTPUT_PIN",
           "can_show_as": "OUTPUT_PIN_ONLY",
           "description": "JSON representation of the pin data"

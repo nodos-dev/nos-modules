@@ -27,7 +27,7 @@ struct Pin2JsonNode : NodeContext
 	{
 		if (pinName == NOS_NAME("Data"))
 		{
-			SetPinType(NOS_NAME("Data"), NOS_NAME("nos.fb.Void"));
+			SetPinType(NOS_NAME("Data"), NOS_NAME("nos.Generic"));
 		}
 	}
 };
