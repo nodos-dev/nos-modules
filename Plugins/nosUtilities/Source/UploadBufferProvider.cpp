@@ -97,6 +97,8 @@ namespace nos::utilities
 						return;
 					SampleBuffer.Info.Buffer.Alignment = newAlignment;
 					Buffers.clear();
+					if (SampleBuffer.Info.Buffer.Size == 0)
+						return;
 					for (size_t i = 0; i < QueueSize; i++)
 						Buffers.emplace_back(SampleBuffer);
 				});
@@ -111,6 +113,8 @@ namespace nos::utilities
 					else
 						memFlags = nosMemoryFlags(memFlags & ~NOS_MEMORY_FLAGS_FORCE_HOST_MEMORY);
 					Buffers.clear();
+					if (SampleBuffer.Info.Buffer.Size == 0)
+						return;
 					for (size_t i = 0; i < QueueSize; i++)
 						Buffers.emplace_back(SampleBuffer);
 				});
@@ -125,6 +129,8 @@ namespace nos::utilities
 					else
 						memFlags = nosMemoryFlags(memFlags & ~NOS_MEMORY_FLAGS_DOWNLOAD);
 					Buffers.clear();
+					if (SampleBuffer.Info.Buffer.Size == 0)
+						return;
 					for (size_t i = 0; i < QueueSize; i++)
 						Buffers.emplace_back(SampleBuffer);
 				});

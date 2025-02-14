@@ -142,7 +142,6 @@
 			"class_name": "Add_Transform",
 			"menu_info": {
 				"category": "Math|Addition",
-				"class_name": "Add_Transform",
 				"display_name": "Add Transform"
 			},
 			"node": {
