@@ -24,24 +24,5 @@
 	"defaults": [
 		"Config/Defaults.json"
 	],
-	"binary_path": "Binaries/nosTrack",
-	"associated_nodes": [
-		{
-			"category": "nosTrack",
-			"class_name": "FreeD",
-			"display_name": "FreeD",
-			"name_aliases": [ "virtual camera", "udp port" ]
-		},
-		{
-			"category": "nosTrack",
-			"class_name": "UserTrack",
-			"display_name": "User Track",
-			"name_aliases": [ "virtual camera" ]
-		},
-		{
-			"category": "Math|Addition",
-			"class_name": "AddTrack",
-			"display_name": "Add Track"
-		}
-	]
+	"binary_path": "Binaries/nosTrack"
 }

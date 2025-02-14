@@ -1,78 +1,85 @@
 {
-  "nodes": [
-    {
-      "class_name": "CasFilter",
-      "display_name": "CAS Filter",
-      "description": "Contrast Adaptive Sharpening",
-      "contents_type": "Job",
-      "contents": {
-        "type": "nos.sys.vulkan.GPUNode",
-        "options": {
-          "shader": "Shaders/CAS.comp",
-          "stage": "COMPUTE"
-        }
-      },
-      "pins": [
-        {
-          "name": "Input",
-          "type_name": "nos.sys.vulkan.Texture",
-          "show_as": "INPUT_PIN",
-          "can_show_as": "INPUT_PIN_ONLY",
-          "data": {
-            "filtering": "NEAREST"
-          }
-        },
-        {
-          "name": "Sharpness",
-          "type_name": "float",
-          "show_as": "PROPERTY",
-          "can_show_as": "INPUT_PIN_OR_PROPERTY",
-          "data": 0.0,
-          "min": 0.0,
-          "max": 1.0
-        },
-        {
-          "name": "Strength",
-          "type_name": "float",
-          "show_as": "PROPERTY",
-          "can_show_as": "INPUT_PIN_OR_PROPERTY",
-          "data": 1.0,
-          "min": 0.0,
-          "max": 1.0
-        },
-        {
-          "name": "LumaCoeffs",
-          "display_name": "Luma Coefficients",
-          "type_name": "nos.fb.vec3",
-          "show_as": "PROPERTY",
-          "can_show_as": "INPUT_PIN_OR_PROPERTY",
-            "data": {
-                "x": 0.0,
-                "y": 1.0,
-                "z": 0.0
-            }
-        },
-        {
-          "name": "DispatchSize",
-          "display_name": "Dispatch Size",
-          "type_name": "nos.fb.vec2u",
-          "show_as": "PROPERTY",
-          "can_show_as": "INPUT_PIN_OR_PROPERTY",
-          "data": {
-            "x": 120,
-            "y": 120
-          }
-        },
-        {
-          "name": "Output",
-          "type_name": "nos.sys.vulkan.Texture",
-          "show_as": "OUTPUT_PIN",
-          "can_show_as": "OUTPUT_PIN_ONLY",
-          "data": {
-            "format": "R16G16B16A16_UNORM"
-          }
-        }
-      ]
-    }
-  ]
+	"nodes": [
+		{
+			"class_name": "CasFilter",
+			"menu_info": {
+				"category": "Filters",
+				"display_name": "CAS Filter (Raw)"
+			},
+			"node": {
+				"class_name": "CasFilter",
+				"display_name": "CAS Filter",
+				"description": "Contrast Adaptive Sharpening",
+				"contents_type": "Job",
+				"contents": {
+					"type": "nos.sys.vulkan.GPUNode",
+					"options": {
+						"shader": "Shaders/CAS.comp",
+						"stage": "COMPUTE"
+					}
+				},
+				"pins": [
+					{
+						"name": "Input",
+						"type_name": "nos.sys.vulkan.Texture",
+						"show_as": "INPUT_PIN",
+						"can_show_as": "INPUT_PIN_ONLY",
+						"data": {
+							"filtering": "NEAREST"
+						}
+					},
+					{
+						"name": "Sharpness",
+						"type_name": "float",
+						"show_as": "PROPERTY",
+						"can_show_as": "INPUT_PIN_OR_PROPERTY",
+						"data": 0.0,
+						"min": 0.0,
+						"max": 1.0
+					},
+					{
+						"name": "Strength",
+						"type_name": "float",
+						"show_as": "PROPERTY",
+						"can_show_as": "INPUT_PIN_OR_PROPERTY",
+						"data": 1.0,
+						"min": 0.0,
+						"max": 1.0
+					},
+					{
+						"name": "LumaCoeffs",
+						"display_name": "Luma Coefficients",
+						"type_name": "nos.fb.vec3",
+						"show_as": "PROPERTY",
+						"can_show_as": "INPUT_PIN_OR_PROPERTY",
+						"data": {
+							"x": 0.0,
+							"y": 1.0,
+							"z": 0.0
+						}
+					},
+					{
+						"name": "DispatchSize",
+						"display_name": "Dispatch Size",
+						"type_name": "nos.fb.vec2u",
+						"show_as": "PROPERTY",
+						"can_show_as": "INPUT_PIN_OR_PROPERTY",
+						"data": {
+							"x": 120,
+							"y": 120
+						}
+					},
+					{
+						"name": "Output",
+						"type_name": "nos.sys.vulkan.Texture",
+						"show_as": "OUTPUT_PIN",
+						"can_show_as": "OUTPUT_PIN_ONLY",
+						"data": {
+							"format": "R16G16B16A16_UNORM"
+						}
+					}
+				]
+			}
+		}
+	]
 }

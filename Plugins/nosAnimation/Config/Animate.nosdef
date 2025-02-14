@@ -1,102 +1,110 @@
 {
-  "nodes": [
-    {
-      "class_name": "Animate",
-      "contents_type": "Job",
-      "always_execute": true,
-      "pins": [
-        {
-          "name": "Duration",
-          "type_name": "double",
-          "show_as": "PROPERTY",
-          "can_show_as": "INPUT_PIN_OR_PROPERTY",
-          "data": 1.0
-        },
-        {
-          "name": "Reverse",
-          "type_name": "bool",
-          "show_as": "PROPERTY",
-          "can_show_as": "INPUT_PIN_OR_PROPERTY",
-          "data": false
-        },
-        {
-          "name": "Loop",
-          "type_name": "bool",
-          "show_as": "PROPERTY",
-          "can_show_as": "INPUT_PIN_OR_PROPERTY",
-          "data": false
-        },
-        {
-          "name": "Swing",
-          "type_name": "bool",
-          "show_as": "PROPERTY",
-          "can_show_as": "INPUT_PIN_OR_PROPERTY",
-          "data": true
-        },
-        {
-            "name": "t",
-            "type_name": "double",
-            "show_as": "OUTPUT_PIN",
-            "can_show_as": "OUTPUT_PIN"
-        },
-        {
-            "name": "AnimationFrame",
-            "type_name": "ulong",
-            "show_as": "PROPERTY",
-            "can_show_as": "OUTPUT_PIN_OR_PROPERTY",
-            "readonly": true
-        }
-      ],
-      "functions": [
-        {
-          "class_name": "Start",
-          "contents_type": "Job"
-        },
-        {
-          "class_name": "Pause",
-          "contents_type": "Job"
-        },
-        {
-          "class_name": "Continue",
-          "contents_type": "Job"
-        },
-        {
-          "class_name": "Reset",
-          "contents_type": "Job"
-        },
-        {
-          "class_name": "ReversedContinue",
-          "contents_type": "Job"
-        },
-        {
-          "class_name": "ForwardContinue",
-          "contents_type": "Job"
-        },
-        {
-          "class_name": "Started_Internal",
-          "contents_type": "Job",
-          "pins": [
-            {
-              "name": "Started",
-              "type_name": "nos.exe",
-              "show_as": "OUTPUT_PIN",
-              "can_show_as": "OUTPUT_PIN_OR_PROPERTY"
-            }
-          ]
-        },
-        {
-          "class_name": "Finished_Internal",
-          "contents_type": "Job",
-          "pins": [
-            {
-              "name": "Finished",
-              "type_name": "nos.exe",
-              "show_as": "OUTPUT_PIN",
-              "can_show_as": "OUTPUT_PIN_OR_PROPERTY"
-            }
-          ]
-        }
-      ]
-    }
-  ]
+	"nodes": [
+		{
+			"class_name": "Animate",
+			"menu_info": {
+				"category": "Animation",
+				"display_name": "Animate",
+				"name_aliases": [ "Animator" ]
+			},
+			"node": {
+				"class_name": "Animate",
+				"contents_type": "Job",
+				"always_execute": true,
+				"pins": [
+					{
+						"name": "Duration",
+						"type_name": "double",
+						"show_as": "PROPERTY",
+						"can_show_as": "INPUT_PIN_OR_PROPERTY",
+						"data": 1.0
+					},
+					{
+						"name": "Reverse",
+						"type_name": "bool",
+						"show_as": "PROPERTY",
+						"can_show_as": "INPUT_PIN_OR_PROPERTY",
+						"data": false
+					},
+					{
+						"name": "Loop",
+						"type_name": "bool",
+						"show_as": "PROPERTY",
+						"can_show_as": "INPUT_PIN_OR_PROPERTY",
+						"data": false
+					},
+					{
+						"name": "Swing",
+						"type_name": "bool",
+						"show_as": "PROPERTY",
+						"can_show_as": "INPUT_PIN_OR_PROPERTY",
+						"data": true
+					},
+					{
+						"name": "t",
+						"type_name": "double",
+						"show_as": "OUTPUT_PIN",
+						"can_show_as": "OUTPUT_PIN"
+					},
+					{
+						"name": "AnimationFrame",
+						"type_name": "ulong",
+						"show_as": "PROPERTY",
+						"can_show_as": "OUTPUT_PIN_OR_PROPERTY",
+						"readonly": true
+					}
+				],
+				"functions": [
+					{
+						"class_name": "Start",
+						"contents_type": "Job"
+					},
+					{
+						"class_name": "Pause",
+						"contents_type": "Job"
+					},
+					{
+						"class_name": "Continue",
+						"contents_type": "Job"
+					},
+					{
+						"class_name": "Reset",
+						"contents_type": "Job"
+					},
+					{
+						"class_name": "ReversedContinue",
+						"contents_type": "Job"
+					},
+					{
+						"class_name": "ForwardContinue",
+						"contents_type": "Job"
+					},
+					{
+						"class_name": "Started_Internal",
+						"contents_type": "Job",
+						"pins": [
+							{
+								"name": "Started",
+								"type_name": "nos.exe",
+								"show_as": "OUTPUT_PIN",
+								"can_show_as": "OUTPUT_PIN_OR_PROPERTY"
+							}
+						]
+					},
+					{
+						"class_name": "Finished_Internal",
+						"contents_type": "Job",
+						"pins": [
+							{
+								"name": "Finished",
+								"type_name": "nos.exe",
+								"show_as": "OUTPUT_PIN",
+								"can_show_as": "OUTPUT_PIN_OR_PROPERTY"
+							}
+						]
+					}
+				]
+			}
+		}
+	]
 }

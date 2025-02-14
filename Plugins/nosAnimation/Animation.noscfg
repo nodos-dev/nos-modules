@@ -26,35 +26,5 @@
     "Config/AnimationExpressionPresets.json"
   ],
   "defaults": [],
-  "custom_types": [],
-  "associated_nodes": [
-    {
-      "category": "Animation",
-      "class_name": "Animate",
-      "display_name": "Animate",
-      "name_aliases": [ "Animator" ]
-    },
-    {
-      "category": "Animation",
-      "class_name": "AnimationCurve",
-      "display_name": "Animation Curve",
-      "name_aliases": [ "Ease", "Easing", "Ease In", "Ease Out" ]
-    },
-    {
-      "category": "Animation|Internal",
-      "class_name": "HasCustomInterpolator",
-      "display_name": "Has Custom Interpolator"
-    },
-    {
-      "category": "Animation|Internal",
-      "class_name": "InterpolateWithCustomInterpolator",
-      "display_name": "Interpolate With Custom Interpolator"
-    },
-    {
-      "category": "Animation",
-      "class_name": "Interpolate",
-      "display_name": "Interpolate",
-      "name_aliases": [ "Animate", "Lerp" ]
-    }
-  ]
+  "custom_types": []
 }
