@@ -1,86 +1,114 @@
 {
-    "nodes": [
-        {
-            "class_name": "Transform",
-            "contents_type": "Job",
-            "description": "",
-            "pins": [
-                {
-                    "name": "A",
-                    "type_name": "nos.fb.mat4",
-                    "show_as": "INPUT_PIN",
-                    "can_show_as": "INPUT_PIN_OR_PROPERTY"
-                },
-                {
-                    "name": "B",
-                    "type_name": "nos.fb.mat4",
-                    "show_as": "INPUT_PIN",
-                    "can_show_as": "INPUT_PIN_OR_PROPERTY"
-                },
-                {
-                    "name": "Result",
-                    "type_name": "nos.fb.mat4",
-                    "show_as": "OUTPUT_PIN",
-                    "can_show_as": "OUTPUT_PIN_ONLY"
-                }
-            ]
-        },
-        {
-            "class_name": "ToTransformMatrix",
-            "contents_type": "Job",
-            "description": "",
-            "pins": [
-                {
-                    "name": "Transform",
-                    "type_name": "nos.fb.Transform",
-                    "show_as": "INPUT_PIN",
-                    "can_show_as": "INPUT_PIN_OR_PROPERTY"
-                },
-                {
-                    "name": "Matrix",
-                    "type_name": "nos.fb.mat4",
-                    "show_as": "OUTPUT_PIN",
-                    "can_show_as": "OUTPUT_PIN_ONLY"
-                }
-            ]
-        },
-        {
-            "class_name": "Inverse",
-            "contents_type": "Job",
-            "description": "",
-            "pins": [
-                {
-                    "name": "In",
-                    "type_name": "nos.Generic",
-                    "show_as": "INPUT_PIN",
-                    "can_show_as": "INPUT_PIN_OR_PROPERTY"
-                },
-                {
-                    "name": "Out",
-                    "type_name": "nos.Generic",
-                    "show_as": "OUTPUT_PIN",
-                    "can_show_as": "OUTPUT_PIN_ONLY"
-                }
-            ]
-        },
-        {
-            "class_name": "Transpose",
-            "contents_type": "Job",
-            "description": "",
-            "pins": [
-                {
-                    "name": "In",
-                    "type_name": "nos.Generic",
-                    "show_as": "INPUT_PIN",
-                    "can_show_as": "INPUT_PIN_OR_PROPERTY"
-                },
-                {
-                    "name": "Out",
-                    "type_name": "nos.Generic",
-                    "show_as": "OUTPUT_PIN",
-                    "can_show_as": "OUTPUT_PIN_ONLY"
-                }
-            ]
-        }
-    ]
+	"nodes": [
+		{
+			"class_name": "Transform",
+			"menu_info": {
+				"category": "Math|Linear Algebra",
+				"display_name": "Transform"
+			},
+			"node": {
+				"class_name": "Transform",
+				"contents_type": "Job",
+				"description": "",
+				"pins": [
+					{
+						"name": "A",
+						"type_name": "nos.fb.mat4",
+						"show_as": "INPUT_PIN",
+						"can_show_as": "INPUT_PIN_OR_PROPERTY"
+					},
+					{
+						"name": "B",
+						"type_name": "nos.fb.mat4",
+						"show_as": "INPUT_PIN",
+						"can_show_as": "INPUT_PIN_OR_PROPERTY"
+					},
+					{
+						"name": "Result",
+						"type_name": "nos.fb.mat4",
+						"show_as": "OUTPUT_PIN",
+						"can_show_as": "OUTPUT_PIN_ONLY"
+					}
+				]
+			}
+		},
+		{
+			"class_name": "ToTransformMatrix",
+			"menu_info": {
+				"category": "Math|Linear Algebra",
+				"display_name": "To Transform Matrix"
+			},
+			"node": {
+				"class_name": "ToTransformMatrix",
+				"contents_type": "Job",
+				"description": "",
+				"pins": [
+					{
+						"name": "Transform",
+						"type_name": "nos.fb.Transform",
+						"show_as": "INPUT_PIN",
+						"can_show_as": "INPUT_PIN_OR_PROPERTY"
+					},
+					{
+						"name": "Matrix",
+						"type_name": "nos.fb.mat4",
+						"show_as": "OUTPUT_PIN",
+						"can_show_as": "OUTPUT_PIN_ONLY"
+					}
+				]
+			}
+		},
+		{
+			"class_name": "Inverse",
+			"menu_info": {
+				"category": "Math|Linear Algebra",
+				"display_name": "Inverse"
+			},
+			"node": {
+				"class_name": "Inverse",
+				"contents_type": "Job",
+				"description": "",
+				"pins": [
+					{
+						"name": "In",
+						"type_name": "nos.Generic",
+						"show_as": "INPUT_PIN",
+						"can_show_as": "INPUT_PIN_OR_PROPERTY"
+					},
+					{
+						"name": "Out",
+						"type_name": "nos.Generic",
+						"show_as": "OUTPUT_PIN",
+						"can_show_as": "OUTPUT_PIN_ONLY"
+					}
+				]
+			}
+		},
+		{
+			"class_name": "Transpose",
+			"menu_info": {
+				"category": "Math|Linear Algebra",
+				"display_name": "Transpose"
+			},
+			"node": {
+				"class_name": "Transpose",
+				"contents_type": "Job",
+				"description": "",
+				"pins": [
+					{
+						"name": "In",
+						"type_name": "nos.Generic",
+						"show_as": "INPUT_PIN",
+						"can_show_as": "INPUT_PIN_OR_PROPERTY"
+					},
+					{
+						"name": "Out",
+						"type_name": "nos.Generic",
+						"show_as": "OUTPUT_PIN",
+						"can_show_as": "OUTPUT_PIN_ONLY"
+					}
+				]
+			}
+		}
+	]
 }

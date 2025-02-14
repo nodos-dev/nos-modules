@@ -2,75 +2,96 @@
 	"nodes": [
 		{
 			"class_name": "Or",
-			"contents_type": "Job",
-			"description": "Returns true if either A or B is true",
-			"pins": [
-				{
-					"name": "A",
-					"type_name": "bool",
-					"show_as": "INPUT_PIN",
-					"can_show_as": "INPUT_PIN_OR_PROPERTY"
-				},
-				{
-					"name": "B",
-					"type_name": "bool",
-					"show_as": "INPUT_PIN",
-					"can_show_as": "INPUT_PIN_OR_PROPERTY"
-				},
-				{
-					"name": "OrResult",
-					"display_name": "Or",
-					"type_name": "bool",
-					"show_as": "OUTPUT_PIN",
-					"can_show_as": "OUTPUT_PIN_ONLY"
-				}
-			]
+			"menu_info": {
+				"category": "Math|Boolean Logic",
+				"display_name": "Or"
+			},
+			"node": {
+				"class_name": "Or",
+				"contents_type": "Job",
+				"description": "Returns true if either A or B is true",
+				"pins": [
+					{
+						"name": "A",
+						"type_name": "bool",
+						"show_as": "INPUT_PIN",
+						"can_show_as": "INPUT_PIN_OR_PROPERTY"
+					},
+					{
+						"name": "B",
+						"type_name": "bool",
+						"show_as": "INPUT_PIN",
+						"can_show_as": "INPUT_PIN_OR_PROPERTY"
+					},
+					{
+						"name": "OrResult",
+						"display_name": "Or",
+						"type_name": "bool",
+						"show_as": "OUTPUT_PIN",
+						"can_show_as": "OUTPUT_PIN_ONLY"
+					}
+				]
+			}
 		},
 		{
 			"class_name": "And",
-			"contents_type": "Job",
-			"description": "Returns true if both A and B are true",
-			"pins": [
-				{
-					"name": "A",
-					"type_name": "bool",
-					"show_as": "INPUT_PIN",
-					"can_show_as": "INPUT_PIN_OR_PROPERTY"
-				},
-				{
-					"name": "B",
-					"type_name": "bool",
-					"show_as": "INPUT_PIN",
-					"can_show_as": "INPUT_PIN_OR_PROPERTY"
-				},
-				{
-					"name": "AndResult",
-					"display_name": "And",
-					"type_name": "bool",
-					"show_as": "OUTPUT_PIN",
-					"can_show_as": "OUTPUT_PIN_ONLY"
-				}
-			]
+			"menu_info": {
+				"category": "Math|Boolean Logic",
+				"display_name": "And"
+			},
+			"node": {
+				"class_name": "And",
+				"contents_type": "Job",
+				"description": "Returns true if both A and B are true",
+				"pins": [
+					{
+						"name": "A",
+						"type_name": "bool",
+						"show_as": "INPUT_PIN",
+						"can_show_as": "INPUT_PIN_OR_PROPERTY"
+					},
+					{
+						"name": "B",
+						"type_name": "bool",
+						"show_as": "INPUT_PIN",
+						"can_show_as": "INPUT_PIN_OR_PROPERTY"
+					},
+					{
+						"name": "AndResult",
+						"display_name": "And",
+						"type_name": "bool",
+						"show_as": "OUTPUT_PIN",
+						"can_show_as": "OUTPUT_PIN_ONLY"
+					}
+				]
+			}
 		},
 		{
 			"class_name": "Not",
-			"contents_type": "Job",
-			"description": "Returns true if A is false",
-			"pins": [
-				{
-					"name": "X",
-					"type_name": "bool",
-					"show_as": "INPUT_PIN",
-					"can_show_as": "INPUT_PIN_OR_PROPERTY"
-				},
-				{
-					"name": "NotX",
-					"display_name": "Not",
-					"type_name": "bool",
-					"show_as": "OUTPUT_PIN",
-					"can_show_as": "OUTPUT_PIN_ONLY"
-				}
-			]
+			"menu_info": {
+				"category": "Math|Boolean Logic",
+				"display_name": "Not"
+			},
+			"node": {
+				"class_name": "Not",
+				"contents_type": "Job",
+				"description": "Returns true if A is false",
+				"pins": [
+					{
+						"name": "X",
+						"type_name": "bool",
+						"show_as": "INPUT_PIN",
+						"can_show_as": "INPUT_PIN_OR_PROPERTY"
+					},
+					{
+						"name": "NotX",
+						"display_name": "Not",
+						"type_name": "bool",
+						"show_as": "OUTPUT_PIN",
+						"can_show_as": "OUTPUT_PIN_ONLY"
+					}
+				]
+			}
 		}
 	]
 }
