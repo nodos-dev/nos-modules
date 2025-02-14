@@ -1,26 +1,37 @@
 {
-  "nodes": [
-    {
-      "class_name": "Json2Pin",
-      "contents_type": "Job",
-      "description": "Convert JSON data to Pin",
-      "display_name": "Json2Pin",
-      "pins": [
-        {
-          "type_name": "string",
-          "name": "Json",
-          "show_as": "INPUT_PIN",
-          "can_show_as": "INPUT_PIN_OR_PROPERTY",
-          "description": "JSON data to convert to pin"
-        },
-        {
-          "name": "Out",
-          "type_name": "nos.Generic",
-          "show_as": "OUTPUT_PIN",
-          "can_show_as": "OUTPUT_PIN_ONLY",
-          "description": "JSON representation of the pin data"
-        }
-      ]
-    }
-  ]
+	"nodes": [
+		{
+			"class_name": "Json2Pin",
+			"menu_info": {
+				"category": "String",
+				"display_name": "JSON To Pin",
+				"hide_in_context_menu": false,
+				"name_aliases": [
+					"converter"
+				]
+			},
+			"node": {
+				"class_name": "Json2Pin",
+				"contents_type": "Job",
+				"description": "Convert JSON data to Pin",
+				"display_name": "Json2Pin",
+				"pins": [
+					{
+						"type_name": "string",
+						"name": "Json",
+						"show_as": "INPUT_PIN",
+						"can_show_as": "INPUT_PIN_OR_PROPERTY",
+						"description": "JSON data to convert to pin"
+					},
+					{
+						"name": "Out",
+						"type_name": "nos.Generic",
+						"show_as": "OUTPUT_PIN",
+						"can_show_as": "OUTPUT_PIN_ONLY",
+						"description": "JSON representation of the pin data"
+					}
+				]
+			}
+		}
+	]
 }

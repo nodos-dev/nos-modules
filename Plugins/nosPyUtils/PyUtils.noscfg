@@ -18,12 +18,5 @@
         "Config/Nodes.nosdef"
     ],
     "defaults": [],
-    "custom_types": [],
-    "associated_nodes": [
-        {
-            "category": "Python",
-            "class_name": "Eval",
-            "display_name": "Eval"
-        }
-    ]
+    "custom_types": []
 }

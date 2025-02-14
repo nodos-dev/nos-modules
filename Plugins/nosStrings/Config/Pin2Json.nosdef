@@ -1,26 +1,37 @@
 {
-  "nodes": [
-    {
-      "class_name": "Pin2Json",
-      "contents_type": "Job",
-      "description": "Convert pin data to JSON",
-      "display_name": "Pin2Json",
-      "pins": [
-        {
-          "type_name": "nos.Generic",
-          "name": "Data",
-          "show_as": "INPUT_PIN",
-          "can_show_as": "INPUT_PIN_ONLY",
-          "description": "Pin data to convert to JSON"
-        },
-        {
-          "name": "Json",
-          "type_name": "string",
-          "show_as": "OUTPUT_PIN",
-          "can_show_as": "OUTPUT_PIN_ONLY",
-          "description": "JSON representation of the pin data"
-        }
-      ]
-    }
-  ]
+	"nodes": [
+		{
+			"class_name": "Pin2Json",
+			"menu_info": {
+				"category": "String",
+				"display_name": "Pin To JSON",
+				"hide_in_context_menu": false,
+				"name_aliases": [
+					"converter"
+				]
+			},
+			"node": {
+				"class_name": "Pin2Json",
+				"contents_type": "Job",
+				"description": "Convert pin data to JSON",
+				"display_name": "Pin2Json",
+				"pins": [
+					{
+						"type_name": "nos.Generic",
+						"name": "Data",
+						"show_as": "INPUT_PIN",
+						"can_show_as": "INPUT_PIN_ONLY",
+						"description": "Pin data to convert to JSON"
+					},
+					{
+						"name": "Json",
+						"type_name": "string",
+						"show_as": "OUTPUT_PIN",
+						"can_show_as": "OUTPUT_PIN_ONLY",
+						"description": "JSON representation of the pin data"
+					}
+				]
+			}
+		}
+	]
 }
