@@ -57,7 +57,7 @@ struct VariableNodeBase : NodeContext
 		if (pinUpdate->UpdatedField != NOS_PIN_FIELD_TYPE_NAME)
 			return;
 		ClearStatus(VariableStatusItem::TypeName);
-		if (TypeName != NSN_VOID && TypeName == pinUpdate->TypeName)
+		if (TypeName != NSN_TypeNameGeneric && TypeName == pinUpdate->TypeName)
 			return;
 		TypeName = pinUpdate->TypeName;
 		SetPinOrphanState(NSN_Value, fb::PinOrphanStateType::ACTIVE);
@@ -65,7 +65,7 @@ struct VariableNodeBase : NodeContext
 
 	bool HasType() const
 	{
-		return TypeName != NSN_VOID;
+		return TypeName != NSN_TypeNameGeneric;
 	}
 
 	bool HasName() const
@@ -75,7 +75,7 @@ struct VariableNodeBase : NodeContext
 
 	std::unordered_map<VariableStatusItem,  fb::TNodeStatusMessage> StatusMessages;
 	nos::Name Name;
-	nos::Name TypeName = NSN_VOID;
+	nos::Name TypeName = NSN_TypeNameGeneric;
 	int32_t CallbackId = -1;
 };
 	
@@ -266,7 +266,7 @@ struct GetVariableNode : VariableNodeBase
 				if (res != NOS_RESULT_SUCCESS)
 				{
 					auto valuePin = GetPin(NOS_NAME("Value"));
-					if (res == NOS_RESULT_NOT_FOUND && valuePin && valuePin->TypeName != NSN_VOID)
+					if (res == NOS_RESULT_NOT_FOUND && valuePin && valuePin->TypeName != NSN_TypeNameGeneric)
 					{
 						RegisterVariable(valuePin, initialValue);
 					}

@@ -175,7 +175,7 @@ struct ArithmeticNodeContext : NodeContext
 			}
 
 			if (scalarTypeName)
-				if (*scalarTypeName != NSN_VOID)
+				if (*scalarTypeName != NSN_TypeNameGeneric)
 					ScalarType = nos::TypeInfo(*scalarTypeName);
 		}
 
@@ -250,7 +250,7 @@ struct ArithmeticNodeContext : NodeContext
 			{
 				auto& pin = params->Pins[i];
 				if ((pin.Name == NSN_Scalar) ^ isScalarPin)
-					pin.OutResolvedTypeName = NSN_VOID;
+					pin.OutResolvedTypeName = NSN_TypeNameGeneric;
 			}
 			if (isScalarPin)
 			{
@@ -277,11 +277,11 @@ struct ArithmeticNodeContext : NodeContext
 
 	nosResult ExecuteNode(nosNodeExecuteParams* params) override
 	{
-		if (!Type || NSN_VOID == Type->TypeName || !Operator)
+		if (!Type || NSN_TypeNameGeneric == Type->TypeName || !Operator)
 			return NOS_RESULT_SUCCESS;
 		if constexpr (IsScalarArithmetic)
 		{
-			if (!ScalarType || NSN_VOID == ScalarType->TypeName)
+			if (!ScalarType || NSN_TypeNameGeneric == ScalarType->TypeName)
 				return NOS_RESULT_SUCCESS;
 		}
 

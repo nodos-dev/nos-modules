@@ -16,7 +16,7 @@ struct IndexOfNode : NodeContext
 		{
 			if(pin->name()->string_view() == NSN_InputArray)
 			{
-				if (pin->type_name()->string_view() != NSN_VOID)
+				if (pin->type_name()->string_view() != NSN_TypeNameGeneric)
 				{
 					auto arrayType = nos::TypeInfo(nos::Name(pin->type_name()->string_view()));
 					if (arrayType->BaseType == NOS_BASE_TYPE_ARRAY)

@@ -123,7 +123,7 @@ struct ResourceSlot : AnySlot
 
 struct DelayNode : NodeContext
 {
-    nosName TypeName = NSN_VOID;
+    nosName TypeName = NSN_TypeNameGeneric;
 	RingBuffer<std::unique_ptr<AnySlot>> Ring;
 
 	DelayNode(nosFbNodePtr node) : NodeContext(node), Ring(0) {
@@ -136,7 +136,7 @@ struct DelayNode : NodeContext
 			}
 			if (NSN_Output == name)
 			{
-				if (pin->type_name()->c_str() == NSN_VOID.AsString())
+				if (pin->type_name()->c_str() == NSN_TypeNameGeneric.AsString())
 					continue;
 				TypeName = nos::Name(pin->type_name()->c_str());
 			}
@@ -146,7 +146,7 @@ struct DelayNode : NodeContext
 
 	void OnPinValueChanged(nos::Name pinName, uuid const& pinId, nosBuffer value) override
 	{
-		if(NSN_VOID == TypeName)
+		if(NSN_TypeNameGeneric == TypeName)
 			return;
 		if (NSN_Delay == pinName)
 		{
@@ -156,7 +156,7 @@ struct DelayNode : NodeContext
 
 	void OnPinUpdated(nosPinUpdate const* update) override
 	{
-		if (TypeName != NSN_VOID)
+		if (TypeName != NSN_TypeNameGeneric)
 			return;
 		if (update->UpdatedField == NOS_PIN_FIELD_TYPE_NAME)
 		{

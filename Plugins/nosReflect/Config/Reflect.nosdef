@@ -16,13 +16,13 @@
         "pins": [
           {
             "name": "Output",
-            "type_name": "nos.fb.Void",
+            "type_name": "nos.Generic",
             "show_as": "OUTPUT_PIN",
             "can_show_as": "OUTPUT_PIN_OR_PROPERTY"
           },
           {
             "name": "Input 0",
-            "type_name": "nos.fb.Void",
+            "type_name": "nos.Generic",
             "show_as": "INPUT_PIN",
             "can_show_as": "INPUT_PIN_OR_PROPERTY"
           }
@@ -54,7 +54,7 @@
         "pins": [
           {
             "name": "Input",
-            "type_name": "nos.fb.Void",
+            "type_name": "nos.Generic",
             "show_as": "INPUT_PIN",
             "can_show_as": "INPUT_PIN_OR_PROPERTY"
           }
@@ -79,7 +79,7 @@
         "pins": [
           {
             "name": "Output",
-            "type_name": "nos.fb.Void",
+            "type_name": "nos.Generic",
             "show_as": "OUTPUT_PIN",
             "can_show_as": "OUTPUT_PIN_ONLY"
           }
@@ -187,21 +187,21 @@
         "pins": [
           {
             "name": "Output",
-            "type_name": "nos.fb.Void",
+            "type_name": "nos.Generic",
             "show_as": "OUTPUT_PIN",
             "can_show_as": "OUTPUT_PIN_ONLY",
             "connection_conditions": "!resource"
           },
           {
             "name": "A",
-            "type_name": "nos.fb.Void",
+            "type_name": "nos.Generic",
             "show_as": "INPUT_PIN",
             "can_show_as": "INPUT_PIN_OR_PROPERTY",
             "connection_conditions": "!resource"
           },
           {
             "name": "B",
-            "type_name": "nos.fb.Void",
+            "type_name": "nos.Generic",
             "show_as": "INPUT_PIN",
             "can_show_as": "INPUT_PIN_OR_PROPERTY",
             "connection_conditions": "!resource"
@@ -220,13 +220,13 @@
         "pins": [
           {
             "name": "Input",
-            "type_name": "nos.fb.Void",
+            "type_name": "nos.Generic",
             "show_as": "INPUT_PIN",
             "can_show_as": "INPUT_PIN_OR_PROPERTY"
           },
           {
             "name": "Output",
-            "type_name": "nos.fb.Void",
+            "type_name": "nos.Generic",
             "show_as": "OUTPUT_PIN",
             "can_show_as": "OUTPUT_PIN_ONLY"
           },
@@ -253,7 +253,7 @@
         "pins": [
           {
             "name": "Input",
-            "type_name": "nos.fb.Void",
+            "type_name": "nos.Generic",
             "show_as": "INPUT_PIN",
             "can_show_as": "INPUT_PIN_OR_PROPERTY"
           },
@@ -265,7 +265,7 @@
           },
           {
             "name": "Output",
-            "type_name": "nos.fb.Void",
+            "type_name": "nos.Generic",
             "show_as": "OUTPUT_PIN",
             "can_show_as": "OUTPUT_PIN_ONLY"
           }
@@ -287,13 +287,13 @@
           {
             "name": "InputArray",
             "display_name": "Input Array",
-            "type_name": "nos.fb.Void",
+            "type_name": "nos.Generic",
             "show_as": "INPUT_PIN",
             "can_show_as": "INPUT_PIN_OR_PROPERTY"
           },
           {
             "name": "Value",
-            "type_name": "nos.fb.Void",
+            "type_name": "nos.Generic",
             "show_as": "INPUT_PIN",
             "can_show_as": "INPUT_PIN_OR_PROPERTY"
           },
@@ -327,13 +327,13 @@
         "pins": [
           {
             "name": "A",
-            "type_name": "nos.fb.Void",
+            "type_name": "nos.Generic",
             "show_as": "INPUT_PIN",
             "can_show_as": "INPUT_PIN_OR_PROPERTY"
           },
           {
             "name": "B",
-            "type_name": "nos.fb.Void",
+            "type_name": "nos.Generic",
             "show_as": "INPUT_PIN",
             "can_show_as": "INPUT_PIN_OR_PROPERTY"
           },
@@ -380,7 +380,7 @@
           },
           {
             "name": "Value",
-            "type_name": "nos.fb.Void",
+            "type_name": "nos.Generic",
             "show_as": "INPUT_PIN",
             "can_show_as": "INPUT_PIN_OR_PROPERTY"
           }
@@ -412,7 +412,7 @@
           },
           {
             "name": "Value",
-            "type_name": "nos.fb.Void",
+            "type_name": "nos.Generic",
             "show_as": "OUTPUT_PIN",
             "can_show_as": "OUTPUT_PIN_ONLY"
           }
@@ -514,21 +514,21 @@
         "pins": [
           {
             "name": "Output",
-            "type_name": "nos.fb.Void",
+            "type_name": "nos.Generic",
             "show_as": "OUTPUT_PIN",
             "can_show_as": "OUTPUT_PIN_ONLY",
             "connection_conditions": "!resource"
           },
           {
             "name": "A",
-            "type_name": "nos.fb.Void",
+            "type_name": "nos.Generic",
             "show_as": "INPUT_PIN",
             "can_show_as": "INPUT_PIN_OR_PROPERTY",
             "connection_conditions": "!resource"
           },
           {
             "name": "Scalar",
-            "type_name": "nos.fb.Void",
+            "type_name": "nos.Generic",
             "show_as": "INPUT_PIN",
             "can_show_as": "INPUT_PIN_OR_PROPERTY"
           }

@@ -17,7 +17,7 @@ struct Indexer : NodeContext
         {
 			if(pin->name()->string_view() == NSN_Output)
             {
-                if (pin->type_name()->string_view() != NSN_VOID)
+                if (pin->type_name()->string_view() != NSN_TypeNameGeneric)
                 {
 					Type = nos::TypeInfo(nos::Name(pin->type_name()->string_view()));
                 }

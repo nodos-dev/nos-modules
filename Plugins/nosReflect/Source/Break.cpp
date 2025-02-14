@@ -16,7 +16,7 @@ struct BreakNode : NodeContext
 			if (pin->show_as() != fb::ShowAs::INPUT_PIN)
 				continue;
             auto typeName = nos::Name(pin->type_name()->string_view());
-			if (NSN_VOID == typeName)
+			if (NSN_TypeNameGeneric == typeName)
 				break;
 			auto ty = nos::TypeInfo(typeName);
 			if (!ty)

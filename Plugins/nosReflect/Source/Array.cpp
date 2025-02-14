@@ -14,13 +14,13 @@ struct ArrayNode : NodeContext
 		{
 			if (pin.ShowAs == fb::ShowAs::INPUT_PIN)
 			{
-				if (pin.TypeName != NSN_VOID)
+				if (pin.TypeName != NSN_TypeNameGeneric)
 					Type = nos::TypeInfo(pin.TypeName);
 			}
 			if (pin.ShowAs == fb::ShowAs::OUTPUT_PIN)
 			{
 				nos::TypeInfo arrayType = nos::TypeInfo(pin.TypeName);
-				if (arrayType.TypeName == NSN_VOID)
+				if (arrayType.TypeName == NSN_TypeNameGeneric)
 					continue;
 				if (arrayType->BaseType != NOS_BASE_TYPE_ARRAY) {
 					invalidNode = true;
@@ -199,7 +199,7 @@ struct ArrayNode : NodeContext
 
 		nosBuffer value;
 		std::vector<uint8_t> data;
-		nos::Name typeName = Type ? Name(Type->TypeName) : NSN_VOID;
+		nos::Name typeName = Type ? Name(Type->TypeName) : NSN_TypeNameGeneric;
 		if (NOS_RESULT_SUCCESS == nosEngine.GetDefaultValueOfType(typeName, &value))
 			data = std::vector<uint8_t>{ (uint8_t*)value.Data, (uint8_t*)value.Data + value.Size };
 
