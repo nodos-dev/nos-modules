@@ -120,12 +120,12 @@ struct ReadImageContext : NodeContext
 				}
 
 				int w, h, n;
-				stbi_info(path.string().c_str(), &w, &h, &n);
-
-				if (w < 0 || h < 0 || n < 0) {
-					nosEngine.LogE("STBI couldn't load image from %s.", path.string().c_str());
+				uint8_t* img = stbi_load(path.string().c_str(), &w, &h, &n, 4);
+				if (!img)
+				{
+					nosEngine.LogE("CouBldn't load image from %s.", path.string().c_str());
 					UpdateStatus(State::Failed);
-					return NOS_RESULT_FAILED;
+					return;
 				}
 
 				nosResourceShareInfo outResInfo = {

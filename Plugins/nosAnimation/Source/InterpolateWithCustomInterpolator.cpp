@@ -9,9 +9,9 @@ nosResult RegisterInterpolateWithCustomInterpolator(nosNodeFunctions* out)
 	out->ExecuteNode = [](void*, nosNodeExecuteParams* params) -> nosResult {
 		NodeExecuteParams args(params);
 		nos::Name typeName = args[NOS_NAME("A")].TypeName;
-		if (typeName == NOS_NAME(fb::Void::GetFullyQualifiedName()))
+		if (typeName == NOS_NAME(Generic::GetFullyQualifiedName()))
 		{
-			nosEngine.LogW("InterpolateWithCustomInterpolator: Type is void");
+			nosEngine.LogW("InterpolateWithCustomInterpolator: Type is not resolved");
 			return NOS_RESULT_FAILED;
 		}
 		nosBuffer a = *args[NOS_NAME("A")].Data;
