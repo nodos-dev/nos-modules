@@ -1,41 +1,48 @@
-    {
-    "nodes": [
-        {
-            "class_name": "WebRTCSignalingServer",
-            "contents_type": "Job",
-			"always_execute": true,
-          "pins": [
-            {
-              "name": "StreamerPort",
-              "type_name": "int",
-              "show_as": "PROPERTY",
-              "can_show_as": "INPUT_PIN_OR_PROPERTY",
-              "data": "8888"
-            },
-			{
-              "name": "PlayerPort",
-              "type_name": "int",
-              "show_as": "PROPERTY",
-              "can_show_as": "INPUT_PIN_OR_PROPERTY",
-              "data": "80"
-            }
-          ],
-            "functions": [
-              {
-                "class_name": "StartServer",
-                "contents_type": "Job",
-                "contents": {
-                  "type": "CPU"
-                }
-              },
-              {
-                "class_name": "StopServer",
-                "contents_type": "Job",
-                "contents": {
-                  "type": "CPU"
-                }
-              }
-            ]
-        }
-    ]
+{
+	"nodes": [
+		{
+			"class_name": "WebRTCSignalingServer",
+			"menu_info": {
+				"category": "WebRTC|SignalingServer",
+				"display_name": "WebRTC Signaling Server"
+			},
+			"node": {
+				"class_name": "WebRTCSignalingServer",
+				"contents_type": "Job",
+				"always_execute": true,
+				"pins": [
+					{
+						"name": "StreamerPort",
+						"type_name": "int",
+						"show_as": "PROPERTY",
+						"can_show_as": "INPUT_PIN_OR_PROPERTY",
+						"data": "8888"
+					},
+					{
+						"name": "PlayerPort",
+						"type_name": "int",
+						"show_as": "PROPERTY",
+						"can_show_as": "INPUT_PIN_OR_PROPERTY",
+						"data": "80"
+					}
+				],
+				"functions": [
+					{
+						"class_name": "StartServer",
+						"contents_type": "Job",
+						"contents": {
+							"type": "CPU"
+						}
+					},
+					{
+						"class_name": "StopServer",
+						"contents_type": "Job",
+						"contents": {
+							"type": "CPU"
+						}
+					}
+				]
+			}
+		}
+	]
 }

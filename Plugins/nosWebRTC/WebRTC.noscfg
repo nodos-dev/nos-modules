@@ -23,20 +23,5 @@
     "custom_types": [],
     "binary_path": "Binaries/nosWebRTC",
     "associated_nodes": [
-      {
-        "category": "WebRTC|Streamer",
-        "class_name": "WebRTCStreamer",
-        "display_name": "WebRTC Streamer"
-      },
-      {
-        "category": "WebRTC|Player",
-        "class_name": "WebRTCPlayer",
-        "display_name": "WebRTC Player"
-      },
-      {
-        "category": "WebRTC|SignalingServer",
-        "class_name": "WebRTCSignalingServer",
-        "display_name": "WebRTC Signaling Server"
-      }
     ]
 }
