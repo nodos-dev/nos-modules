@@ -28,6 +28,8 @@ enum Nodes : size_t
 	ScalarArithmetic,
 	IndexOf,
 	IsEqual,
+	GreaterThan,
+	LessThan,
 	SetVariable,
 	GetVariable,
 	Count
@@ -43,6 +45,8 @@ nosResult RegisterArithmetic(nosNodeFunctions* node);
 nosResult RegisterScalarArithmetic(nosNodeFunctions* node);
 nosResult RegisterIndexOf(nosNodeFunctions* node);
 nosResult RegisterIsEqual(nosNodeFunctions* node);
+nosResult RegisterGreaterThan(nosNodeFunctions* node);
+nosResult RegisterLessThan(nosNodeFunctions* node);
 nosResult RegisterSetVariable(nosNodeFunctions* node);
 nosResult RegisterGetVariable(nosNodeFunctions* node);
 
@@ -75,6 +79,8 @@ nosResult NOSAPI_CALL ExportNodeFunctions(size_t* outCount, nosNodeFunctions** o
 			GEN_CASE_NODE(ScalarArithmetic)
 			GEN_CASE_NODE(IndexOf)
 			GEN_CASE_NODE(IsEqual)
+			GEN_CASE_NODE(GreaterThan)
+			GEN_CASE_NODE(LessThan)
 			GEN_CASE_NODE(SetVariable)
 			GEN_CASE_NODE(GetVariable)
 		}

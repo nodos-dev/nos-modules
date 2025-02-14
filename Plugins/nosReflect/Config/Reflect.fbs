@@ -8,4 +8,7 @@ enum BinaryOperator : uint
     DIV,
     EXP,
     LOG,
+    IS_LESS_THAN,
+    IS_GREATER_THAN,
+    IS_EQUAL,
 }
