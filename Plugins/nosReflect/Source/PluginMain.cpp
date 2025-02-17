@@ -97,6 +97,23 @@ NOSAPI_ATTR nosResult NOSAPI_CALL nosExportPlugin(nosPluginFunctions* outPluginF
 		outRenamedFrom[0] = NOS_NAME("nos.fb.BinaryOperator");
 		outRenamedTo[0] = NOS_NAME("nos.reflect.BinaryOperator");
 	};
+	outPluginFunctions->GetRenamedNodeClasses = [](nosName* outRenamedFrom, nosName* outRenamedTo, size_t* outCount) {
+		constexpr auto ops = std::array{"Add", "Mul", "Sub", "Div"};
+		constexpr auto types = std::array{"f32",	"f64",	 "i8",	 "i16",	  "i32",   "i64",	"u8",	"u16",
+							   "u32",	"u64",	 "vec2", "vec2i", "vec2u", "vec2d", "vec3", "vec3i",
+							   "vec3u", "vec3d", "vec4", "vec4i", "vec4u", "vec4d"};
+		*outCount = ops.size() * types.size(); 
+		if (!outRenamedFrom)
+			return;
+		auto idx = 0;
+		for (const char* op : ops)
+			for (const char* type : types)
+			{
+				outRenamedFrom[idx] = nos::Name("nos.math." + std::string(op) + "_" + std::string(type));
+				outRenamedTo[idx] = NOS_NAME("nos.reflect.Arithmetic");
+				idx++;
+			}
+	};
 	return NOS_RESULT_SUCCESS;
 }
 }

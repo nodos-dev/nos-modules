@@ -335,6 +335,47 @@ struct ArithmeticNodeContext : NodeContext
 			return;
 		SetOperator(reflect::BinaryOperator(cmd), true);
 	}
+
+	static nosResult MigrateNode(nosFbNodePtr nodePtr, nosBuffer* outBuffer)
+	{
+		fb::TNode tNode;
+		nodePtr->UnPackTo(&tNode);
+		std::optional<reflect::BinaryOperator> op{};
+		if (tNode.class_name.starts_with("nos.math.Add_"))
+			op = reflect::BinaryOperator::ADD;
+		else if (tNode.class_name.starts_with("nos.math.Sub_"))
+			op = reflect::BinaryOperator::SUB;
+		else if (tNode.class_name.starts_with("nos.math.Mul_"))
+			op = reflect::BinaryOperator::MUL;
+		else if (tNode.class_name.starts_with("nos.math.Div_"))
+			op = reflect::BinaryOperator::DIV;
+		// Dont migrate
+		if (!op)
+			return NOS_RESULT_SUCCESS;
+		auto& templateParam = tNode.template_parameters.emplace_back(std::make_unique<fb::TTemplateParameter>());
+		templateParam->name = NSN_Operator.AsString();
+		templateParam->value = nos::Buffer::From(op);
+
+		templateParam->type_name = "nos.reflect.BinaryOperator";
+		tNode.class_name = "nos.reflect." + NSN_Arithmetic.AsString();
+		std::string type = "float";
+		for (auto& pin : tNode.pins)
+		{
+			type = pin->type_name;
+			if (pin->name == "X")
+				pin->name = NSN_A.AsString();
+			else if (pin->name == "Y")
+				pin->name = NSN_B.AsString();
+			else if (pin->name == "Z")
+				pin->name = NSN_Output.AsString();
+		}
+		auto& templateParam2 = tNode.template_parameters.emplace_back(std::make_unique<fb::TTemplateParameter>());
+		templateParam2->name = NSN_Type.AsString();
+		templateParam2->value = std::vector<uint8_t>(type.c_str(), type.c_str() + type.size() + 1);
+		templateParam2->type_name = "string";
+		*outBuffer = EngineBuffer::CopyFrom(tNode).Release();
+		return NOS_RESULT_SUCCESS;
+	}
 };
 
 nosResult RegisterArithmetic(nosNodeFunctions* fn)
