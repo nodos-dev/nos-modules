@@ -6,7 +6,7 @@
 				"category": "Animation",
 				"display_name": "Animation Curve",
 				"name_aliases": [ "Ease", "Easing", "Ease In", "Ease Out" ]
-			}
+			},
 			"node": {
 
 				"id": "b5057dbf-6fa3-44fa-99cd-aee4dd08b978",

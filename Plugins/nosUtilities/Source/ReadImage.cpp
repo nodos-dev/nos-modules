@@ -105,7 +105,7 @@ struct ReadImageContext : NodeContext
 		OutPendingImageRefs.clear();
 	}
 
-	nosResult LoadImage(std::filesystem::path path, nosCUUID outPinId, bool sRGB)
+	nosResult LoadImage(std::filesystem::path path, nosUUID outPinId, bool sRGB)
 	{
 		UpdateStatus(State::Loading);
 		FilePath = path.string();

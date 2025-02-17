@@ -136,7 +136,7 @@ public:
 		auto buf = it->second.Data;
 		return pyb::memoryview::from_memory(buf->Data, buf->Size);
 	}
-	std::optional<nosCUUID> GetPinId(std::string pinName) const
+	std::optional<nosUUID> GetPinId(std::string pinName) const
 	{
 		auto it = this->find(nos::Name(pinName));
 		if (it == this->end())
@@ -212,11 +212,11 @@ PYBIND11_EMBEDDED_MODULE(__nodos_internal__, m)
 		.def_property_readonly_static("FAILED", [](const pyb::object&) {return NOS_RESULT_FAILED; });
 
 	// Structs
-	pyb::class_<nosCUUID>(m, "uuid")
+	pyb::class_<nosUUID>(m, "uuid")
 		.def(pyb::init<>())
-		.def("__str__", [](const nosCUUID& id) -> std::string { return std::string(uuid(id)); })
-		.def("__hash__", [](const nosCUUID& id) -> size_t { return std::hash<uuid>{}(uuid(id)); })
-		.def("__eq__", [](const nosCUUID& self, const nosCUUID& other) -> bool { return uuid(self) == other; });
+		.def("__str__", [](const nosUUID& id) -> std::string { return std::string(uuid(id)); })
+		.def("__hash__", [](const nosUUID& id) -> size_t { return std::hash<uuid>{}(uuid(id)); })
+		.def("__eq__", [](const nosUUID& self, const nosUUID& other) -> bool { return uuid(self) == other; });
 
 	pyb::class_<nos::Name>(m, "Name")
 		.def(pyb::init([](uint64_t arg) {return nos::Name(nosName{ arg }); }))
@@ -242,7 +242,7 @@ PYBIND11_EMBEDDED_MODULE(__nodos_internal__, m)
 		.def_property_readonly("pin_value", [](const PyNativeOnPinDisconnectedArgs& args) -> std::string_view { return args.PinName.AsCStr(); });
 
 	pyb::class_<PyNativeContextMenuRequest>(m, "ContextMenuRequest")
-		.def_property("item_id", [](const PyNativeContextMenuRequest& req) -> nosCUUID { return req.ItemId; }, [](PyNativeContextMenuRequest& req, nosCUUID id) { req.ItemId = id; })
+		.def_property("item_id", [](const PyNativeContextMenuRequest& req) -> nosUUID { return req.ItemId; }, [](PyNativeContextMenuRequest& req, nosUUID id) { req.ItemId = id; })
 		.def_property("position", [](const PyNativeContextMenuRequest& req) -> nos::fb::vec2 { return req.Pos; }, [](PyNativeContextMenuRequest& req, nos::fb::vec2 pos) { req.Pos = pos; })
 		.def_property("instigator", [](const PyNativeContextMenuRequest& req) -> PyNativeContextMenuRequestInstigator { return req.Instigator; }, [](PyNativeContextMenuRequest& req, PyNativeContextMenuRequestInstigator instigator) { req.Instigator = instigator; });
 
@@ -252,7 +252,7 @@ PYBIND11_EMBEDDED_MODULE(__nodos_internal__, m)
 
 	// Engine Services
 	m.def("set_pin_value",
-		[](const nosCUUID& id, const pyb::buffer& buf) {
+		[](const nosUUID& id, const pyb::buffer& buf) {
 			auto info = buf.request();
 			nosEngine.SetPinValue(id, nosBuffer{.Data = info.ptr, .Size = info.size < 0 ? 0ull : (size_t(info.size) * info.itemsize)});
 		});
@@ -393,7 +393,7 @@ public:
 
 	void OnMenuCommand(uuid const& itemID, uint32_t cmd) override
 	{
-		CallMethod<void>("on_menu_command", nosCUUID(itemID), cmd);
+		CallMethod<void>("on_menu_command", nosUUID(itemID), cmd);
 	}
 
 	void OnPinConnected(nos::Name pinName, uuid const& connectedPin) override

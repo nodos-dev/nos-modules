@@ -66,7 +66,7 @@ nosResult OnRequest(uint32_t minorVersion, void** outSubsystemCtx)
 
 nosResult OnPreExecuteNode(nosNodeExecuteParams* params)
 {
-	nosCUUID scheduledNodeId;
+	nosUUID scheduledNodeId;
 	if (nosEngine.GetCurrentRunnerPathInfo(&scheduledNodeId, nullptr) == NOS_RESULT_FAILED)
 		return NOS_RESULT_FAILED;
 
@@ -82,7 +82,7 @@ nosResult OnPreExecuteNode(nosNodeExecuteParams* params)
 	return NOS_RESULT_SUCCESS;
 }
 
-void NOSAPI_CALL OnPinDeleted(nosCUUID pinId)
+void NOSAPI_CALL OnPinDeleted(nosUUID pinId)
 {
 	GAnimationSysContext->Animator.OnPinDeleted(pinId);
 }
@@ -100,19 +100,19 @@ nosResult ShouldExecuteNodeWithoutDirty(nosNodeExecuteParams* params)
 	return NOS_RESULT_NOT_FOUND;
 }
 
-void NOSAPI_CALL OnPathStart(nosCUUID scheduledPinId)
+void NOSAPI_CALL OnPathStart(nosUUID scheduledPinId)
 {
 	nosVec2u deltaSec;
 	nosEngine.GetCurrentRunnerPathInfo(nullptr, &deltaSec);
 	GAnimationSysContext->Animator.CreatePathInfo(scheduledPinId, deltaSec);
 }
 
-void NOSAPI_CALL OnPathStop(nosCUUID scheduledPinId)
+void NOSAPI_CALL OnPathStop(nosUUID scheduledPinId)
 {
 	GAnimationSysContext->Animator.DeletePathInfo(scheduledPinId);
 }
 
-void NOSAPI_CALL OnEndFrame(nosCUUID scheduledPinId, nosEndFrameCause cause)
+void NOSAPI_CALL OnEndFrame(nosUUID scheduledPinId, nosEndFrameCause cause)
 {
 	if (cause != NOS_END_FRAME_FINISHED)
 		return;
@@ -128,10 +128,10 @@ void OnMessageFromEditor(uint64_t editorId, nosBuffer blob)
 		auto animatePin = msg->event_as_AnimatePin();
 		if(!animatePin || !animatePin->pin_path())
 			return;
-		nosCUUID pinId{};
+		nosUUID pinId{};
 		if (nosEngine.ItemPathToItemId(animatePin->pin_path()->c_str(), &pinId) == NOS_RESULT_SUCCESS)
 		{
-			nosCUUID sourceId{};
+			nosUUID sourceId{};
 			if (nosEngine.GetSourcePinId(pinId, &sourceId) == NOS_RESULT_SUCCESS)
 				GAnimationSysContext->Animator.AddAnimation(sourceId, *animatePin);
 		}

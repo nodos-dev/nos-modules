@@ -258,7 +258,7 @@ struct TestPluginFunctions : PluginFunctions
 		outFunctions[5]->OnNodeCreated = [](nosFbNodePtr node, void** outCtxPtr) {
 			nosEngine.RegisterFeature(uuid(*node->id()), "Nodos.CopyTestLicensed", 1, "Nodos.CopyTestLicensed required");
 			};
-		outFunctions[5]->OnNodeDeleted = [](void* ctx, nosCUUID nodeId) {
+		outFunctions[5]->OnNodeDeleted = [](void* ctx, nosUUID nodeId) {
 			nosEngine.UnregisterFeature(nodeId, "Nodos.CopyTestLicensed");
 			};
 		outFunctions[5]->ExecuteNode = [](void* ctx, nosNodeExecuteParams* params)
