@@ -89,7 +89,7 @@ struct SinkNode : NodeContext
 		nosEngine.RecompilePath(NodeId);
 		auto fpsPinId = *GetPinId(NOS_NAME("Sink FPS"));
 		nosOrphanState orphanState{
-			.Type = uint8_t(!IsPeriodic() ? NOS_ORPHAN_STATE_TYPE_ORPHAN : NOS_ORPHAN_STATE_TYPE_ACTIVE),
+			.Type = !IsPeriodic() ? NOS_ORPHAN_STATE_TYPE_ORPHAN : NOS_ORPHAN_STATE_TYPE_ACTIVE,
 			.Message = !IsPeriodic() ? "Periodic mode is disabled" : ""
 		};
 		nosEngine.SetItemOrphanState(fpsPinId, &orphanState);
