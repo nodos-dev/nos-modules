@@ -22,16 +22,13 @@ struct SwitchTrigger : NodeContext
 	nos::uuid SwitchFuncId;
 	std::unordered_map<nos::uuid, std::optional<int>> FuncPinIdToCaseMap;
 
-	void OnNodeUpdated(nosNodeUpdate const* update) override
+	void OnFunctionUpdated(nosNodeFunctionUpdate const* update) override
 	{
-		if (update->Type != NOS_NODE_UPDATE_FUNCTION_UPDATED)
+		if (update->FunctionName != NSN_Switch)
 			return;
-		auto& funcUpdate = update->FunctionUpdated;
-		if (funcUpdate->FunctionName != NSN_Switch)
-			return;
-		if (funcUpdate->IsNodeUpdate)
+		if (update->Type == NOS_NODE_FUNCTION_UPDATE_NODE_UPDATE)
 		{
-			auto& nodeUpdate = *funcUpdate->NodeUpdate;
+			auto& nodeUpdate = *update->NodeUpdate;
 			switch (nodeUpdate.Type)
 			{
 			case NOS_NODE_UPDATE_PIN_CREATED: 
@@ -46,7 +43,7 @@ struct SwitchTrigger : NodeContext
 		}
 		else
 		{
-			auto& pinUpdate = *funcUpdate->PinUpdate;
+			auto& pinUpdate = *update->PinUpdate;
 			if (!FuncPinIdToCaseMap.contains(pinUpdate.PinId))
 				return;
 			if (pinUpdate.UpdatedField == NOS_PIN_FIELD_DISPLAY_NAME)
@@ -83,8 +80,10 @@ struct SwitchTrigger : NodeContext
 	{
 		auto pos = name.find_last_of(' ');
 		if (pos == std::string::npos)
-			return std::nullopt;
-		auto num = name.substr(pos + 1);
+			pos = 0;
+		else
+			pos++;
+		auto num = name.substr(pos);
 		if (num.empty())
 			return std::nullopt;
 		try
