@@ -611,6 +611,36 @@
 					}
 				]
 			}
+		},
+		{
+			"class_name": "Print",
+			"menu_info": {
+				"category": "Test"
+			},
+			"node": {
+				"contents_type": "Job",
+				"always_execute": true,
+				"pins": [
+					{
+						"name": "InExe",
+						"type_name": "nos.exe",
+						"show_as": "INPUT_PIN",
+						"can_show_as": "INPUT_PIN_OR_PROPERTY"
+					},
+					{
+						"name": "OutExe",
+						"type_name": "nos.exe",
+						"show_as": "OUTPUT_PIN",
+						"can_show_as": "OUTPUT_PIN_OR_PROPERTY"
+					},
+					{
+						"name": "Log",
+						"type_name": "string",
+						"show_as": "INPUT_PIN",
+						"can_show_as": "INPUT_PIN_OR_PROPERTY"
+					}
+				]
+			}
 		}
 	]
 }
