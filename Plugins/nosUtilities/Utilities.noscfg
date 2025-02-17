@@ -53,7 +53,8 @@
 		"Config/ThreadedSyncMultiOutlet.nosdef",
 		"Config/ConditionalTrigger.nosdef",
 		"Config/TriggerOnAnyInput.nosdef",
-		"Config/TextureMonitor.nosdef"
+		"Config/TextureMonitor.nosdef",
+		"Config/SwitchTrigger.nosdef"
 	],
 	"custom_types": [
 		"Config/Merge.fbs",
