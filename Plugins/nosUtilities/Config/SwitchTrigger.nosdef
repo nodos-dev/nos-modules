@@ -1,0 +1,55 @@
+{
+	"nodes": [
+		{
+			"class_name": "SwitchTrigger",
+			"menu_info": {
+				"category": "Execution",
+				"display_name": "Switch Trigger",
+				"name_aliases": [
+					"branch",
+					"if",
+					"case"
+				]
+			},
+			"node": {
+				"display_name": "Switch Trigger",
+				"contents_type": "Job",
+				"functions": [
+					{
+						"class_name": "Switch",
+						"contents_type": "Job",
+						"pins": [
+							{
+								"name": "InExe",
+								"type_name": "nos.exe",
+								"show_as": "INPUT_PIN",
+								"can_show_as": "INPUT_PIN_OR_PROPERTY"
+							},
+							{
+								"name": "Case",
+								"type_name": "int",
+								"show_as": "INPUT_PIN",
+								"can_show_as": "INPUT_PIN_OR_PROPERTY"
+							},
+							{
+								"name": "Case_1",
+								"display_name":"Case 1",
+								"type_name": "nos.exe",
+								"show_as": "OUTPUT_PIN",
+								"can_show_as": "OUTPUT_PIN_OR_PROPERTY"
+							},
+							{
+								"name": "Case_2",
+								"display_name":"Case 2",
+								"type_name": "nos.exe",
+								"show_as": "OUTPUT_PIN",
+								"can_show_as": "OUTPUT_PIN_OR_PROPERTY"
+							}
+
+						]
+					}
+				]
+			}
+		}
+	]
+}

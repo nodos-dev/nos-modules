@@ -2,7 +2,7 @@
 	"info": {
 		"id": {
 			"name": "nos.utilities",
-			"version": "3.7.0"
+			"version": "3.8.0"
 		},
 		"description": "Various utility nodes.",
 		"display_name": "Utilities",
@@ -53,7 +53,8 @@
 		"Config/ThreadedSyncMultiOutlet.nosdef",
 		"Config/ConditionalTrigger.nosdef",
 		"Config/TriggerOnAnyInput.nosdef",
-		"Config/TextureMonitor.nosdef"
+		"Config/TextureMonitor.nosdef",
+		"Config/SwitchTrigger.nosdef"
 	],
 	"custom_types": [
 		"Config/Merge.fbs",

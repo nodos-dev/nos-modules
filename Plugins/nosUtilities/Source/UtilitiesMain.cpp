@@ -7,7 +7,7 @@
 
 #include <nosVulkanSubsystem/nosVulkanSubsystem.h>
 
-NOS_INIT()
+NOS_INIT_WITH_MIN_REQUIRED_MINOR(1)
 NOS_VULKAN_INIT()
 
 NOS_BEGIN_IMPORT_DEPS()
@@ -48,6 +48,7 @@ enum Utilities : int
 	SyncMultiOutlet,
 	ConditionalTrigger,
 	TriggerOnAnyInput,
+	SwitchTrigger,
 	Count
 };
 
@@ -75,6 +76,7 @@ nosResult RegisterDeinterlacedBufferRing(nosNodeFunctions*);
 nosResult RegisterSyncMultiOutlet(nosNodeFunctions*);
 nosResult RegisterConditionalTrigger(nosNodeFunctions*);
 nosResult RegisterTriggerOnAnyInput(nosNodeFunctions*);
+nosResult RegisterSwitchTrigger(nosNodeFunctions*);
 
 nosResult NOSAPI_CALL ExportNodeFunctions(size_t* outSize, nosNodeFunctions** outList)
 {
@@ -118,6 +120,7 @@ nosResult NOSAPI_CALL ExportNodeFunctions(size_t* outSize, nosNodeFunctions** ou
 			GEN_CASE_NODE(SyncMultiOutlet)
 			GEN_CASE_NODE(ConditionalTrigger)
 			GEN_CASE_NODE(TriggerOnAnyInput)
+			GEN_CASE_NODE(SwitchTrigger)
 		}
 	}
 	return NOS_RESULT_SUCCESS;
