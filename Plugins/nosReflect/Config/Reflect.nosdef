@@ -348,6 +348,90 @@
       }
     },
     {
+      "class_name": "LessThan",
+      "menu_info": {
+        "category": "Type",
+        "display_name": "Less Than",
+        "name_aliases": [
+          "compare"
+        ]
+      },
+      "node": {
+        "contents_type": "Job",
+        "description": "Compares two values and returns true if A < B for all fields",
+        "menu_info": {
+          "category": "Type",
+          "display_name": "Less Than",
+          "name_aliases": [
+            "compare"
+          ]
+        },
+        "pins": [
+          {
+            "name": "A",
+            "type_name": "nos.Generic",
+            "show_as": "INPUT_PIN",
+            "can_show_as": "INPUT_PIN_OR_PROPERTY"
+          },
+          {
+            "name": "B",
+            "type_name": "nos.Generic",
+            "show_as": "INPUT_PIN",
+            "can_show_as": "INPUT_PIN_OR_PROPERTY"
+          },
+          {
+            "name": "IsLess",
+            "display_name": "A < B",
+            "type_name": "bool",
+            "show_as": "OUTPUT_PIN",
+            "can_show_as": "OUTPUT_PIN_ONLY"
+          }
+        ]
+      }
+    },
+    {
+      "class_name": "GreaterThan",
+      "menu_info": {
+        "category": "Type",
+        "display_name": "Greater Than",
+        "name_aliases": [
+          "compare"
+        ]
+      },
+      "node": {
+        "contents_type": "Job",
+        "description": "Compares two values and returns true if A > B for all fields",
+        "menu_info": {
+          "category": "Type",
+          "display_name": "Greater Than",
+          "name_aliases": [
+            "compare"
+          ]
+        },
+        "pins": [
+          {
+            "name": "A",
+            "type_name": "nos.Generic",
+            "show_as": "INPUT_PIN",
+            "can_show_as": "INPUT_PIN_OR_PROPERTY"
+          },
+          {
+            "name": "B",
+            "type_name": "nos.Generic",
+            "show_as": "INPUT_PIN",
+            "can_show_as": "INPUT_PIN_OR_PROPERTY"
+          },
+          {
+            "name": "IsGreater",
+            "display_name": "A > B",
+            "type_name": "bool",
+            "show_as": "OUTPUT_PIN",
+            "can_show_as": "OUTPUT_PIN_ONLY"
+          }
+        ]
+      }
+    },
+    {
       "class_name": "SetVariable",
       "menu_info": {
         "category": "Variables",

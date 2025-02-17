@@ -4,13 +4,14 @@
 
 namespace nos::reflect
 {
-struct IsEqualNode : NodeContext
+template<CompareResult TCompareResult>
+struct ComparisonNode : NodeContext
 {
 	std::optional<nos::TypeInfo> Type = std::nullopt;
 
 	nos::Buffer Value;
 	
-	IsEqualNode(nosFbNodePtr inNode) : NodeContext(inNode)
+	ComparisonNode(nosFbNodePtr inNode) : NodeContext(inNode)
 	{
 		for (auto pin : *inNode->pins())
 		{
@@ -51,15 +52,34 @@ struct IsEqualNode : NodeContext
 			aPtr = A.Data->Data;
 			bPtr = B.Data->Data;
 		}
-		bool isEqual = AreFlatBuffersEqual(type, aPtr, bPtr);
-		nosEngine.SetPinValueByName(NodeId, NSN_IsEqual, nosBuffer{.Data = &isEqual, .Size = sizeof(bool)});
+		bool yes = CompareFlatBuffers<TCompareResult>(type, aPtr, bPtr);
+		nos::Name pinName;
+		if constexpr (TCompareResult == CompareResult::Equal)
+			pinName = NSN_IsEqual;
+		else if constexpr (TCompareResult == CompareResult::Less)
+			pinName = NSN_IsLess;
+		else if constexpr (TCompareResult == CompareResult::Greater)
+			pinName = NSN_IsGreater;
+		nosEngine.SetPinValueByName(NodeId, pinName, nosBuffer{.Data = &yes, .Size = sizeof(bool)});
 		return NOS_RESULT_SUCCESS;
 	}
 };
 
 nosResult RegisterIsEqual(nosNodeFunctions* fn)
 {
-	NOS_BIND_NODE_CLASS(NSN_IsEqual, IsEqualNode, fn);
+	NOS_BIND_NODE_CLASS(NSN_IsEqual, ComparisonNode<CompareResult::Equal>, fn);
+	return NOS_RESULT_SUCCESS;
+}
+
+nosResult RegisterLessThan(nosNodeFunctions* fn)
+{
+	NOS_BIND_NODE_CLASS(NSN_LessThan, ComparisonNode<CompareResult::Less>, fn);
+	return NOS_RESULT_SUCCESS;
+}
+
+nosResult RegisterGreaterThan(nosNodeFunctions* fn)
+{
+	NOS_BIND_NODE_CLASS(NSN_GreaterThan, ComparisonNode<CompareResult::Greater>, fn);
 	return NOS_RESULT_SUCCESS;
 }
 

@@ -404,6 +404,16 @@ bool AreFlatBuffersEqual(const nosTypeInfo* type,
 	return true;
 }
 
+CompareResult CompareStrings(const char* first, const char* second)
+{
+	int res = strcmp(first, second);
+	if (res == 0)
+		return CompareResult::Equal;
+	if (res < 0)
+		return CompareResult::Less;
+	return CompareResult::Greater;
+}
+
 flatbuffers::uoffset_t CopyArgs(
 	flatbuffers::FlatBufferBuilder& fbb,
 	const nosTypeInfo* type,
