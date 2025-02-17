@@ -7,6 +7,7 @@
 
 namespace nos::reflect
 {
+NOS_REGISTER_NAME(Type)
 struct MakeNode : NodeContext
 {
     std::optional<nos::TypeInfo> Type = {};
@@ -27,7 +28,7 @@ struct MakeNode : NodeContext
         }
     }
 
-    void OnPinConnected(nos::Name pinName, nosUUID connectedPin) override
+    void OnPinConnected(nos::Name pinName, uuid const& connectedPin) override
     {
         if (pinName == NSN_Value && Type)
         {
@@ -72,7 +73,7 @@ struct MakeNode : NodeContext
 
 	std::vector<nosName> AllTypeNames;
     
-    void OnMenuRequested(const nosContextMenuRequest* request) override
+    void OnMenuRequested(nosContextMenuRequestPtr request) override
     {
         if(Type) 
             return;
@@ -92,7 +93,7 @@ struct MakeNode : NodeContext
     	HandleEvent(CreateAppEvent(fbb, app::CreateAppContextMenuUpdateDirect(fbb, &NodeId, request->pos(), request->instigator(), &types)));
     }
 
-    void OnMenuCommand(nosUUID itemID, uint32_t cmd) override
+    void OnMenuCommand(uuid const& itemID, uint32_t cmd) override
     {
 		if(Type) 
 			return;
@@ -110,7 +111,8 @@ struct MakeNode : NodeContext
         flatbuffers::FlatBufferBuilder fbb;
         
         std::vector<uint8_t> data = nos::Buffer(nos::Name(typeInfo->TypeName).AsCStr(), 1 + nos::Name(typeInfo->TypeName).AsString().size());
-        std::vector <flatbuffers::Offset<fb::TemplateParameter>> params = { fb::CreateTemplateParameterDirect(fbb, "string", &data) };
+		std::vector<flatbuffers::Offset<fb::TemplateParameter>> params = {
+			fb::CreateTemplateParameterDirect(fbb, NSN_Type.AsCStr(), "string", &data)};
         auto paramsOffset = fbb.CreateVector(params);
 		auto typeNameOffset = fbb.CreateString(nos::Name(typeInfo->TypeName).AsCStr());
         
@@ -148,12 +150,11 @@ struct MakeNode : NodeContext
     void LoadPins(const char* updatedDisplayName = nullptr)
     {
 		assert((*Type)->BaseType != NOS_BASE_TYPE_NONE);
-    	nosBuffer defBuf{};
 		auto& type = *Type;
-    	nosEngine.GetDefaultValueOfType(type->TypeName, &defBuf); // TODO: This can be freed after type is unloaded, so beware.
-		if (!defBuf.Data)
+    	auto defBuf = GetDefaultValueOfType(type->TypeName); // TODO: This can be freed after type is unloaded, so beware.
+		if (!defBuf)
 			return;
-    	auto buf = nos::Buffer(defBuf);
+    	nos::Buffer buf = defBuf->GetBuffer();
     	std::vector<uint8_t> data = buf;
         flatbuffers::FlatBufferBuilder fbb;
         std::vector<flatbuffers::Offset<nos::fb::Pin>> pinsToAdd = {};
@@ -176,7 +177,7 @@ struct MakeNode : NodeContext
 		}
 		else
 		{
-			nosUUID id = nosEngine.GenerateID();
+			uuid id = nosEngine.GenerateID();
 			nos::fb::TPin outPin{};
             outPin.id = id;
             outPin.name = nos::Name(NSN_Output).AsCStr();
@@ -217,7 +218,7 @@ struct MakeNode : NodeContext
             }
             else
             {
-                nosUUID id = nosEngine.GenerateID();
+                uuid id = nosEngine.GenerateID();
                 std::vector<uint8_t> data(type->ByteSize);
                 if (type->BaseType == NOS_BASE_TYPE_STRING)
                 {
@@ -249,7 +250,7 @@ struct MakeNode : NodeContext
                 }
                 else
                 {
-                    nosUUID id = nosEngine.GenerateID();
+                    uuid id = nosEngine.GenerateID();
 					std::vector<uint8_t> data;
 					if (type->ByteSize)
 					{
@@ -279,7 +280,7 @@ struct MakeNode : NodeContext
 			std::vector<uint8_t> data =
 				nos::Buffer(nos::Name(Type->TypeName).AsCStr(), 1 + nos::Name(Type->TypeName).AsString().size());
 			std::vector<flatbuffers::Offset<fb::TemplateParameter>> params = {
-				fb::CreateTemplateParameterDirect(fbb, "string", &data)};
+				fb::CreateTemplateParameterDirect(fbb, NSN_Type.AsCStr(), "string", &data)};
 			HandleEvent(CreateAppEvent(fbb,
 												  CreatePartialNodeUpdateDirect(fbb,
 																				&NodeId,
@@ -332,7 +333,7 @@ nosResult RegisterMake(nosNodeFunctions* fn)
 		typeNames.resize(count);
 		nosEngine.GetPinDataTypeNames(typeNames.data(), &count);
 	}
-	std::vector<nos::Buffer> nodeInfos;
+	std::vector<nos::Buffer> nodePresets;
 	for (auto& typeName : typeNames)
 	{
 		nos::TypeInfo typeInfo(typeName);
@@ -360,22 +361,23 @@ nosResult RegisterMake(nosNodeFunctions* fn)
 		std::string name = nos::Name(typeInfo.TypeName).AsString();
 		auto idx = name.find_last_of(".");
 		idx = idx == std::string::npos ? 0 : 1+idx;
-		fb::TNodeInfo info;
+		fb::TNodePreset preset;
+		fb::TNodeMenuInfo info;
 		info.category = "Type";
-		info.class_name = "nos.reflect.Make";
 		info.display_name = "Make " + name.substr(idx);
+		preset.menu_info = std::make_unique<fb::TNodeMenuInfo>(std::move(info));
 		std::vector<uint8_t> data(1 + name.size());
 		memcpy(data.data(), name.data(), name.size());
-		info.params.emplace_back(new fb::TTemplateParameter{ {},"string", std::move(data) });
+		preset.params.emplace_back(new fb::TTemplateParameter{{}, NSN_Type.AsString(), "string", std::move(data)});
 		flatbuffers::FlatBufferBuilder fbb;
-		fbb.Finish(CreateNodeInfo(fbb, &info));
+		fbb.Finish(CreateNodePreset(fbb, &preset));
 		nos::Buffer buf = fbb.Release();
-		nodeInfos.push_back(std::move(buf));
+		nodePresets.push_back(std::move(buf));
 	}
-	std::vector<const nosFbNodeInfo*> fbNodeInfos;
-	for (auto& buf : nodeInfos)
-		fbNodeInfos.push_back(flatbuffers::GetMutableRoot<nosFbNodeInfo>(buf.Data()));
-	nosEngine.RegisterNodeInfos(nosEngine.Module->Id, fbNodeInfos.size(), fbNodeInfos.data());
+	std::vector<nosFbNodePresetPtr> fbNodePresets;
+	for (auto& buf : nodePresets)
+		fbNodePresets.push_back(flatbuffers::GetMutableRoot<nos::fb::NodePreset>(buf.Data()));
+	nosEngine.RegisterNodePresets(NOS_NAME("nos.reflect.Make"), fbNodePresets.size(), fbNodePresets.data());
 	return NOS_RESULT_SUCCESS;
 }
 

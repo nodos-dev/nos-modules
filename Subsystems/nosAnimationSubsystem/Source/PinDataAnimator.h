@@ -34,7 +34,7 @@ struct InterpolatorManager
 		return Interpolators.contains(name);
 	}
 
-	nosResult Interpolate(nos::Name typeName, const nosBuffer from, const nosBuffer to, const double t, nosBuffer& outBuf);
+	nosResult Interpolate(nos::Name typeName, const nosBuffer from, const nosBuffer to, const double t, std::optional<EngineBuffer>& outBuf);
 
 	std::unordered_set<nos::Name> GetAnimatableTypes();
 
@@ -45,7 +45,7 @@ struct InterpolatorManager
 
 struct AnimationData
 {
-	nosUUID PinId;
+	uuid PinId;
 	nos::Name TypeName;
 	editor::InterpolationUnion Interp;
 	uint64_t StartTime; 
@@ -63,16 +63,16 @@ struct PinDataAnimator
 {
 	PinDataAnimator(InterpolatorManager& interpManager) : InterpManager(interpManager) {}
 
-	bool AddAnimation(nosUUID const& pinId,
+	bool AddAnimation(uuid const& pinId,
 					  editor::AnimatePin const& animate);
-	void UpdatePin(nosUUID const& pinId, nosVec2u const& deltaSeconds, uint64_t curFSM, const nosBuffer* currentData);
-	bool IsPinAnimating(nosUUID const& pinId);
-	void OnPinDeleted(nosUUID const& pinId);
-	std::optional<PathInfo> GetPathInfo(nosUUID const& nodeId);
+	void UpdatePin(uuid const& pinId, nosVec2u const& deltaSeconds, uint64_t curFSM, const nosBuffer* currentData);
+	bool IsPinAnimating(uuid const& pinId);
+	void OnPinDeleted(uuid const& pinId);
+	std::optional<PathInfo> GetPathInfo(uuid const& nodeId);
 
-	void CreatePathInfo(nosUUID const& scheduledNodeId, nosVec2u const& deltaSec);
-	void DeletePathInfo(nosUUID const& scheduledNodeId);
-	void PathExecutionFinished(nosUUID const& scheduledNodeId);
+	void CreatePathInfo(uuid const& scheduledNodeId, nosVec2u const& deltaSec);
+	void DeletePathInfo(uuid const& scheduledNodeId);
+	void PathExecutionFinished(uuid const& scheduledNodeId);
 
 	struct TimeAscending
 	{
@@ -85,10 +85,10 @@ struct PinDataAnimator
 	InterpolatorManager& InterpManager;
 
 	std::shared_mutex PathInfosMutex;
-	std::unordered_map<nosUUID, PathInfo> PathInfos;
+	std::unordered_map<uuid, PathInfo> PathInfos;
 
 	std::shared_mutex AnimationsMutex;
-	std::unordered_map<nosUUID, std::priority_queue<AnimationData, std::vector<AnimationData>, TimeAscending>> Animations;
+	std::unordered_map<uuid, std::priority_queue<AnimationData, std::vector<AnimationData>, TimeAscending>> Animations;
 
 };
 

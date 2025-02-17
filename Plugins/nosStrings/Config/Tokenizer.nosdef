@@ -1,34 +1,45 @@
 {
-    "nodes": [
-        {
-            "class_name": "Tokenizer",
-            "contents_type": "Job",
-            "description": "Breaks a string into tokens using a delimiter",
-            "display_name": "Tokenizer",
-            "pins": [
-                {
-                    "name": "Delimiter",
-                    "type_name": "string",
-                    "show_as": "PROPERTY",
-                    "can_show_as": "INPUT_PIN_OR_PROPERTY",
-                    "description": "Delimiter to use for tokenizing",
-                    "data": ","
-                },
-                {
-                    "name": "Text",
-                    "type_name": "string",
-                    "show_as": "INPUT_PIN",
-                    "can_show_as": "INPUT_PIN_OR_PROPERTY",
-                    "description": "Input string to tokenize"
-                },
-                {
-                    "name": "Tokens",
-                    "type_name": "[string]",
-                    "show_as": "OUTPUT_PIN",
-                    "can_show_as": "OUTPUT_PIN_ONLY",
-                    "description": "List of tokens"
-                }
-            ]
-        }
-    ]
+	"nodes": [
+		{
+			"class_name": "Tokenizer",
+			"menu_info": {
+				"category": "String",
+				"display_name": "Tokenizer",
+				"hide_in_context_menu": false,
+				"name_aliases": [
+					"split"
+				]
+			},
+			"node": {
+				"class_name": "Tokenizer",
+				"contents_type": "Job",
+				"description": "Breaks a string into tokens using a delimiter",
+				"display_name": "Tokenizer",
+				"pins": [
+					{
+						"name": "Delimiter",
+						"type_name": "string",
+						"show_as": "PROPERTY",
+						"can_show_as": "INPUT_PIN_OR_PROPERTY",
+						"description": "Delimiter to use for tokenizing",
+						"data": ","
+					},
+					{
+						"name": "Text",
+						"type_name": "string",
+						"show_as": "INPUT_PIN",
+						"can_show_as": "INPUT_PIN_OR_PROPERTY",
+						"description": "Input string to tokenize"
+					},
+					{
+						"name": "Tokens",
+						"type_name": "[string]",
+						"show_as": "OUTPUT_PIN",
+						"can_show_as": "OUTPUT_PIN_ONLY",
+						"description": "List of tokens"
+					}
+				]
+			}
+		}
+	]
 }

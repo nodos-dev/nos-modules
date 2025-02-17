@@ -1,1281 +1,173 @@
 {
-    "nodes": [
-        {
-            "class_name": "PerspectiveView",
-            "contents_type": "Job",
-            "pins": [
-                {
-                    "name": "FOV",
-                    "type_name": "float",
-                    "show_as": "INPUT_PIN"
-                },
-                {
-                    "name": "Rotation",
-                    "type_name": "nos.fb.vec3",
-                    "show_as": "INPUT_PIN"
-                },
-                {
-                    "name": "Position",
-                    "type_name": "nos.fb.vec3",
-                    "show_as": "INPUT_PIN"
-                },
-                {
-                    "name": "Transformation",
-                    "type_name": "nos.fb.mat4",
-                    "show_as": "OUTPUT_PIN"
-                }
-            ]
-        },
-        {
-            "class_name": "SineWave",
-            "contents_type": "Job",
-            "always_execute": true,
-            "pins": [
-                {
-                    "name": "Amplitude",
-                    "type_name": "float",
-                    "show_as": "INPUT_PIN",
-                    "can_show_as": "INPUT_PIN_OR_PROPERTY",
-                    "data": 1.0
-                },
-                {
-                    "name": "Frequency",
-                    "type_name": "float",
-                    "show_as": "INPUT_PIN",
-                    "can_show_as": "INPUT_PIN_OR_PROPERTY",
-                    "data": 1.0
-                },
-                {
-                    "name": "Out",
-                    "type_name": "float",
-                    "show_as": "OUTPUT_PIN",
-                    "can_show_as": "OUTPUT_PIN_OR_PROPERTY"
-                },
-                {
-                    "name": "Offset",
-                    "type_name": "float",
-                    "show_as": "PROPERTY",
-                    "can_show_as": "INPUT_PIN_OR_PROPERTY",
-                    "data": 0.0
-                }
-            ]
-        },
-        {
-            "class_name": "Clamp",
-            "contents_type": "Job",
-            "pins": [
-                {
-                    "name": "In",
-                    "type_name": "float",
-                    "show_as": "INPUT_PIN",
-                    "can_show_as": "INPUT_PIN_OR_PROPERTY"
-                },
-                {
-                    "name": "Min",
-                    "type_name": "float",
-                    "show_as": "INPUT_PIN",
-                    "can_show_as": "INPUT_PIN_OR_PROPERTY",
-                    "data": 0.0
-                },
-                {
-                    "name": "Max",
-                    "type_name": "float",
-                    "show_as": "INPUT_PIN",
-                    "can_show_as": "INPUT_PIN_OR_PROPERTY",
-                    "data": 1.0
-                },
-                {
-                    "name": "Out",
-                    "type_name": "float",
-                    "show_as": "OUTPUT_PIN",
-                    "can_show_as": "OUTPUT_PIN_OR_PROPERTY"
-                }
-            ]
-        },
-        {
-            "class_name": "Absolute",
-            "contents_type": "Job",
-            "pins": [
-                {
-                    "name": "In",
-                    "type_name": "float",
-                    "show_as": "INPUT_PIN",
-                    "can_show_as": "INPUT_PIN_OR_PROPERTY"
-                },
-                {
-                    "name": "Out",
-                    "type_name": "float",
-                    "show_as": "OUTPUT_PIN",
-                    "can_show_as": "OUTPUT_PIN_OR_PROPERTY"
-                }
-            ]
-        },
+	"nodes": [
 		{
-            "class_name": "Add_Transform",
-            "contents_type": "Job",
-            "pins": [
-                {
-                    "name": "X",
-                    "type_name": "nos.fb.Transform",
-                    "show_as": "INPUT_PIN",
-                    "can_show_as": "INPUT_PIN_OR_PROPERTY"
-                },
-                {
-                    "name": "Y",
-                    "type_name": "nos.fb.Transform",
-                    "show_as": "INPUT_PIN",
-                    "can_show_as": "INPUT_PIN_OR_PROPERTY"
-                },
-                {
-                    "name": "Z",
-                    "type_name": "nos.fb.Transform",
-                    "show_as": "OUTPUT_PIN",
-                    "can_show_as": "OUTPUT_PIN_OR_PROPERTY"
-                }
-            ]
-        },
-	
+			"class_name": "PerspectiveView",
+			"menu_info": {
+				"category": "Math",
+				"display_name": "Perspective View"
+			},
+			"node": {
+				"class_name": "PerspectiveView",
+				"contents_type": "Job",
+				"pins": [
+					{
+						"name": "FOV",
+						"type_name": "float",
+						"show_as": "INPUT_PIN"
+					},
+					{
+						"name": "Rotation",
+						"type_name": "nos.fb.vec3",
+						"show_as": "INPUT_PIN"
+					},
+					{
+						"name": "Position",
+						"type_name": "nos.fb.vec3",
+						"show_as": "INPUT_PIN"
+					},
+					{
+						"name": "Transformation",
+						"type_name": "nos.fb.mat4",
+						"show_as": "OUTPUT_PIN"
+					}
+				]
+			}
+		},
 		{
-            "class_name": "Add_Track",
-            "contents_type": "Job",
-            "pins": [
-                {
-                    "name": "X",
-                    "type_name": "nos.fb.Track",
-                    "show_as": "INPUT_PIN",
-                    "can_show_as": "INPUT_PIN_OR_PROPERTY",
-					"data": {
-						"location": {
-							"x": 0,
-							"y": 0,
-							"z": 0
-						},
-						"rotation": {
-							"x": 0,
-							"y": 0,
-							"z": 0
-						},
-						"fov": 0,
-						"focus": 0.0,
-						"zoom": 0.0,
-						"render_ratio": 0.0,
-						"sensor_size": {
-							"x": 0.0,
-							"y": 0.0
-						},
-						"pixel_aspect_ratio": 0.0,
-						"nodal_offset": 0.0,
-						"lens_distortion": {
-							"distortion_scale": 0.0,
-							"k1k2": {
-								"x": 0.0,
-								"y": 0.0
-							},
-							"center_shift": {
-								"x": 0.0,
-								"y": 0.0
-							}
-						}
+			"class_name": "SineWave",
+			"menu_info": {
+				"category": "Math|Wave",
+				"display_name": "Sine Wave"
+			},
+			"node": {
+				"class_name": "SineWave",
+				"contents_type": "Job",
+				"always_execute": true,
+				"pins": [
+					{
+						"name": "Amplitude",
+						"type_name": "float",
+						"show_as": "INPUT_PIN",
+						"can_show_as": "INPUT_PIN_OR_PROPERTY",
+						"data": 1.0
+					},
+					{
+						"name": "Frequency",
+						"type_name": "float",
+						"show_as": "INPUT_PIN",
+						"can_show_as": "INPUT_PIN_OR_PROPERTY",
+						"data": 1.0
+					},
+					{
+						"name": "Out",
+						"type_name": "float",
+						"show_as": "OUTPUT_PIN",
+						"can_show_as": "OUTPUT_PIN_OR_PROPERTY"
+					},
+					{
+						"name": "Offset",
+						"type_name": "float",
+						"show_as": "PROPERTY",
+						"can_show_as": "INPUT_PIN_OR_PROPERTY",
+						"data": 0.0
 					}
-                },
-                {
-                    "name": "Y",
-                    "type_name": "nos.fb.Track",
-                    "show_as": "INPUT_PIN",
-                    "can_show_as": "INPUT_PIN_OR_PROPERTY",
-					"data": {
-						"location": {
-							"x": 0,
-							"y": 0,
-							"z": 0
-						},
-						"rotation": {
-							"x": 0,
-							"y": 0,
-							"z": 0
-						},
-						"fov": 0,
-						"focus": 0.0,
-						"zoom": 0.0,
-						"render_ratio": 0.0,
-						"sensor_size": {
-							"x": 0.0,
-							"y": 0.0
-						},
-						"pixel_aspect_ratio": 0.0,
-						"nodal_offset": 0.0,
-						"lens_distortion": {
-							"distortion_scale": 0.0,
-							"k1k2": {
-								"x": 0.0,
-								"y": 0.0
-							},
-							"center_shift": {
-								"x": 0.0,
-								"y": 0.0
-							}
-						}
+				]
+			}
+		},
+		{
+			"class_name": "Clamp",
+			"menu_info": {
+				"category": "Math",
+				"display_name": "Clamp"
+			},
+			"node": {
+				"class_name": "Clamp",
+				"contents_type": "Job",
+				"pins": [
+					{
+						"name": "In",
+						"type_name": "float",
+						"show_as": "INPUT_PIN",
+						"can_show_as": "INPUT_PIN_OR_PROPERTY"
+					},
+					{
+						"name": "Min",
+						"type_name": "float",
+						"show_as": "INPUT_PIN",
+						"can_show_as": "INPUT_PIN_OR_PROPERTY",
+						"data": 0.0
+					},
+					{
+						"name": "Max",
+						"type_name": "float",
+						"show_as": "INPUT_PIN",
+						"can_show_as": "INPUT_PIN_OR_PROPERTY",
+						"data": 1.0
+					},
+					{
+						"name": "Out",
+						"type_name": "float",
+						"show_as": "OUTPUT_PIN",
+						"can_show_as": "OUTPUT_PIN_OR_PROPERTY"
 					}
-                },
-                {
-                    "name": "Z",
-                    "type_name": "nos.fb.Track",
-                    "show_as": "OUTPUT_PIN",
-                    "can_show_as": "OUTPUT_PIN_OR_PROPERTY",
-					"data": {
-						"location": {
-							"x": 0,
-							"y": 0,
-							"z": 0
-						},
-						"rotation": {
-							"x": 0,
-							"y": 0,
-							"z": 0
-						},
-						"fov": 0,
-						"focus": 0.0,
-						"zoom": 0.0,
-						"render_ratio": 0.0,
-						"sensor_size": {
-							"x": 0.0,
-							"y": 0.0
-						},
-						"pixel_aspect_ratio": 0.0,
-						"nodal_offset": 0.0,
-						"lens_distortion": {
-							"distortion_scale": 0.0,
-							"k1k2": {
-								"x": 0.0,
-								"y": 0.0
-							},
-							"center_shift": {
-								"x": 0.0,
-								"y": 0.0
-							}
-						}
+				]
+			}
+		},
+		{
+			"class_name": "Absolute",
+			"menu_info": {
+				"category": "Math",
+				"display_name": "Absolute"
+			},
+			"node": {
+				"class_name": "Absolute",
+				"contents_type": "Job",
+				"pins": [
+					{
+						"name": "In",
+						"type_name": "float",
+						"show_as": "INPUT_PIN",
+						"can_show_as": "INPUT_PIN_OR_PROPERTY"
+					},
+					{
+						"name": "Out",
+						"type_name": "float",
+						"show_as": "OUTPUT_PIN",
+						"can_show_as": "OUTPUT_PIN_OR_PROPERTY"
 					}
-                }
-            ]
-        },
-
-
-                {
-                    "class_name": "Add_f32",
-                    "contents_type": "Job",
-                    "pins": [ 
-                        { "name": "X", "type_name": "float", "show_as": "INPUT_PIN", "can_show_as": "INPUT_PIN_OR_PROPERTY"  },
-                        { "name": "Y", "type_name": "float", "show_as": "INPUT_PIN", "can_show_as": "INPUT_PIN_OR_PROPERTY"  },
-                        { "name": "Z", "type_name": "float", "show_as": "OUTPUT_PIN", "can_show_as": "OUTPUT_PIN_OR_PROPERTY" }
-                    ]
-                },
-                
-
-                {
-                    "class_name": "Sub_f32",
-                    "contents_type": "Job",
-                    "pins": [ 
-                        { "name": "X", "type_name": "float", "show_as": "INPUT_PIN", "can_show_as": "INPUT_PIN_OR_PROPERTY"  },
-                        { "name": "Y", "type_name": "float", "show_as": "INPUT_PIN", "can_show_as": "INPUT_PIN_OR_PROPERTY"  },
-                        { "name": "Z", "type_name": "float", "show_as": "OUTPUT_PIN", "can_show_as": "OUTPUT_PIN_OR_PROPERTY" }
-                    ]
-                },
-                
-
-                {
-                    "class_name": "Mul_f32",
-                    "contents_type": "Job",
-                    "pins": [ 
-                        { "name": "X", "type_name": "float", "show_as": "INPUT_PIN", "can_show_as": "INPUT_PIN_OR_PROPERTY"  },
-                        { "name": "Y", "type_name": "float", "show_as": "INPUT_PIN", "can_show_as": "INPUT_PIN_OR_PROPERTY"  },
-                        { "name": "Z", "type_name": "float", "show_as": "OUTPUT_PIN", "can_show_as": "OUTPUT_PIN_OR_PROPERTY" }
-                    ]
-                },
-                
-
-                {
-                    "class_name": "Div_f32",
-                    "contents_type": "Job",
-                    "pins": [ 
-                        { "name": "X", "type_name": "float", "show_as": "INPUT_PIN", "can_show_as": "INPUT_PIN_OR_PROPERTY"  },
-                        { "name": "Y", "type_name": "float", "show_as": "INPUT_PIN", "can_show_as": "INPUT_PIN_OR_PROPERTY"  },
-                        { "name": "Z", "type_name": "float", "show_as": "OUTPUT_PIN", "can_show_as": "OUTPUT_PIN_OR_PROPERTY" }
-                    ]
-                },
-                
-
-                {
-                    "class_name": "Add_f64",
-                    "contents_type": "Job",
-                    "pins": [ 
-                        { "name": "X", "type_name": "double", "show_as": "INPUT_PIN", "can_show_as": "INPUT_PIN_OR_PROPERTY"  },
-                        { "name": "Y", "type_name": "double", "show_as": "INPUT_PIN", "can_show_as": "INPUT_PIN_OR_PROPERTY"  },
-                        { "name": "Z", "type_name": "double", "show_as": "OUTPUT_PIN", "can_show_as": "OUTPUT_PIN_OR_PROPERTY" }
-                    ]
-                },
-                
-
-                {
-                    "class_name": "Sub_f64",
-                    "contents_type": "Job",
-                    "pins": [ 
-                        { "name": "X", "type_name": "double", "show_as": "INPUT_PIN", "can_show_as": "INPUT_PIN_OR_PROPERTY"  },
-                        { "name": "Y", "type_name": "double", "show_as": "INPUT_PIN", "can_show_as": "INPUT_PIN_OR_PROPERTY"  },
-                        { "name": "Z", "type_name": "double", "show_as": "OUTPUT_PIN", "can_show_as": "OUTPUT_PIN_OR_PROPERTY" }
-                    ]
-                },
-                
-
-                {
-                    "class_name": "Mul_f64",
-                    "contents_type": "Job",
-                    "pins": [ 
-                        { "name": "X", "type_name": "double", "show_as": "INPUT_PIN", "can_show_as": "INPUT_PIN_OR_PROPERTY"  },
-                        { "name": "Y", "type_name": "double", "show_as": "INPUT_PIN", "can_show_as": "INPUT_PIN_OR_PROPERTY"  },
-                        { "name": "Z", "type_name": "double", "show_as": "OUTPUT_PIN", "can_show_as": "OUTPUT_PIN_OR_PROPERTY" }
-                    ]
-                },
-                
-
-                {
-                    "class_name": "Div_f64",
-                    "contents_type": "Job",
-                    "pins": [ 
-                        { "name": "X", "type_name": "double", "show_as": "INPUT_PIN", "can_show_as": "INPUT_PIN_OR_PROPERTY"  },
-                        { "name": "Y", "type_name": "double", "show_as": "INPUT_PIN", "can_show_as": "INPUT_PIN_OR_PROPERTY"  },
-                        { "name": "Z", "type_name": "double", "show_as": "OUTPUT_PIN", "can_show_as": "OUTPUT_PIN_OR_PROPERTY" }
-                    ]
-                },
-                
-
-                {
-                    "class_name": "Add_u8",
-                    "contents_type": "Job",
-                    "pins": [ 
-                        { "name": "X", "type_name": "ubyte", "show_as": "INPUT_PIN", "can_show_as": "INPUT_PIN_OR_PROPERTY"  },
-                        { "name": "Y", "type_name": "ubyte", "show_as": "INPUT_PIN", "can_show_as": "INPUT_PIN_OR_PROPERTY"  },
-                        { "name": "Z", "type_name": "ubyte", "show_as": "OUTPUT_PIN", "can_show_as": "OUTPUT_PIN_OR_PROPERTY" }
-                    ]
-                },
-                
-
-                {
-                    "class_name": "Sub_u8",
-                    "contents_type": "Job",
-                    "pins": [ 
-                        { "name": "X", "type_name": "ubyte", "show_as": "INPUT_PIN", "can_show_as": "INPUT_PIN_OR_PROPERTY"  },
-                        { "name": "Y", "type_name": "ubyte", "show_as": "INPUT_PIN", "can_show_as": "INPUT_PIN_OR_PROPERTY"  },
-                        { "name": "Z", "type_name": "ubyte", "show_as": "OUTPUT_PIN", "can_show_as": "OUTPUT_PIN_OR_PROPERTY" }
-                    ]
-                },
-                
-
-                {
-                    "class_name": "Mul_u8",
-                    "contents_type": "Job",
-                    "pins": [ 
-                        { "name": "X", "type_name": "ubyte", "show_as": "INPUT_PIN", "can_show_as": "INPUT_PIN_OR_PROPERTY"  },
-                        { "name": "Y", "type_name": "ubyte", "show_as": "INPUT_PIN", "can_show_as": "INPUT_PIN_OR_PROPERTY"  },
-                        { "name": "Z", "type_name": "ubyte", "show_as": "OUTPUT_PIN", "can_show_as": "OUTPUT_PIN_OR_PROPERTY" }
-                    ]
-                },
-                
-
-                {
-                    "class_name": "Div_u8",
-                    "contents_type": "Job",
-                    "pins": [ 
-                        { "name": "X", "type_name": "ubyte", "show_as": "INPUT_PIN", "can_show_as": "INPUT_PIN_OR_PROPERTY"  },
-                        { "name": "Y", "type_name": "ubyte", "show_as": "INPUT_PIN", "can_show_as": "INPUT_PIN_OR_PROPERTY"  },
-                        { "name": "Z", "type_name": "ubyte", "show_as": "OUTPUT_PIN", "can_show_as": "OUTPUT_PIN_OR_PROPERTY" }
-                    ]
-                },
-                
-
-                {
-                    "class_name": "Add_u16",
-                    "contents_type": "Job",
-                    "pins": [ 
-                        { "name": "X", "type_name": "ushort", "show_as": "INPUT_PIN", "can_show_as": "INPUT_PIN_OR_PROPERTY"  },
-                        { "name": "Y", "type_name": "ushort", "show_as": "INPUT_PIN", "can_show_as": "INPUT_PIN_OR_PROPERTY"  },
-                        { "name": "Z", "type_name": "ushort", "show_as": "OUTPUT_PIN", "can_show_as": "OUTPUT_PIN_OR_PROPERTY" }
-                    ]
-                },
-                
-
-                {
-                    "class_name": "Sub_u16",
-                    "contents_type": "Job",
-                    "pins": [ 
-                        { "name": "X", "type_name": "ushort", "show_as": "INPUT_PIN", "can_show_as": "INPUT_PIN_OR_PROPERTY"  },
-                        { "name": "Y", "type_name": "ushort", "show_as": "INPUT_PIN", "can_show_as": "INPUT_PIN_OR_PROPERTY"  },
-                        { "name": "Z", "type_name": "ushort", "show_as": "OUTPUT_PIN", "can_show_as": "OUTPUT_PIN_OR_PROPERTY" }
-                    ]
-                },
-                
-
-                {
-                    "class_name": "Mul_u16",
-                    "contents_type": "Job",
-                    "pins": [ 
-                        { "name": "X", "type_name": "ushort", "show_as": "INPUT_PIN", "can_show_as": "INPUT_PIN_OR_PROPERTY"  },
-                        { "name": "Y", "type_name": "ushort", "show_as": "INPUT_PIN", "can_show_as": "INPUT_PIN_OR_PROPERTY"  },
-                        { "name": "Z", "type_name": "ushort", "show_as": "OUTPUT_PIN", "can_show_as": "OUTPUT_PIN_OR_PROPERTY" }
-                    ]
-                },
-                
-
-                {
-                    "class_name": "Div_u16",
-                    "contents_type": "Job",
-                    "pins": [ 
-                        { "name": "X", "type_name": "ushort", "show_as": "INPUT_PIN", "can_show_as": "INPUT_PIN_OR_PROPERTY"  },
-                        { "name": "Y", "type_name": "ushort", "show_as": "INPUT_PIN", "can_show_as": "INPUT_PIN_OR_PROPERTY"  },
-                        { "name": "Z", "type_name": "ushort", "show_as": "OUTPUT_PIN", "can_show_as": "OUTPUT_PIN_OR_PROPERTY" }
-                    ]
-                },
-                
-
-                {
-                    "class_name": "Add_u32",
-                    "contents_type": "Job",
-                    "pins": [ 
-                        { "name": "X", "type_name": "uint", "show_as": "INPUT_PIN", "can_show_as": "INPUT_PIN_OR_PROPERTY"  },
-                        { "name": "Y", "type_name": "uint", "show_as": "INPUT_PIN", "can_show_as": "INPUT_PIN_OR_PROPERTY"  },
-                        { "name": "Z", "type_name": "uint", "show_as": "OUTPUT_PIN", "can_show_as": "OUTPUT_PIN_OR_PROPERTY" }
-                    ]
-                },
-                
-
-                {
-                    "class_name": "Sub_u32",
-                    "contents_type": "Job",
-                    "pins": [ 
-                        { "name": "X", "type_name": "uint", "show_as": "INPUT_PIN", "can_show_as": "INPUT_PIN_OR_PROPERTY"  },
-                        { "name": "Y", "type_name": "uint", "show_as": "INPUT_PIN", "can_show_as": "INPUT_PIN_OR_PROPERTY"  },
-                        { "name": "Z", "type_name": "uint", "show_as": "OUTPUT_PIN", "can_show_as": "OUTPUT_PIN_OR_PROPERTY" }
-                    ]
-                },
-                
-
-                {
-                    "class_name": "Mul_u32",
-                    "contents_type": "Job",
-                    "pins": [ 
-                        { "name": "X", "type_name": "uint", "show_as": "INPUT_PIN", "can_show_as": "INPUT_PIN_OR_PROPERTY"  },
-                        { "name": "Y", "type_name": "uint", "show_as": "INPUT_PIN", "can_show_as": "INPUT_PIN_OR_PROPERTY"  },
-                        { "name": "Z", "type_name": "uint", "show_as": "OUTPUT_PIN", "can_show_as": "OUTPUT_PIN_OR_PROPERTY" }
-                    ]
-                },
-                
-
-                {
-                    "class_name": "Div_u32",
-                    "contents_type": "Job",
-                    "pins": [ 
-                        { "name": "X", "type_name": "uint", "show_as": "INPUT_PIN", "can_show_as": "INPUT_PIN_OR_PROPERTY"  },
-                        { "name": "Y", "type_name": "uint", "show_as": "INPUT_PIN", "can_show_as": "INPUT_PIN_OR_PROPERTY"  },
-                        { "name": "Z", "type_name": "uint", "show_as": "OUTPUT_PIN", "can_show_as": "OUTPUT_PIN_OR_PROPERTY" }
-                    ]
-                },
-                
-
-                {
-                    "class_name": "Add_u64",
-                    "contents_type": "Job",
-                    "pins": [ 
-                        { "name": "X", "type_name": "ulong", "show_as": "INPUT_PIN", "can_show_as": "INPUT_PIN_OR_PROPERTY"  },
-                        { "name": "Y", "type_name": "ulong", "show_as": "INPUT_PIN", "can_show_as": "INPUT_PIN_OR_PROPERTY"  },
-                        { "name": "Z", "type_name": "ulong", "show_as": "OUTPUT_PIN", "can_show_as": "OUTPUT_PIN_OR_PROPERTY" }
-                    ]
-                },
-                
-
-                {
-                    "class_name": "Sub_u64",
-                    "contents_type": "Job",
-                    "pins": [ 
-                        { "name": "X", "type_name": "ulong", "show_as": "INPUT_PIN", "can_show_as": "INPUT_PIN_OR_PROPERTY"  },
-                        { "name": "Y", "type_name": "ulong", "show_as": "INPUT_PIN", "can_show_as": "INPUT_PIN_OR_PROPERTY"  },
-                        { "name": "Z", "type_name": "ulong", "show_as": "OUTPUT_PIN", "can_show_as": "OUTPUT_PIN_OR_PROPERTY" }
-                    ]
-                },
-                
-
-                {
-                    "class_name": "Mul_u64",
-                    "contents_type": "Job",
-                    "pins": [ 
-                        { "name": "X", "type_name": "ulong", "show_as": "INPUT_PIN", "can_show_as": "INPUT_PIN_OR_PROPERTY"  },
-                        { "name": "Y", "type_name": "ulong", "show_as": "INPUT_PIN", "can_show_as": "INPUT_PIN_OR_PROPERTY"  },
-                        { "name": "Z", "type_name": "ulong", "show_as": "OUTPUT_PIN", "can_show_as": "OUTPUT_PIN_OR_PROPERTY" }
-                    ]
-                },
-                
-
-                {
-                    "class_name": "Div_u64",
-                    "contents_type": "Job",
-                    "pins": [ 
-                        { "name": "X", "type_name": "ulong", "show_as": "INPUT_PIN", "can_show_as": "INPUT_PIN_OR_PROPERTY"  },
-                        { "name": "Y", "type_name": "ulong", "show_as": "INPUT_PIN", "can_show_as": "INPUT_PIN_OR_PROPERTY"  },
-                        { "name": "Z", "type_name": "ulong", "show_as": "OUTPUT_PIN", "can_show_as": "OUTPUT_PIN_OR_PROPERTY" }
-                    ]
-                },
-                
-
-                {
-                    "class_name": "Add_i8",
-                    "contents_type": "Job",
-                    "pins": [ 
-                        { "name": "X", "type_name": "byte", "show_as": "INPUT_PIN", "can_show_as": "INPUT_PIN_OR_PROPERTY"  },
-                        { "name": "Y", "type_name": "byte", "show_as": "INPUT_PIN", "can_show_as": "INPUT_PIN_OR_PROPERTY"  },
-                        { "name": "Z", "type_name": "byte", "show_as": "OUTPUT_PIN", "can_show_as": "OUTPUT_PIN_OR_PROPERTY" }
-                    ]
-                },
-                
-
-                {
-                    "class_name": "Sub_i8",
-                    "contents_type": "Job",
-                    "pins": [ 
-                        { "name": "X", "type_name": "byte", "show_as": "INPUT_PIN", "can_show_as": "INPUT_PIN_OR_PROPERTY"  },
-                        { "name": "Y", "type_name": "byte", "show_as": "INPUT_PIN", "can_show_as": "INPUT_PIN_OR_PROPERTY"  },
-                        { "name": "Z", "type_name": "byte", "show_as": "OUTPUT_PIN", "can_show_as": "OUTPUT_PIN_OR_PROPERTY" }
-                    ]
-                },
-                
-
-                {
-                    "class_name": "Mul_i8",
-                    "contents_type": "Job",
-                    "pins": [ 
-                        { "name": "X", "type_name": "byte", "show_as": "INPUT_PIN", "can_show_as": "INPUT_PIN_OR_PROPERTY"  },
-                        { "name": "Y", "type_name": "byte", "show_as": "INPUT_PIN", "can_show_as": "INPUT_PIN_OR_PROPERTY"  },
-                        { "name": "Z", "type_name": "byte", "show_as": "OUTPUT_PIN", "can_show_as": "OUTPUT_PIN_OR_PROPERTY" }
-                    ]
-                },
-                
-
-                {
-                    "class_name": "Div_i8",
-                    "contents_type": "Job",
-                    "pins": [ 
-                        { "name": "X", "type_name": "byte", "show_as": "INPUT_PIN", "can_show_as": "INPUT_PIN_OR_PROPERTY"  },
-                        { "name": "Y", "type_name": "byte", "show_as": "INPUT_PIN", "can_show_as": "INPUT_PIN_OR_PROPERTY"  },
-                        { "name": "Z", "type_name": "byte", "show_as": "OUTPUT_PIN", "can_show_as": "OUTPUT_PIN_OR_PROPERTY" }
-                    ]
-                },
-                
-
-                {
-                    "class_name": "Add_i16",
-                    "contents_type": "Job",
-                    "pins": [ 
-                        { "name": "X", "type_name": "short", "show_as": "INPUT_PIN", "can_show_as": "INPUT_PIN_OR_PROPERTY"  },
-                        { "name": "Y", "type_name": "short", "show_as": "INPUT_PIN", "can_show_as": "INPUT_PIN_OR_PROPERTY"  },
-                        { "name": "Z", "type_name": "short", "show_as": "OUTPUT_PIN", "can_show_as": "OUTPUT_PIN_OR_PROPERTY" }
-                    ]
-                },
-                
-
-                {
-                    "class_name": "Sub_i16",
-                    "contents_type": "Job",
-                    "pins": [ 
-                        { "name": "X", "type_name": "short", "show_as": "INPUT_PIN", "can_show_as": "INPUT_PIN_OR_PROPERTY"  },
-                        { "name": "Y", "type_name": "short", "show_as": "INPUT_PIN", "can_show_as": "INPUT_PIN_OR_PROPERTY"  },
-                        { "name": "Z", "type_name": "short", "show_as": "OUTPUT_PIN", "can_show_as": "OUTPUT_PIN_OR_PROPERTY" }
-                    ]
-                },
-                
-
-                {
-                    "class_name": "Mul_i16",
-                    "contents_type": "Job",
-                    "pins": [ 
-                        { "name": "X", "type_name": "short", "show_as": "INPUT_PIN", "can_show_as": "INPUT_PIN_OR_PROPERTY"  },
-                        { "name": "Y", "type_name": "short", "show_as": "INPUT_PIN", "can_show_as": "INPUT_PIN_OR_PROPERTY"  },
-                        { "name": "Z", "type_name": "short", "show_as": "OUTPUT_PIN", "can_show_as": "OUTPUT_PIN_OR_PROPERTY" }
-                    ]
-                },
-                
-
-                {
-                    "class_name": "Div_i16",
-                    "contents_type": "Job",
-                    "pins": [ 
-                        { "name": "X", "type_name": "short", "show_as": "INPUT_PIN", "can_show_as": "INPUT_PIN_OR_PROPERTY"  },
-                        { "name": "Y", "type_name": "short", "show_as": "INPUT_PIN", "can_show_as": "INPUT_PIN_OR_PROPERTY"  },
-                        { "name": "Z", "type_name": "short", "show_as": "OUTPUT_PIN", "can_show_as": "OUTPUT_PIN_OR_PROPERTY" }
-                    ]
-                },
-                
-
-                {
-                    "class_name": "Add_i32",
-                    "contents_type": "Job",
-                    "pins": [ 
-                        { "name": "X", "type_name": "int", "show_as": "INPUT_PIN", "can_show_as": "INPUT_PIN_OR_PROPERTY"  },
-                        { "name": "Y", "type_name": "int", "show_as": "INPUT_PIN", "can_show_as": "INPUT_PIN_OR_PROPERTY"  },
-                        { "name": "Z", "type_name": "int", "show_as": "OUTPUT_PIN", "can_show_as": "OUTPUT_PIN_OR_PROPERTY" }
-                    ]
-                },
-                
-
-                {
-                    "class_name": "Sub_i32",
-                    "contents_type": "Job",
-                    "pins": [ 
-                        { "name": "X", "type_name": "int", "show_as": "INPUT_PIN", "can_show_as": "INPUT_PIN_OR_PROPERTY"  },
-                        { "name": "Y", "type_name": "int", "show_as": "INPUT_PIN", "can_show_as": "INPUT_PIN_OR_PROPERTY"  },
-                        { "name": "Z", "type_name": "int", "show_as": "OUTPUT_PIN", "can_show_as": "OUTPUT_PIN_OR_PROPERTY" }
-                    ]
-                },
-                
-
-                {
-                    "class_name": "Mul_i32",
-                    "contents_type": "Job",
-                    "pins": [ 
-                        { "name": "X", "type_name": "int", "show_as": "INPUT_PIN", "can_show_as": "INPUT_PIN_OR_PROPERTY"  },
-                        { "name": "Y", "type_name": "int", "show_as": "INPUT_PIN", "can_show_as": "INPUT_PIN_OR_PROPERTY"  },
-                        { "name": "Z", "type_name": "int", "show_as": "OUTPUT_PIN", "can_show_as": "OUTPUT_PIN_OR_PROPERTY" }
-                    ]
-                },
-                
-
-                {
-                    "class_name": "Div_i32",
-                    "contents_type": "Job",
-                    "pins": [ 
-                        { "name": "X", "type_name": "int", "show_as": "INPUT_PIN", "can_show_as": "INPUT_PIN_OR_PROPERTY"  },
-                        { "name": "Y", "type_name": "int", "show_as": "INPUT_PIN", "can_show_as": "INPUT_PIN_OR_PROPERTY"  },
-                        { "name": "Z", "type_name": "int", "show_as": "OUTPUT_PIN", "can_show_as": "OUTPUT_PIN_OR_PROPERTY" }
-                    ]
-                },
-                
-
-                {
-                    "class_name": "Add_i64",
-                    "contents_type": "Job",
-                    "pins": [ 
-                        { "name": "X", "type_name": "long", "show_as": "INPUT_PIN", "can_show_as": "INPUT_PIN_OR_PROPERTY"  },
-                        { "name": "Y", "type_name": "long", "show_as": "INPUT_PIN", "can_show_as": "INPUT_PIN_OR_PROPERTY"  },
-                        { "name": "Z", "type_name": "long", "show_as": "OUTPUT_PIN", "can_show_as": "OUTPUT_PIN_OR_PROPERTY" }
-                    ]
-                },
-                
-
-                {
-                    "class_name": "Sub_i64",
-                    "contents_type": "Job",
-                    "pins": [ 
-                        { "name": "X", "type_name": "long", "show_as": "INPUT_PIN", "can_show_as": "INPUT_PIN_OR_PROPERTY"  },
-                        { "name": "Y", "type_name": "long", "show_as": "INPUT_PIN", "can_show_as": "INPUT_PIN_OR_PROPERTY"  },
-                        { "name": "Z", "type_name": "long", "show_as": "OUTPUT_PIN", "can_show_as": "OUTPUT_PIN_OR_PROPERTY" }
-                    ]
-                },
-                
-
-                {
-                    "class_name": "Mul_i64",
-                    "contents_type": "Job",
-                    "pins": [ 
-                        { "name": "X", "type_name": "long", "show_as": "INPUT_PIN", "can_show_as": "INPUT_PIN_OR_PROPERTY"  },
-                        { "name": "Y", "type_name": "long", "show_as": "INPUT_PIN", "can_show_as": "INPUT_PIN_OR_PROPERTY"  },
-                        { "name": "Z", "type_name": "long", "show_as": "OUTPUT_PIN", "can_show_as": "OUTPUT_PIN_OR_PROPERTY" }
-                    ]
-                },
-                
-
-                {
-                    "class_name": "Div_i64",
-                    "contents_type": "Job",
-                    "pins": [ 
-                        { "name": "X", "type_name": "long", "show_as": "INPUT_PIN", "can_show_as": "INPUT_PIN_OR_PROPERTY"  },
-                        { "name": "Y", "type_name": "long", "show_as": "INPUT_PIN", "can_show_as": "INPUT_PIN_OR_PROPERTY"  },
-                        { "name": "Z", "type_name": "long", "show_as": "OUTPUT_PIN", "can_show_as": "OUTPUT_PIN_OR_PROPERTY" }
-                    ]
-                },
-                
-
-                    {
-                        "class_name": "Add_vec2",
-                        "contents_type": "Job",
-                        
-                        "pins": [ 
-                            { "name": "X", "type_name": "nos.fb.vec2", "show_as": "INPUT_PIN", "can_show_as": "INPUT_PIN_OR_PROPERTY"  },
-                            { "name": "Y", "type_name": "nos.fb.vec2", "show_as": "INPUT_PIN", "can_show_as": "INPUT_PIN_OR_PROPERTY"  },
-                            { "name": "Z", "type_name": "nos.fb.vec2", "show_as": "OUTPUT_PIN", "can_show_as": "OUTPUT_PIN_OR_PROPERTY" }
-                        ]
-                    },
-                    
-
-                    {
-                        "class_name": "Sub_vec2",
-                        "contents_type": "Job",
-                        
-                        "pins": [ 
-                            { "name": "X", "type_name": "nos.fb.vec2", "show_as": "INPUT_PIN", "can_show_as": "INPUT_PIN_OR_PROPERTY"  },
-                            { "name": "Y", "type_name": "nos.fb.vec2", "show_as": "INPUT_PIN", "can_show_as": "INPUT_PIN_OR_PROPERTY"  },
-                            { "name": "Z", "type_name": "nos.fb.vec2", "show_as": "OUTPUT_PIN", "can_show_as": "OUTPUT_PIN_OR_PROPERTY" }
-                        ]
-                    },
-                    
-
-                    {
-                        "class_name": "Mul_vec2",
-                        "contents_type": "Job",
-                        
-                        "pins": [ 
-                            { "name": "X", "type_name": "nos.fb.vec2", "show_as": "INPUT_PIN", "can_show_as": "INPUT_PIN_OR_PROPERTY"  },
-                            { "name": "Y", "type_name": "nos.fb.vec2", "show_as": "INPUT_PIN", "can_show_as": "INPUT_PIN_OR_PROPERTY"  },
-                            { "name": "Z", "type_name": "nos.fb.vec2", "show_as": "OUTPUT_PIN", "can_show_as": "OUTPUT_PIN_OR_PROPERTY" }
-                        ]
-                    },
-                    
-
-                    {
-                        "class_name": "Div_vec2",
-                        "contents_type": "Job",
-                        
-                        "pins": [ 
-                            { "name": "X", "type_name": "nos.fb.vec2", "show_as": "INPUT_PIN", "can_show_as": "INPUT_PIN_OR_PROPERTY"  },
-                            { "name": "Y", "type_name": "nos.fb.vec2", "show_as": "INPUT_PIN", "can_show_as": "INPUT_PIN_OR_PROPERTY"  },
-                            { "name": "Z", "type_name": "nos.fb.vec2", "show_as": "OUTPUT_PIN", "can_show_as": "OUTPUT_PIN_OR_PROPERTY" }
-                        ]
-                    },
-                    
-
-                    {
-                        "class_name": "Add_vec2d",
-                        "contents_type": "Job",
-                        
-                        "pins": [ 
-                            { "name": "X", "type_name": "nos.fb.vec2d", "show_as": "INPUT_PIN", "can_show_as": "INPUT_PIN_OR_PROPERTY"  },
-                            { "name": "Y", "type_name": "nos.fb.vec2d", "show_as": "INPUT_PIN", "can_show_as": "INPUT_PIN_OR_PROPERTY"  },
-                            { "name": "Z", "type_name": "nos.fb.vec2d", "show_as": "OUTPUT_PIN", "can_show_as": "OUTPUT_PIN_OR_PROPERTY" }
-                        ]
-                    },
-                    
-
-                    {
-                        "class_name": "Sub_vec2d",
-                        "contents_type": "Job",
-                        
-                        "pins": [ 
-                            { "name": "X", "type_name": "nos.fb.vec2d", "show_as": "INPUT_PIN", "can_show_as": "INPUT_PIN_OR_PROPERTY"  },
-                            { "name": "Y", "type_name": "nos.fb.vec2d", "show_as": "INPUT_PIN", "can_show_as": "INPUT_PIN_OR_PROPERTY"  },
-                            { "name": "Z", "type_name": "nos.fb.vec2d", "show_as": "OUTPUT_PIN", "can_show_as": "OUTPUT_PIN_OR_PROPERTY" }
-                        ]
-                    },
-                    
-
-                    {
-                        "class_name": "Mul_vec2d",
-                        "contents_type": "Job",
-                        
-                        "pins": [ 
-                            { "name": "X", "type_name": "nos.fb.vec2d", "show_as": "INPUT_PIN", "can_show_as": "INPUT_PIN_OR_PROPERTY"  },
-                            { "name": "Y", "type_name": "nos.fb.vec2d", "show_as": "INPUT_PIN", "can_show_as": "INPUT_PIN_OR_PROPERTY"  },
-                            { "name": "Z", "type_name": "nos.fb.vec2d", "show_as": "OUTPUT_PIN", "can_show_as": "OUTPUT_PIN_OR_PROPERTY" }
-                        ]
-                    },
-                    
-
-                    {
-                        "class_name": "Div_vec2d",
-                        "contents_type": "Job",
-                        
-                        "pins": [ 
-                            { "name": "X", "type_name": "nos.fb.vec2d", "show_as": "INPUT_PIN", "can_show_as": "INPUT_PIN_OR_PROPERTY"  },
-                            { "name": "Y", "type_name": "nos.fb.vec2d", "show_as": "INPUT_PIN", "can_show_as": "INPUT_PIN_OR_PROPERTY"  },
-                            { "name": "Z", "type_name": "nos.fb.vec2d", "show_as": "OUTPUT_PIN", "can_show_as": "OUTPUT_PIN_OR_PROPERTY" }
-                        ]
-                    },
-                    
-
-                    {
-                        "class_name": "Add_vec3",
-                        "contents_type": "Job",
-                        
-                        "pins": [ 
-                            { "name": "X", "type_name": "nos.fb.vec3", "show_as": "INPUT_PIN", "can_show_as": "INPUT_PIN_OR_PROPERTY"  },
-                            { "name": "Y", "type_name": "nos.fb.vec3", "show_as": "INPUT_PIN", "can_show_as": "INPUT_PIN_OR_PROPERTY"  },
-                            { "name": "Z", "type_name": "nos.fb.vec3", "show_as": "OUTPUT_PIN", "can_show_as": "OUTPUT_PIN_OR_PROPERTY" }
-                        ]
-                    },
-                    
-
-                    {
-                        "class_name": "Sub_vec3",
-                        "contents_type": "Job",
-                        
-                        "pins": [ 
-                            { "name": "X", "type_name": "nos.fb.vec3", "show_as": "INPUT_PIN", "can_show_as": "INPUT_PIN_OR_PROPERTY"  },
-                            { "name": "Y", "type_name": "nos.fb.vec3", "show_as": "INPUT_PIN", "can_show_as": "INPUT_PIN_OR_PROPERTY"  },
-                            { "name": "Z", "type_name": "nos.fb.vec3", "show_as": "OUTPUT_PIN", "can_show_as": "OUTPUT_PIN_OR_PROPERTY" }
-                        ]
-                    },
-                    
-
-                    {
-                        "class_name": "Mul_vec3",
-                        "contents_type": "Job",
-                        
-                        "pins": [ 
-                            { "name": "X", "type_name": "nos.fb.vec3", "show_as": "INPUT_PIN", "can_show_as": "INPUT_PIN_OR_PROPERTY"  },
-                            { "name": "Y", "type_name": "nos.fb.vec3", "show_as": "INPUT_PIN", "can_show_as": "INPUT_PIN_OR_PROPERTY"  },
-                            { "name": "Z", "type_name": "nos.fb.vec3", "show_as": "OUTPUT_PIN", "can_show_as": "OUTPUT_PIN_OR_PROPERTY" }
-                        ]
-                    },
-                    
-
-                    {
-                        "class_name": "Div_vec3",
-                        "contents_type": "Job",
-                        
-                        "pins": [ 
-                            { "name": "X", "type_name": "nos.fb.vec3", "show_as": "INPUT_PIN", "can_show_as": "INPUT_PIN_OR_PROPERTY"  },
-                            { "name": "Y", "type_name": "nos.fb.vec3", "show_as": "INPUT_PIN", "can_show_as": "INPUT_PIN_OR_PROPERTY"  },
-                            { "name": "Z", "type_name": "nos.fb.vec3", "show_as": "OUTPUT_PIN", "can_show_as": "OUTPUT_PIN_OR_PROPERTY" }
-                        ]
-                    },
-                    
-
-                    {
-                        "class_name": "Add_vec3d",
-                        "contents_type": "Job",
-                        
-                        "pins": [ 
-                            { "name": "X", "type_name": "nos.fb.vec3d", "show_as": "INPUT_PIN", "can_show_as": "INPUT_PIN_OR_PROPERTY"  },
-                            { "name": "Y", "type_name": "nos.fb.vec3d", "show_as": "INPUT_PIN", "can_show_as": "INPUT_PIN_OR_PROPERTY"  },
-                            { "name": "Z", "type_name": "nos.fb.vec3d", "show_as": "OUTPUT_PIN", "can_show_as": "OUTPUT_PIN_OR_PROPERTY" }
-                        ]
-                    },
-                    
-
-                    {
-                        "class_name": "Sub_vec3d",
-                        "contents_type": "Job",
-                        
-                        "pins": [ 
-                            { "name": "X", "type_name": "nos.fb.vec3d", "show_as": "INPUT_PIN", "can_show_as": "INPUT_PIN_OR_PROPERTY"  },
-                            { "name": "Y", "type_name": "nos.fb.vec3d", "show_as": "INPUT_PIN", "can_show_as": "INPUT_PIN_OR_PROPERTY"  },
-                            { "name": "Z", "type_name": "nos.fb.vec3d", "show_as": "OUTPUT_PIN", "can_show_as": "OUTPUT_PIN_OR_PROPERTY" }
-                        ]
-                    },
-                    
-
-                    {
-                        "class_name": "Mul_vec3d",
-                        "contents_type": "Job",
-                        
-                        "pins": [ 
-                            { "name": "X", "type_name": "nos.fb.vec3d", "show_as": "INPUT_PIN", "can_show_as": "INPUT_PIN_OR_PROPERTY"  },
-                            { "name": "Y", "type_name": "nos.fb.vec3d", "show_as": "INPUT_PIN", "can_show_as": "INPUT_PIN_OR_PROPERTY"  },
-                            { "name": "Z", "type_name": "nos.fb.vec3d", "show_as": "OUTPUT_PIN", "can_show_as": "OUTPUT_PIN_OR_PROPERTY" }
-                        ]
-                    },
-                    
-
-                    {
-                        "class_name": "Div_vec3d",
-                        "contents_type": "Job",
-                        
-                        "pins": [ 
-                            { "name": "X", "type_name": "nos.fb.vec3d", "show_as": "INPUT_PIN", "can_show_as": "INPUT_PIN_OR_PROPERTY"  },
-                            { "name": "Y", "type_name": "nos.fb.vec3d", "show_as": "INPUT_PIN", "can_show_as": "INPUT_PIN_OR_PROPERTY"  },
-                            { "name": "Z", "type_name": "nos.fb.vec3d", "show_as": "OUTPUT_PIN", "can_show_as": "OUTPUT_PIN_OR_PROPERTY" }
-                        ]
-                    },
-                    
-
-                    {
-                        "class_name": "Add_vec4",
-                        "contents_type": "Job",
-                        
-                        "pins": [ 
-                            { "name": "X", "type_name": "nos.fb.vec4", "show_as": "INPUT_PIN", "can_show_as": "INPUT_PIN_OR_PROPERTY"  },
-                            { "name": "Y", "type_name": "nos.fb.vec4", "show_as": "INPUT_PIN", "can_show_as": "INPUT_PIN_OR_PROPERTY"  },
-                            { "name": "Z", "type_name": "nos.fb.vec4", "show_as": "OUTPUT_PIN", "can_show_as": "OUTPUT_PIN_OR_PROPERTY" }
-                        ]
-                    },
-                    
-
-                    {
-                        "class_name": "Sub_vec4",
-                        "contents_type": "Job",
-                        
-                        "pins": [ 
-                            { "name": "X", "type_name": "nos.fb.vec4", "show_as": "INPUT_PIN", "can_show_as": "INPUT_PIN_OR_PROPERTY"  },
-                            { "name": "Y", "type_name": "nos.fb.vec4", "show_as": "INPUT_PIN", "can_show_as": "INPUT_PIN_OR_PROPERTY"  },
-                            { "name": "Z", "type_name": "nos.fb.vec4", "show_as": "OUTPUT_PIN", "can_show_as": "OUTPUT_PIN_OR_PROPERTY" }
-                        ]
-                    },
-                    
-
-                    {
-                        "class_name": "Mul_vec4",
-                        "contents_type": "Job",
-                        
-                        "pins": [ 
-                            { "name": "X", "type_name": "nos.fb.vec4", "show_as": "INPUT_PIN", "can_show_as": "INPUT_PIN_OR_PROPERTY"  },
-                            { "name": "Y", "type_name": "nos.fb.vec4", "show_as": "INPUT_PIN", "can_show_as": "INPUT_PIN_OR_PROPERTY"  },
-                            { "name": "Z", "type_name": "nos.fb.vec4", "show_as": "OUTPUT_PIN", "can_show_as": "OUTPUT_PIN_OR_PROPERTY" }
-                        ]
-                    },
-                    
-
-                    {
-                        "class_name": "Div_vec4",
-                        "contents_type": "Job",
-                        
-                        "pins": [ 
-                            { "name": "X", "type_name": "nos.fb.vec4", "show_as": "INPUT_PIN", "can_show_as": "INPUT_PIN_OR_PROPERTY"  },
-                            { "name": "Y", "type_name": "nos.fb.vec4", "show_as": "INPUT_PIN", "can_show_as": "INPUT_PIN_OR_PROPERTY"  },
-                            { "name": "Z", "type_name": "nos.fb.vec4", "show_as": "OUTPUT_PIN", "can_show_as": "OUTPUT_PIN_OR_PROPERTY" }
-                        ]
-                    },
-                    
-
-                    {
-                        "class_name": "Add_vec4d",
-                        "contents_type": "Job",
-                        
-                        "pins": [ 
-                            { "name": "X", "type_name": "nos.fb.vec4d", "show_as": "INPUT_PIN", "can_show_as": "INPUT_PIN_OR_PROPERTY"  },
-                            { "name": "Y", "type_name": "nos.fb.vec4d", "show_as": "INPUT_PIN", "can_show_as": "INPUT_PIN_OR_PROPERTY"  },
-                            { "name": "Z", "type_name": "nos.fb.vec4d", "show_as": "OUTPUT_PIN", "can_show_as": "OUTPUT_PIN_OR_PROPERTY" }
-                        ]
-                    },
-                    
-
-                    {
-                        "class_name": "Sub_vec4d",
-                        "contents_type": "Job",
-                        
-                        "pins": [ 
-                            { "name": "X", "type_name": "nos.fb.vec4d", "show_as": "INPUT_PIN", "can_show_as": "INPUT_PIN_OR_PROPERTY"  },
-                            { "name": "Y", "type_name": "nos.fb.vec4d", "show_as": "INPUT_PIN", "can_show_as": "INPUT_PIN_OR_PROPERTY"  },
-                            { "name": "Z", "type_name": "nos.fb.vec4d", "show_as": "OUTPUT_PIN", "can_show_as": "OUTPUT_PIN_OR_PROPERTY" }
-                        ]
-                    },
-                    
-
-                    {
-                        "class_name": "Mul_vec4d",
-                        "contents_type": "Job",
-                        
-                        "pins": [ 
-                            { "name": "X", "type_name": "nos.fb.vec4d", "show_as": "INPUT_PIN", "can_show_as": "INPUT_PIN_OR_PROPERTY"  },
-                            { "name": "Y", "type_name": "nos.fb.vec4d", "show_as": "INPUT_PIN", "can_show_as": "INPUT_PIN_OR_PROPERTY"  },
-                            { "name": "Z", "type_name": "nos.fb.vec4d", "show_as": "OUTPUT_PIN", "can_show_as": "OUTPUT_PIN_OR_PROPERTY" }
-                        ]
-                    },
-                    
-
-                    {
-                        "class_name": "Div_vec4d",
-                        "contents_type": "Job",
-                        
-                        "pins": [ 
-                            { "name": "X", "type_name": "nos.fb.vec4d", "show_as": "INPUT_PIN", "can_show_as": "INPUT_PIN_OR_PROPERTY"  },
-                            { "name": "Y", "type_name": "nos.fb.vec4d", "show_as": "INPUT_PIN", "can_show_as": "INPUT_PIN_OR_PROPERTY"  },
-                            { "name": "Z", "type_name": "nos.fb.vec4d", "show_as": "OUTPUT_PIN", "can_show_as": "OUTPUT_PIN_OR_PROPERTY" }
-                        ]
-                    },
-                    
-
-                    {
-                        "class_name": "Add_vec2u",
-                        "contents_type": "Job",
-                        
-                        "pins": [ 
-                            { "name": "X", "type_name": "nos.fb.vec2u", "show_as": "INPUT_PIN", "can_show_as": "INPUT_PIN_OR_PROPERTY"  },
-                            { "name": "Y", "type_name": "nos.fb.vec2u", "show_as": "INPUT_PIN", "can_show_as": "INPUT_PIN_OR_PROPERTY"  },
-                            { "name": "Z", "type_name": "nos.fb.vec2u", "show_as": "OUTPUT_PIN", "can_show_as": "OUTPUT_PIN_OR_PROPERTY" }
-                        ]
-                    },
-                    
-
-                    {
-                        "class_name": "Sub_vec2u",
-                        "contents_type": "Job",
-                        
-                        "pins": [ 
-                            { "name": "X", "type_name": "nos.fb.vec2u", "show_as": "INPUT_PIN", "can_show_as": "INPUT_PIN_OR_PROPERTY"  },
-                            { "name": "Y", "type_name": "nos.fb.vec2u", "show_as": "INPUT_PIN", "can_show_as": "INPUT_PIN_OR_PROPERTY"  },
-                            { "name": "Z", "type_name": "nos.fb.vec2u", "show_as": "OUTPUT_PIN", "can_show_as": "OUTPUT_PIN_OR_PROPERTY" }
-                        ]
-                    },
-                    
-
-                    {
-                        "class_name": "Mul_vec2u",
-                        "contents_type": "Job",
-                        
-                        "pins": [ 
-                            { "name": "X", "type_name": "nos.fb.vec2u", "show_as": "INPUT_PIN", "can_show_as": "INPUT_PIN_OR_PROPERTY"  },
-                            { "name": "Y", "type_name": "nos.fb.vec2u", "show_as": "INPUT_PIN", "can_show_as": "INPUT_PIN_OR_PROPERTY"  },
-                            { "name": "Z", "type_name": "nos.fb.vec2u", "show_as": "OUTPUT_PIN", "can_show_as": "OUTPUT_PIN_OR_PROPERTY" }
-                        ]
-                    },
-                    
-
-                    {
-                        "class_name": "Div_vec2u",
-                        "contents_type": "Job",
-                        
-                        "pins": [ 
-                            { "name": "X", "type_name": "nos.fb.vec2u", "show_as": "INPUT_PIN", "can_show_as": "INPUT_PIN_OR_PROPERTY"  },
-                            { "name": "Y", "type_name": "nos.fb.vec2u", "show_as": "INPUT_PIN", "can_show_as": "INPUT_PIN_OR_PROPERTY"  },
-                            { "name": "Z", "type_name": "nos.fb.vec2u", "show_as": "OUTPUT_PIN", "can_show_as": "OUTPUT_PIN_OR_PROPERTY" }
-                        ]
-                    },
-                    
-
-                    {
-                        "class_name": "Add_vec3u",
-                        "contents_type": "Job",
-                        
-                        "pins": [ 
-                            { "name": "X", "type_name": "nos.fb.vec3u", "show_as": "INPUT_PIN", "can_show_as": "INPUT_PIN_OR_PROPERTY"  },
-                            { "name": "Y", "type_name": "nos.fb.vec3u", "show_as": "INPUT_PIN", "can_show_as": "INPUT_PIN_OR_PROPERTY"  },
-                            { "name": "Z", "type_name": "nos.fb.vec3u", "show_as": "OUTPUT_PIN", "can_show_as": "OUTPUT_PIN_OR_PROPERTY" }
-                        ]
-                    },
-                    
-
-                    {
-                        "class_name": "Sub_vec3u",
-                        "contents_type": "Job",
-                        
-                        "pins": [ 
-                            { "name": "X", "type_name": "nos.fb.vec3u", "show_as": "INPUT_PIN", "can_show_as": "INPUT_PIN_OR_PROPERTY"  },
-                            { "name": "Y", "type_name": "nos.fb.vec3u", "show_as": "INPUT_PIN", "can_show_as": "INPUT_PIN_OR_PROPERTY"  },
-                            { "name": "Z", "type_name": "nos.fb.vec3u", "show_as": "OUTPUT_PIN", "can_show_as": "OUTPUT_PIN_OR_PROPERTY" }
-                        ]
-                    },
-                    
-
-                    {
-                        "class_name": "Mul_vec3u",
-                        "contents_type": "Job",
-                        
-                        "pins": [ 
-                            { "name": "X", "type_name": "nos.fb.vec3u", "show_as": "INPUT_PIN", "can_show_as": "INPUT_PIN_OR_PROPERTY"  },
-                            { "name": "Y", "type_name": "nos.fb.vec3u", "show_as": "INPUT_PIN", "can_show_as": "INPUT_PIN_OR_PROPERTY"  },
-                            { "name": "Z", "type_name": "nos.fb.vec3u", "show_as": "OUTPUT_PIN", "can_show_as": "OUTPUT_PIN_OR_PROPERTY" }
-                        ]
-                    },
-                    
-
-                    {
-                        "class_name": "Div_vec3u",
-                        "contents_type": "Job",
-                        
-                        "pins": [ 
-                            { "name": "X", "type_name": "nos.fb.vec3u", "show_as": "INPUT_PIN", "can_show_as": "INPUT_PIN_OR_PROPERTY"  },
-                            { "name": "Y", "type_name": "nos.fb.vec3u", "show_as": "INPUT_PIN", "can_show_as": "INPUT_PIN_OR_PROPERTY"  },
-                            { "name": "Z", "type_name": "nos.fb.vec3u", "show_as": "OUTPUT_PIN", "can_show_as": "OUTPUT_PIN_OR_PROPERTY" }
-                        ]
-                    },
-                    
-
-                    {
-                        "class_name": "Add_vec4u",
-                        "contents_type": "Job",
-                        
-                        "pins": [ 
-                            { "name": "X", "type_name": "nos.fb.vec4u", "show_as": "INPUT_PIN", "can_show_as": "INPUT_PIN_OR_PROPERTY"  },
-                            { "name": "Y", "type_name": "nos.fb.vec4u", "show_as": "INPUT_PIN", "can_show_as": "INPUT_PIN_OR_PROPERTY"  },
-                            { "name": "Z", "type_name": "nos.fb.vec4u", "show_as": "OUTPUT_PIN", "can_show_as": "OUTPUT_PIN_OR_PROPERTY" }
-                        ]
-                    },
-                    
-
-                    {
-                        "class_name": "Sub_vec4u",
-                        "contents_type": "Job",
-                        
-                        "pins": [ 
-                            { "name": "X", "type_name": "nos.fb.vec4u", "show_as": "INPUT_PIN", "can_show_as": "INPUT_PIN_OR_PROPERTY"  },
-                            { "name": "Y", "type_name": "nos.fb.vec4u", "show_as": "INPUT_PIN", "can_show_as": "INPUT_PIN_OR_PROPERTY"  },
-                            { "name": "Z", "type_name": "nos.fb.vec4u", "show_as": "OUTPUT_PIN", "can_show_as": "OUTPUT_PIN_OR_PROPERTY" }
-                        ]
-                    },
-                    
-
-                    {
-                        "class_name": "Mul_vec4u",
-                        "contents_type": "Job",
-                        
-                        "pins": [ 
-                            { "name": "X", "type_name": "nos.fb.vec4u", "show_as": "INPUT_PIN", "can_show_as": "INPUT_PIN_OR_PROPERTY"  },
-                            { "name": "Y", "type_name": "nos.fb.vec4u", "show_as": "INPUT_PIN", "can_show_as": "INPUT_PIN_OR_PROPERTY"  },
-                            { "name": "Z", "type_name": "nos.fb.vec4u", "show_as": "OUTPUT_PIN", "can_show_as": "OUTPUT_PIN_OR_PROPERTY" }
-                        ]
-                    },
-                    
-
-                    {
-                        "class_name": "Div_vec4u",
-                        "contents_type": "Job",
-                        
-                        "pins": [ 
-                            { "name": "X", "type_name": "nos.fb.vec4u", "show_as": "INPUT_PIN", "can_show_as": "INPUT_PIN_OR_PROPERTY"  },
-                            { "name": "Y", "type_name": "nos.fb.vec4u", "show_as": "INPUT_PIN", "can_show_as": "INPUT_PIN_OR_PROPERTY"  },
-                            { "name": "Z", "type_name": "nos.fb.vec4u", "show_as": "OUTPUT_PIN", "can_show_as": "OUTPUT_PIN_OR_PROPERTY" }
-                        ]
-                    },
-                    
-
-                    {
-                        "class_name": "Add_vec2i",
-                        "contents_type": "Job",
-                        
-                        "pins": [ 
-                            { "name": "X", "type_name": "nos.fb.vec2i", "show_as": "INPUT_PIN", "can_show_as": "INPUT_PIN_OR_PROPERTY"  },
-                            { "name": "Y", "type_name": "nos.fb.vec2i", "show_as": "INPUT_PIN", "can_show_as": "INPUT_PIN_OR_PROPERTY"  },
-                            { "name": "Z", "type_name": "nos.fb.vec2i", "show_as": "OUTPUT_PIN", "can_show_as": "OUTPUT_PIN_OR_PROPERTY" }
-                        ]
-                    },
-                    
-
-                    {
-                        "class_name": "Sub_vec2i",
-                        "contents_type": "Job",
-                        
-                        "pins": [ 
-                            { "name": "X", "type_name": "nos.fb.vec2i", "show_as": "INPUT_PIN", "can_show_as": "INPUT_PIN_OR_PROPERTY"  },
-                            { "name": "Y", "type_name": "nos.fb.vec2i", "show_as": "INPUT_PIN", "can_show_as": "INPUT_PIN_OR_PROPERTY"  },
-                            { "name": "Z", "type_name": "nos.fb.vec2i", "show_as": "OUTPUT_PIN", "can_show_as": "OUTPUT_PIN_OR_PROPERTY" }
-                        ]
-                    },
-                    
-
-                    {
-                        "class_name": "Mul_vec2i",
-                        "contents_type": "Job",
-                        
-                        "pins": [ 
-                            { "name": "X", "type_name": "nos.fb.vec2i", "show_as": "INPUT_PIN", "can_show_as": "INPUT_PIN_OR_PROPERTY"  },
-                            { "name": "Y", "type_name": "nos.fb.vec2i", "show_as": "INPUT_PIN", "can_show_as": "INPUT_PIN_OR_PROPERTY"  },
-                            { "name": "Z", "type_name": "nos.fb.vec2i", "show_as": "OUTPUT_PIN", "can_show_as": "OUTPUT_PIN_OR_PROPERTY" }
-                        ]
-                    },
-                    
-
-                    {
-                        "class_name": "Div_vec2i",
-                        "contents_type": "Job",
-                        
-                        "pins": [ 
-                            { "name": "X", "type_name": "nos.fb.vec2i", "show_as": "INPUT_PIN", "can_show_as": "INPUT_PIN_OR_PROPERTY"  },
-                            { "name": "Y", "type_name": "nos.fb.vec2i", "show_as": "INPUT_PIN", "can_show_as": "INPUT_PIN_OR_PROPERTY"  },
-                            { "name": "Z", "type_name": "nos.fb.vec2i", "show_as": "OUTPUT_PIN", "can_show_as": "OUTPUT_PIN_OR_PROPERTY" }
-                        ]
-                    },
-                    
-
-                    {
-                        "class_name": "Add_vec3i",
-                        "contents_type": "Job",
-                        
-                        "pins": [ 
-                            { "name": "X", "type_name": "nos.fb.vec3i", "show_as": "INPUT_PIN", "can_show_as": "INPUT_PIN_OR_PROPERTY"  },
-                            { "name": "Y", "type_name": "nos.fb.vec3i", "show_as": "INPUT_PIN", "can_show_as": "INPUT_PIN_OR_PROPERTY"  },
-                            { "name": "Z", "type_name": "nos.fb.vec3i", "show_as": "OUTPUT_PIN", "can_show_as": "OUTPUT_PIN_OR_PROPERTY" }
-                        ]
-                    },
-                    
-
-                    {
-                        "class_name": "Sub_vec3i",
-                        "contents_type": "Job",
-                        
-                        "pins": [ 
-                            { "name": "X", "type_name": "nos.fb.vec3i", "show_as": "INPUT_PIN", "can_show_as": "INPUT_PIN_OR_PROPERTY"  },
-                            { "name": "Y", "type_name": "nos.fb.vec3i", "show_as": "INPUT_PIN", "can_show_as": "INPUT_PIN_OR_PROPERTY"  },
-                            { "name": "Z", "type_name": "nos.fb.vec3i", "show_as": "OUTPUT_PIN", "can_show_as": "OUTPUT_PIN_OR_PROPERTY" }
-                        ]
-                    },
-                    
-
-                    {
-                        "class_name": "Mul_vec3i",
-                        "contents_type": "Job",
-                        
-                        "pins": [ 
-                            { "name": "X", "type_name": "nos.fb.vec3i", "show_as": "INPUT_PIN", "can_show_as": "INPUT_PIN_OR_PROPERTY"  },
-                            { "name": "Y", "type_name": "nos.fb.vec3i", "show_as": "INPUT_PIN", "can_show_as": "INPUT_PIN_OR_PROPERTY"  },
-                            { "name": "Z", "type_name": "nos.fb.vec3i", "show_as": "OUTPUT_PIN", "can_show_as": "OUTPUT_PIN_OR_PROPERTY" }
-                        ]
-                    },
-                    
-
-                    {
-                        "class_name": "Div_vec3i",
-                        "contents_type": "Job",
-                        
-                        "pins": [ 
-                            { "name": "X", "type_name": "nos.fb.vec3i", "show_as": "INPUT_PIN", "can_show_as": "INPUT_PIN_OR_PROPERTY"  },
-                            { "name": "Y", "type_name": "nos.fb.vec3i", "show_as": "INPUT_PIN", "can_show_as": "INPUT_PIN_OR_PROPERTY"  },
-                            { "name": "Z", "type_name": "nos.fb.vec3i", "show_as": "OUTPUT_PIN", "can_show_as": "OUTPUT_PIN_OR_PROPERTY" }
-                        ]
-                    },
-                    
-
-                    {
-                        "class_name": "Add_vec4i",
-                        "contents_type": "Job",
-                        
-                        "pins": [ 
-                            { "name": "X", "type_name": "nos.fb.vec4i", "show_as": "INPUT_PIN", "can_show_as": "INPUT_PIN_OR_PROPERTY"  },
-                            { "name": "Y", "type_name": "nos.fb.vec4i", "show_as": "INPUT_PIN", "can_show_as": "INPUT_PIN_OR_PROPERTY"  },
-                            { "name": "Z", "type_name": "nos.fb.vec4i", "show_as": "OUTPUT_PIN", "can_show_as": "OUTPUT_PIN_OR_PROPERTY" }
-                        ]
-                    },
-                    
-
-                    {
-                        "class_name": "Sub_vec4i",
-                        "contents_type": "Job",
-                        
-                        "pins": [ 
-                            { "name": "X", "type_name": "nos.fb.vec4i", "show_as": "INPUT_PIN", "can_show_as": "INPUT_PIN_OR_PROPERTY"  },
-                            { "name": "Y", "type_name": "nos.fb.vec4i", "show_as": "INPUT_PIN", "can_show_as": "INPUT_PIN_OR_PROPERTY"  },
-                            { "name": "Z", "type_name": "nos.fb.vec4i", "show_as": "OUTPUT_PIN", "can_show_as": "OUTPUT_PIN_OR_PROPERTY" }
-                        ]
-                    },
-                    
-
-                    {
-                        "class_name": "Mul_vec4i",
-                        "contents_type": "Job",
-                        
-                        "pins": [ 
-                            { "name": "X", "type_name": "nos.fb.vec4i", "show_as": "INPUT_PIN", "can_show_as": "INPUT_PIN_OR_PROPERTY"  },
-                            { "name": "Y", "type_name": "nos.fb.vec4i", "show_as": "INPUT_PIN", "can_show_as": "INPUT_PIN_OR_PROPERTY"  },
-                            { "name": "Z", "type_name": "nos.fb.vec4i", "show_as": "OUTPUT_PIN", "can_show_as": "OUTPUT_PIN_OR_PROPERTY" }
-                        ]
-                    },
-                    
-
-                    {
-                        "class_name": "Div_vec4i",
-                        "contents_type": "Job",
-                        
-                        "pins": [ 
-                            { "name": "X", "type_name": "nos.fb.vec4i", "show_as": "INPUT_PIN", "can_show_as": "INPUT_PIN_OR_PROPERTY"  },
-                            { "name": "Y", "type_name": "nos.fb.vec4i", "show_as": "INPUT_PIN", "can_show_as": "INPUT_PIN_OR_PROPERTY"  },
-                            { "name": "Z", "type_name": "nos.fb.vec4i", "show_as": "OUTPUT_PIN", "can_show_as": "OUTPUT_PIN_OR_PROPERTY" }
-                        ]
-                    }
-                    
-
-
-    ]
+				]
+			}
+		},
+		{
+			"class_name": "Add_Transform",
+			"menu_info": {
+				"category": "Math|Addition",
+				"display_name": "Add Transform"
+			},
+			"node": {
+				"class_name": "Add_Transform",
+				"contents_type": "Job",
+				"pins": [
+					{
+						"name": "X",
+						"type_name": "nos.fb.Transform",
+						"show_as": "INPUT_PIN",
+						"can_show_as": "INPUT_PIN_OR_PROPERTY"
+					},
+					{
+						"name": "Y",
+						"type_name": "nos.fb.Transform",
+						"show_as": "INPUT_PIN",
+						"can_show_as": "INPUT_PIN_OR_PROPERTY"
+					},
+					{
+						"name": "Z",
+						"type_name": "nos.fb.Transform",
+						"show_as": "OUTPUT_PIN",
+						"can_show_as": "OUTPUT_PIN_OR_PROPERTY"
+					}
+				]
+			}
+		}
+	]
 }

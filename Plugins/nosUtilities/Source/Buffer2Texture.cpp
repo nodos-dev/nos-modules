@@ -10,7 +10,7 @@ namespace nos::utilities
 
 struct Buffer2TextureNodeContext : NodeContext
 {
-	Buffer2TextureNodeContext(const nosFbNode* node) : NodeContext(node)
+	Buffer2TextureNodeContext(nosFbNodePtr node) : NodeContext(node)
 	{
 	}
 	nosResult ExecuteNode(nosNodeExecuteParams* params) override
@@ -44,8 +44,7 @@ struct Buffer2TextureNodeContext : NodeContext
 		if (!in.Memory.Handle || !out.Memory.Handle)
 			return NOS_RESULT_SUCCESS;
 
-		nosCmd cmd;
-		nosVulkan->Begin("Buffer2Texture Copy", &cmd);
+		nosCmd cmd = vkss::BeginCmd(NOS_NAME("Buffer2Texture Copy"), NodeId);
 		nosVulkan->Copy(cmd, &in, &out, 0);
 		nosGPUEvent event;
 		nosCmdEndParams endParams{.ForceSubmit = true, .OutGPUEventHandle = &event};

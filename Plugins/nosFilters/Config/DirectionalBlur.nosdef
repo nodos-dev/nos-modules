@@ -1,69 +1,76 @@
 {
-  "nodes": [
-    {
-      "class_name": "DirectionalBlur",
-      "name": "Directional Blur",
-      "description": "Blurs the input texture in a specified direction with a 1D Gaussian kernel.",
-      "contents_type": "Job",
-      "contents": {
-        "type": "nos.sys.vulkan.GPUNode",
-        "options": {
-          "shader": "Shaders/DirectionalBlur.frag"
-        }
-      },
-      "pins": [
-        {
-          "name": "Input",
-          "type_name": "nos.sys.vulkan.Texture",
-          "show_as": "INPUT_PIN",
-          "can_show_as": "INPUT_PIN_OR_PROPERTY",
-          "data": {
-            "filtering": "LINEAR"
-          }
-        },
-        {
-          "name": "Softness",
-          "type_name": "float",
-          "show_as": "PROPERTY",
-          "can_show_as": "INPUT_PIN_OR_PROPERTY",
-          "data": 1.0,
-          "min": 0.0,
-          "max": 1.0
-        },
-        {
-          "name": "Size",
-          "type_name": "float",
-          "show_as": "PROPERTY",
-          "can_show_as": "INPUT_PIN_OR_PROPERTY",
-          "data": 6,
-          "min": 0.0,
-          "max": 100.0
-        },
-        {
-          "name": "Direction",
-          "type_name": "nos.fb.vec2",
-          "show_as": "PROPERTY",
-          "can_show_as": "INPUT_PIN_OR_PROPERTY",
-          "data": {
-            "x": 1.0,
-            "y": 0.0
-          },
-          "min": {
-            "x": 0.0,
-            "y": 0.0
-          },
-          "max": {
-            "x": 1.0,
-            "y": 1.0
-          }
-        },
-        {
-          "name": "Output",
-          "type_name": "nos.sys.vulkan.Texture",
-          "show_as": "OUTPUT_PIN",
-          "can_show_as": "OUTPUT_PIN_OR_PROPERTY"
-        }
-      ]
-    }
-  ]
+	"nodes": [
+		{
+			"class_name": "DirectionalBlur",
+			"menu_info": {
+				"category": "Filters",
+				"display_name": "Directional Blur"
+			},
+			"node": {
+				"class_name": "DirectionalBlur",
+				"name": "Directional Blur",
+				"description": "Blurs the input texture in a specified direction with a 1D Gaussian kernel.",
+				"contents_type": "Job",
+				"contents": {
+					"type": "nos.sys.vulkan.GPUNode",
+					"options": {
+						"shader": "Shaders/DirectionalBlur.frag"
+					}
+				},
+				"pins": [
+					{
+						"name": "Input",
+						"type_name": "nos.sys.vulkan.Texture",
+						"show_as": "INPUT_PIN",
+						"can_show_as": "INPUT_PIN_OR_PROPERTY",
+						"data": {
+							"filtering": "LINEAR"
+						}
+					},
+					{
+						"name": "Softness",
+						"type_name": "float",
+						"show_as": "PROPERTY",
+						"can_show_as": "INPUT_PIN_OR_PROPERTY",
+						"data": 1.0,
+						"min": 0.0,
+						"max": 1.0
+					},
+					{
+						"name": "Size",
+						"type_name": "float",
+						"show_as": "PROPERTY",
+						"can_show_as": "INPUT_PIN_OR_PROPERTY",
+						"data": 6,
+						"min": 0.0,
+						"max": 100.0
+					},
+					{
+						"name": "Direction",
+						"type_name": "nos.fb.vec2",
+						"show_as": "PROPERTY",
+						"can_show_as": "INPUT_PIN_OR_PROPERTY",
+						"data": {
+							"x": 1.0,
+							"y": 0.0
+						},
+						"min": {
+							"x": 0.0,
+							"y": 0.0
+						},
+						"max": {
+							"x": 1.0,
+							"y": 1.0
+						}
+					},
+					{
+						"name": "Output",
+						"type_name": "nos.sys.vulkan.Texture",
+						"show_as": "OUTPUT_PIN",
+						"can_show_as": "OUTPUT_PIN_OR_PROPERTY"
+					}
+				]
+			}
+		}
+	]
 }

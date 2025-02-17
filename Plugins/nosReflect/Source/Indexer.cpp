@@ -11,13 +11,13 @@ struct Indexer : NodeContext
     uint32_t Index = 0;
 	uint32_t ArraySize = 0;
     
-    Indexer(const nosFbNode* inNode) : NodeContext(inNode)
+    Indexer(nosFbNodePtr inNode) : NodeContext(inNode)
     {
         for (auto pin : *inNode->pins())
         {
 			if(pin->name()->string_view() == NSN_Output)
             {
-                if (pin->type_name()->string_view() != NSN_VOID)
+                if (pin->type_name()->string_view() != NSN_TypeNameGeneric)
                 {
 					Type = nos::TypeInfo(nos::Name(pin->type_name()->string_view()));
                 }
@@ -120,12 +120,11 @@ struct Indexer : NodeContext
 	}
 
 	bool UpdateInputVectorSize() {
-		nosBuffer value;
 		std::vector<uint8_t> data;
 
-		if (NOS_RESULT_SUCCESS == nosEngine.GetDefaultValueOfType(Type->TypeName, &value))
+		if (auto buf = GetDefaultValueOfType(Type->TypeName))
 		{
-			data = std::vector<uint8_t>{ (uint8_t*)value.Data, (uint8_t*)value.Data + value.Size };
+			data = std::vector<uint8_t>{(uint8_t*)buf->Data(), (uint8_t*)buf->Data() + buf->Size()};
 		}
 
 		std::vector<const void*> datas = { data.data() };
@@ -187,7 +186,7 @@ struct Indexer : NodeContext
 		return NOS_RESULT_SUCCESS;
     }
 
-	void OnPinValueChanged(nos::Name pinName, nosUUID pinId, nosBuffer value) override
+	void OnPinValueChanged(nos::Name pinName, uuid const& pinId, nosBuffer value) override
     {
         if (pinName == NSN_Index)
         {

@@ -11,6 +11,7 @@
 #include <nosUtil/Thread.h>
 #include <AppService_generated.h>
 #include "Nodos/PluginHelpers.hpp"
+#include "Track_generated.h"
 #include <glm/glm.hpp>
 #include <asio.hpp>
 #include <atomic>
@@ -64,7 +65,7 @@ public:
 	std::atomic_bool ShouldRestart = false;
 	std::atomic_bool NeverStarve = false;
 	std::atomic_bool UDPConnected = false;
-	std::queue<std::pair<fb::TTrack, uint64_t>> DataQueue;
+	std::queue<std::pair<track::TTrack, uint64_t>> DataQueue;
 	std::atomic_uint LastServedFrameNumber = 0;
 	bool AutoSpare = true;
 	float AutoSpareMaxJitter = 0.4999f;
@@ -80,8 +81,8 @@ public:
 		glm::bvec3 NegateRot = {};
 		bool EnableEffectiveFOV = true;
 		float TransformScale = 1.f;
-		nos::fb::CoordinateSystem CoordinateSystem = fb::CoordinateSystem::XYZ;
-		nos::fb::RotationSystem   RotationSystem = fb::RotationSystem::PTR;
+		nos::track::CoordinateSystem CoordinateSystem = track::CoordinateSystem::XYZ;
+		nos::track::RotationSystem   RotationSystem = track::RotationSystem::PTR;
 		glm::vec3 DevicePosition = {};
 		glm::vec3 DeviceRotation = {};
 		glm::vec3 CameraPosition = {};
@@ -93,16 +94,16 @@ public:
 public:
 	TrackNodeContext(nos::fb::Node const* node);
 	virtual ~TrackNodeContext() {}
-	virtual bool Parse(std::vector<uint8_t> const& data, fb::TTrack& out) = 0;
+	virtual bool Parse(std::vector<uint8_t> const& data, track::TTrack& out) = 0;
 	void OnPathStart() override;	
 	void OnPathCommand(const nosPathCommand* command) override;
 	void PerformAutoSpare(uint64_t firstVBLTime);
 	nosResult ExecuteNode(nosNodeExecuteParams* params) override;
 	void SignalRestart();
-	void OnPinValueChanged(nos::Name pinName, nosUUID pinId, nosBuffer val)  override;
+	void OnPinValueChanged(nos::Name pinName, uuid const& pinId, nosBuffer val)  override;
 	void Restart();
-	fb::TTrack GetDefaultOrFirstTrack();
-	virtual nos::Buffer UpdateTrackOut(fb::TTrack& outTrack);
+	track::TTrack GetDefaultOrFirstTrack();
+	virtual nos::Buffer UpdateTrackOut(track::TTrack& outTrack);
 	virtual void Run() override;
 	template<class T>
 	static bool LoadField(nos::fb::Pin const* pin, nos::Name field, auto& dst)

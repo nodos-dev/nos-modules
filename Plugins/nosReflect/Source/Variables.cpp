@@ -20,7 +20,7 @@ enum class VariableStatusItem
 
 struct VariableNodeBase : NodeContext
 {
-	VariableNodeBase(const nosFbNode* node) : NodeContext(node)
+	VariableNodeBase(nosFbNodePtr node) : NodeContext(node)
 	{
 		TypeName = GetPin(NSN_Value)->TypeName;
 	}
@@ -57,7 +57,7 @@ struct VariableNodeBase : NodeContext
 		if (pinUpdate->UpdatedField != NOS_PIN_FIELD_TYPE_NAME)
 			return;
 		ClearStatus(VariableStatusItem::TypeName);
-		if (TypeName != NSN_VOID && TypeName == pinUpdate->TypeName)
+		if (TypeName != NSN_TypeNameGeneric && TypeName == pinUpdate->TypeName)
 			return;
 		TypeName = pinUpdate->TypeName;
 		SetPinOrphanState(NSN_Value, fb::PinOrphanStateType::ACTIVE);
@@ -65,7 +65,7 @@ struct VariableNodeBase : NodeContext
 
 	bool HasType() const
 	{
-		return TypeName != NSN_VOID;
+		return TypeName != NSN_TypeNameGeneric;
 	}
 
 	bool HasName() const
@@ -75,13 +75,13 @@ struct VariableNodeBase : NodeContext
 
 	std::unordered_map<VariableStatusItem,  fb::TNodeStatusMessage> StatusMessages;
 	nos::Name Name;
-	nos::Name TypeName = NSN_VOID;
+	nos::Name TypeName = NSN_TypeNameGeneric;
 	int32_t CallbackId = -1;
 };
 	
 struct SetVariableNode : VariableNodeBase
 {
-	SetVariableNode(const nosFbNode* node) : VariableNodeBase(node)
+	SetVariableNode(nosFbNodePtr node) : VariableNodeBase(node)
 	{
 		CheckType();
 		// For editor to show changes without a scheduled node, we use pin value change callbacks.
@@ -154,9 +154,8 @@ struct SetVariableNode : VariableNodeBase
 
 	void SetDefaultValue()
 	{
-		nosBuffer def{};
-		nosEngine.GetDefaultValueOfType(TypeName, &def);
-		SetPinValue(NOS_NAME("Value"), def);
+		if (auto def = GetDefaultValueOfType(TypeName))
+			SetPinValue(NOS_NAME("Value"), *def);
 	}
 
 	void OnVariableUpdated(nos::Name name, nos::Name typeName, const nosBuffer* value)
@@ -171,7 +170,7 @@ struct SetVariableNode : VariableNodeBase
 		node->OnVariableUpdated(name, typeName, value);
 	}
 
-	void OnNodeMenuRequested(const nosContextMenuRequest* request) override
+	void OnNodeMenuRequested(nosContextMenuRequestPtr request) override
 	{
 		if (HasType()) 
 			return;
@@ -193,7 +192,7 @@ struct SetVariableNode : VariableNodeBase
 		HandleEvent(CreateAppEvent(fbb, app::CreateAppContextMenuUpdateDirect(fbb, &NodeId, request->pos(), request->instigator(), &items)));
 	}
 
-	void OnMenuCommand(nosUUID itemID, uint32_t cmd) override
+	void OnMenuCommand(uuid const& itemID, uint32_t cmd) override
 	{
 		if (HasType()) 
 			return;
@@ -231,7 +230,7 @@ struct SetVariableNode : VariableNodeBase
 
 struct GetVariableNode : VariableNodeBase
 {
-	GetVariableNode(const nosFbNode* node) : VariableNodeBase(node)
+	GetVariableNode(nosFbNodePtr node) : VariableNodeBase(node)
 	{
 		nos::Buffer initialValue;
 		for (auto* pin : *node->pins())
@@ -266,7 +265,7 @@ struct GetVariableNode : VariableNodeBase
 				if (res != NOS_RESULT_SUCCESS)
 				{
 					auto valuePin = GetPin(NOS_NAME("Value"));
-					if (res == NOS_RESULT_NOT_FOUND && valuePin && valuePin->TypeName != NSN_VOID)
+					if (res == NOS_RESULT_NOT_FOUND && valuePin && valuePin->TypeName != NSN_TypeNameGeneric)
 					{
 						RegisterVariable(valuePin, initialValue);
 					}

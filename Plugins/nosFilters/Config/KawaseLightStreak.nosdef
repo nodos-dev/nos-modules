@@ -1,59 +1,66 @@
 {
-    "nodes": [
-        {
-            "class_name": "KawaseLightStreak",
-            "contents_type": "Job",
-            "contents": {
-                "type": "nos.sys.vulkan.GPUNode",
-                "options": {
-                    "shader": "Shaders/KawaseLightStreak.frag"
-                }
-            },
-            "pins": [
-                {
-                    "name": "Input",
-                    "type_name": "nos.sys.vulkan.Texture",
-                    "show_as": "INPUT_PIN",
-                    "can_show_as": "INPUT_PIN_OR_PROPERTY"
-                },
-                {
-                    "name": "Streak_Direction",
-                    "type_name": "nos.fb.vec2",
-                    "show_as": "PROPERTY",
-                    "can_show_as": "INPUT_PIN_OR_PROPERTY",
-                    "data": {
-                        "x": 0.0,
-                        "y": 0.0
-                    }
-                },
-                {
-                    "name": "Samples",
-                    "type_name": "uint",
-                    "show_as": "PROPERTY",
-                    "can_show_as": "INPUT_PIN_OR_PROPERTY",
-                    "data": 3
-                },
-                {
-                    "name": "Iteration",
-                    "type_name": "uint",
-                    "show_as": "PROPERTY",
-                    "can_show_as": "INPUT_PIN_OR_PROPERTY",
-                    "data": 3
-                },
-                {
-                    "name": "Attenuation",
-                    "type_name": "float",
-                    "show_as": "PROPERTY",
-                    "can_show_as": "INPUT_PIN_OR_PROPERTY",
-                    "data": 0.5
-                },
-                {
-                    "name": "Output",
-                    "type_name": "nos.sys.vulkan.Texture",
-                    "show_as": "OUTPUT_PIN",
-                    "can_show_as": "OUTPUT_PIN_OR_PROPERTY"
-                }
-            ]
-        }
-    ]
+	"nodes": [
+		{
+			"class_name": "KawaseLightStreak",
+			"menu_info": {
+				"category": "Filters",
+				"display_name": "Kawase Light Streak"
+			},
+			"node": {
+				"class_name": "KawaseLightStreak",
+				"contents_type": "Job",
+				"contents": {
+					"type": "nos.sys.vulkan.GPUNode",
+					"options": {
+						"shader": "Shaders/KawaseLightStreak.frag"
+					}
+				},
+				"pins": [
+					{
+						"name": "Input",
+						"type_name": "nos.sys.vulkan.Texture",
+						"show_as": "INPUT_PIN",
+						"can_show_as": "INPUT_PIN_OR_PROPERTY"
+					},
+					{
+						"name": "Streak_Direction",
+						"type_name": "nos.fb.vec2",
+						"show_as": "PROPERTY",
+						"can_show_as": "INPUT_PIN_OR_PROPERTY",
+						"data": {
+							"x": 0.0,
+							"y": 0.0
+						}
+					},
+					{
+						"name": "Samples",
+						"type_name": "uint",
+						"show_as": "PROPERTY",
+						"can_show_as": "INPUT_PIN_OR_PROPERTY",
+						"data": 3
+					},
+					{
+						"name": "Iteration",
+						"type_name": "uint",
+						"show_as": "PROPERTY",
+						"can_show_as": "INPUT_PIN_OR_PROPERTY",
+						"data": 3
+					},
+					{
+						"name": "Attenuation",
+						"type_name": "float",
+						"show_as": "PROPERTY",
+						"can_show_as": "INPUT_PIN_OR_PROPERTY",
+						"data": 0.5
+					},
+					{
+						"name": "Output",
+						"type_name": "nos.sys.vulkan.Texture",
+						"show_as": "OUTPUT_PIN",
+						"can_show_as": "OUTPUT_PIN_OR_PROPERTY"
+					}
+				]
+			}
+		}
+	]
 }

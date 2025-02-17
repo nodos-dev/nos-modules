@@ -2,14 +2,14 @@
     "info": {
         "id": {
             "name": "nos.pyutils",
-            "version": "0.2.1"
+            "version": "0.3.0"
         },
         "display_name": "nos.pyutils",
         "description": "",
         "dependencies": [
             {
                 "name": "nos.py",
-                "version": "0.2"
+                "version": "0.4"
             }
         ]
     },
@@ -18,12 +18,5 @@
         "Config/Nodes.nosdef"
     ],
     "defaults": [],
-    "custom_types": [],
-    "associated_nodes": [
-        {
-            "category": "Python",
-            "class_name": "Eval",
-            "display_name": "Eval"
-        }
-    ]
+    "custom_types": []
 }

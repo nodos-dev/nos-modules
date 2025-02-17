@@ -1,4 +1,4 @@
-set(MODULE_DEPENDENCIES "nos.py-0.3")
+set(MODULE_DEPENDENCIES "nos.py-0.4")
 list(APPEND MODULE_DEPENDENCIES_TARGETS ${NOS_PLUGIN_SDK_TARGET})
 set(dep_idx 0)
 foreach(module_name_version ${MODULE_DEPENDENCIES})

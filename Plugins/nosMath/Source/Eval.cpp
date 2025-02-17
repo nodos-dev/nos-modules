@@ -29,12 +29,12 @@ struct EvalNodeContext : NodeContext
 		}
 	};
 
-	std::vector<nosUUID> Inputs;
+	std::vector<uuid> Inputs;
 	
-	EvalNodeContext(nosFbNode const* node) : NodeContext(node)
+	EvalNodeContext(nosFbNodePtr node) : NodeContext(node)
 	{
 		auto pinCount = node->pins()->size();
-		std::list<nosUUID> pinsToUnorphan;
+		std::list<uuid> pinsToUnorphan;
 		for (auto i = 2; i < pinCount; i++)
 		{
 			auto pin = node->pins()->Get(i);
@@ -55,7 +55,7 @@ struct EvalNodeContext : NodeContext
 			SetPinOrphanState(pinId, fb::PinOrphanStateType::ACTIVE);
 	}
 
-	void OnPartialNodeUpdated(nosNodeUpdate const* update) override
+	void OnNodeUpdated(nosNodeUpdate const* update) override
 	{
 		if (update->Type == NOS_NODE_UPDATE_PIN_DELETED)
 		{
@@ -76,7 +76,7 @@ struct EvalNodeContext : NodeContext
 		}
 	}
 
-	void OnPinValueChanged(nos::Name pinName, nosUUID pinId, nosBuffer value) override
+	void OnPinValueChanged(nos::Name pinName, uuid const& pinId, nosBuffer value) override
 	{
 		if (pinName == NOS_NAME("Show_Expression"))
 		{
@@ -131,7 +131,7 @@ struct EvalNodeContext : NodeContext
 		Compile();
 	}
 	
-	void OnNodeMenuRequested(const nosContextMenuRequest* request) override
+	void OnNodeMenuRequested(nosContextMenuRequestPtr request) override
 	{
 		uint32_t cmd = MenuCommand(ADD_INPUT, 0);
 		
@@ -145,7 +145,7 @@ struct EvalNodeContext : NodeContext
 		                           )));
 	}
 
-	void OnPinMenuRequested(nos::Name pinName, const nosContextMenuRequest* request) override
+	void OnPinMenuRequested(nos::Name pinName, nosContextMenuRequestPtr request) override
 	{
 		flatbuffers::FlatBufferBuilder fbb;
 		if (pinName == NOS_NAME("Result") || pinName == NOS_NAME("Show_Expression") || pinName == NOS_NAME("Expression"))
@@ -161,7 +161,7 @@ struct EvalNodeContext : NodeContext
 		                           )));
 	}
 	
-	void OnMenuCommand(nosUUID itemID, uint32_t cmd) override
+	void OnMenuCommand(uuid const& itemID, uint32_t cmd) override
 	{
 		auto command = MenuCommand(cmd);
 
@@ -170,7 +170,7 @@ struct EvalNodeContext : NodeContext
 		case ADD_INPUT:
 		{
 			flatbuffers::FlatBufferBuilder fbb;
-			nosUUID pinId = nosEngine.GenerateID();
+			uuid pinId = nosEngine.GenerateID();
 			constexpr std::string_view VARIABLE_NAMES = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 			if (Variables.size() >= VARIABLE_NAMES.size())
 			{
@@ -270,7 +270,7 @@ struct EvalNodeContext : NodeContext
 
 	te_parser Parser;
 	std::string Expression;
-	std::unordered_map<nosUUID, double> Variables;
+	std::unordered_map<uuid, double> Variables;
 
 	struct {
 		std::string Message;

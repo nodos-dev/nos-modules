@@ -2,48 +2,56 @@
 	"nodes": [
 		{
 			"class_name": "TriggerOnAnyInput",
-			"display_name": "Trigger On Any Input",
-			"contents_type": "Job",
-			"functions": [
-				{
-					"class_name": "Trigger",
-					"display_name": "Trigger",
-					"contents_type": "Job",
-					"pins": [
-						{
-							"name": "InExe",
-							"type_name": "nos.exe",
-							"show_as": "INPUT_PIN",
-							"can_show_as": "INPUT_PIN_OR_PROPERTY"
-						}
-					]
-				},
-				{
-					"class_name": "Trigger",
-					"display_name": "Trigger",
-					"contents_type": "Job",
-					"pins": [
-						{
-							"name": "InExe",
-							"type_name": "nos.exe",
-							"show_as": "INPUT_PIN",
-							"can_show_as": "INPUT_PIN_OR_PROPERTY"
-						}
-					]
-				},
-				{
-					"class_name": "OnTrigger",
-					"contents_type": "Job",
-					"pins": [
-						{
-							"name": "Continue",
-							"type_name": "nos.exe",
-							"show_as": "OUTPUT_PIN",
-							"can_show_as": "OUTPUT_PIN_OR_PROPERTY"
-						}
-					]
-				}
-			]
+			"menu_info": {
+				"category": "Execution",
+				"display_name": "Trigger On Any Input",
+				"aliases": [ "either", "or" ]
+			},
+			"node": {
+				"class_name": "TriggerOnAnyInput",
+				"display_name": "Trigger On Any Input",
+				"contents_type": "Job",
+				"functions": [
+					{
+						"class_name": "Trigger",
+						"display_name": "Trigger",
+						"contents_type": "Job",
+						"pins": [
+							{
+								"name": "InExe",
+								"type_name": "nos.exe",
+								"show_as": "INPUT_PIN",
+								"can_show_as": "INPUT_PIN_OR_PROPERTY"
+							}
+						]
+					},
+					{
+						"class_name": "Trigger",
+						"display_name": "Trigger",
+						"contents_type": "Job",
+						"pins": [
+							{
+								"name": "InExe",
+								"type_name": "nos.exe",
+								"show_as": "INPUT_PIN",
+								"can_show_as": "INPUT_PIN_OR_PROPERTY"
+							}
+						]
+					},
+					{
+						"class_name": "OnTrigger",
+						"contents_type": "Job",
+						"pins": [
+							{
+								"name": "Continue",
+								"type_name": "nos.exe",
+								"show_as": "OUTPUT_PIN",
+								"can_show_as": "OUTPUT_PIN_OR_PROPERTY"
+							}
+						]
+					}
+				]
+			}
 		}
 	]
 }

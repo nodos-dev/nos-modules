@@ -1,62 +1,70 @@
 {
-    "nodes": [
-        {
-            "class_name": "Gradient",
-            "contents_type": "Job",
-            "contents": {
-                "type": "nos.sys.vulkan.GPUNode",
-                "options": {
-                    "shader": "Shaders/Gradient.frag"
-                }
-            },
-            "description": "Generates a gradient image",
-            "pins": [
-                {
-                    "name": "OddColor",
-                    "type_name": "nos.fb.vec4",
-                    "show_as": "INPUT_PIN",
-                    "can_show_as": "INPUT_PIN_OR_PROPERTY",
-                    "visualizer": {
-                        "type": "COLOR_PICKER"
-                    },
-                    "data": {
-                        "x": 1,
-                        "y": 1,
-                        "z": 1,
-                        "w": 1
-                    },
-                    "description": "Start color of the selected gradient type"
-                },
-                {
-                    "name": "EvenColor",
-                    "type_name": "nos.fb.vec4",
-                    "show_as": "INPUT_PIN",
-                    "can_show_as": "INPUT_PIN_OR_PROPERTY",
-                    "visualizer": {
-                        "type": "COLOR_PICKER"
-                    },
-                    "data": {
-                        "x": 0,
-                        "y": 0,
-                        "z": 0,
-                        "w": 1
-                    },
-                    "description": "End color of the selected gradient type"
-                },
-                {
-                    "name": "Kind",
-                    "type_name": "nos.utilities.GradientKind",
-                    "show_as": "PROPERTY",
-                    "can_show_as": "INPUT_PIN_OR_PROPERTY",
-                    "description": "Sets the output images gradient type"
-                },
-                {
-                    "name": "Output",
-                    "type_name": "nos.sys.vulkan.Texture",
-                    "show_as": "OUTPUT_PIN",
-                    "can_show_as": "OUTPUT_PIN_OR_PROPERTY"
-                }
-            ]
-        }
-    ]
+	"nodes": [
+		{
+			"class_name": "Gradient",
+			"menu_info": {
+				"category": "Utilities",
+				"display_name": "Gradient",
+				"name_aliases": [ "linear interpolation", "lerp" ]
+			},
+			"node": {
+				"class_name": "Gradient",
+				"contents_type": "Job",
+				"contents": {
+					"type": "nos.sys.vulkan.GPUNode",
+					"options": {
+						"shader": "Shaders/Gradient.frag"
+					}
+				},
+				"description": "Generates a gradient image",
+				"pins": [
+					{
+						"name": "OddColor",
+						"type_name": "nos.fb.vec4",
+						"show_as": "INPUT_PIN",
+						"can_show_as": "INPUT_PIN_OR_PROPERTY",
+						"visualizer": {
+							"type": "COLOR_PICKER"
+						},
+						"data": {
+							"x": 1,
+							"y": 1,
+							"z": 1,
+							"w": 1
+						},
+						"description": "Start color of the selected gradient type"
+					},
+					{
+						"name": "EvenColor",
+						"type_name": "nos.fb.vec4",
+						"show_as": "INPUT_PIN",
+						"can_show_as": "INPUT_PIN_OR_PROPERTY",
+						"visualizer": {
+							"type": "COLOR_PICKER"
+						},
+						"data": {
+							"x": 0,
+							"y": 0,
+							"z": 0,
+							"w": 1
+						},
+						"description": "End color of the selected gradient type"
+					},
+					{
+						"name": "Kind",
+						"type_name": "nos.utilities.GradientKind",
+						"show_as": "PROPERTY",
+						"can_show_as": "INPUT_PIN_OR_PROPERTY",
+						"description": "Sets the output images gradient type"
+					},
+					{
+						"name": "Output",
+						"type_name": "nos.sys.vulkan.Texture",
+						"show_as": "OUTPUT_PIN",
+						"can_show_as": "OUTPUT_PIN_OR_PROPERTY"
+					}
+				]
+			}
+		}
+	]
 }

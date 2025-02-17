@@ -9,22 +9,25 @@ struct BreakNode : NodeContext
 	std::optional<nos::TypeInfo> Type = std::nullopt;
 	size_t ArraySize = 0;
 
-	BreakNode(const nosFbNode* node) : NodeContext(node)
+	BreakNode(nosFbNodePtr node) : NodeContext(node)
 	{
 		for (auto* pin : *node->pins())
 		{
 			if (pin->show_as() != fb::ShowAs::INPUT_PIN)
 				continue;
             auto typeName = nos::Name(pin->type_name()->string_view());
-			if (NSN_VOID == typeName)
+			if (NSN_TypeNameGeneric == typeName)
 				break;
-			Type = nos::TypeInfo(typeName);
+			auto ty = nos::TypeInfo(typeName);
+			if (!ty)
+				return;
+			Type = std::move(ty);
 			LoadPins(false);
             break;
         }
 	}
 
-	void OnPinValueChanged(nos::Name pinName, nosUUID pinId, nosBuffer value) override
+	void OnPinValueChanged(nos::Name pinName, uuid const& pinId, nosBuffer value) override
 	{ 
 		if (!Type || (*Type)->BaseType != NOS_BASE_TYPE_ARRAY || pinName != NSN_Input)
 			return;
@@ -94,7 +97,7 @@ struct BreakNode : NodeContext
 				}
 				else
 				{
-					nosUUID newPinId = nosEngine.GenerateID();
+					uuid newPinId = nosEngine.GenerateID();
 
 					std::vector<uint8_t> data =
 						std::vector((const uint8_t*)field.DefaultValue.Data,
@@ -159,13 +162,12 @@ struct BreakNode : NodeContext
     	{
     		for (size_t a = 0; a < ArraySize - i; a++)
     		{
-    			nosUUID newPinId = nosEngine.GenerateID();
+    			uuid newPinId = nosEngine.GenerateID();
     			std::vector<uint8_t> vec{};
-    			nosBuffer defVal{};
 				auto& type = *Type;
-    			if (nosEngine.GetDefaultValueOfType(type->ElementType->TypeName, &defVal) == NOS_RESULT_SUCCESS)
+    			if (auto buf = GetDefaultValueOfType(type->ElementType->TypeName))
     			{
-    				vec = std::vector((const uint8_t*)defVal.Data, (const uint8_t*)defVal.Data + defVal.Size);
+					vec = std::vector((const uint8_t*)buf->Data(), (const uint8_t*)buf->Data() + buf->Size());
     			}
 
     			std::vector<uint8_t> data = std::vector<uint8_t>(type->ByteSize);
@@ -189,10 +191,9 @@ struct BreakNode : NodeContext
 				fbb, CreatePartialNodeUpdateDirect(fbb, &NodeId, ClearFlags::NONE, &pinsToDelete, &pinsToCreate)));
     }
 
+	std::unordered_map<uuid, nos::Buffer> LastServedPinValues;
 
-	std::unordered_map<nosUUID, nos::Buffer> LastServedPinValues;
-
-	void SetPinValueCached(const nosUUID& pinId, nosBuffer value)
+	void SetPinValueCached(const uuid& pinId, nosBuffer value)
 	{
 		auto it = LastServedPinValues.find(pinId);
 		if (it != LastServedPinValues.end() && it->second == value)

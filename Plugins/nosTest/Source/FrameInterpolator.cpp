@@ -18,7 +18,7 @@ NOS_REGISTER_NAME(FrameInterpolator_BasicInterpolationPass)
 
 struct FrameInterpolatorNode : NodeContext
 {
-	FrameInterpolatorNode(nosFbNode const* node)
+	FrameInterpolatorNode(nosFbNodePtr node)
 		: NodeContext(node), DeltaNanosec(0)
 	{
 		Thread = std::thread([this]() { InterpolatorThread(); });
@@ -31,11 +31,6 @@ struct FrameInterpolatorNode : NodeContext
 	}
 
 	nosResult CopyFrom(nosCopyInfo* copyInfo) override
-	{
-		return NOS_RESULT_SUCCESS;
-	}
-
-	nosResult CopyTo(nosCopyInfo* copyInfo) override
 	{
 		return NOS_RESULT_SUCCESS;
 	}
@@ -55,8 +50,7 @@ struct FrameInterpolatorNode : NodeContext
 		switch (*method)
 		{
 		case FrameInterpolationMethod::REPEAT: {
-			nosCmd cmd;
-			nosVulkan->Begin("Frame Interpolator", &cmd);
+			nosCmd cmd = vkss::BeginCmd(NOS_NAME("Frame Interpolator"), NodeId);
 			nosVulkan->Copy(cmd, &inputTextureInfo, &outputTextureInfo, 0);
 			nosVulkan->End(cmd, NOS_FALSE);
 			break;
@@ -96,7 +90,7 @@ struct FrameInterpolatorNode : NodeContext
 	}
 
 	uint64_t DeltaNanosec = 0;
-	std::optional<nosUUID> InputPinId = std::nullopt;
+	std::optional<uuid> InputPinId = std::nullopt;
 	std::shared_mutex Mutex;
 	std::atomic_bool ShouldStop;
 	std::thread Thread;
@@ -119,11 +113,12 @@ nosResult RegisterFrameInterpolator(nosNodeFunctions* nodeFunctions)
 	{
 		auto& [stage, path] = data;
 		shaderInfos.push_back(nosShaderInfo{
-			.Key = name,
+			.ShaderName = name,
 			.Source = {
 				.Stage = stage,
 				.GLSLPath = path,
 			},
+			.AssociatedNodeClassName = NSN_ClassName_FrameInterpolator,
 		});
 	}
 	auto ret = nosVulkan->RegisterShaders(shaderInfos.size(), shaderInfos.data());

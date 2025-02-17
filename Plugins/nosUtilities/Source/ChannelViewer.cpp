@@ -53,11 +53,11 @@ nosResult RegisterChannelViewer(nosNodeFunctions* out)
 	fs::path root = nosEngine.Module->RootFolderPath;
 	auto chViewerPath = (root / "Shaders" / "ChannelViewer.frag").generic_string();
 
-	nosShaderInfo2 shader = {
-		.Key = NSN_Channel_Viewer_Shader, .Source = {.Stage = NOS_SHADER_STAGE_FRAG, .GLSLPath = chViewerPath.c_str()},
+	nosShaderInfo shader = {
+		.ShaderName = NSN_Channel_Viewer_Shader, .Source = {.Stage = NOS_SHADER_STAGE_FRAG, .GLSLPath = chViewerPath.c_str()},
 		.AssociatedNodeClassName = NSN_Nos_Utilities_ChannelViewer
 	};
-	auto ret = nosVulkan->RegisterShaders2(1, &shader);
+	auto ret = nosVulkan->RegisterShaders(1, &shader);
 	if (NOS_RESULT_SUCCESS != ret)
 		return ret;
 

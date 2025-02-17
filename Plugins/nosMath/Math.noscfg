@@ -2,7 +2,7 @@
   "info": {
     "id": {
       "name": "nos.math",
-      "version": "1.8.1"
+      "version": "1.9.0"
     },
     "description": "Nodes for math operations.",
     "display_name": "Math",
@@ -10,7 +10,7 @@
     "dependencies": [
       {
         "name": "nos.reflect",
-        "version": "1.4"
+        "version": "1.5"
       }
     ]
   },
@@ -30,96 +30,6 @@
     "Config/Licenses.json"
   ],
   "associated_nodes": [
-    {
-      "category": "Math",
-      "class_name": "PerspectiveView",
-      "display_name": "Perspective View"
-    },
-    {
-      "category": "Math",
-      "class_name": "Eval",
-      "display_name": "Eval"
-    },
-    {
-      "category": "Math",
-      "class_name": "Lerp",
-      "display_name": "Lerp"
-    },
-    {
-      "category": "Math",
-      "class_name": "Random",
-      "display_name": "Random"
-    },
-    {
-      "category": "Math|Boolean Logic",
-      "class_name": "And",
-      "display_name": "And"
-    },
-    {
-      "category": "Math|Boolean Logic",
-      "class_name": "Or",
-      "display_name": "Or"
-    },
-    {
-      "category": "Math|Boolean Logic",
-      "class_name": "Not",
-      "display_name": "Not"
-    },
-    {
-      "category": "Math|Boolean Logic",
-      "class_name": "Xor",
-      "display_name": "Xor"
-    },
-    {
-      "category": "Math",
-      "class_name": "Round",
-      "display_name": "Round"
-    },
-    {
-      "category": "Math|Linear Algebra",
-      "class_name": "Transform",
-      "display_name": "Transform"
-    },
-    {
-      "category": "Math|Linear Algebra",
-      "class_name": "ToTransformMatrix",
-      "display_name": "To Transform Matrix"
-    },
-    {
-      "category": "Math|Linear Algebra",
-      "class_name": "Inverse",
-      "display_name": "Inverse"
-    },
-    {
-      "category": "Math|Linear Algebra",
-      "class_name": "Transpose",
-      "display_name": "Transpose"
-    },
-    {
-      "category": "Math|Wave",
-      "class_name": "SineWave",
-      "display_name": "Sine Wave"
-    },
-    {
-      "category": "Math",
-      "class_name": "Clamp",
-      "display_name": "Clamp"
-    },
-    {
-      "category": "Math",
-      "class_name": "Absolute",
-      "display_name": "Absolute"
-    },
-    {
-      "category": "Math|Addition",
-      "class_name": "Add_Track",
-      "display_name": "Add Track"
-    },
-    {
-      "category": "Math|Addition",
-      "class_name": "Add_Transform",
-      "display_name": "Add Transform"
-    },
     {
       "category": "Math|Addition",
       "class_name": "Add_f32",

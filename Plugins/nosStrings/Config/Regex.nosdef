@@ -1,41 +1,58 @@
 {
-  "nodes": [
-    {
-      "class_name": "Regex",
-      "contents_type": "Job",
-      "description": "Match string with regular expressions",
-      "display_name": "Regex",
-      "pins": [
-        {
-          "name": "RegularExpression",
-          "display_name": "Regular Expression",
-          "type_name": "string",
-          "show_as": "PROPERTY",
-          "can_show_as": "INPUT_PIN_OR_PROPERTY",
-          "description": "Expression to compile & match input with"
-        },
-        {
-          "name": "Input",
-          "type_name": "string",
-          "show_as": "INPUT_PIN",
-          "can_show_as": "INPUT_PIN_OR_PROPERTY",
-          "description": "Input string to match"
-        },
-        {
-          "name": "Match",
-          "type_name": "bool",
-          "show_as": "OUTPUT_PIN",
-          "can_show_as": "OUTPUT_PIN_ONLY",
-          "description": "True if input matches the regular expression"
-        },
-        {
-          "name": "Groups",
-          "type_name": "[string]",
-          "show_as": "OUTPUT_PIN",
-          "can_show_as": "OUTPUT_PIN_ONLY",
-          "description": "Captured groups from the input string"
-        }
-      ]
-    }
-  ]
+	"nodes": [
+		{
+			"class_name": "Regex",
+			"menu_info": {
+				"category": "String",
+				"display_name": "Regex",
+				"hide_in_context_menu": false,
+				"name_aliases": [
+					"regular expression",
+					"match",
+					"replace",
+					"search",
+					"find",
+					"split",
+					"filter"
+				]
+			},
+			"node": {
+				"class_name": "Regex",
+				"contents_type": "Job",
+				"description": "Match string with regular expressions",
+				"display_name": "Regex",
+				"pins": [
+					{
+						"name": "RegularExpression",
+						"display_name": "Regular Expression",
+						"type_name": "string",
+						"show_as": "PROPERTY",
+						"can_show_as": "INPUT_PIN_OR_PROPERTY",
+						"description": "Expression to compile & match input with"
+					},
+					{
+						"name": "Input",
+						"type_name": "string",
+						"show_as": "INPUT_PIN",
+						"can_show_as": "INPUT_PIN_OR_PROPERTY",
+						"description": "Input string to match"
+					},
+					{
+						"name": "Match",
+						"type_name": "bool",
+						"show_as": "OUTPUT_PIN",
+						"can_show_as": "OUTPUT_PIN_ONLY",
+						"description": "True if input matches the regular expression"
+					},
+					{
+						"name": "Groups",
+						"type_name": "[string]",
+						"show_as": "OUTPUT_PIN",
+						"can_show_as": "OUTPUT_PIN_ONLY",
+						"description": "Captured groups from the input string"
+					}
+				]
+			}
+		}
+	]
 }

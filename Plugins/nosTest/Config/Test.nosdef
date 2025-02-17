@@ -2,524 +2,615 @@
 	"nodes": [
 		{
 			"class_name": "NodeTest",
-			"contents_type": "Job",
-			"description": "test online update",
-			"functions": [
-				{
-					"class_name": "TestFunction",
-					"contents_type": "Job",
-					"description": "Test function description",
-					"pins": [
-						{
-							"name": "in1",
-							"type_name": "double",
-							"show_as": "INPUT_PIN",
-							"description": "Function pin test description"
-						},
-						{
-							"name": "in2",
-							"type_name": "double",
-							"show_as": "INPUT_PIN"
+			"menu_info": {
+				"category": "Test",
+				"display_name": "NodeTestNode"
+			},
+			"node": {
+				"class_name": "NodeTest",
+				"contents_type": "Job",
+				"description": "test online update",
+				"functions": [
+					{
+						"class_name": "TestFunction",
+						"contents_type": "Job",
+						"description": "Test function description",
+						"pins": [
+							{
+								"name": "in1",
+								"type_name": "double",
+								"show_as": "INPUT_PIN",
+								"description": "Function pin test description"
+							},
+							{
+								"name": "in2",
+								"type_name": "double",
+								"show_as": "INPUT_PIN"
 
-						},
-						{
-							"name": "out",
-							"type_name": "double",
-							"show_as": "OUTPUT_PIN"
-						}
-					]
-				}
-			],
-			"pins": [
-				{
-					"name": "double_prop",
-					"type_name": "double",
-					"show_as": "INPUT_PIN",
-					"description": "Test pin description",
-					"meta_data_map": [
-						{
-							"key": "Tags",
-							"value": "TestTag1,TestTag2"
-						}
-					]
-
-				},
-				{
-					"name": "vec3d_prop",
-					"type_name": "nos.fb.vec3d",
-					"show_as": "INPUT_PIN"
-				},
-				{
-					"name": "vec3d_prop",
-					"type_name": "nos.fb.vec3d",
-					"show_as": "INPUT_PIN"
-				},
-				{
-					"name": "mat4d_prop",
-					"type_name": "nos.fb.mat4d",
-					"show_as": "OUTPUT_PIN"
-				},
-				{
-					"name": "color_array",
-					"type_name": "[nos.fb.vec4]",
-					"show_as": "INPUT_PIN",
-					"can_show_as": "INPUT_PIN_OR_PROPERTY",
-					"visualizer": {
-						"type": "COLOR_PICKER"
+							},
+							{
+								"name": "out",
+								"type_name": "double",
+								"show_as": "OUTPUT_PIN"
+							}
+						]
 					}
-				}
-			]
+				],
+				"pins": [
+					{
+						"name": "double_prop",
+						"type_name": "double",
+						"show_as": "INPUT_PIN",
+						"description": "Test pin description",
+						"meta_data_map": [
+							{
+								"key": "Tags",
+								"value": "TestTag1,TestTag2"
+							}
+						]
+
+					},
+					{
+						"name": "vec3d_prop",
+						"type_name": "nos.fb.vec3d",
+						"show_as": "INPUT_PIN"
+					},
+					{
+						"name": "vec3d_prop",
+						"type_name": "nos.fb.vec3d",
+						"show_as": "INPUT_PIN"
+					},
+					{
+						"name": "mat4d_prop",
+						"type_name": "nos.fb.mat4d",
+						"show_as": "OUTPUT_PIN"
+					},
+					{
+						"name": "color_array",
+						"type_name": "[nos.fb.vec4]",
+						"show_as": "INPUT_PIN",
+						"can_show_as": "INPUT_PIN_OR_PROPERTY",
+						"visualizer": {
+							"type": "COLOR_PICKER"
+						}
+					}
+				]
+			}
 		},
 		{
 			"class_name": "NodeWithCategories",
-			"contents_type": "Job",
-			"functions": [
-				{
-					"class_name": "TestFunction",
-					"contents_type": "Job",
-					"function_category": "A",
-					"pins": [
-						{
-							"name": "in1",
-							"type_name": "double",
-							"show_as": "INPUT_PIN",
-							"pin_category": "A"
+			"menu_info": {
+				"category": "Test",
+				"display_name": "NodeWithCategories"
+			},
+			"node": {
+				"class_name": "NodeWithCategories",
+				"contents_type": "Job",
+				"functions": [
+					{
+						"class_name": "TestFunction",
+						"contents_type": "Job",
+						"function_category": "A",
+						"pins": [
+							{
+								"name": "in1",
+								"type_name": "double",
+								"show_as": "INPUT_PIN",
+								"pin_category": "A"
 
-						},
-						{
-							"name": "in2",
-							"type_name": "double",
-							"show_as": "INPUT_PIN"
-						},
-						{
-							"name": "out",
-							"type_name": "double",
-							"show_as": "OUTPUT_PIN"
-						}
-					]
-				}
-			],
-			"pins": [
-				{
-					"name": "TestPin1",
-					"type_name": "double",
-					"show_as": "INPUT_PIN",
-					"pin_category": "A"
-				},
-				{
-					"name": "TestPin2",
-					"type_name": "nos.fb.vec3d",
-					"show_as": "INPUT_PIN",
-					"pin_category": "A|B"
-				},
-				{
-					"name": "TestPin3",
-					"type_name": "nos.fb.vec3d",
-					"show_as": "INPUT_PIN",
-					"pin_category": "B"
-				},
-				{
-					"name": "TestPin4",
-					"type_name": "nos.fb.mat4d",
-					"show_as": "OUTPUT_PIN",
-					"pin_category": "B|A"
-				}
-			]
+							},
+							{
+								"name": "in2",
+								"type_name": "double",
+								"show_as": "INPUT_PIN"
+							},
+							{
+								"name": "out",
+								"type_name": "double",
+								"show_as": "OUTPUT_PIN"
+							}
+						]
+					}
+				],
+				"pins": [
+					{
+						"name": "TestPin1",
+						"type_name": "double",
+						"show_as": "INPUT_PIN",
+						"pin_category": "A"
+					},
+					{
+						"name": "TestPin2",
+						"type_name": "nos.fb.vec3d",
+						"show_as": "INPUT_PIN",
+						"pin_category": "A|B"
+					},
+					{
+						"name": "TestPin3",
+						"type_name": "nos.fb.vec3d",
+						"show_as": "INPUT_PIN",
+						"pin_category": "B"
+					},
+					{
+						"name": "TestPin4",
+						"type_name": "nos.fb.mat4d",
+						"show_as": "OUTPUT_PIN",
+						"pin_category": "B|A"
+					}
+				]
+			}
 		},
 		{
 			"class_name": "NodeWithFunctions",
-			"contents_type": "Job",
-			"functions": [
-				{
-					"class_name": "TestFunction",
-					"contents_type": "Job",
-					"function_category": "A",
-					"pins": [
-						{
-							"name": "InTrigger",
-							"type_name": "nos.exe",
-							"show_as": "INPUT_PIN",
-							"can_show_as": "INPUT_PIN_ONLY"
-						},
-						{
-							"name": "OutTrigger",
-							"type_name": "nos.exe",
-							"show_as": "OUTPUT_PIN",
-							"can_show_as": "OUTPUT_PIN_ONLY"
-						},
-						{
-							"name": "in1",
-							"type_name": "double",
-							"show_as": "INPUT_PIN",
-							"pin_category": "A",
-							"can_show_as": "INPUT_PIN_OR_PROPERTY"
-						},
-						{
-							"name": "in2",
-							"type_name": "double",
-							"show_as": "INPUT_PIN",
-							"can_show_as": "INPUT_PIN_OR_PROPERTY"
-						},
-						{
-							"name": "out",
-							"type_name": "double",
-							"show_as": "OUTPUT_PIN"
-						}
-					]
-				},
-				{
-					"class_name": "TestFunction2",
-					"contents_type": "Job",
-					"function_category": "A|B",
-					"pins": [
-						{
-							"name": "in1",
-							"type_name": "double",
-							"show_as": "INPUT_PIN",
-							"pin_category": "A"
+			"menu_info": {
+				"category": "Test",
+				"display_name": "NodeWithFunctions"
+			},
+			"node": {
+				"class_name": "NodeWithFunctions",
+				"contents_type": "Job",
+				"functions": [
+					{
+						"class_name": "TestFunction",
+						"contents_type": "Job",
+						"function_category": "A",
+						"pins": [
+							{
+								"name": "InTrigger",
+								"type_name": "nos.exe",
+								"show_as": "INPUT_PIN",
+								"can_show_as": "INPUT_PIN_ONLY"
+							},
+							{
+								"name": "OutTrigger",
+								"type_name": "nos.exe",
+								"show_as": "OUTPUT_PIN",
+								"can_show_as": "OUTPUT_PIN_ONLY"
+							},
+							{
+								"name": "in1",
+								"type_name": "double",
+								"show_as": "INPUT_PIN",
+								"pin_category": "A",
+								"can_show_as": "INPUT_PIN_OR_PROPERTY"
+							},
+							{
+								"name": "in2",
+								"type_name": "double",
+								"show_as": "INPUT_PIN",
+								"can_show_as": "INPUT_PIN_OR_PROPERTY"
+							},
+							{
+								"name": "out",
+								"type_name": "double",
+								"show_as": "OUTPUT_PIN"
+							}
+						]
+					},
+					{
+						"class_name": "TestFunction2",
+						"contents_type": "Job",
+						"function_category": "A|B",
+						"pins": [
+							{
+								"name": "in1",
+								"type_name": "double",
+								"show_as": "INPUT_PIN",
+								"pin_category": "A"
 
-						},
-						{
-							"name": "in2",
-							"type_name": "double",
-							"show_as": "INPUT_PIN"
-						},
-						{
-							"name": "out",
-							"type_name": "double",
-							"show_as": "OUTPUT_PIN"
-						}
-					]
-				},
-				{
-					"class_name": "TestFunction3",
-					"contents_type": "Job",
-					"function_category": "B",
-					"pins": [
-						{
-							"name": "in1",
-							"type_name": "double",
-							"show_as": "INPUT_PIN",
-							"pin_category": "A"
+							},
+							{
+								"name": "in2",
+								"type_name": "double",
+								"show_as": "INPUT_PIN"
+							},
+							{
+								"name": "out",
+								"type_name": "double",
+								"show_as": "OUTPUT_PIN"
+							}
+						]
+					},
+					{
+						"class_name": "TestFunction3",
+						"contents_type": "Job",
+						"function_category": "B",
+						"pins": [
+							{
+								"name": "in1",
+								"type_name": "double",
+								"show_as": "INPUT_PIN",
+								"pin_category": "A"
 
-						},
-						{
-							"name": "in2",
-							"type_name": "double",
-							"show_as": "INPUT_PIN"
-						},
-						{
-							"name": "out",
-							"type_name": "double",
-							"show_as": "OUTPUT_PIN"
-						}
-					]
-				},
-				{
-					"class_name": "TestFunction3",
-					"contents_type": "Job",
-					"function_category": "A",
-					"pins": [
-						{
-							"name": "in1",
-							"type_name": "double",
-							"show_as": "INPUT_PIN",
-							"pin_category": "A"
+							},
+							{
+								"name": "in2",
+								"type_name": "double",
+								"show_as": "INPUT_PIN"
+							},
+							{
+								"name": "out",
+								"type_name": "double",
+								"show_as": "OUTPUT_PIN"
+							}
+						]
+					},
+					{
+						"class_name": "TestFunction3",
+						"contents_type": "Job",
+						"function_category": "A",
+						"pins": [
+							{
+								"name": "in1",
+								"type_name": "double",
+								"show_as": "INPUT_PIN",
+								"pin_category": "A"
 
-						},
-						{
-							"name": "in2",
-							"type_name": "double",
-							"show_as": "INPUT_PIN"
-						},
-						{
-							"name": "out",
-							"type_name": "double",
-							"show_as": "OUTPUT_PIN"
-						}
-					]
-				}
-			],
-			"pins": [
-				{
-					"name": "TestPin1",
-					"type_name": "double",
-					"show_as": "INPUT_PIN",
-					"pin_category": "A"
-				},
-				{
-					"name": "TestPin2",
-					"type_name": "nos.fb.vec3d",
-					"show_as": "INPUT_PIN",
-					"pin_category": "A|B"
-				},
-				{
-					"name": "TestPin3",
-					"type_name": "nos.fb.vec3d",
-					"show_as": "INPUT_PIN",
-					"pin_category": "B"
-				},
-				{
-					"name": "TestPin4",
-					"type_name": "nos.fb.mat4d",
-					"show_as": "OUTPUT_PIN",
-					"pin_category": "B|A"
-				}
-			]
+							},
+							{
+								"name": "in2",
+								"type_name": "double",
+								"show_as": "INPUT_PIN"
+							},
+							{
+								"name": "out",
+								"type_name": "double",
+								"show_as": "OUTPUT_PIN"
+							}
+						]
+					}
+				],
+				"pins": [
+					{
+						"name": "TestPin1",
+						"type_name": "double",
+						"show_as": "INPUT_PIN",
+						"pin_category": "A"
+					},
+					{
+						"name": "TestPin2",
+						"type_name": "nos.fb.vec3d",
+						"show_as": "INPUT_PIN",
+						"pin_category": "A|B"
+					},
+					{
+						"name": "TestPin3",
+						"type_name": "nos.fb.vec3d",
+						"show_as": "INPUT_PIN",
+						"pin_category": "B"
+					},
+					{
+						"name": "TestPin4",
+						"type_name": "nos.fb.mat4d",
+						"show_as": "OUTPUT_PIN",
+						"pin_category": "B|A"
+					}
+				]
+			}
 		},
 		{
 			"class_name": "NodeWithCustomTypes",
-			"contents_type": "Job",
-			"functions": [
-				{
-					"class_name": "TestFunction",
-					"contents_type": "Job",
-					"function_category": "A",
-					"pins": [
-						{
-							"name": "in1",
-							"type_name": "nos.test.TestStruct",
-							"show_as": "INPUT_PIN",
-							"pin_category": "A"
+			"menu_info": {
+				"category": "Test",
+				"display_name": "NodeWithCustomTypes"
+			},
+			"node": {
+				"class_name": "NodeWithCustomTypes",
+				"contents_type": "Job",
+				"functions": [
+					{
+						"class_name": "TestFunction",
+						"contents_type": "Job",
+						"function_category": "A",
+						"pins": [
+							{
+								"name": "in1",
+								"type_name": "nos.test.TestStruct",
+								"show_as": "INPUT_PIN",
+								"pin_category": "A"
 
-						},
-						{
-							"name": "in2",
-							"type_name": "nos.test.TestTable",
-							"show_as": "INPUT_PIN"
-						},
-						{
-							"name": "out",
-							"type_name": "double",
-							"show_as": "OUTPUT_PIN"
-						}
-					]
-				}
-			],
-			"pins": [
-				{
-					"name": "TestPin1",
-					"type_name": "nos.Test.TestTable",
-					"show_as": "INPUT_PIN",
-					"pin_category": "A"
-				},
-				{
-					"name": "TestPin2",
-					"type_name": "nos.fb.vec3d",
-					"show_as": "INPUT_PIN",
-					"pin_category": "A|B"
-				},
-				{
-					"name": "TestPin3",
-					"type_name": "nos.test.TestEnum",
-					"show_as": "INPUT_PIN",
-					"pin_category": "B"
-				},
-				{
-					"name": "TestPin4",
-					"type_name": "nos.test.TestStruct2",
-					"show_as": "OUTPUT_PIN",
-					"pin_category": "B|A"
-				}
-			]
+							},
+							{
+								"name": "in2",
+								"type_name": "nos.test.TestTable",
+								"show_as": "INPUT_PIN"
+							},
+							{
+								"name": "out",
+								"type_name": "double",
+								"show_as": "OUTPUT_PIN"
+							}
+						]
+					}
+				],
+				"pins": [
+					{
+						"name": "TestPin1",
+						"type_name": "nos.Test.TestTable",
+						"show_as": "INPUT_PIN",
+						"pin_category": "A"
+					},
+					{
+						"name": "TestPin2",
+						"type_name": "nos.fb.vec3d",
+						"show_as": "INPUT_PIN",
+						"pin_category": "A|B"
+					},
+					{
+						"name": "TestPin3",
+						"type_name": "nos.test.TestEnum",
+						"show_as": "INPUT_PIN",
+						"pin_category": "B"
+					},
+					{
+						"name": "TestPin4",
+						"type_name": "nos.test.TestStruct2",
+						"show_as": "OUTPUT_PIN",
+						"pin_category": "B|A"
+					}
+				]
+			}
 		},
 		{
 			"class_name": "GpuStress",
-			"contents_type": "Job",
-			"contents": {
-				"type": "nos.sys.vulkan.GPUNode",
-				"options": {
-					"shader": "./Source/GpuStress.frag.spv"
-				}
+			"menu_info": {
+				"category": "Test",
+				"display_name": "GPU Stress"
 			},
-			"pins": [
-				{
-					"name": "Input",
-					"type_name": "nos.sys.vulkan.Texture",
-					"show_as": "INPUT_PIN",
-					"can_show_as": "INPUT_PIN_OR_PROPERTY"
+			"node": {
+				"class_name": "GpuStress",
+				"contents_type": "Job",
+				"contents": {
+					"type": "nos.sys.vulkan.GPUNode",
+					"options": {
+						"shader": "./Source/GpuStress.frag.spv"
+					}
 				},
-				{
-					"name": "StressExponent",
-					"display_name": "Stress Exponent",
-					"type_name": "uint",
-					"show_as": "PROPERTY",
-					"can_show_as": "INPUT_PIN_OR_PROPERTY",
-					"description": "The shader will loop 2^StressExponent times",
-					"data": 15
-				},
-				{
-					"name": "Output",
-					"type_name": "nos.sys.vulkan.Texture",
-					"show_as": "OUTPUT_PIN",
-					"can_show_as": "OUTPUT_PIN_OR_PROPERTY"
-				}
-			]
+				"pins": [
+					{
+						"name": "Input",
+						"type_name": "nos.sys.vulkan.Texture",
+						"show_as": "INPUT_PIN",
+						"can_show_as": "INPUT_PIN_OR_PROPERTY"
+					},
+					{
+						"name": "StressExponent",
+						"display_name": "Stress Exponent",
+						"type_name": "uint",
+						"show_as": "PROPERTY",
+						"can_show_as": "INPUT_PIN_OR_PROPERTY",
+						"description": "The shader will loop 2^StressExponent times",
+						"data": 15
+					},
+					{
+						"name": "Output",
+						"type_name": "nos.sys.vulkan.Texture",
+						"show_as": "OUTPUT_PIN",
+						"can_show_as": "OUTPUT_PIN_OR_PROPERTY"
+					}
+				]
+			}
 		},
 		{
 			"class_name": "CopyTest",
-			"contents_type": "Job",
-			"pins": [
-				{
-					"name": "Input",
-					"type_name": "nos.sys.vulkan.Texture",
-					"show_as": "INPUT_PIN",
-					"can_show_as": "INPUT_PIN_OR_PROPERTY"
-				},
-				{
-					"name": "Output",
-					"type_name": "nos.sys.vulkan.Texture",
-					"show_as": "OUTPUT_PIN",
-					"can_show_as": "OUTPUT_PIN_OR_PROPERTY"
-				}
-			]
+			"menu_info": {
+				"category": "Test",
+				"display_name": "Copy Test"
+			},
+			"node": {
+				"class_name": "CopyTest",
+				"contents_type": "Job",
+				"pins": [
+					{
+						"name": "Input",
+						"type_name": "nos.sys.vulkan.Texture",
+						"show_as": "INPUT_PIN",
+						"can_show_as": "INPUT_PIN_OR_PROPERTY"
+					},
+					{
+						"name": "Output",
+						"type_name": "nos.sys.vulkan.Texture",
+						"show_as": "OUTPUT_PIN",
+						"can_show_as": "OUTPUT_PIN_OR_PROPERTY"
+					}
+				]
+			}
 		},
 		{
 			"class_name": "CopyTestLicensed",
-			"contents_type": "Job",
-			"pins": [
-				{
-					"name": "Input",
-					"type_name": "nos.sys.vulkan.Texture",
-					"show_as": "INPUT_PIN",
-					"can_show_as": "INPUT_PIN_OR_PROPERTY"
-				},
-				{
-					"name": "Output",
-					"type_name": "nos.sys.vulkan.Texture",
-					"show_as": "OUTPUT_PIN",
-					"can_show_as": "OUTPUT_PIN_OR_PROPERTY"
-				}
-			]
+			"menu_info": {
+				"category": "Test",
+				"display_name": "Copy Test Licensed"
+			},
+			"node": {
+				"class_name": "CopyTestLicensed",
+				"contents_type": "Job",
+				"pins": [
+					{
+						"name": "Input",
+						"type_name": "nos.sys.vulkan.Texture",
+						"show_as": "INPUT_PIN",
+						"can_show_as": "INPUT_PIN_OR_PROPERTY"
+					},
+					{
+						"name": "Output",
+						"type_name": "nos.sys.vulkan.Texture",
+						"show_as": "OUTPUT_PIN",
+						"can_show_as": "OUTPUT_PIN_OR_PROPERTY"
+					}
+				]
+			}
 		},
 		{
 			"class_name": "PyPow",
-			"contents_type": "Job",
-			"contents": {
-				"type": "nos.py.PythonNode",
-				"options": {
-					"source": "./Source/PowNode.py"
-				}
+			"menu_info": {
+				"category": "Test",
+				"display_name": "PyPow"
 			},
-			"pins": [
-				{
-					"name": "Base",
-					"type_name": "float",
-					"show_as": "INPUT_PIN",
-					"can_show_as": "INPUT_PIN_OR_PROPERTY"
+			"node": {
+				"class_name": "PyPow",
+				"contents_type": "Job",
+				"contents": {
+					"type": "nos.py.PythonNode",
+					"options": {
+						"source": "./Source/PowNode.py"
+					}
 				},
-				{
-					"name": "Exponent",
-					"type_name": "float",
-					"show_as": "INPUT_PIN",
-					"can_show_as": "INPUT_PIN_OR_PROPERTY"
-				},
-				{
-					"name": "Result",
-					"type_name": "float",
-					"show_as": "OUTPUT_PIN",
-					"can_show_as": "OUTPUT_PIN_OR_PROPERTY"
-				}
-			]
+				"pins": [
+					{
+						"name": "Base",
+						"type_name": "float",
+						"show_as": "INPUT_PIN",
+						"can_show_as": "INPUT_PIN_OR_PROPERTY"
+					},
+					{
+						"name": "Exponent",
+						"type_name": "float",
+						"show_as": "INPUT_PIN",
+						"can_show_as": "INPUT_PIN_OR_PROPERTY"
+					},
+					{
+						"name": "Result",
+						"type_name": "float",
+						"show_as": "OUTPUT_PIN",
+						"can_show_as": "OUTPUT_PIN_OR_PROPERTY"
+					}
+				]
+			}
 		},
 		{
 			"class_name": "CopyBuffer",
-			"contents_type": "Job",
-			"pins": [
-				{
-					"name": "Input",
-					"type_name": "nos.sys.vulkan.Buffer",
-					"show_as": "INPUT_PIN",
-					"can_show_as": "INPUT_PIN_OR_PROPERTY"
-				},
-				{
-					"name": "Output",
-					"type_name": "nos.sys.vulkan.Buffer",
-					"show_as": "OUTPUT_PIN",
-					"can_show_as": "OUTPUT_PIN_OR_PROPERTY"
-				}
-			]
+			"menu_info": {
+				"category": "Test",
+				"display_name": "Copy Buffer"
+			},
+			"node": {
+				"class_name": "CopyBuffer",
+				"contents_type": "Job",
+				"pins": [
+					{
+						"name": "Input",
+						"type_name": "nos.sys.vulkan.Buffer",
+						"show_as": "INPUT_PIN",
+						"can_show_as": "INPUT_PIN_OR_PROPERTY"
+					},
+					{
+						"name": "Output",
+						"type_name": "nos.sys.vulkan.Buffer",
+						"show_as": "OUTPUT_PIN",
+						"can_show_as": "OUTPUT_PIN_OR_PROPERTY"
+					}
+				]
+			}
 		},
 		{
 			"class_name": "ComputeTest1",
-			"contents_type": "Job",
-			"contents": {
-				"type": "nos.sys.vulkan.GPUNode",
-				"options": {
-					"shader": "./Shaders/ComputeTest1.comp",
-					"stage": "COMPUTE"
-				}
+			"menu_info": {
+				"category": "Test",
+				"display_name": "ComputeTest1"
 			},
-			"pins": [
-				{
-					"name": "Input",
-					"type_name": "nos.sys.vulkan.Texture",
-					"show_as": "INPUT_PIN",
-					"can_show_as": "INPUT_PIN_ONLY"
+			"node": {
+				"class_name": "ComputeTest1",
+				"contents_type": "Job",
+				"contents": {
+					"type": "nos.sys.vulkan.GPUNode",
+					"options": {
+						"shader": "./Shaders/ComputeTest1.comp",
+						"stage": "COMPUTE"
+					}
 				},
-				{
-					"name": "Output",
-					"type_name": "nos.sys.vulkan.Texture",
-					"show_as": "OUTPUT_PIN",
-					"can_show_as": "OUTPUT_PIN_ONLY"
-				}
-			]
+				"pins": [
+					{
+						"name": "Input",
+						"type_name": "nos.sys.vulkan.Texture",
+						"show_as": "INPUT_PIN",
+						"can_show_as": "INPUT_PIN_ONLY"
+					},
+					{
+						"name": "Output",
+						"type_name": "nos.sys.vulkan.Texture",
+						"show_as": "OUTPUT_PIN",
+						"can_show_as": "OUTPUT_PIN_ONLY"
+					}
+				]
+			}
 		},
 		{
 			"class_name": "BypassTexture",
-			"contents_type": "Job",
-			"pins": [
-				{
-					"name": "Input",
-					"type_name": "nos.sys.vulkan.Texture",
-					"show_as": "INPUT_PIN",
-					"can_show_as": "INPUT_PIN_OR_PROPERTY"
-				},
-				{
-					"name": "Output",
-					"type_name": "nos.sys.vulkan.Texture",
-					"show_as": "OUTPUT_PIN",
-					"can_show_as": "OUTPUT_PIN_OR_PROPERTY"
-				}
-			]
+			"menu_info": {
+				"category": "Test",
+				"display_name": "Bypass Texture"
+			},
+			"node": {
+				"class_name": "BypassTexture",
+				"contents_type": "Job",
+				"pins": [
+					{
+						"name": "Input",
+						"type_name": "nos.sys.vulkan.Texture",
+						"show_as": "INPUT_PIN",
+						"can_show_as": "INPUT_PIN_OR_PROPERTY"
+					},
+					{
+						"name": "Output",
+						"type_name": "nos.sys.vulkan.Texture",
+						"show_as": "OUTPUT_PIN",
+						"can_show_as": "OUTPUT_PIN_OR_PROPERTY"
+					}
+				]
+			}
 		},
 		{
 			"class_name": "LiveOutWithInput",
-			"contents_type": "Job",
-			"pins": [
-				{
-					"name": "Input",
-					"type_name": "float",
-					"show_as": "INPUT_PIN",
-					"can_show_as": "INPUT_PIN_ONLY"
-				},
-				{
-					"name": "Output",
-					"type_name": "float",
-					"show_as": "OUTPUT_PIN",
-					"can_show_as": "OUTPUT_PIN_ONLY",
-					"live": true
-				}
-			]
+			"menu_info": {
+				"category": "Test",
+				"display_name": "Live Out With Input"
+			},
+			"node": {
+				"class_name": "LiveOutWithInput",
+				"contents_type": "Job",
+				"pins": [
+					{
+						"name": "Input",
+						"type_name": "float",
+						"show_as": "INPUT_PIN",
+						"can_show_as": "INPUT_PIN_ONLY"
+					},
+					{
+						"name": "Output",
+						"type_name": "float",
+						"show_as": "OUTPUT_PIN",
+						"can_show_as": "OUTPUT_PIN_ONLY",
+						"live": true
+					}
+				]
+			}
 		},
 		{
 			"class_name": "AlwaysDirty",
-			"contents_type": "Job",
-			"always_execute": true,
-			"pins": [
-				{
-					"name": "OutLive",
-					"type_name": "bool",
-					"show_as": "PROPERTY",
-					"can_show_as": "INPUT_PIN_OR_PROPERTY"
-				},
-				{
-					"name": "Output",
-					"type_name": "nos.fb.Void",
-					"show_as": "OUTPUT_PIN",
-					"can_show_as": "OUTPUT_PIN_ONLY"
-				}
-			]
+			"menu_info": {
+				"category": "Test",
+				"display_name": "Always Dirty"
+			},
+			"node": {
+				"class_name": "AlwaysDirty",
+				"contents_type": "Job",
+				"always_execute": true,
+				"pins": [
+					{
+						"name": "OutLive",
+						"type_name": "bool",
+						"show_as": "PROPERTY",
+						"can_show_as": "INPUT_PIN_OR_PROPERTY"
+					},
+					{
+						"name": "Output",
+						"type_name": "nos.Generic",
+						"show_as": "OUTPUT_PIN",
+						"can_show_as": "OUTPUT_PIN_ONLY"
+					}
+				]
+			}
 		}
 	]
 }

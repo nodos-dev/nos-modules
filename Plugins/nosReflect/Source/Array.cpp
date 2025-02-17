@@ -8,19 +8,19 @@ struct ArrayNode : NodeContext
 {
 	std::optional<nos::TypeInfo> Type = std::nullopt;
 	bool invalidNode = false;
-	ArrayNode(const nosFbNode* inNode) : NodeContext(inNode)
+	ArrayNode(nosFbNodePtr inNode) : NodeContext(inNode)
 	{
 		for (auto& pin : Pins | std::views::values)
 		{
 			if (pin.ShowAs == fb::ShowAs::INPUT_PIN)
 			{
-				if (pin.TypeName != NSN_VOID)
+				if (pin.TypeName != NSN_TypeNameGeneric)
 					Type = nos::TypeInfo(pin.TypeName);
 			}
 			if (pin.ShowAs == fb::ShowAs::OUTPUT_PIN)
 			{
 				nos::TypeInfo arrayType = nos::TypeInfo(pin.TypeName);
-				if (arrayType.TypeName == NSN_VOID)
+				if (arrayType.TypeName == NSN_TypeNameGeneric)
 					continue;
 				if (arrayType->BaseType != NOS_BASE_TYPE_ARRAY) {
 					invalidNode = true;
@@ -36,7 +36,7 @@ struct ArrayNode : NodeContext
 		UpdateOutputVectorSize();
 	}
 
-	void OnPartialNodeUpdated(const nosNodeUpdate* update) override
+	void OnNodeUpdated(const nosNodeUpdate* update) override
 	{
 		if (update->Type == NOS_NODE_UPDATE_PIN_DELETED || update->Type == NOS_NODE_UPDATE_PIN_CREATED)
 			UpdateOutputVectorSize();
@@ -146,19 +146,14 @@ struct ArrayNode : NodeContext
 		if (!Type)
 			return;
 
-		nosBuffer value;
-		std::vector<uint8_t> data;
 
-		if (NOS_RESULT_SUCCESS == nosEngine.GetDefaultValueOfType(Type->TypeName, &value))
+		if (auto buf = GetDefaultValueOfType(Type->TypeName))
 		{
-			data = std::vector<uint8_t>{(uint8_t*)value.Data, (uint8_t*)value.Data + value.Size};
+			std::vector<const void*> datas;
+			for (unsigned int i = 0; i < GetInputs().size(); i++)
+				datas.push_back(buf->Data());
+			SendOutputArray(datas);
 		}
-
-		std::vector<const void*> datas;
-		for (unsigned int i = 0; i < GetInputs().size(); i++) {
-			datas.push_back(data.data());
-		}
-		SendOutputArray(datas);
 	}
 
 	nosResult ExecuteNode(nosNodeExecuteParams* params) override
@@ -175,7 +170,7 @@ struct ArrayNode : NodeContext
 		return SendOutputArray(values) ? NOS_RESULT_SUCCESS : NOS_RESULT_FAILED;
 	}
 
-	void OnMenuRequested(const nosContextMenuRequest* request) override
+	void OnMenuRequested(nosContextMenuRequestPtr request) override
 	{
 		auto inputs = GetInputs();
 
@@ -197,15 +192,14 @@ struct ArrayNode : NodeContext
 		auto inputs = GetInputs();
 		flatbuffers::FlatBufferBuilder fbb;
 
-		nosBuffer value;
 		std::vector<uint8_t> data;
-		nos::Name typeName = Type ? Name(Type->TypeName) : NSN_VOID;
-		if (NOS_RESULT_SUCCESS == nosEngine.GetDefaultValueOfType(typeName, &value))
-			data = std::vector<uint8_t>{ (uint8_t*)value.Data, (uint8_t*)value.Data + value.Size };
+		nos::Name typeName = Type ? Name(Type->TypeName) : NSN_TypeNameGeneric;
+		if (auto buf = GetDefaultValueOfType(typeName))
+			data = std::vector<uint8_t>{(uint8_t*)buf->Data(), (uint8_t*)buf->Data() + buf->Size()};
 
 		auto outputType = "[" + typeName.AsString() + "]";
 		auto name = "Input " + std::to_string(inputs.size());
-		nosUUID id = nosEngine.GenerateID();
+		uuid id = nosEngine.GenerateID();
 
 		std::vector pins = {
 			nos::fb::CreatePinDirect(fbb,
@@ -237,7 +231,7 @@ struct ArrayNode : NodeContext
 		UpdateOutputVectorSize();
 	}
 
-	void OnMenuCommand(nosUUID itemID, uint32_t cmd) override
+	void OnMenuCommand(uuid const& itemID, uint32_t cmd) override
 	{
 		switch (cmd)
 		{

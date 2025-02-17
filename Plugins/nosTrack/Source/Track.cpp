@@ -21,8 +21,8 @@ TrackNodeContext::TrackNodeContext(nos::fb::Node const* node) : NodeContext(node
 		LoadField<bool>(pin, NSN_NegateTilt, Args.NegateRot.y);
 		LoadField<bool>(pin, NSN_NegateRoll, Args.NegateRot.x);
 		LoadField<float>(pin, NSN_TransformScale, Args.TransformScale);
-		LoadField<fb::CoordinateSystem>(pin, NSN_CoordinateSystem, Args.CoordinateSystem);
-		LoadField<fb::RotationSystem>(pin, NSN_RotationSystem, Args.RotationSystem);
+		LoadField<track::CoordinateSystem>(pin, NSN_CoordinateSystem, Args.CoordinateSystem);
+		LoadField<track::RotationSystem>(pin, NSN_RotationSystem, Args.RotationSystem);
 		LoadField<glm::vec3>(pin, NSN_DevicePosition, Args.DevicePosition);
 		LoadField<glm::vec3>(pin, NSN_DeviceRotation, Args.DeviceRotation);
 		LoadField<glm::vec3>(pin, NSN_CameraPosition, Args.CameraPosition);
@@ -157,7 +157,7 @@ nosResult TrackNodeContext::ExecuteNode(nosNodeExecuteParams* params)
 		Restart();
 		ShouldRestart = false;
 	}
-	fb::TTrack track;
+	track::TTrack track;
 #if _DEBUG
 	size_t queueSize = 0;
 #endif
@@ -203,7 +203,7 @@ void TrackNodeContext::SignalRestart()
 	nosEngine.SendPathRestart(NodeId);
 }
 
-void TrackNodeContext::OnPinValueChanged(nos::Name pinName, nosUUID pinId, nosBuffer val)
+void TrackNodeContext::OnPinValueChanged(nos::Name pinName, uuid const& pinId, nosBuffer val)
 {
 #define SET_VALUE(ty, name, var) if(pinName == NOS_NAME_STATIC(#name)) Args.var = *(ty*)value;
 
@@ -218,8 +218,8 @@ void TrackNodeContext::OnPinValueChanged(nos::Name pinName, nosUUID pinId, nosBu
 
 	SET_VALUE(bool, EnableEffectiveFOV, EnableEffectiveFOV);
 	SET_VALUE(float, TransformScale, TransformScale);
-	SET_VALUE(fb::CoordinateSystem, CoordinateSystem, CoordinateSystem);
-	SET_VALUE(fb::RotationSystem, Pan_Tilt_Roll, RotationSystem);
+	SET_VALUE(track::CoordinateSystem, CoordinateSystem, CoordinateSystem);
+	SET_VALUE(track::RotationSystem, Pan_Tilt_Roll, RotationSystem);
 
 	SET_VALUE(glm::vec3, DevicePosition, DevicePosition);
 	SET_VALUE(glm::vec3, DeviceRotation, DeviceRotation);
@@ -293,7 +293,7 @@ void TrackNodeContext::OnPinValueChanged(nos::Name pinName, nosUUID pinId, nosBu
 
 void TrackNodeContext::Restart()
 {
-	fb::TTrack defaultTrack = GetDefaultOrFirstTrack();
+	track::TTrack defaultTrack = GetDefaultOrFirstTrack();
 	std::unique_lock<std::mutex> guard(QMutex);
 	while (DataQueue.size() > Delay + SpareCount)
 		DataQueue.pop();
@@ -304,18 +304,14 @@ void TrackNodeContext::Restart()
 		DataQueue.push({ defaultTrack, 0 });
 }
 
-fb::TTrack TrackNodeContext::GetDefaultOrFirstTrack()
+track::TTrack TrackNodeContext::GetDefaultOrFirstTrack()
 {
 	{
 		std::unique_lock guard(QMutex);
 		if (!DataQueue.empty())
 			return DataQueue.front().first;
 	}
-	fb::TTrack track;
-	nosBuffer defaultTrackData;
-	nosEngine.GetDefaultValueOfType(NOS_NAME_STATIC("nos.fb.Track"), &defaultTrackData);
-	flatbuffers::GetRoot<fb::Track>(defaultTrackData.Data)->UnPackTo(&track);
-	return track;
+	return GetDefaultValueOfType(NOS_NAME_STATIC(nos::track::Track::GetFullyQualifiedName()))->As<track::TTrack>();
 }
 
 double CalculateR(double R, glm::dvec2 k1k2)
@@ -379,7 +375,7 @@ glm::vec3 TrackNodeContext::Swizzle(glm::vec3 v, glm::bvec3 n, uint8_t control)
 	return glm::mix(v, -v, n);
 }
 
-nos::Buffer TrackNodeContext::UpdateTrackOut(fb::TTrack& outTrack)
+nos::Buffer TrackNodeContext::UpdateTrackOut(track::TTrack& outTrack)
 {
 	auto xf = Args;
 
@@ -436,10 +432,8 @@ void TrackNodeContext::Run()
 		}
 	}
 	uint8_t buf[4096];
-	nosBuffer defaultTrackData;
-	nosEngine.GetDefaultValueOfType(NOS_NAME_STATIC("nos.fb.Track"), &defaultTrackData);
-	nos::Buffer defaultTrackBuffer = nos::Buffer((uint8_t*)defaultTrackData.Data, defaultTrackData.Size);
-	fb::TTrack defaultTrack = defaultTrackBuffer.As<fb::TTrack>();
+	auto defaultTrackData = GetDefaultValueOfType(NOS_NAME_STATIC(nos::track::Track::GetFullyQualifiedName()));
+	auto defaultTrack = defaultTrackData->As<track::TTrack>();
 	bool reviveFromOrphanOnFirstSuccess = false;
 	while (!ShouldStop)
 	{
@@ -449,7 +443,7 @@ void TrackNodeContext::Run()
 			size_t len = sock->receive_from(asio::buffer(buf, 4096), sender_endpoint);
 			uint64_t nanoSeconds = std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count();
 			{
-				fb::TTrack data = defaultTrack;
+				track::TTrack data = defaultTrack;
 				if (Parse(std::vector<uint8_t>{buf, buf + len}, data))
 				{
 					std::unique_lock<std::mutex> guard(QMutex);

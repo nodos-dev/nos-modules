@@ -16,7 +16,7 @@ namespace nos::utilities
 
 struct RingBufferNodeContext : RingNodeBase
 {
-	RingBufferNodeContext(nosFbNode const* node) : RingNodeBase(node, RingNodeBase::OnRestartType::WAIT_UNTIL_FULL)
+	RingBufferNodeContext(nosFbNodePtr node) : RingNodeBase(node, RingNodeBase::OnRestartType::WAIT_UNTIL_FULL)
 	{
 	}
 	~RingBufferNodeContext()
@@ -52,7 +52,7 @@ struct RingBufferNodeContext : RingNodeBase
 		return ExecuteRingNode(params, true, NOS_NAME_STATIC("RingBuffer"), true);
 	}
 
-	void OnEndFrame(nosUUID pinId, nosEndFrameCause cause) override
+	void OnEndFrame(uuid const& pinId, nosEndFrameCause cause) override
 	{
 		RingNodeBase::OnEndFrame(pinId, cause);
 		if (pinId == PinName2Id[NOS_NAME_STATIC("Output")])

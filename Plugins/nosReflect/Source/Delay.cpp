@@ -14,6 +14,13 @@ struct RingBuffer {
 	uint32_t Size;
 	RingBuffer(uint32_t sz) : Size(sz) {}
 	RingBuffer(const RingBuffer&) = delete;
+	void Clear()
+	{
+		Ring.clear();
+		while (!FreeList.empty())
+			FreeList.pop();
+	}
+
 	bool GetLastPopped(T& out)
 	{
 		if (FreeList.empty())
@@ -55,41 +62,15 @@ struct AnySlot
 	AnySlot(const AnySlot&) = delete;
 	AnySlot& operator=(const AnySlot&) = delete;
 	AnySlot(nosBuffer const& buf) : Buffer(buf) {}
-	virtual void CopyFrom(nosBuffer const& buf, nosUUID const& nodeId) = 0;
+	virtual void CopyFrom(nosBuffer const& buf, uuid const& nodeId) = 0;
 };
 
 struct TriviallyCopyableSlot : AnySlot
 {
 	using AnySlot::AnySlot;
-	void CopyFrom(nosBuffer const& other, nosUUID const& nodeId) override
+	void CopyFrom(nosBuffer const& other, uuid const& nodeId) override
 	{
 		Buffer = other;
-	}
-};
-
-template <typename T>
-struct Resource
-{
-	nosResourceShareInfo Desc;
-	
-	Resource(T r) : Desc{}
-	{
-		if constexpr (std::is_same_v<T, nosBufferInfo>)
-		{
-			Desc.Info.Type = NOS_RESOURCE_TYPE_BUFFER;
-			Desc.Info.Buffer = r;
-		}
-		else
-		{
-			Desc.Info.Type = NOS_RESOURCE_TYPE_TEXTURE;
-			Desc.Info.Texture = r;
-		}
-		nosVulkan->CreateResource(&Desc);
-	}
-        
-	~Resource()
-	{ 
-		nosVulkan->DestroyResource(&Desc);
 	}
 };
 
@@ -97,21 +78,27 @@ template <typename T>
 requires std::is_same_v<T, nosTextureInfo> || std::is_same_v<T, nosBufferInfo>
 struct ResourceSlot : AnySlot
 {
-	std::unique_ptr<Resource<T>> Res;
-	ResourceSlot(nosBuffer const& buf) : AnySlot(buf)
+	vkss::Resource Res;
+	ResourceSlot(nosBuffer const& buf)
+		: AnySlot(buf),
+		  Res(*vkss::Resource::Create(
+			  [](nosBuffer const& buf) -> T {
+				  if constexpr (std::is_same_v<T, nosBufferInfo>)
+				  {
+					  auto desc =
+						  vkss::ConvertToResourceInfo(*InterpretPinValue<sys::vulkan::Buffer>(buf.Data)).Info.Buffer;
+					  desc.Usage = nosBufferUsage(desc.Usage | nosBufferUsage(NOS_BUFFER_USAGE_TRANSFER_SRC | NOS_BUFFER_USAGE_TRANSFER_DST));
+					  return desc;
+				  }
+				  if constexpr (std::is_same_v<T, nosTextureInfo>)
+				  {
+					  return vkss::DeserializeTextureInfo(buf.Data).Info.Texture;
+				  }
+			  }(buf),
+			  "Delay Resource"))
 	{
-		if constexpr (std::is_same_v<T, nosBufferInfo>) {
-			auto desc = vkss::ConvertToResourceInfo(*InterpretPinValue<sys::vulkan::Buffer>(buf.Data));
-			reinterpret_cast<int&>(desc.Info.Buffer.Usage) |= nosBufferUsage(NOS_BUFFER_USAGE_TRANSFER_SRC | NOS_BUFFER_USAGE_TRANSFER_DST);
-			Res = std::make_unique<Resource<T>>(desc.Info.Buffer);
-		}
-		if constexpr (std::is_same_v<T, nosTextureInfo>) {
-			auto desc = vkss::DeserializeTextureInfo(Buffer.Data());
-			// desc.Info.Texture.FieldType = NOS_TEXTURE_FIELD_TYPE_UNKNOWN;
-			Res = std::make_unique<Resource<T>>(desc.Info.Texture);
-		}
 	}
-	void CopyFrom(nosBuffer const& other, nosUUID const& nodeId) override
+	void CopyFrom(nosBuffer const& other, uuid const& nodeId) override
 	{
 		// TODO: Interlaced.
 		nosCmd cmd{};
@@ -125,24 +112,21 @@ struct ResourceSlot : AnySlot
 			src = vkss::ConvertToResourceInfo(*InterpretPinValue<sys::vulkan::Buffer>(other.Data));
 		if constexpr (std::is_same_v<T, nosTextureInfo>)
 			src = vkss::DeserializeTextureInfo(other.Data);
-		nosVulkan->Begin2(&beginParams);
-		nosVulkan->Copy(cmd, &src, &Res->Desc, nullptr);
+		nosVulkan->Begin(&beginParams);
+		nosVulkan->Copy(cmd, &src, &Res, nullptr);
 		//nosCmdEndParams endParams{.ForceSubmit = NOS_FALSE, .OutGPUEventHandle = &Texture->Params.WaitEvent};
 		//nosVulkan->End(cmd, &endParams);
 		nosVulkan->End(cmd, nullptr);
-		if constexpr (std::is_same_v<T, nosTextureInfo>)
-			Buffer = nos::Buffer::From(vkss::ConvertTextureInfo(Res->Desc));
-		if constexpr (std::is_same_v<T, nosBufferInfo>)
-			Buffer = nos::Buffer::From(vkss::ConvertBufferInfo(Res->Desc));
+		Buffer = Res.ToPinData();
 	}
 };
 
 struct DelayNode : NodeContext
 {
-    nosName TypeName = NSN_VOID;
+    nosName TypeName = NSN_TypeNameGeneric;
 	RingBuffer<std::unique_ptr<AnySlot>> Ring;
 
-	DelayNode(const nosFbNode* node) : NodeContext(node), Ring(0) {
+	DelayNode(nosFbNodePtr node) : NodeContext(node), Ring(0) {
 		for (auto pin : *node->pins())
 		{
 			auto name = nos::Name(pin->name()->c_str());
@@ -152,7 +136,7 @@ struct DelayNode : NodeContext
 			}
 			if (NSN_Output == name)
 			{
-				if (pin->type_name()->c_str() == NSN_VOID.AsString())
+				if (pin->type_name()->c_str() == NSN_TypeNameGeneric.AsString())
 					continue;
 				TypeName = nos::Name(pin->type_name()->c_str());
 			}
@@ -160,9 +144,9 @@ struct DelayNode : NodeContext
 	}
 
 
-	void OnPinValueChanged(nos::Name pinName, nosUUID pinId, nosBuffer value) override
+	void OnPinValueChanged(nos::Name pinName, uuid const& pinId, nosBuffer value) override
 	{
-		if(NSN_VOID == TypeName)
+		if(NSN_TypeNameGeneric == TypeName)
 			return;
 		if (NSN_Delay == pinName)
 		{
@@ -172,7 +156,7 @@ struct DelayNode : NodeContext
 
 	void OnPinUpdated(nosPinUpdate const* update) override
 	{
-		if (TypeName != NSN_VOID)
+		if (TypeName != NSN_TypeNameGeneric)
 			return;
 		if (update->UpdatedField == NOS_PIN_FIELD_TYPE_NAME)
 		{
@@ -191,6 +175,7 @@ struct DelayNode : NodeContext
 
 		if (0 == delay)
 		{
+			Ring.Clear();
 			SetPinValue(NSN_Output, inputBuffer);
 			return NOS_RESULT_SUCCESS;
 		}

@@ -1,30 +1,37 @@
 {
-    "nodes": [
-        {
-            "class_name": "Eval",
-            "contents_type": "Job",
-            "description": "Evaluates a given string",
-            "contents": {
-                "type": "nos.py.PythonNode",
-                "options": {
-                    "source": "Source/eval_node.py"
-                }
-            },
-            "pins": [
-                {
-                    "name": "Expression",
-                    "type_name": "string",
-                    "description": "Single line expression to evaluate",
-                    "show_as": "INPUT_PIN",
-                    "can_show_as": "INPUT_PIN_OR_PROPERTY"
-                },
-                {
-                    "name": "Output",
-                    "type_name": "string",
-                    "show_as": "OUTPUT_PIN",
-                    "can_show_as": "OUTPUT_PIN_OR_PROPERTY"
-                }
-            ]
-        }
-    ]
+	"nodes": [
+		{
+			"class_name": "Eval",
+			"menu_info": {
+				"category": "Python",
+				"display_name": "Eval"
+			},
+			"node": {
+				"class_name": "Eval",
+				"contents_type": "Job",
+				"description": "Evaluates a given string",
+				"contents": {
+					"type": "nos.py.PythonNode",
+					"options": {
+						"source": "Source/eval_node.py"
+					}
+				},
+				"pins": [
+					{
+						"name": "Expression",
+						"type_name": "string",
+						"description": "Single line expression to evaluate",
+						"show_as": "INPUT_PIN",
+						"can_show_as": "INPUT_PIN_OR_PROPERTY"
+					},
+					{
+						"name": "Output",
+						"type_name": "string",
+						"show_as": "OUTPUT_PIN",
+						"can_show_as": "OUTPUT_PIN_OR_PROPERTY"
+					}
+				]
+			}
+		}
+	]
 }

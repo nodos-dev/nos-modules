@@ -24,9 +24,9 @@ NOS_REGISTER_NAME_SPACED(Merge, "nos.utilities.Merge")
 
 struct MergePin
 {
-	nosUUID TextureId;
-	nosUUID OpacityId;
-	nosUUID BlendId;
+	uuid TextureId;
+	uuid OpacityId;
+	uuid BlendId;
 };
 
 struct MergeContext : NodeContext
@@ -43,7 +43,7 @@ struct MergeContext : NodeContext
 		return MergeContext::GetTextureCount(Pins.size());
 	}
 
-	MergeContext(nosFbNode const* node) : NodeContext(node) 
+	MergeContext(nosFbNodePtr node) : NodeContext(node) 
 	{
 		auto textureCount = GetTextureCount();
 		if (textureCount > 2)
@@ -144,13 +144,13 @@ struct MergeContext : NodeContext
 
 		nosCmd cmd{};
 		nosCmdBeginParams begin{  .Name = NSN_Merge_Pass, .AssociatedNodeId = NodeId, .OutCmdHandle = &cmd };
-		nosVulkan->Begin2(&begin);
+		nosVulkan->Begin(&begin);
 		nosVulkan->RunPass(cmd, &mergePass);
 		nosVulkan->End(cmd, nullptr);
 		return NOS_RESULT_SUCCESS;
 	}
 
-	void OnMenuRequested(const nosContextMenuRequest* request) override
+	void OnMenuRequested(nosContextMenuRequestPtr request) override
 	{
 		flatbuffers::FlatBufferBuilder fbb;
 
@@ -171,7 +171,7 @@ struct MergeContext : NodeContext
 		HandleEvent(event);
 	}
 
-	void OnMenuCommand(nosUUID itemID, uint32_t cmd) override
+	void OnMenuCommand(uuid const& itemID, uint32_t cmd) override
 	{
 		if (!cmd)
 			return;
@@ -179,21 +179,18 @@ struct MergeContext : NodeContext
 		if (cmd == 1)
 		{
 			auto count = std::to_string(GetTextureCount());
-			nosBuffer buffer;
-			nosEngine.GetDefaultValueOfType(NOS_NAME_STATIC("nos.sys.vulkan.Texture"), &buffer);
 
 			std::string texPinName = "Texture_" + count;
-			nosUUID texId = nosEngine.GenerateID();
-			std::vector<uint8_t> texData((uint8_t*)buffer.Data, (uint8_t*)buffer.Data + buffer.Size);
+			uuid texId = nosEngine.GenerateID();
 
 			std::string opacityPinName = "Opacity_" + count;
-			nosUUID opacityId = nosEngine.GenerateID();
+			uuid opacityId = nosEngine.GenerateID();
 			std::vector<uint8_t> opacityData = nos::Buffer::From(1.f);
 			std::vector<uint8_t> opacityMinData = nos::Buffer::From(0.f);
 			std::vector<uint8_t> opacityMaxData = nos::Buffer::From(1.f);
 
 			std::string blendPinName = "Blend_Mode_" + count;
-			nosUUID blendId = nosEngine.GenerateID();
+			uuid blendId = nosEngine.GenerateID();
 			std::vector<uint8_t> blendModeData = nos::Buffer::From(0u);
 
 			std::string pinCategory = "Layer (" + count + ")";
@@ -208,9 +205,7 @@ struct MergeContext : NodeContext
 				                    "nos.sys.vulkan.Texture",
 				                    fb::ShowAs::INPUT_PIN,
 				                    fb::CanShowAs::INPUT_PIN_ONLY,
-				                    pinCategory.c_str(),
-				                    0,
-				                    &texData),
+				                    pinCategory.c_str()),
 				fb::CreatePinDirect(fbb,
 				                    &opacityId,
 				                    opacityPinName.c_str(),
@@ -246,7 +241,7 @@ struct MergeContext : NodeContext
 			if (GetTextureCount() > 2)
 			{
 				flatbuffers::FlatBufferBuilder fbb;
-				std::vector<nosUUID> ids = {AddedPins.back().TextureId, AddedPins.back().OpacityId,
+				std::vector<fb::UUID> ids = {AddedPins.back().TextureId, AddedPins.back().OpacityId,
 				                           AddedPins.back().BlendId};
 				HandleEvent(CreateAppEvent(fbb,
 				                                    CreatePartialNodeUpdateDirect(
@@ -268,8 +263,8 @@ nosResult RegisterMerge(nosNodeFunctions* out)
 	auto mergePath = (root / "Shaders" / "Merge.frag").generic_string();
 
 	// Register shaders
-	nosShaderInfo2 shader = {.Key = NSN_Merge_Shader, .Source = {.Stage = NOS_SHADER_STAGE_FRAG, .GLSLPath = mergePath.c_str() }, .AssociatedNodeClassName = NSN_Merge};
-	auto ret = nosVulkan->RegisterShaders2(1, &shader);
+	nosShaderInfo shader = {.ShaderName = NSN_Merge_Shader, .Source = {.Stage = NOS_SHADER_STAGE_FRAG, .GLSLPath = mergePath.c_str() }, .AssociatedNodeClassName = NSN_Merge};
+	auto ret = nosVulkan->RegisterShaders(1, &shader);
 	if (NOS_RESULT_SUCCESS != ret)
 		return ret;
 

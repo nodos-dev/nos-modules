@@ -12,8 +12,8 @@ NOS_REGISTER_NAME(StreamerPort)
 NOS_REGISTER_NAME(PlayerPort)
 
 struct WebRTCSignalingServerNodeContext : nos::NodeContext {
-	nosUUID StartServerUUID;
-	nosUUID StopServerUUID;
+	nos::uuid StartServerUUID;
+	nos::uuid StopServerUUID;
 
 	std::thread ServerThread;
 	std::mutex UpdateMutex;

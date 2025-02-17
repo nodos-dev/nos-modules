@@ -43,7 +43,11 @@ struct AnimationSubsystemCtx
 		};
 		AnimationSubsystem.Interpolate =
 			[](nosName typeName, const nosBuffer from, const nosBuffer to, const double t, nosBuffer* outBuf) {
-				return GAnimationSysContext->InterpolatorManager.Interpolate(typeName, from, to, t, *outBuf);
+				std::optional<EngineBuffer> buf;
+				auto res = GAnimationSysContext->InterpolatorManager.Interpolate(typeName, from, to, t, buf);
+				if (res == NOS_RESULT_SUCCESS)
+					*outBuf = buf->Release();
+				return res;
 			};
 	}
 
@@ -57,7 +61,7 @@ struct AnimationSubsystemCtx
 nosResult OnRequest(uint32_t minorVersion, void** outSubsystemCtx)
 {
 	*outSubsystemCtx = &GAnimationSysContext->AnimationSubsystem;
-	return NOS_RESULT_NOT_IMPLEMENTED;
+	return NOS_RESULT_SUCCESS;
 }
 
 nosResult OnPreExecuteNode(nosNodeExecuteParams* params)
@@ -78,7 +82,7 @@ nosResult OnPreExecuteNode(nosNodeExecuteParams* params)
 	return NOS_RESULT_SUCCESS;
 }
 
-void OnPinDeleted(nosUUID pinId)
+void NOSAPI_CALL OnPinDeleted(nosUUID pinId)
 {
 	GAnimationSysContext->Animator.OnPinDeleted(pinId);
 }
@@ -96,20 +100,22 @@ nosResult ShouldExecuteNodeWithoutDirty(nosNodeExecuteParams* params)
 	return NOS_RESULT_NOT_FOUND;
 }
 
-void OnPathStart(nosUUID scheduledPinId)
+void NOSAPI_CALL OnPathStart(nosUUID scheduledPinId)
 {
 	nosVec2u deltaSec;
 	nosEngine.GetCurrentRunnerPathInfo(nullptr, &deltaSec);
 	GAnimationSysContext->Animator.CreatePathInfo(scheduledPinId, deltaSec);
 }
 
-void OnPathStop(nosUUID scheduledPinId)
+void NOSAPI_CALL OnPathStop(nosUUID scheduledPinId)
 {
 	GAnimationSysContext->Animator.DeletePathInfo(scheduledPinId);
 }
 
-void OnEndFrame(nosUUID scheduledPinId)
+void NOSAPI_CALL OnEndFrame(nosUUID scheduledPinId, nosEndFrameCause cause)
 {
+	if (cause != NOS_END_FRAME_FINISHED)
+		return;
 	GAnimationSysContext->Animator.PathExecutionFinished(scheduledPinId);
 }
 
@@ -150,7 +156,8 @@ void BroadcastAnimationTypesToEditors()
 	flatbuffers::FlatBufferBuilder fbb;
 	fbb.Finish(editor::MakeFromAnimation(fbb, editor::CreateAnimatableTypes(fbb, &types)));
 	nos::Buffer buf = fbb.Release();
-	nosEngine.SendCustomMessageToEditors(NOS_NAME(NOS_ANIMATION_SUBSYSTEM_NAME), buf);
+	nosSendEditorMessageParams params{.Message = buf, .DispatchType = NOS_EDITOR_MESSAGE_DISPATCH_TYPE_BROADCAST};
+	nosEngine.SendEditorMessage(&params);
 }
 
 void OnEditorConnected(uint64_t editorId)

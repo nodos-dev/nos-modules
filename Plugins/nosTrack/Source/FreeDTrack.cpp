@@ -231,7 +231,7 @@ struct FreeDNodeContext : public TrackNodeContext
 		bool InvertZoom = false;
 		bool InvertFocus = false;
 
-        bool Parse(std::vector<uint8_t> const& data, fb::TTrack& TrackData) override
+        bool Parse(std::vector<uint8_t> const& data, track::TTrack& TrackData) override
         {
             if(data.size() < sizeof(FreeDMessage_D1))
             {
@@ -254,7 +254,7 @@ struct FreeDNodeContext : public TrackNodeContext
             return true;
         }
 
-        void OnPinValueChanged(nos::Name pinName, nosUUID pinId, nosBuffer val)  override
+        void OnPinValueChanged(nos::Name pinName, uuid const& pinId, nosBuffer val)  override
         {
             if(NSN_ZoomRange == pinName)
             {

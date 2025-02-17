@@ -1,91 +1,98 @@
 {
-    "nodes": [
-        {
-            "class_name": "TextureSwitcher",
-            "contents_type": "Job",
-            "contents": {
-                "type": "nos.sys.vulkan.GPUNode",
-                "options": {
-                    "shader": "Shaders/TextureSwitcher.frag"
-                }
-            },
-            "description": "Used for switching between multiple textures",
-            "pins": [
-                {
-                    "name": "Output_Channel",
-                    "type_name": "nos.utilities.TextureSwitcherChannel",
-                    "show_as": "PROPERTY",
-                    "can_show_as": "INPUT_PIN_OR_PROPERTY",
-                    "description": "Channel index to display on output",
-                    "data": "Channel_1"
-                },
-                {
-                    "name": "Channel_1",
-                    "type_name": "nos.sys.vulkan.Texture",
-                    "show_as": "INPUT_PIN",
-                    "can_show_as": "INPUT_PIN_ONLY"
-                },
-                {
-                    "name": "Channel_2",
-                    "type_name": "nos.sys.vulkan.Texture",
-                    "show_as": "INPUT_PIN",
-                    "can_show_as": "INPUT_PIN_ONLY"
-                },
-                {
-                    "name": "Channel_3",
-                    "type_name": "nos.sys.vulkan.Texture",
-                    "show_as": "INPUT_PIN",
-                    "can_show_as": "INPUT_PIN_ONLY"
-                },
-                {
-                    "name": "Channel_4",
-                    "type_name": "nos.sys.vulkan.Texture",
-                    "show_as": "INPUT_PIN",
-                    "can_show_as": "INPUT_PIN_ONLY"
-                },
-                {
-                    "name": "Channel_5",
-                    "type_name": "nos.sys.vulkan.Texture",
-                    "show_as": "INPUT_PIN",
-                    "can_show_as": "INPUT_PIN_ONLY"
-                },
-                {
-                    "name": "Channel_6",
-                    "type_name": "nos.sys.vulkan.Texture",
-                    "show_as": "INPUT_PIN",
-                    "can_show_as": "INPUT_PIN_ONLY"
-                },
-                {
-                    "name": "Channel_7",
-                    "type_name": "nos.sys.vulkan.Texture",
-                    "show_as": "INPUT_PIN",
-                    "can_show_as": "INPUT_PIN_ONLY"
-                },
-                {
-                    "name": "Channel_8",
-                    "type_name": "nos.sys.vulkan.Texture",
-                    "show_as": "INPUT_PIN",
-                    "can_show_as": "INPUT_PIN_ONLY"
-                },
-                {
-                    "name": "Channel_9",
-                    "type_name": "nos.sys.vulkan.Texture",
-                    "show_as": "INPUT_PIN",
-                    "can_show_as": "INPUT_PIN_ONLY"
-                },
-                {
-                    "name": "Channel_10",
-                    "type_name": "nos.sys.vulkan.Texture",
-                    "show_as": "INPUT_PIN",
-                    "can_show_as": "INPUT_PIN_ONLY"
-                },
-                {
-                    "name": "Output",
-                    "type_name": "nos.sys.vulkan.Texture",
-                    "show_as": "OUTPUT_PIN",
-                    "can_show_as": "OUTPUT_PIN_ONLY"
-                }
-            ]
-        }
-    ]
+	"nodes": [
+		{
+			"class_name": "TextureSwitcher",
+			"menu_info": {
+				"category": "Utilities",
+				"display_name": "Texture Switcher"
+			},
+			"node": {
+				"class_name": "TextureSwitcher",
+				"contents_type": "Job",
+				"contents": {
+					"type": "nos.sys.vulkan.GPUNode",
+					"options": {
+						"shader": "Shaders/TextureSwitcher.frag"
+					}
+				},
+				"description": "Used for switching between multiple textures",
+				"pins": [
+					{
+						"name": "Output_Channel",
+						"type_name": "nos.utilities.TextureSwitcherChannel",
+						"show_as": "PROPERTY",
+						"can_show_as": "INPUT_PIN_OR_PROPERTY",
+						"description": "Channel index to display on output",
+						"data": "Channel_1"
+					},
+					{
+						"name": "Channel_1",
+						"type_name": "nos.sys.vulkan.Texture",
+						"show_as": "INPUT_PIN",
+						"can_show_as": "INPUT_PIN_ONLY"
+					},
+					{
+						"name": "Channel_2",
+						"type_name": "nos.sys.vulkan.Texture",
+						"show_as": "INPUT_PIN",
+						"can_show_as": "INPUT_PIN_ONLY"
+					},
+					{
+						"name": "Channel_3",
+						"type_name": "nos.sys.vulkan.Texture",
+						"show_as": "INPUT_PIN",
+						"can_show_as": "INPUT_PIN_ONLY"
+					},
+					{
+						"name": "Channel_4",
+						"type_name": "nos.sys.vulkan.Texture",
+						"show_as": "INPUT_PIN",
+						"can_show_as": "INPUT_PIN_ONLY"
+					},
+					{
+						"name": "Channel_5",
+						"type_name": "nos.sys.vulkan.Texture",
+						"show_as": "INPUT_PIN",
+						"can_show_as": "INPUT_PIN_ONLY"
+					},
+					{
+						"name": "Channel_6",
+						"type_name": "nos.sys.vulkan.Texture",
+						"show_as": "INPUT_PIN",
+						"can_show_as": "INPUT_PIN_ONLY"
+					},
+					{
+						"name": "Channel_7",
+						"type_name": "nos.sys.vulkan.Texture",
+						"show_as": "INPUT_PIN",
+						"can_show_as": "INPUT_PIN_ONLY"
+					},
+					{
+						"name": "Channel_8",
+						"type_name": "nos.sys.vulkan.Texture",
+						"show_as": "INPUT_PIN",
+						"can_show_as": "INPUT_PIN_ONLY"
+					},
+					{
+						"name": "Channel_9",
+						"type_name": "nos.sys.vulkan.Texture",
+						"show_as": "INPUT_PIN",
+						"can_show_as": "INPUT_PIN_ONLY"
+					},
+					{
+						"name": "Channel_10",
+						"type_name": "nos.sys.vulkan.Texture",
+						"show_as": "INPUT_PIN",
+						"can_show_as": "INPUT_PIN_ONLY"
+					},
+					{
+						"name": "Output",
+						"type_name": "nos.sys.vulkan.Texture",
+						"show_as": "OUTPUT_PIN",
+						"can_show_as": "OUTPUT_PIN_ONLY"
+					}
+				]
+			}
+		}
+	]
 }

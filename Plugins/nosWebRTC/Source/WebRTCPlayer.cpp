@@ -132,11 +132,11 @@ struct WebRTCPlayerNodeContext : nos::NodeContext {
 	std::unique_ptr<RingProxy> OutputRing;
 
 	std::atomic<EWebRTCPlayerStates> currentState;
-	nosUUID NodeID;
-	nosUUID OutputPinUUID;
-	nosUUID ConnectToServerID;
-	nosUUID ConnectToPeerID;
-	nosUUID DisconnectFromServerID;
+	nos::uuid NodeID;
+	nos::uuid OutputPinUUID;
+	nos::uuid ConnectToServerID;
+	nos::uuid ConnectToPeerID;
+	nos::uuid DisconnectFromServerID;
 
 	std::atomic<bool> shouldConvertFrame = false;
 	std::atomic<bool> checkCallbacks = true;
@@ -166,15 +166,17 @@ struct WebRTCPlayerNodeContext : nos::NodeContext {
 
 
 	//On Node Created
-	WebRTCPlayerNodeContext(nos::fb::Node const* node) :NodeContext
-	(node), currentState(EWebRTCPlayerStates::eNONE), PlayerBeginCopyToLogger("WebRTC Player BeginCopyFrom"), PlayerOnFrameLogger("WebRTC Player OnVideoFrame") {
+	WebRTCPlayerNodeContext(nos::fb::Node const* node)
+		: NodeContext(node), currentState(EWebRTCPlayerStates::eNONE),
+		  PlayerBeginCopyToLogger("WebRTC Player BeginCopyFrom"), PlayerOnFrameLogger("WebRTC Player OnVideoFrame")
+	{
 		OutputRGBA8.Info.Texture.Format = NOS_FORMAT_R8G8B8A8_SRGB;
 		OutputRGBA8.Info.Type = NOS_RESOURCE_TYPE_TEXTURE;
 		OutputRGBA8.Info.Texture.Usage = nosImageUsage(NOS_IMAGE_USAGE_TRANSFER_SRC | NOS_IMAGE_USAGE_TRANSFER_DST);
 		OutputRGBA8.Info.Texture.Width = 1280;
 		OutputRGBA8.Info.Texture.Height = 720;
 
-		nosVulkan->CreateResource(&OutputRGBA8);
+		nosVulkan->CreateResource(&OutputRGBA8, "WebRTCPlayer Output RGBA8 Texture");
 
 		for (int i = 0; i < 5; i++) {
 			nosResourceShareInfo tex = {};
@@ -183,7 +185,7 @@ struct WebRTCPlayerNodeContext : nos::NodeContext {
 			tex.Info.Texture.Usage = nosImageUsage(NOS_IMAGE_USAGE_TRANSFER_SRC | NOS_IMAGE_USAGE_TRANSFER_DST);
 			tex.Info.Texture.Width = OutputRGBA8.Info.Texture.Width;
 			tex.Info.Texture.Height = OutputRGBA8.Info.Texture.Height;
-			nosVulkan->CreateResource(&tex);
+			nosVulkan->CreateResource(&tex, "WebRTCPlayer Converted Texture");
 			ConvertedTextures.push_back(std::move(tex));
 
 			nosResourceShareInfo tmpY = {};
@@ -240,7 +242,7 @@ struct WebRTCPlayerNodeContext : nos::NodeContext {
 		}
 	}
 
-	void  OnPinValueChanged(nos::Name pinName, nosUUID pinId, nosBuffer value) override {
+	void  OnPinValueChanged(nos::Name pinName, nos::uuid const& pinId, nosBuffer value) override {
 		if (pinName == NSN_MaxFPS) {
 			FPS = *(static_cast<float*>(value.Data));
 			auto time = std::chrono::duration<float>(1.0f / FPS);
@@ -294,39 +296,41 @@ struct WebRTCPlayerNodeContext : nos::NodeContext {
 			OnFrameYBuffers[writeIndex].Info.Texture.Usage = nosImageUsage(NOS_IMAGE_USAGE_TRANSFER_SRC | NOS_IMAGE_USAGE_TRANSFER_DST);
 			OnFrameYBuffers[writeIndex].Info.Texture.Width = buffer->width();
 			OnFrameYBuffers[writeIndex].Info.Texture.Height = buffer->height();
-			nosVulkan->CreateResource(&OnFrameYBuffers[writeIndex]);
+			nosVulkan->CreateResource(&OnFrameYBuffers[writeIndex], "WebRTCPlayer Y Plane");
 
 			OnFrameUBuffers[writeIndex].Info.Texture.Format = NOS_FORMAT_R8_SRGB;
 			OnFrameUBuffers[writeIndex].Info.Type = NOS_RESOURCE_TYPE_TEXTURE;
 			OnFrameUBuffers[writeIndex].Info.Texture.Usage = nosImageUsage(NOS_IMAGE_USAGE_TRANSFER_SRC | NOS_IMAGE_USAGE_TRANSFER_DST);
 			OnFrameUBuffers[writeIndex].Info.Texture.Width = buffer->width() / 2;
 			OnFrameUBuffers[writeIndex].Info.Texture.Height = buffer->height() / 2;
-			nosVulkan->CreateResource(&OnFrameUBuffers[writeIndex]);
+			nosVulkan->CreateResource(&OnFrameUBuffers[writeIndex], "WebRTCPlayer U Plane");
 
 			OnFrameVBuffers[writeIndex].Info.Texture.Format = NOS_FORMAT_R8_SRGB;
 			OnFrameVBuffers[writeIndex].Info.Type = NOS_RESOURCE_TYPE_TEXTURE;
 			OnFrameVBuffers[writeIndex].Info.Texture.Usage = nosImageUsage(NOS_IMAGE_USAGE_TRANSFER_SRC | NOS_IMAGE_USAGE_TRANSFER_DST);
 			OnFrameVBuffers[writeIndex].Info.Texture.Width = buffer->width() / 2;
 			OnFrameVBuffers[writeIndex].Info.Texture.Height = buffer->height() / 2;
-			nosVulkan->CreateResource(&OnFrameVBuffers[writeIndex]);
+			nosVulkan->CreateResource(&OnFrameVBuffers[writeIndex], "WebRTCPlayer V Plane");
 		}
-		nosCmd cmd;
-		nosVulkan->Begin("WebRTCPlayer Upload", &cmd);
+		nosCmd cmd = nos::vkss::BeginCmd(NOS_NAME("WebRTCPlayer Upload"), NodeId);
 		nosVulkan->ImageLoad(cmd,
 							 buffer->DataY(),
 							 nosVec2u(buffer->width(), buffer->height()),
 							 NOS_FORMAT_R8_SRGB,
-							 &OnFrameYBuffers[writeIndex]);
+							 &OnFrameYBuffers[writeIndex],
+							 nullptr);
 		nosVulkan->ImageLoad(cmd,
 							 buffer->DataU(),
 							 nosVec2u(buffer->width() / 2, buffer->height() / 2),
 							 NOS_FORMAT_R8_SRGB,
-							 &OnFrameUBuffers[writeIndex]);
+							 &OnFrameUBuffers[writeIndex],
+							 nullptr);
 		nosVulkan->ImageLoad(cmd,
 							 buffer->DataV(),
 							 nosVec2u(buffer->width() / 2, buffer->height() / 2),
 							 NOS_FORMAT_R8_SRGB,
-							 &OnFrameVBuffers[writeIndex]);
+							 &OnFrameVBuffers[writeIndex],
+							 nullptr);
 		RGBAConversionRing->SetWrote();
 		FrameConversionCV.notify_one();
 	}
@@ -348,8 +352,7 @@ struct WebRTCPlayerNodeContext : nos::NodeContext {
 		PlayerBeginCopyToLogger.LogStats();
 		int readIndex = OutputRing->GetNextReadable();
 		auto dst = nos::vkss::DeserializeTextureInfo(copyInfo->PinData->Data);
-		nosCmd cmd;
-		nosVulkan->Begin("WebRTC Copy From", &cmd);
+		nosCmd cmd = nos::vkss::BeginCmd(NOS_NAME("WebRTC Copy From"), NodeId);
 		nosVulkan->Copy(cmd, &ConvertedTextures[readIndex], &dst, 0);
 		nosGPUEvent event;
 		nosCmdEndParams endParams{.ForceSubmit = true, .OutGPUEventHandle = &event};
@@ -381,8 +384,7 @@ struct WebRTCPlayerNodeContext : nos::NodeContext {
 			inputs.emplace_back(nos::vkss::ShaderBinding(NSN_PlaneV, OnFrameVBuffers[readIndex]));
 
 
-			nosCmd cmdRunPass;
-			nosVulkan->Begin("WebRTCPlayer.YUVConversion", &cmdRunPass);
+			nosCmd cmdRunPass = nos::vkss::BeginCmd(NOS_NAME("WebRTCPlayer.YUVConversion"), NodeId);
 			auto t0 = std::chrono::high_resolution_clock::now();
 			{
 				nosRunComputePassParams pass = {};
@@ -405,7 +407,7 @@ struct WebRTCPlayerNodeContext : nos::NodeContext {
 		}
 	}
 
-	void OnPinConnected(nos::Name pinName, nosUUID connectedPin) override
+	void OnPinConnected(nos::Name pinName, nos::uuid const& connectedPin) override
 	{
 
 	}
@@ -542,8 +544,9 @@ nosResult RegisterWebRTCPlayer(nosNodeFunctions* outFunctions) {
 	YUV420toRGBShader = { NSN_YUV420toRGB_Compute_Shader, {std::begin(YUV420toRGB_comp_spv), std::end(YUV420toRGB_comp_spv)} };
 
 	nosShaderInfo YUV420toRGBShaderInfo = {
-		.Key = YUV420toRGBShader.first,
+		.ShaderName = YUV420toRGBShader.first,
 		.Source = {.SpirvBlob = {YUV420toRGBShader.second.data(), YUV420toRGBShader.second.size()}},
+		.AssociatedNodeClassName = NSN_WebRTCPlayer,
 	};
 	nosResult res = nosVulkan->RegisterShaders(1, &YUV420toRGBShaderInfo);
 	if (res != NOS_RESULT_SUCCESS)

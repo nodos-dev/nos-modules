@@ -2,14 +2,14 @@
     "info": {
         "id": {
             "name": "nos.webrtc",
-            "version": "1.1.3"
+            "version": "1.2.0"
         },
         "description": "WebRTC Nodes",
         "display_name": "WebRTC",
         "dependencies": [
             {
                 "name": "nos.sys.vulkan",
-                "version": "5.24.0"
+                "version": "6.0.0"
             }
         ],
         "category": "Media I/O",
@@ -23,20 +23,5 @@
     "custom_types": [],
     "binary_path": "Binaries/nosWebRTC",
     "associated_nodes": [
-      {
-        "category": "WebRTC|Streamer",
-        "class_name": "WebRTCStreamer",
-        "display_name": "WebRTC Streamer"
-      },
-      {
-        "category": "WebRTC|Player",
-        "class_name": "WebRTCPlayer",
-        "display_name": "WebRTC Player"
-      },
-      {
-        "category": "WebRTC|SignalingServer",
-        "class_name": "WebRTCSignalingServer",
-        "display_name": "WebRTC Signaling Server"
-      }
     ]
 }

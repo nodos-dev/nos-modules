@@ -9,9 +9,7 @@ namespace nos::strings
 {
 struct RegexNode : NodeContext
 {
-	RegexNode(const nosFbNode* node) : NodeContext(node)
-	{
-	}
+	using NodeContext::NodeContext;
 
 	nosResult ExecuteNode(nosNodeExecuteParams* params) override
 	{

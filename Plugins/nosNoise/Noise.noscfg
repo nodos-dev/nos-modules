@@ -2,14 +2,14 @@
     "info": {
         "id": {
             "name": "nos.noise",
-            "version": "0.2.3"
+            "version": "0.3.0"
         },
         "display_name": "nos.noise",
         "description": "Noise utilities for Nodos.",
         "dependencies": [
             {
                 "name": "nos.sys.vulkan",
-                "version": "5.24"
+                "version": "6.0"
             }
         ],
         "category": "Procedural Generation"
@@ -22,24 +22,5 @@
     ],
     "defaults": [],
     "custom_types": [],
-    "associated_nodes": [
-        {
-            "category": "Noise",
-            "class_name": "SimplexNoise",
-          "display_name": "Simplex Noise",
-          "name_aliases": [ "random", "image" ]
-        },
-      {
-        "category": "Noise",
-        "class_name": "WorleyNoise",
-        "display_name": "Worley Noise",
-        "name_aliases": [ "random", "image" ]
-      },
-        {
-            "category": "Noise",
-            "class_name": "Fraction",
-            "display_name": "Fraction"
-        }
-    ],
     "third_party_software": ["./Config/Licenses.json"]
 }

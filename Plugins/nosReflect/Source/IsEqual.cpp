@@ -10,13 +10,13 @@ struct IsEqualNode : NodeContext
 
 	nos::Buffer Value;
 	
-	IsEqualNode(const nosFbNode* inNode) : NodeContext(inNode)
+	IsEqualNode(nosFbNodePtr inNode) : NodeContext(inNode)
 	{
 		for (auto pin : *inNode->pins())
 		{
 			if(pin->name()->string_view() == NSN_A)
 			{
-				if (pin->type_name()->string_view() != NSN_VOID)
+				if (pin->type_name()->string_view() != NSN_TypeNameGeneric)
 					Type = nos::TypeInfo(nos::Name(pin->type_name()->string_view()));
 			}
 		}
@@ -26,7 +26,7 @@ struct IsEqualNode : NodeContext
 	{
 		if (Type || update->UpdatedField != NOS_PIN_FIELD_TYPE_NAME)
 			return;
-		if (update->PinName == NSN_A && update->TypeName != NSN_VOID)
+		if (update->PinName == NSN_A && update->TypeName != NSN_TypeNameGeneric)
 			Type = nos::TypeInfo(update->TypeName);
 	}
 	

@@ -39,9 +39,9 @@ struct ReadImageContext : NodeContext
 	std::filesystem::path FilePath;
 
 	std::mutex OutImageDecRefCallbacksMutex;
-	std::queue<std::function<void()>> OutImageDecRefCallbacks;
+	std::vector<vkss::Resource> OutPendingImageRefs;
 
-	ReadImageContext(nosFbNode const* node) : 
+	ReadImageContext(nosFbNodePtr node) : 
 		NodeContext(node), 
 		CurrentState(State::Idle), 
 		TimeStarted(Clock::now())
@@ -102,11 +102,7 @@ struct ReadImageContext : NodeContext
 	void FlushImageDecRefCallbacks()
 	{
 		std::lock_guard<std::mutex> lock(OutImageDecRefCallbacksMutex);
-		while (!OutImageDecRefCallbacks.empty())
-		{
-			OutImageDecRefCallbacks.front()();
-			OutImageDecRefCallbacks.pop();
-		}
+		OutPendingImageRefs.clear();
 	}
 
 	nosResult LoadImage(std::filesystem::path path, nosUUID outPinId, bool sRGB)
@@ -127,20 +123,20 @@ struct ReadImageContext : NodeContext
 				uint8_t* img = stbi_load(path.string().c_str(), &w, &h, &n, 4);
 				if (!img)
 				{
-					nosEngine.LogE("Couldn't load image from %s.", path.string().c_str());
+					nosEngine.LogE("CouBldn't load image from %s.", path.string().c_str());
 					UpdateStatus(State::Failed);
 					return;
 				}
-					
-				nosResourceShareInfo outRes = {
+
+				nosResourceShareInfo outResInfo = {
 					.Info = {.Type = NOS_RESOURCE_TYPE_TEXTURE,
-						.Texture = {.Width = (uint32_t)w, .Height = (uint32_t)h, .Format = NOS_FORMAT_R8G8B8A8_UNORM, .FieldType = NOS_TEXTURE_FIELD_TYPE_PROGRESSIVE}} };
+								.Texture = {.Width = (uint32_t)w, .Height = (uint32_t)h, .Format = NOS_FORMAT_R8G8B8A8_UNORM, .FieldType = NOS_TEXTURE_FIELD_TYPE_PROGRESSIVE}} };
 
 				// unless reading raw bytes, this is useless since samplers convert to linear space automatically
 				if (sRGB)
-					outRes.Info.Texture.Format = NOS_FORMAT_R8G8B8A8_SRGB;
-				nosVulkan->CreateResource(&outRes);
-				nosVulkan->SetResourceTag(&outRes, "ReadImage Texture");
+					outResInfo.Info.Texture.Format = NOS_FORMAT_R8G8B8A8_SRGB;
+
+				auto outRes = *vkss::Resource::Create(outResInfo, "ReadImage Texture");
 
 				nosCmd cmd{};
 				nosCmdBeginParams beginParams {
@@ -148,20 +144,18 @@ struct ReadImageContext : NodeContext
 					.AssociatedNodeId = this->NodeId,
 					.OutCmdHandle = &cmd
 				};
-				nosVulkan->Begin2(&beginParams);
-				nosVulkan->ImageLoad(cmd, img, nosVec2u(w, h), NOS_FORMAT_R8G8B8A8_SRGB, &outRes);
+				nosVulkan->Begin(&beginParams);
+				nosVulkan->ImageLoad(cmd, img, nosVec2u(w, h), NOS_FORMAT_R8G8B8A8_SRGB, &outRes, nullptr);
 				nosCmdEndParams endParams{ .ForceSubmit = true };
 				nosVulkan->End(cmd, &endParams);
 
-				nosEngine.SetPinValue(outPinId, nos::Buffer::From(vkss::ConvertTextureInfo(outRes)));
+				nosEngine.SetPinValue(outPinId, outRes.ToPinData());
 
 				{
 					std::lock_guard<std::mutex> lock(this->OutImageDecRefCallbacksMutex);
-					this->OutImageDecRefCallbacks.push([this, outRes]() {
-						nosVulkan->DestroyResource(&outRes);
-					});
+					OutPendingImageRefs.push_back(std::move(outRes));
 				}
-					
+				
 				nosEngine.CallNodeFunction(this->NodeId, NOS_NAME_STATIC("OnImageLoaded"));
 
 				free(img);

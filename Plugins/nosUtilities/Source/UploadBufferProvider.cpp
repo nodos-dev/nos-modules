@@ -18,21 +18,17 @@ namespace nos::utilities
 {
 	struct UploadBuffer
 	{
-		nosResourceShareInfo BufferInfo = {};
+		vkss::Resource BufferInfo;
 		nosGPUEventResource Event = 0;
-		UploadBuffer(nosResourceShareInfo sampleBufferInfo) : BufferInfo(sampleBufferInfo)
+		UploadBuffer(nosResourceShareInfo sampleBufferInfo) : BufferInfo(*vkss::Resource::Create(sampleBufferInfo, "UploadBuffer"))
 		{
 			nosVulkan->CreateGPUEventResource(&Event);
-			nosVulkan->CreateResource(&BufferInfo);
 		}
 		UploadBuffer(const UploadBuffer& other) = delete;
 		UploadBuffer& operator=(const UploadBuffer& other) = delete;
-		UploadBuffer(UploadBuffer&& other) 
+		UploadBuffer(UploadBuffer&& other) noexcept : BufferInfo(std::move(other.BufferInfo)), Event(other.Event)
 		{
-			BufferInfo = other.BufferInfo;
-			Event = other.Event;
 			other.Event = 0;
-			other.BufferInfo = {};
 		}
 
 		~UploadBuffer()
@@ -45,7 +41,6 @@ namespace nos::utilities
 				if (res == NOS_RESULT_SUCCESS && *event)
 					nosVulkan->WaitGpuEvent(event, UINT64_MAX);
 			}
-			nosVulkan->DestroyResource(&BufferInfo);
 			nosVulkan->DestroyGPUEventResource(&Event);
 		}
 	};
@@ -67,7 +62,7 @@ namespace nos::utilities
 
 		size_t CurrentIndex = 0;
 
-		UploadBufferProviderNodeContext(const nosFbNode* node) : NodeContext(node)
+		UploadBufferProviderNodeContext(nosFbNodePtr node) : NodeContext(node)
 		{
 			AddPinValueWatcher(NSN_QueueSize, [this](nos::Buffer const& newVal, std::optional<nos::Buffer> oldVal) 
 				{
@@ -102,6 +97,8 @@ namespace nos::utilities
 						return;
 					SampleBuffer.Info.Buffer.Alignment = newAlignment;
 					Buffers.clear();
+					if (SampleBuffer.Info.Buffer.Size == 0)
+						return;
 					for (size_t i = 0; i < QueueSize; i++)
 						Buffers.emplace_back(SampleBuffer);
 				});
@@ -116,6 +113,8 @@ namespace nos::utilities
 					else
 						memFlags = nosMemoryFlags(memFlags & ~NOS_MEMORY_FLAGS_FORCE_HOST_MEMORY);
 					Buffers.clear();
+					if (SampleBuffer.Info.Buffer.Size == 0)
+						return;
 					for (size_t i = 0; i < QueueSize; i++)
 						Buffers.emplace_back(SampleBuffer);
 				});
@@ -130,6 +129,8 @@ namespace nos::utilities
 					else
 						memFlags = nosMemoryFlags(memFlags & ~NOS_MEMORY_FLAGS_DOWNLOAD);
 					Buffers.clear();
+					if (SampleBuffer.Info.Buffer.Size == 0)
+						return;
 					for (size_t i = 0; i < QueueSize; i++)
 						Buffers.emplace_back(SampleBuffer);
 				});
@@ -152,7 +153,7 @@ namespace nos::utilities
 				nosEngine.WatchLog("UploadBufferProvider Wait", sw.ElapsedString().c_str());
 			}
 
-			nosEngine.SetPinValue(execParams[NSN_Buffer].Id, Buffer::From(vkss::ConvertBufferInfo(nextBuf.BufferInfo)));
+			nosEngine.SetPinValue(execParams[NSN_Buffer].Id, nextBuf.BufferInfo.ToPinData());
 			nosEngine.SetPinValue(execParams[NSN_GPUEventRef].Id, Buffer::From(nos::sys::vulkan::GPUEventResource(nextBuf.Event)));
 
 			return NOS_RESULT_SUCCESS;

@@ -161,7 +161,8 @@ protected:
 		auto event = editor::CreateFromSubsystem(fbb, editor::FromSubsystemUnion::VariableDeleted, offset.Union());
 		fbb.Finish(event);
 		nos::Buffer buf = fbb.Release();
-		nosEngine.SendCustomMessageToEditors(nosEngine.Module->Id.Name, buf);
+		nosSendEditorMessageParams params{.Message = buf, .DispatchType = NOS_EDITOR_MESSAGE_DISPATCH_TYPE_BROADCAST};
+		nosEngine.SendEditorMessage(&params);
 	}
 
 	void SendVariableListToEditors(std::optional<uint64_t> optEditorId = std::nullopt)
@@ -178,7 +179,15 @@ protected:
 		auto event  = editor::CreateFromSubsystem(fbb, editor::FromSubsystemUnion::VariableList, offset.Union());
 		fbb.Finish(event);
 		nos::Buffer buf = fbb.Release();
-		nosEngine.SendCustomMessageToEditors(nosEngine.Module->Id.Name, buf);
+		nosSendEditorMessageParams params{.Message = buf};
+		if (optEditorId)
+		{
+			params.DispatchType = NOS_EDITOR_MESSAGE_DISPATCH_TYPE_TO_SELECTED;
+			params.ToSelected = {.EditorId = *optEditorId};
+		}
+		else
+			params.DispatchType = NOS_EDITOR_MESSAGE_DISPATCH_TYPE_BROADCAST;
+		nosEngine.SendEditorMessage(&params);
 	}
 
 	void SendVariableNameStringListUpdate()
@@ -197,7 +206,9 @@ protected:
 		auto event  = editor::CreateFromSubsystem(fbb, editor::FromSubsystemUnion::nos_sys_variables_Variable, offset.Union());
 		fbb.Finish(event);
 		nos::Buffer msgBuf = fbb.Release();
-		nosEngine.SendCustomMessageToEditors(nosEngine.Module->Id.Name, msgBuf);
+		nosSendEditorMessageParams params{.Message = msgBuf,
+										  .DispatchType = NOS_EDITOR_MESSAGE_DISPATCH_TYPE_BROADCAST};
+		nosEngine.SendEditorMessage(&params);
 	}
 
 	void SendVariableToListeners(VariableInfo& variable)

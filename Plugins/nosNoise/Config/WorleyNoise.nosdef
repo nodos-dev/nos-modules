@@ -1,48 +1,56 @@
 {
-    "nodes": [
-        {
-            "class_name": "WorleyNoise",
-            "contents_type": "Job",
-            "contents": {
-                "type": "nos.sys.vulkan.GPUNode",
-                "options": {
-                    "shader": "Shaders/WorleyNoise.frag"
-                }
-            },
-            "pins": [
-                {
-                    "name": "Position",
-                    "type_name": "nos.fb.vec2",
-                    "show_as": "INPUT_PIN",
-                    "can_show_as": "INPUT_PIN_OR_PROPERTY"
-                },
-                {
-                    "name": "Scale",
-                    "type_name": "float",
-                    "show_as": "INPUT_PIN",
-                    "can_show_as": "INPUT_PIN_OR_PROPERTY",
-                    "data": 5.0
-                },
-                {
-                    "name": "Resolution",
-                    "type_name": "nos.fb.vec2u",
-                    "show_as": "PROPERTY",
-                    "can_show_as": "INPUT_PIN_OR_PROPERTY",
-                    "data": {
-                        "x": 1920,
-                        "y": 1080
-                    }
-                },
-                {
-                    "name": "Output",
-                    "type_name": "nos.sys.vulkan.Texture",
-                    "show_as": "OUTPUT_PIN",
-                    "can_show_as": "OUTPUT_PIN_OR_PROPERTY",
-                    "data": {
-                        "format": "R32_SFLOAT"
-                    }
-                }
-            ]
-        }
-    ]
+	"nodes": [
+		{
+			"class_name": "WorleyNoise",
+			"menu_info": {
+				"category": "Noise",
+				"display_name": "Worley Noise",
+				"name_aliases": [ "random", "image" ]
+			},
+			"node": {
+				"class_name": "WorleyNoise",
+				"contents_type": "Job",
+				"contents": {
+					"type": "nos.sys.vulkan.GPUNode",
+					"options": {
+						"shader": "Shaders/WorleyNoise.frag"
+					}
+				},
+				"pins": [
+					{
+						"name": "Position",
+						"type_name": "nos.fb.vec2",
+						"show_as": "INPUT_PIN",
+						"can_show_as": "INPUT_PIN_OR_PROPERTY"
+					},
+					{
+						"name": "Scale",
+						"type_name": "float",
+						"show_as": "INPUT_PIN",
+						"can_show_as": "INPUT_PIN_OR_PROPERTY",
+						"data": 5.0
+					},
+					{
+						"name": "Resolution",
+						"type_name": "nos.fb.vec2u",
+						"show_as": "PROPERTY",
+						"can_show_as": "INPUT_PIN_OR_PROPERTY",
+						"data": {
+							"x": 1920,
+							"y": 1080
+						}
+					},
+					{
+						"name": "Output",
+						"type_name": "nos.sys.vulkan.Texture",
+						"show_as": "OUTPUT_PIN",
+						"can_show_as": "OUTPUT_PIN_OR_PROPERTY",
+						"data": {
+							"format": "R32_SFLOAT"
+						}
+					}
+				]
+			}
+		}
+	]
 }

@@ -77,7 +77,7 @@ public:
 		return NOS_RESULT_SUCCESS;
 	}
 
-	void CreateNodeInstance(const nosFbNode* node)
+	void CreateNodeInstance(nosFbNodePtr node)
 	{
 		auto name = nos::Name(node->name()->str());
 		auto classNameStr = node->class_name()->str();
@@ -96,7 +96,7 @@ public:
 		}
 	}
 
-	void RemoveNodeInstance(nos::fb::UUID id)
+	void RemoveNodeInstance(uuid id)
 	{
 		if (NodeInstances.contains(id)) {
 			pyb::gil_scoped_acquire gil;
@@ -104,7 +104,7 @@ public:
 		}
 	}
 
-	std::shared_ptr<pyb::object> GetNodeInstance(nos::fb::UUID id)
+	std::shared_ptr<pyb::object> GetNodeInstance(uuid id)
 	{
 		auto it = NodeInstances.find(id);
 		if (it == NodeInstances.end())
@@ -115,7 +115,7 @@ public:
 protected:
 	pyb::scoped_interpreter ScopedInterpreter;
 	pyb::gil_scoped_release Release;
-	std::unordered_map<nos::fb::UUID, std::shared_ptr<pyb::object>> NodeInstances;
+	std::unordered_map<uuid, std::shared_ptr<pyb::object>> NodeInstances;
 	std::unordered_map<nos::Name, std::unique_ptr<pyb::module>> Modules;
 	std::unique_ptr<pyb::module> NodosInternalModule;
 };
@@ -179,12 +179,12 @@ struct PyNativeContextMenuRequestInstigator
 	
 struct PyNativeContextMenuRequest
 {
-	PyNativeContextMenuRequest(const nosContextMenuRequest* request) : Instigator(request->instigator()->client_id(), request->instigator()->request_id())
+	PyNativeContextMenuRequest(nosContextMenuRequestPtr request) : Instigator(request->instigator()->client_id(), request->instigator()->request_id())
 	{
 		ItemId = *request->item_id();
 		Pos = *request->pos();
 	}
-	nosUUID ItemId {};
+	uuid ItemId {};
 	nos::fb::vec2 Pos {};
 	PyNativeContextMenuRequestInstigator Instigator;
 };
@@ -214,9 +214,9 @@ PYBIND11_EMBEDDED_MODULE(__nodos_internal__, m)
 	// Structs
 	pyb::class_<nosUUID>(m, "uuid")
 		.def(pyb::init<>())
-		.def("__str__", [](const nosUUID& id) -> std::string { return nos::UUID2STR(id); })
-		.def("__hash__", [](const nosUUID& id) -> size_t { return nos::UUIDHash(id); })
-		.def("__eq__", [](const nosUUID& self, const nosUUID& other) -> bool { return self == other; });
+		.def("__str__", [](const nosUUID& id) -> std::string { return std::string(uuid(id)); })
+		.def("__hash__", [](const nosUUID& id) -> size_t { return std::hash<uuid>{}(uuid(id)); })
+		.def("__eq__", [](const nosUUID& self, const nosUUID& other) -> bool { return uuid(self) == other; });
 
 	pyb::class_<nos::Name>(m, "Name")
 		.def(pyb::init([](uint64_t arg) {return nos::Name(nosName{ arg }); }))
@@ -325,7 +325,7 @@ nosResult NOSAPI_CALL OnPyNodeRegistered(nosModuleIdentifier pluginId, nosName c
 class PyNativeNode : public nos::NodeContext
 {
 public:
-	PyNativeNode(const nosFbNode* node) : NodeContext(node)
+	PyNativeNode(nosFbNodePtr node) : NodeContext(node)
 	{
 		GInterpreter->CreateNodeInstance(node);
 	}
@@ -376,27 +376,27 @@ public:
 		return CallMethod<nosResult>("execute_node", PyNativeNodeExecuteParams(params));
 	}
 
-	void OnPinValueChanged(nos::Name pinName, nosUUID pinId, nosBuffer value) override
+	void OnPinValueChanged(nos::Name pinName, uuid const& pinId, nosBuffer value) override
 	{
 		CallMethod<void>("on_pin_value_changed", PyNativeOnPinValueChangedArgs(pinName, value));
 	}
 
-	void OnNodeMenuRequested(const nosContextMenuRequest* request) override
+	void OnNodeMenuRequested(nosContextMenuRequestPtr request) override
 	{
 		CallMethod<void>("on_node_menu_requested", PyNativeContextMenuRequest(request));
 	}
 	
-	void OnPinMenuRequested(nos::Name pinName, const nosContextMenuRequest* request) override
+	void OnPinMenuRequested(nos::Name pinName, nosContextMenuRequestPtr request) override
 	{
 		CallMethod<void>("on_pin_menu_requested", nos::Name(pinName), PyNativeContextMenuRequest(request));
 	}
 
-	void OnMenuCommand(nosUUID itemID, uint32_t cmd) override
+	void OnMenuCommand(uuid const& itemID, uint32_t cmd) override
 	{
-		CallMethod<void>("on_menu_command", itemID, cmd);
+		CallMethod<void>("on_menu_command", nosUUID(itemID), cmd);
 	}
 
-	void OnPinConnected(nos::Name pinName, nosUUID connectedPin) override
+	void OnPinConnected(nos::Name pinName, uuid const& connectedPin) override
 	{
 		CallMethod<void>("on_pin_connected", PyNativeOnPinConnectedArgs(pinName));
 	}

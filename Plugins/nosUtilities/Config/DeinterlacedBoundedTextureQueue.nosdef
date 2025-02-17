@@ -1,48 +1,55 @@
 {
-  "nodes": [
-    {
-      "class_name": "DeinterlacedBoundedTextureQueue",
-      "display_name": "Deinterlaced Bounded Texture Queue",
-      "contents_type": "Job",
-      "description":  "",
-      "pins": [
-        {
-          "name": "Thread",
-          "type_name": "nos.exe",
-          "show_as": "INPUT_PIN",
-          "can_show_as": "INPUT_PIN_ONLY"
-        },
-        {
-          "name": "Size",
-          "type_name": "uint",
-          "data": 2,
-          "max": 120,
-          "min": 1,
-          "show_as": "PROPERTY",
-          "can_show_as": "PROPERTY_ONLY"
-        },
-        {
-          "name": "ShouldInterlace",
-          "description": "If true, the output will be two times the frame rate the input has, with alternating fields",
-          "type_name": "bool",
-          "data": false,
-          "show_as": "INPUT_PIN",
-          "can_show_as": "INPUT_PIN_OR_PROPERTY"
-        },
-        {
-          "name": "Input",
-          "type_name": "nos.sys.vulkan.Texture",
-          "show_as": "INPUT_PIN",
-          "can_show_as": "INPUT_PIN_ONLY"
-        },
-        {
-          "name": "Output",
-          "type_name": "nos.sys.vulkan.Texture",
-          "show_as": "OUTPUT_PIN",
-          "can_show_as": "OUTPUT_PIN_ONLY",
-          "live": true
-        }
-      ]
-    }
-  ]
+	"nodes": [
+		{
+			"class_name": "DeinterlacedBoundedTextureQueue",
+			"menu_info": {
+				"category": "Utilities",
+				"display_name": "Deinterlaced Bounded Texture Queue"
+			},
+			"node": {
+				"class_name": "DeinterlacedBoundedTextureQueue",
+				"display_name": "Deinterlaced Bounded Texture Queue",
+				"contents_type": "Job",
+				"description": "",
+				"pins": [
+					{
+						"name": "Thread",
+						"type_name": "nos.exe",
+						"show_as": "INPUT_PIN",
+						"can_show_as": "INPUT_PIN_ONLY"
+					},
+					{
+						"name": "Size",
+						"type_name": "uint",
+						"data": 2,
+						"max": 120,
+						"min": 1,
+						"show_as": "PROPERTY",
+						"can_show_as": "PROPERTY_ONLY"
+					},
+					{
+						"name": "ShouldInterlace",
+						"description": "If true, the output will be two times the frame rate the input has, with alternating fields",
+						"type_name": "bool",
+						"data": false,
+						"show_as": "INPUT_PIN",
+						"can_show_as": "INPUT_PIN_OR_PROPERTY"
+					},
+					{
+						"name": "Input",
+						"type_name": "nos.sys.vulkan.Texture",
+						"show_as": "INPUT_PIN",
+						"can_show_as": "INPUT_PIN_ONLY"
+					},
+					{
+						"name": "Output",
+						"type_name": "nos.sys.vulkan.Texture",
+						"show_as": "OUTPUT_PIN",
+						"can_show_as": "OUTPUT_PIN_ONLY",
+						"live": true
+					}
+				]
+			}
+		}
+	]
 }

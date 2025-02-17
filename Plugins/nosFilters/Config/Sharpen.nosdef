@@ -1,56 +1,63 @@
 {
-    "nodes": [
-        {
-            "class_name": "Sharpen",
-            "contents_type": "Job",
-            "contents": {
-                "type": "nos.sys.vulkan.GPUNode",
-                "options": {
-                    "shader": "Shaders/Sharpen.frag"
-                }
-            },
-            "pins": [
-                {
-                    "name": "Input",
-                    "type_name": "nos.sys.vulkan.Texture",
-                    "show_as": "INPUT_PIN",
-                    "can_show_as": "INPUT_PIN_ONLY",
-                    "data": {
-                        "filtering": "LINEAR"
-                    }
-                },
-                {
-                    "name": "Radius",
-                    "type_name": "float",
-                    "show_as": "PROPERTY",
-                    "can_show_as": "INPUT_PIN_OR_PROPERTY",
-                    "data": 1.0,
-                    "min": 0.0,
-                    "max": 4.0
-                },
-                {
-                    "name": "Sharpness",
-                    "type_name": "float",
-                    "show_as": "PROPERTY",
-                    "can_show_as": "INPUT_PIN_OR_PROPERTY",
-                    "data": 1.0,
-                    "min": 0.0,
-                    "max": 4.0
-                },
-                {
-                    "name": "PreMultiplyAlpha",
-                    "type_name": "bool",
-                    "show_as": "PROPERTY",
-                    "can_show_as": "INPUT_PIN_OR_PROPERTY",
-                    "data": 0
-                },
-                {
-                    "name": "Output",
-                    "type_name": "nos.sys.vulkan.Texture",
-                    "show_as": "OUTPUT_PIN",
-                    "can_show_as": "OUTPUT_PIN_ONLY"
-                }
-            ]
-        }
-    ]
+	"nodes": [
+		{
+			"class_name": "Sharpen",
+			"menu_info": {
+				"category": "Filters",
+				"display_name": "Sharpen"
+			},
+			"node": {
+				"class_name": "Sharpen",
+				"contents_type": "Job",
+				"contents": {
+					"type": "nos.sys.vulkan.GPUNode",
+					"options": {
+						"shader": "Shaders/Sharpen.frag"
+					}
+				},
+				"pins": [
+					{
+						"name": "Input",
+						"type_name": "nos.sys.vulkan.Texture",
+						"show_as": "INPUT_PIN",
+						"can_show_as": "INPUT_PIN_ONLY",
+						"data": {
+							"filtering": "LINEAR"
+						}
+					},
+					{
+						"name": "Radius",
+						"type_name": "float",
+						"show_as": "PROPERTY",
+						"can_show_as": "INPUT_PIN_OR_PROPERTY",
+						"data": 1.0,
+						"min": 0.0,
+						"max": 4.0
+					},
+					{
+						"name": "Sharpness",
+						"type_name": "float",
+						"show_as": "PROPERTY",
+						"can_show_as": "INPUT_PIN_OR_PROPERTY",
+						"data": 1.0,
+						"min": 0.0,
+						"max": 4.0
+					},
+					{
+						"name": "PreMultiplyAlpha",
+						"type_name": "bool",
+						"show_as": "PROPERTY",
+						"can_show_as": "INPUT_PIN_OR_PROPERTY",
+						"data": 0
+					},
+					{
+						"name": "Output",
+						"type_name": "nos.sys.vulkan.Texture",
+						"show_as": "OUTPUT_PIN",
+						"can_show_as": "OUTPUT_PIN_ONLY"
+					}
+				]
+			}
+		}
+	]
 }

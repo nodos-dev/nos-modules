@@ -2,21 +2,28 @@
 	"nodes": [
 		{
 			"class_name": "Window",
-			"contents_type": "Job",
-			"description": "Test window node",
-			"pins": [
-				{
-					"name": "Thread",
-					"type_name": "nos.exe",
-					"show_as": "INPUT_PIN",
-					"can_show_as": "INPUT_PIN_ONLY"
-				},
-				{
-					"name": "Input",
-					"type_name": "nos.sys.vulkan.Texture",
-					"show_as": "INPUT_PIN"
-				}
-			]
+			"menu_info": {
+				"category": "Test|Window",
+				"display_name": "Window"
+			},
+			"node": {
+				"class_name": "Window",
+				"contents_type": "Job",
+				"description": "Test window node",
+				"pins": [
+					{
+						"name": "Thread",
+						"type_name": "nos.exe",
+						"show_as": "INPUT_PIN",
+						"can_show_as": "INPUT_PIN_ONLY"
+					},
+					{
+						"name": "Input",
+						"type_name": "nos.sys.vulkan.Texture",
+						"show_as": "INPUT_PIN"
+					}
+				]
+			}
 		}
 	]
 }

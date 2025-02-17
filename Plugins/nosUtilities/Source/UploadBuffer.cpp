@@ -10,7 +10,7 @@ namespace nos::utilities
 {
 struct UploadBufferNodeContext : NodeContext
 {
-	UploadBufferNodeContext(const nosFbNode* node) : NodeContext(node)
+	UploadBufferNodeContext(nosFbNodePtr node) : NodeContext(node)
 	{
 
 	}
@@ -53,8 +53,7 @@ struct UploadBufferNodeContext : NodeContext
 		auto OutputBuffer = vkss::ConvertToResourceInfo(output);
 		auto InputBuffer = vkss::ConvertToResourceInfo(input);
 
-		nosCmd cmd;
-		nosVulkan->Begin("UploadBuffer Staging Copy", &cmd);
+		nosCmd cmd = vkss::BeginCmd(NOS_NAME("UploadBuffer Staging Copy"), NodeId);
 		nosVulkan->Copy(cmd, &InputBuffer, &OutputBuffer, 0);
 		nosCmdEndParams endParams{.ForceSubmit = false, .OutGPUEventHandle = event};
 		nosVulkan->End(cmd, &endParams);

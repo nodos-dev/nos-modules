@@ -2,202 +2,25 @@
     "info": {
         "id": {
             "name": "nos.reflect",
-            "version": "1.4.5"
+            "version": "1.5.0"
         },
         "display_name": "Reflect",
         "description": "Collection of type reflection nodes",
 		"dependencies": [
 			{
 				"name": "nos.sys.vulkan",
-				"version":  "5.24"
+				"version":  "6.0"
 			},
 			{
 				"name": "nos.sys.variables",
-				"version":  "0.1"
+				"version":  "0.2"
 			}
 		]
     },
     "binary_path": "Binaries/nosReflect",
     "node_definitions": ["Config/Reflect.nosdef"],
     "defaults": [],
-    "custom_types": [],
-	"associated_nodes": [
-		{
-			"category": "Type",
-			"class_name": "MakeDynamic",
-			"display_name": "Make",
-			"name_aliases": [ "variable", "create", "new", "Make *" ]
-		},
-		{
-			"category": "Type",
-			"class_name": "Make",
-			"display_name": "Make",
-			"hide_in_context_menu": true,
-			"name_aliases": [ "variable", "create", "new" ]
-		},
-		{
-			"category": "Type",
-			"class_name": "Break",
-			"display_name": "Break",
-			"name_aliases": [ "member", "argument" ]
-		},
-		{
-			"category": "Type",
-			"class_name": "Array",
-			"display_name": "Array",
-			"name_aliases": [ "list", "vector", "dynamic" ]
-		},
-		{
-			"category": "Type",
-			"class_name": "IndexOf",
-			"display_name": "Index Of",
-			"name_aliases": [ "array" ]
-		},
-		{
-			"category": "Type",
-			"class_name": "Indexer",
-			"display_name": "Indexer",
-			"name_aliases": [ "element" ]
-		},
-		{
-			"category": "Type",
-			"class_name": "Delay",
-			"display_name": "Delay"
-		},
-		{
-			"category": "Type",
-			"class_name": "IsEqual",
-			"display_name": "Is Equal",
-			"name_aliases": [ "compare", "equal", "isequal" ]
-		},
-		{
-			"category": "Arithmetic",
-			"class_name": "Arithmetic",
-			"display_name": "Add",
-			"params": [
-				{
-					"type_name": "nos.fb.BinaryOperator",
-					"value": "ADD"
-				}
-			],
-			"name_aliases": [ "plus", "sum" ]
-		},
-		{
-			"category": "Arithmetic",
-			"class_name": "Arithmetic",
-			"display_name": "Div",
-			"params": [
-				{
-					"type_name": "nos.fb.BinaryOperator",
-					"value": "DIV"
-				}
-			]
-		},
-		{
-			"category": "Arithmetic",
-			"class_name": "Arithmetic",
-			"display_name": "Mul",
-			"params": [
-				{
-					"type_name": "nos.fb.BinaryOperator",
-					"value": "MUL"
-				}
-			]
-		},
-		{
-			"category": "Arithmetic",
-			"class_name": "Arithmetic",
-			"display_name": "Sub",
-			"params": [
-				{
-					"type_name": "nos.fb.BinaryOperator",
-					"value": "SUB"
-				}
-			],
-			"name_aliases": [ "minus", "difference" ]
-		},
-		{
-			"category": "Arithmetic",
-			"class_name": "Arithmetic",
-			"display_name": "Log",
-			"params": [
-				{
-					"type_name": "nos.fb.BinaryOperator",
-					"value": "LOG"
-				}
-			],
-			"name_aliases": [ "logarithm", "ln" ]
-		},
-		{
-			"category": "Variables",
-			"class_name": "SetVariable",
-			"display_name": "Set Variable",
-			"name_aliases": [ "store", "assign" ]
-		},
-		{
-			"category": "Variables",
-			"class_name": "GetVariable",
-			"display_name": "Get Variable",
-			"name_aliases": [ "fetch", "retrieve" ]
-		},
-
-		{
-			"category": "Arithmetic",
-			"class_name": "ScalarArithmetic",
-			"display_name": "ScalarAdd",
-			"params": [
-				{
-					"type_name": "nos.fb.BinaryOperator",
-					"value": "ADD"
-				}
-			],
-			"name_aliases": [ "plus", "sum" ]
-		},
-		{
-			"category": "Arithmetic",
-			"class_name": "ScalarArithmetic",
-			"display_name": "ScalarDiv",
-			"params": [
-				{
-					"type_name": "nos.fb.BinaryOperator",
-					"value": "DIV"
-				}
-			]
-		},
-		{
-			"category": "Arithmetic",
-			"class_name": "ScalarArithmetic",
-			"display_name": "ScalarMul",
-			"params": [
-				{
-					"type_name": "nos.fb.BinaryOperator",
-					"value": "MUL"
-				}
-			]
-		},
-		{
-			"category": "Arithmetic",
-			"class_name": "ScalarArithmetic",
-			"display_name": "ScalarSub",
-			"params": [
-				{
-					"type_name": "nos.fb.BinaryOperator",
-					"value": "SUB"
-				}
-			],
-			"name_aliases": [ "minus", "difference" ]
-		},
-		{
-			"category": "Arithmetic",
-			"class_name": "ScalarArithmetic",
-			"display_name": "ScalarLog",
-			"params": [
-				{
-					"type_name": "nos.fb.BinaryOperator",
-					"value": "LOG"
-				}
-			],
-			"name_aliases": [ "logarithm", "ln" ]
-		}
+	"custom_types": [
+		"Config/Reflect.fbs"
 	]
 }

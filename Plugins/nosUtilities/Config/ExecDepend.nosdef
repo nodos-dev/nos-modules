@@ -2,28 +2,36 @@
 	"nodes": [
 		{
 			"class_name": "ExecDepend",
-			"display_name": "Execution Dependency",
-			"contents_type": "Job",
-			"pins": [
-				{
-					"name": "In",
-					"type_name": "nos.exe",
-					"show_as": "INPUT_PIN",
-					"can_show_as": "INPUT_PIN_OR_PROPERTY"
-				},
-				{
-					"name": "Out",
-					"type_name": "nos.exe",
-					"show_as": "OUTPUT_PIN",
-					"can_show_as": "OUTPUT_PIN_OR_PROPERTY"
-				},
-				{
-					"name": "Dependency",
-					"type_name": "nos.fb.Void",
-					"show_as": "INPUT_PIN",
-					"can_show_as": "INPUT_PIN_ONLY"
-				}
-			]
+			"menu_info": {
+				"category": "Execution",
+				"display_name": "Execution Dependency",
+				"name_aliases": [ "dep" ]
+			},
+			"node": {
+				"class_name": "ExecDepend",
+				"display_name": "Execution Dependency",
+				"contents_type": "Job",
+				"pins": [
+					{
+						"name": "In",
+						"type_name": "nos.exe",
+						"show_as": "INPUT_PIN",
+						"can_show_as": "INPUT_PIN_OR_PROPERTY"
+					},
+					{
+						"name": "Out",
+						"type_name": "nos.exe",
+						"show_as": "OUTPUT_PIN",
+						"can_show_as": "OUTPUT_PIN_OR_PROPERTY"
+					},
+					{
+						"name": "Dependency",
+						"type_name": "nos.Generic",
+						"show_as": "INPUT_PIN",
+						"can_show_as": "INPUT_PIN_ONLY"
+					}
+				]
+			}
 		}
 	]
 }

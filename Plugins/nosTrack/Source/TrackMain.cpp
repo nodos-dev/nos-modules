@@ -1,7 +1,7 @@
 // Copyright MediaZ Teknoloji A.S. All Rights Reserved.
 #include "Track.h"
 #include "nosAnimationSubsystem/nosAnimationSubsystem.h"
-
+#include "Track_generated.h"
 
 #include <glm/gtc/quaternion.hpp>
 #include <glm/ext/quaternion_common.hpp>
@@ -20,11 +20,13 @@ enum TrackNode : int
 {
 	FreeD,
 	UserTrack,
+	AddTrack,
 	Count
 };
 
 void RegisterFreeDNode(nosNodeFunctions* functions);
 void RegisterController(nosNodeFunctions* functions);
+void RegisterAddTrack(nosNodeFunctions*);
 
 nosResult NOSAPI_CALL ExportNodeFunctions(size_t* outSize, nosNodeFunctions** outList)
 {
@@ -42,6 +44,9 @@ nosResult NOSAPI_CALL ExportNodeFunctions(size_t* outSize, nosNodeFunctions** ou
 			break;
 		case TrackNode::UserTrack:
 			RegisterController(node);
+			break;
+		case TrackNode::AddTrack:
+			RegisterAddTrack(node); 
 			break;
 		}
 	}
@@ -74,9 +79,9 @@ Vec3Type InterpolateRotation(const Vec3Type& start, const Vec3Type& end, const d
 
 nosResult NOSAPI_CALL InterpolateTrack(const nosBuffer from, const nosBuffer to, const double t, nosBuffer* out)
 {
-	auto start = flatbuffers::GetRoot<fb::Track>(from.Data);
-	auto end = flatbuffers::GetRoot<fb::Track>(to.Data);
-	nos::fb::TTrack interm;
+	auto start = flatbuffers::GetRoot<track::Track>(from.Data);
+	auto end = flatbuffers::GetRoot<track::Track>(to.Data);
+	nos::track::TTrack interm;
 	interm.location = LerpVec<fb::vec3, 3>(*start->location(), *end->location(), t);
 	interm.rotation = InterpolateRotation(*start->rotation(), *end->rotation(), t); // quat
 	interm.fov = glm::mix(start->fov(), end->fov(), t);
@@ -95,9 +100,7 @@ nosResult NOSAPI_CALL InterpolateTrack(const nosBuffer from, const nosBuffer to,
 	distortion.mutable_k1k2() = LerpVec<fb::vec2, 2>(distortionStart.k1k2(), distortionEnd.k1k2(), t);
 	distortion.mutate_distortion_scale(glm::mix(distortionStart.distortion_scale(), distortionEnd.distortion_scale(), t));
 
-	nos::Table<fb::Track> result = nos::Buffer::From(interm);
-	nosEngine.AllocateBuffer(result.Size(), out);
-	memcpy(out->Data, result.Data(), result.Size());
+	*out = EngineBuffer::CopyFrom(interm).Release();
 	return NOS_RESULT_SUCCESS;
 }
 
@@ -110,8 +113,7 @@ nosResult NOSAPI_CALL InterpolateTransform(const nosBuffer from, const nosBuffer
 	interm.mutable_rotation() = InterpolateRotation(start->rotation(), end->rotation(), t); // quat
 	interm.mutable_scale() = LerpVec<fb::vec3d, 3>(start->scale(), end->scale(), t);
 
-	nosEngine.AllocateBuffer(sizeof(interm), out);
-	memcpy(out->Data, &interm, sizeof(interm));
+	*out = EngineBuffer::CopyFrom(interm).Release();
 	return NOS_RESULT_SUCCESS;
 }
 
@@ -120,9 +122,23 @@ extern "C"
 NOSAPI_ATTR nosResult NOSAPI_CALL nosExportPlugin(nosPluginFunctions* outFunctions)
 {
 	outFunctions->ExportNodeFunctions = ExportNodeFunctions;
+	outFunctions->GetRenamedTypes = [](nosName* outRenamedFrom, nosName* outRenamedTo, size_t* outCount) {
+		*outCount = 4;
+		if (!outRenamedFrom || !outRenamedTo)
+			return;
+		outRenamedFrom[0] = NOS_NAME_STATIC("nos.fb.Track");
+		outRenamedTo[0] = NOS_NAME_STATIC(track::Track::GetFullyQualifiedName());
+		outRenamedFrom[1] = NOS_NAME_STATIC("nos.fb.LensDistortion");
+		outRenamedTo[1] = NOS_NAME_STATIC(track::LensDistortion::GetFullyQualifiedName());
+		outRenamedFrom[2] = NOS_NAME_STATIC("nos.fb.CoordinateSystem");
+		outRenamedTo[2] = NOS_NAME_STATIC("nos.track.CoordinateSystem");
+		outRenamedFrom[3] = NOS_NAME_STATIC("nos.fb.RotationSystem");
+		outRenamedTo[3] = NOS_NAME_STATIC("nos.track.RotationSystem");
+	};
+
 
 	nosAnimationInterpolator trackInterpolator = {
-		.TypeName = NOS_NAME(fb::Track::GetFullyQualifiedName()), .InterpolateCallback = InterpolateTrack};
+		.TypeName = NOS_NAME(track::Track::GetFullyQualifiedName()), .InterpolateCallback = InterpolateTrack};
 	nosAnimation->RegisterInterpolator(&trackInterpolator);
 
 	nosAnimationInterpolator transformInterpolator = {.TypeName = NOS_NAME(fb::Transform::GetFullyQualifiedName()),

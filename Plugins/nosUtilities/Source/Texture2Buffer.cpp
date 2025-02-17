@@ -16,8 +16,8 @@ nosBufferElementType GetBufferElementTypeFromVulkanFormat(nosFormat format);
 
 struct Texture2BufferNode : nos::NodeContext
 {
-	nosUUID InputPinId = {}, OutputBufferPinId = {};
-	Texture2BufferNode(nosFbNode const* node) : NodeContext(node)
+	uuid InputPinId = {}, OutputBufferPinId = {};
+	Texture2BufferNode(nosFbNodePtr node) : NodeContext(node)
 	{
 		for (const auto& pin : *node->pins()) {
 			const char* currentPinName = pin->name()->c_str();
@@ -53,7 +53,7 @@ struct Texture2BufferNode : nos::NodeContext
 		outputBufferDesc = nos::vkss::ConvertToResourceInfo(*static_cast<sys::vulkan::Buffer*>(outputBufferPinData->Data));
 		nosCmd cmd = {};
 		nosCmdBeginParams beginParams = {.Name = NOS_NAME("Texture2Buffer Copy"), .AssociatedNodeId = NodeId, .OutCmdHandle = &cmd};
-		nosVulkan->Begin2(&beginParams);
+		nosVulkan->Begin(&beginParams);
 		nosVulkan->Copy(cmd, &inputTextureDesc, &outputBufferDesc, 0);
 		nosVulkan->End(cmd, nullptr);
 		return NOS_RESULT_SUCCESS;

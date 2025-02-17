@@ -16,7 +16,7 @@ namespace nos::utilities
 
 struct DeinterlacedBoundedTextureQueueNode : RingNodeBase
 {
-	DeinterlacedBoundedTextureQueueNode(nosFbNode const* node) : RingNodeBase(node, RingNodeBase::OnRestartType::RESET)
+	DeinterlacedBoundedTextureQueueNode(nosFbNodePtr node) : RingNodeBase(node, RingNodeBase::OnRestartType::RESET)
 	{
 	}
 
@@ -25,7 +25,7 @@ struct DeinterlacedBoundedTextureQueueNode : RingNodeBase
 		return "DeinterlacedBoundedTextureQueue";
 	}
 
-	void OnPinValueChanged(nos::Name pinName, nosUUID pinId, nosBuffer value) override
+	void OnPinValueChanged(nos::Name pinName, uuid const& pinId, nosBuffer value) override
 	{
 		if (pinName == NOS_NAME("ShouldInterlace"))
 		{

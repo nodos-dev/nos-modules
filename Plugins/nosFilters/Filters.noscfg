@@ -2,18 +2,18 @@
     "info": {
         "id": {
             "name": "nos.filters",
-            "version": "1.4.0"
+            "version": "1.5.0"
         },
         "display_name": "Filters",
         "description": "Collection of image filters.",
         "dependencies": [
             {
                 "name": "nos.sys.vulkan",
-                "version": "5.24.0"
+                "version": "6.0.0"
             },
             {
                 "name": "nos.math",
-                "version": "1.3.0"
+                "version": "1.9.0"
             }
         ],
         "category": "Image Processing"
@@ -36,75 +36,5 @@
     "custom_types": [
         "Config/Thresholder.fbs"
     ],
-    "binary_path": "Binaries/nosFilters",
-    "associated_nodes": [
-        {
-            "category": "Filters",
-            "class_name": "ColorCorrect",
-          "display_name": "Color Correct",
-          "name_aliases": ["post process"]
-        },
-        {
-            "category": "Filters",
-            "class_name": "GaussianBlur",
-            "display_name": "Gaussian Blur"
-        },
-        {
-            "category": "Filters",
-            "class_name": "DirectionalBlur",
-            "display_name": "Directional Blur"
-        },
-        {
-            "category": "Filters",
-            "class_name": "KawaseLightStreak",
-            "display_name": "Kawase Light Streak"
-        },
-        {
-            "category": "Filters",
-            "class_name": "Thresholder",
-          "display_name": "Thresholder",
-          "name_aliases": ["image segment"]
-        },
-        {
-            "category": "Filters",
-            "class_name": "Sampler",
-            "display_name": "Sampler"
-        },
-        {
-            "category": "Filters",
-            "class_name": "Sobel",
-            "display_name": "Sobel"
-        },
-        {
-            "category": "Filters",
-            "class_name": "Kuwahara",
-            "display_name": "Kuwahara"
-        },
-        {
-            "category": "Filters",
-            "class_name": "Sharpen",
-            "display_name": "Sharpen"
-        },
-        {
-            "category": "Filters",
-            "class_name": "CasFilter",
-            "display_name": "CAS Filter (Raw)"
-        },
-        {
-            "category": "Filters",
-            "class_name": "CasWithColorSpace",
-            "display_name": "CAS Filter",
-            "name_aliases": ["Contrast Adaptive Sharpening", "sharpen", "fx"]
-        },
-        {
-            "category": "Filters",
-            "class_name": "PremultiplyAlpha",
-            "display_name": "Premultiply Alpha"
-        },
-        {
-            "category": "Filters",
-            "class_name": "Diff",
-            "display_name": "Difference"
-        }
-    ]
+    "binary_path": "Binaries/nosFilters"
 }

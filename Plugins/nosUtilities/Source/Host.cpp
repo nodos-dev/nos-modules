@@ -113,9 +113,9 @@ long long GetUpTime()
 
 struct HostInfoPins
 {
-	nosUUID HostNamePinId;
-	nosUUID IpAddressPinId;
-	nosUUID UptimeSecondsPinId;
+	uuid HostNamePinId;
+	uuid IpAddressPinId;
+	uuid UptimeSecondsPinId;
 };
 
 struct HostInfo
@@ -124,7 +124,7 @@ struct HostInfo
 	std::string IpAddress; // TODO: Return a map of interfaces and IPs
 	uint32_t UptimeS;
 
-	std::unordered_map<nosUUID, HostInfoPins> Listeners;
+	std::unordered_map<uuid, HostInfoPins> Listeners;
 
 	template <auto PinIdMember, typename T>
 	void SetPinValue(HostInfoPins const& pinIds, T const& value)
@@ -154,7 +154,7 @@ struct HostInfo
 		}
 	}
 
-	void AddListener(nosUUID nodeId, HostInfoPins pins)
+	void AddListener(uuid nodeId, HostInfoPins pins)
 	{
 		Listeners[nodeId] = std::move(pins);
 		SetPinValue<&HostInfoPins::HostNamePinId>(pins, HostName);
@@ -182,7 +182,7 @@ struct HostInfo
 		}
 	}
 
-	void RemoveListener(nosUUID nodeId)
+	void RemoveListener(uuid nodeId)
 	{
 		Listeners.erase(nodeId);
 		if (Listeners.empty())
@@ -202,7 +202,7 @@ struct HostInfo
 
 struct HostNode : NodeContext
 {
-	HostNode(const nosFbNode* node) : NodeContext(node)
+	HostNode(nosFbNodePtr node) : NodeContext(node)
 	{
 		HostInfoPins pins {
 			.HostNamePinId = *GetPinId(NOS_NAME("HostName")),

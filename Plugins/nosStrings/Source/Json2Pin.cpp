@@ -13,22 +13,18 @@ struct Json2PinNode : NodeContext
 		NodeExecuteParams execParams(params);
 		auto& jsonPin = execParams[NOS_NAME("Json")];
 		auto& outPin = execParams[NOS_NAME("Out")];
-		if(outPin.TypeName == NOS_NAME("nos.fb.Void"))
+		if(outPin.TypeName == NOS_NAME("nos.Generic"))
 		{
 			SetNodeStatusMessage("Out pin is not connected to typed pin", fb::NodeStatusMessageType::FAILURE);
 			return NOS_RESULT_FAILED;
 		}
-		nosBuffer outBuffer;
-		auto ret = nosEngine.GenerateBufferFromJson(outPin.TypeName, (const char*)(*jsonPin.Data).Data, &outBuffer);
-		if (ret == NOS_RESULT_SUCCESS)
+		if (auto buf = GenerateBufferFromJson(outPin.TypeName, (const char*)(*jsonPin.Data).Data))
 		{
-			SetPinValue(outPin.Name, outBuffer);
+			SetPinValue(outPin.Name, *buf);
 			ClearNodeStatusMessages();
 		}
 		else
-		{
 			SetNodeStatusMessage("Unable to convert data to JSON", fb::NodeStatusMessageType::FAILURE);
-		}
 		return NOS_RESULT_SUCCESS;
 	}
 
@@ -36,7 +32,7 @@ struct Json2PinNode : NodeContext
 	{
 		if (pinName == NOS_NAME("Out"))
 		{
-			SetPinType(NOS_NAME("Out"), NOS_NAME("nos.fb.Void"));
+			SetPinType(NOS_NAME("Out"), NOS_NAME("nos.Generic"));
 		}
 	}
 };

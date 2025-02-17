@@ -28,8 +28,8 @@ public:
 	void OnPathStop() override;
 	void OnPathStart() override;
 
-	void OnEnterRunnerThread(std::optional<nosUUID> runnerId) override;
-	void OnExitRunnerThread(std::optional<nosUUID> runnerId) override;
+	void OnEnterRunnerThread(nosEnterRunnerThreadParams const& params) override;
+	void OnExitRunnerThread(nosExitRunnerThreadParams const& params) override;
 
 private:
 	void WindowThread();

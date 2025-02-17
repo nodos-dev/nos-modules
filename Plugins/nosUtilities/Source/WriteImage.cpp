@@ -20,7 +20,7 @@ NOS_REGISTER_NAME_SPACED(Nos_Utilities_WriteImage, "nos.utilities.WriteImage")
 
 struct WriteImage : NodeContext {
     std::filesystem::path Path;
-    nosResourceShareInfo TempSrgbCopy;
+    std::optional<vkss::Resource> TempSrgbCopy;
     bool IncludeAlpha = false;
     nosGPUEvent Event = 0;
     std::atomic_bool WriteRequested = false;
@@ -30,7 +30,7 @@ struct WriteImage : NodeContext {
     std::atomic_bool Write = false;
     std::atomic_bool ShouldStop = false;
 
-    WriteImage(nosFbNode const* node) : NodeContext(node){
+    WriteImage(nosFbNodePtr node) : NodeContext(node){
         Worker = std::thread([this] {
             while (!ShouldStop) {
                 std::unique_lock<std::mutex> lock(Mutex);
@@ -67,17 +67,17 @@ struct WriteImage : NodeContext {
         std::unique_lock<std::mutex> lock(Mutex);
         Path = std::string((const char*)execParams[NSN_Path].Data->Data, execParams[NSN_Path].Data->Size);
         IncludeAlpha = *(bool*)execParams[NSN_IncludeAlpha].Data->Data;
-        nosCmd cmd;
         assert(Event == 0);
-        nosVulkan->Begin("Write Image Copy To", &cmd);
+        nosCmd cmd = vkss::BeginCmd(NOS_NAME("Write Image Copy To"), NodeId);
         auto inputTex = vkss::DeserializeTextureInfo(execParams[NSN_In].Data->Data);
         TempSrgbCopy = {};
-        TempSrgbCopy.Info = inputTex.Info;
-        TempSrgbCopy.Info.Texture.Format = NOS_FORMAT_R8G8B8A8_SRGB;
-        TempSrgbCopy.Info.Texture.Usage = nosImageUsage(NOS_IMAGE_USAGE_TRANSFER_SRC | NOS_IMAGE_USAGE_TRANSFER_DST);
 
-        nosVulkan->CreateResource(&TempSrgbCopy);
-        nosVulkan->Copy(cmd, &inputTex, &TempSrgbCopy, 0);
+        nosResourceShareInfo tempSrgbInfo = inputTex;
+		tempSrgbInfo.Info.Texture.Format = NOS_FORMAT_R8G8B8A8_SRGB;
+		tempSrgbInfo.Info.Texture.Usage = nosImageUsage(NOS_IMAGE_USAGE_TRANSFER_SRC | NOS_IMAGE_USAGE_TRANSFER_DST);
+		TempSrgbCopy = vkss::Resource::Create(tempSrgbInfo, "TempSrgbCopy");
+        
+        nosVulkan->Copy(cmd, &inputTex, &*TempSrgbCopy, 0);
         nosCmdEndParams endParams{ .ForceSubmit = true, .OutGPUEventHandle = &Event };
         nosVulkan->End(cmd, &endParams);
         Write = true;
@@ -96,23 +96,19 @@ struct WriteImage : NodeContext {
         }
         nosEngine.LogI("WriteImage: Writing frame to file %s", path.string().c_str());
 
-        nosResourceShareInfo buf = {};
+		auto buf = vkss::Resource::DownloadTexture(*TempSrgbCopy, "TempSrgbCopy Downloaded", NodeId);
 
-        nosVulkan->Download(0, &TempSrgbCopy, &buf);
-
-        if (auto buf2write = nosVulkan->Map(&buf))
+        if (auto buf2write = nosVulkan->Map(&*buf))
         {
             if(!IncludeAlpha)
-                for (size_t i = 3; i < buf.Info.Buffer.Size; i += 4)
+                for (size_t i = 3; i < buf->Info.Buffer.Size; i += 4)
                     buf2write[i] = 0xff;
 
-            if (!stbi_write_png(Path.string().c_str(), TempSrgbCopy.Info.Texture.Width, TempSrgbCopy.Info.Texture.Height, 4, buf2write, TempSrgbCopy.Info.Texture.Width * 4))
+            if (!stbi_write_png(Path.string().c_str(), TempSrgbCopy->Info.Texture.Width, TempSrgbCopy->Info.Texture.Height, 4, buf2write, TempSrgbCopy->Info.Texture.Width * 4))
                 nosEngine.LogE("WriteImage: Unable to write frame to file", "");
             else
                 nosEngine.LogI("WriteImage: Wrote frame to file %s", Path.string().c_str());
         }
-        nosVulkan->DestroyResource(&buf);
-        nosVulkan->DestroyResource(&TempSrgbCopy);
         TempSrgbCopy = {};
     }
 

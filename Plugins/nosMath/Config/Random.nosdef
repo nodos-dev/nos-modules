@@ -1,44 +1,51 @@
 {
-  "nodes": [
-    {
-      "class_name": "Random",
-      "contents_type": "Job",
-      "description": "Outputs a random number between Min and Max",
-      "pins": [
-        {
-          "name": "Random",
-          "type_name": "float",
-          "show_as": "OUTPUT_PIN",
-          "can_show_as": "OUTPUT_PIN_ONLY"
-        },
-        {
-          "name": "Time",
-          "type_name": "float",
-          "show_as": "INPUT_PIN",
-          "can_show_as": "INPUT_PIN_OR_PROPERTY"
-        },
-        {
-          "name": "Seed",
-          "type_name": "int",
-          "show_as": "PROPERTY",
-          "can_show_as": "INPUT_PIN_OR_PROPERTY",
-          "data": 42
-        },
-        {
-          "name": "Min",
-          "type_name": "float",
-          "show_as": "INPUT_PIN",
-          "can_show_as": "INPUT_PIN_OR_PROPERTY",
-          "data": 0
-        },
-        {
-          "name": "Max",
-          "type_name": "float",
-          "show_as": "INPUT_PIN",
-          "can_show_as": "INPUT_PIN_OR_PROPERTY",
-          "data": 1
-        }
-      ]
-    }
-  ]
+	"nodes": [
+		{
+			"class_name": "Random",
+			"menu_info": {
+				"category": "Math",
+				"display_name": "Random"
+			},
+			"node": {
+				"class_name": "Random",
+				"contents_type": "Job",
+				"description": "Outputs a random number between Min and Max",
+				"pins": [
+					{
+						"name": "Random",
+						"type_name": "float",
+						"show_as": "OUTPUT_PIN",
+						"can_show_as": "OUTPUT_PIN_ONLY"
+					},
+					{
+						"name": "Time",
+						"type_name": "float",
+						"show_as": "INPUT_PIN",
+						"can_show_as": "INPUT_PIN_OR_PROPERTY"
+					},
+					{
+						"name": "Seed",
+						"type_name": "int",
+						"show_as": "PROPERTY",
+						"can_show_as": "INPUT_PIN_OR_PROPERTY",
+						"data": 42
+					},
+					{
+						"name": "Min",
+						"type_name": "float",
+						"show_as": "INPUT_PIN",
+						"can_show_as": "INPUT_PIN_OR_PROPERTY",
+						"data": 0
+					},
+					{
+						"name": "Max",
+						"type_name": "float",
+						"show_as": "INPUT_PIN",
+						"can_show_as": "INPUT_PIN_OR_PROPERTY",
+						"data": 1
+					}
+				]
+			}
+		}
+	]
 }
