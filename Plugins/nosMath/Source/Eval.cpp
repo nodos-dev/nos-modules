@@ -207,7 +207,7 @@ struct EvalNodeContext : NodeContext
 			auto pinId = Inputs[command.InputIndex];
 			flatbuffers::FlatBufferBuilder fbb;
 			std::vector pinsToRemove {
-				fb::UUID(pinId),
+				*&pinId,
 			};
 			HandleEvent(CreateAppEvent(fbb, CreatePartialNodeUpdateDirect(fbb, &NodeId, ClearFlags::NONE, &pinsToRemove)));
 			break;
