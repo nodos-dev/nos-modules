@@ -109,6 +109,14 @@ struct SetVariableNode : VariableNodeBase
 				if (res == NOS_RESULT_SUCCESS)
 				{
 					nosVariables->IncreaseRefCount(Name, nullptr);
+					// If type is already set, reset it to the correct type.
+					if (HasType())
+					{
+						SetPinType(NOS_NAME("Value"), outTypeName);
+						SetPinValue(NOS_NAME("Value"), outValue);
+					}
+					else
+						TypeName = outTypeName;
 					return;
 				}
 			}
@@ -154,7 +162,12 @@ struct SetVariableNode : VariableNodeBase
 
 	void SetDefaultValue()
 	{
-		if (auto def = GetDefaultValueOfType(TypeName))
+		nosName outTypeName{};
+		nosBuffer outValue{};
+		auto res = nosVariables->Get(Name, &outTypeName, &outValue);
+		if (res == NOS_RESULT_SUCCESS)
+			SetPinValue(NOS_NAME("Value"), outValue);
+		else if (auto def = GetDefaultValueOfType(TypeName))
 			SetPinValue(NOS_NAME("Value"), *def);
 	}
 
