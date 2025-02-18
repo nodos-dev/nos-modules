@@ -128,6 +128,7 @@ public:
 		return IsFulledOnce;
 	}
 
+	std::atomic_size_t FreeCount;
 private:
 	inline static int RingID;
 	std::string name, name_EMPTY, name_FILLED;
@@ -135,7 +136,6 @@ private:
 	std::atomic_bool IsFulledOnce = false;
 	std::mutex RingMutex;
 	size_t Size;
-	std::atomic_size_t FreeCount;
 	std::atomic_size_t NextReadableFrame = 0;
 	std::atomic_size_t NextWritableFrame = 0;
 };
