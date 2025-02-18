@@ -15,12 +15,17 @@ struct SwitchTrigger : NodeContext
 			SwitchFuncId = *func->id();
 			for (auto* pin : *func->pins())
 				if (pin->show_as() == fb::ShowAs::OUTPUT_PIN)
-					if (AddPin(pin))
-						SetPinOrphanState(*pin->id(), fb::PinOrphanStateType::ACTIVE);
+					AddFbPin(pin);
 		}
 	}
+
 	nos::uuid SwitchFuncId;
-	std::unordered_map<nos::uuid, std::optional<int>> FuncPinIdToCaseMap;
+	struct CasePinInfo
+	{
+		std::optional<int> CaseNum = std::nullopt;
+		bool IsDuplicate = false;
+	};
+	std::unordered_map<nos::uuid, CasePinInfo> FuncPinIdToCaseMap;
 
 	void OnFunctionUpdated(nosNodeFunctionUpdate const* update) override
 	{
@@ -35,7 +40,7 @@ struct SwitchTrigger : NodeContext
 			{
 				nosFbPinPtr pin = nodeUpdate.PinCreated;
 				if (pin->show_as() == fb::ShowAs::OUTPUT_PIN)
-					AddPin(pin);
+					AddFbPin(pin);
 				break;
 			}
 			case NOS_NODE_UPDATE_PIN_DELETED: FuncPinIdToCaseMap.erase(nodeUpdate.PinDeleted); break;
@@ -49,31 +54,71 @@ struct SwitchTrigger : NodeContext
 			if (pinUpdate.UpdatedField == NOS_PIN_FIELD_DISPLAY_NAME)
 			{
 				auto caseNum = DisplayNameToCase(nos::Name(pinUpdate.DisplayName).AsString());
-				FuncPinIdToCaseMap[pinUpdate.PinId] = caseNum;
-				if (caseNum)
-					SetPinOrphanState(pinUpdate.PinId, fb::PinOrphanStateType::ACTIVE);
-				else
-					SetPinOrphanState(pinUpdate.PinId,
-									  fb::PinOrphanStateType::ORPHAN,
-									  "Pin name is invalid. Name must be in format: `Name Number`.");
+				auto oldCaseInfo = FuncPinIdToCaseMap[pinUpdate.PinId];
+				if (oldCaseInfo.CaseNum == caseNum)
+					return;
+				FuncPinIdToCaseMap.erase(pinUpdate.PinId);
+				if (oldCaseInfo.CaseNum && !oldCaseInfo.IsDuplicate)
+					for (auto& [id, otherCaseInfo] : FuncPinIdToCaseMap)
+					{
+						if (otherCaseInfo.CaseNum == oldCaseInfo.CaseNum)
+						{
+							otherCaseInfo.IsDuplicate = false;
+							UpdatePinMetadataAndOrphan(id, otherCaseInfo);
+						}
+					}
+				AddCasePinInfo(pinUpdate.PinId, caseNum);
 			}
 		}
 	}
 
-	bool AddPin(nosFbPinPtr pin)
+	void AddFbPin(nosFbPinPtr pin)
 	{
 		std::string dispName;
 		if (auto pinDispName = pin->display_name())
 			dispName = pinDispName->str();
 		else
 			dispName = pin->name()->str();
-		auto caseNum = DisplayNameToCase(dispName);	
-		FuncPinIdToCaseMap[*pin->id()] = caseNum;
-		if (!caseNum)
-			SetPinOrphanState(*pin->id(),
-							  fb::PinOrphanStateType::ORPHAN,
-							  "Pin name is invalid. Name must be in format: `Name Number`.");
-		return caseNum.has_value();
+
+		AddCasePinInfo(*pin->id(), DisplayNameToCase(dispName), pin->meta_data_map()->LookupByKey("Duplicate"));
+	}
+
+	void AddCasePinInfo(nos::uuid const& pinId,
+						std::optional<int> caseNum,
+						std::optional<bool> isDuplicate = std::nullopt)
+	{
+		CasePinInfo caseInfo{.CaseNum = caseNum, .IsDuplicate = isDuplicate.value_or(false)};
+		if (caseInfo.CaseNum && !caseInfo.IsDuplicate)
+			for (auto const& [_, otherCaseInfo] : FuncPinIdToCaseMap)
+				if (!otherCaseInfo.IsDuplicate && otherCaseInfo.CaseNum && *otherCaseInfo.CaseNum == *caseInfo.CaseNum)
+				{
+					caseInfo.IsDuplicate = true;
+					break;
+				}
+		FuncPinIdToCaseMap[pinId] = caseInfo;
+		UpdatePinMetadataAndOrphan(pinId, caseInfo);
+	}
+
+	void UpdatePinMetadataAndOrphan(nos::uuid const& pinId, CasePinInfo const& caseInfo)
+	{
+		TPartialPinUpdate update;
+		update.pin_id = pinId;
+		update.orphan_state = std::make_unique<fb::TPinOrphanState>();
+		update.orphan_state->type =
+			caseInfo.CaseNum && !caseInfo.IsDuplicate ? fb::PinOrphanStateType::ACTIVE : fb::PinOrphanStateType::ORPHAN;
+		if (!caseInfo.CaseNum)
+			update.orphan_state->message = "Pin name is invalid. Name must be in format: `Name Number`.";
+		else if (caseInfo.IsDuplicate)
+			update.orphan_state->message = "Case number is duplicated.";
+		update.clear_metadata = true;
+		if (caseInfo.IsDuplicate)
+		{
+			auto& metadata = update.meta_data_map.emplace_back(std::make_unique<fb::TMetaDataEntry>());
+			metadata->key = "Duplicate";
+			metadata->value = "true";
+		}
+		flatbuffers::FlatBufferBuilder fbb;
+		HandleEvent(CreateAppEvent(fbb, nos::CreatePartialPinUpdate(fbb, &update)));
 	}
 
 	std::optional<int> DisplayNameToCase(std::string const& name)
@@ -124,9 +169,9 @@ struct SwitchTrigger : NodeContext
 		if (itemID == NodeId)
 		{
 			int maxCaseNum = 0;
-			for (auto& [_, caseNum] : FuncPinIdToCaseMap)
-				if (caseNum && *caseNum > maxCaseNum)
-					maxCaseNum = *caseNum;
+			for (auto& [_, caseInfo] : FuncPinIdToCaseMap)
+				if (caseInfo.CaseNum && *caseInfo.CaseNum > maxCaseNum)
+					maxCaseNum = *caseInfo.CaseNum;
 			maxCaseNum++;
 			fb::TPin pin{};
 			pin.id = uuid(nosEngine.GenerateID());
@@ -156,11 +201,11 @@ struct SwitchTrigger : NodeContext
 		NodeExecuteParams params(functionExecParams->FunctionNodeExecuteParams);
 		int caseNum = *params.GetPinData<int>(NOS_NAME("Case"));
 		functionExecParams->MarkOutExeDirty = false;
-		for (auto& [pinId, pinCaseNum] : FuncPinIdToCaseMap)
+		for (auto& [pinId, pinCaseInfo] : FuncPinIdToCaseMap)
 		{
-			if (!pinCaseNum)
+			if (!pinCaseInfo.CaseNum || pinCaseInfo.IsDuplicate)
 				continue;
-			if (caseNum != *pinCaseNum)
+			if (caseNum != *pinCaseInfo.CaseNum)
 				continue;
 			nosEngine.SetPinDirty(pinId);
 		}
