@@ -136,7 +136,14 @@ struct ReadImageContext : NodeContext
 				if (sRGB)
 					outResInfo.Info.Texture.Format = NOS_FORMAT_R8G8B8A8_SRGB;
 
-				auto outRes = *vkss::Resource::Create(outResInfo, "ReadImage Texture");
+				auto outResOpt = vkss::Resource::Create(outResInfo, "ReadImage Texture");
+				if (!outResOpt)
+				{
+					nosEngine.LogE("Failed to create texture resource for image %s.", path.string().c_str());
+					UpdateStatus(State::Failed);
+					return;
+				}
+				auto outRes = std::move(*outResOpt);
 
 				nosCmd cmd{};
 				nosCmdBeginParams beginParams {

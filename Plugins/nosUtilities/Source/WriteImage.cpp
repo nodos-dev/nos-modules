@@ -96,12 +96,17 @@ struct WriteImage : NodeContext {
         }
         nosEngine.LogI("WriteImage: Writing frame to file %s", path.string().c_str());
 
-		auto buf = vkss::Resource::DownloadTexture(*TempSrgbCopy, "TempSrgbCopy Downloaded", NodeId);
+		auto optBuf = vkss::Resource::DownloadTextureSync(*TempSrgbCopy, "TempSrgbCopy Downloaded");
+        if (!optBuf) {
+            nosEngine.LogE("WriteImage: Unable to download frame");
+            return;
+        }
+        auto buf = std::move(*optBuf);
 
-        if (auto buf2write = nosVulkan->Map(&*buf))
+        if (auto buf2write = nosVulkan->Map(&buf))
         {
             if(!IncludeAlpha)
-                for (size_t i = 3; i < buf->Info.Buffer.Size; i += 4)
+                for (size_t i = 3; i < buf.Info.Buffer.Size; i += 4)
                     buf2write[i] = 0xff;
 
             if (!stbi_write_png(Path.string().c_str(), TempSrgbCopy->Info.Texture.Width, TempSrgbCopy->Info.Texture.Height, 4, buf2write, TempSrgbCopy->Info.Texture.Width * 4))

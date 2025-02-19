@@ -13,7 +13,7 @@ endif()
 
 add_compile_definitions(NOS_DISABLE_DEPRECATED)
 nos_find_sdk("1.3.0" NOS_PLUGIN_SDK_TARGET NOS_SUBSYSTEM_SDK_TARGET NOS_SDK_DIR)
-nos_get_module("nos.sys.vulkan" "6.0" NOS_SYS_VULKAN_TARGET)
+nos_get_module("nos.sys.vulkan" "6.1" NOS_SYS_VULKAN_TARGET)
 cmake_path(SET FLATC_EXECUTABLE "${NOS_SDK_DIR}/bin/flatc")
 
 set(TOOLS_DIR ${CMAKE_CURRENT_SOURCE_DIR}/Subsystems/nosShaderCompiler/Binaries/tools/${CMAKE_SYSTEM_NAME})
