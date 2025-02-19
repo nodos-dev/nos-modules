@@ -20,7 +20,7 @@ struct VariableInfo
 	nos::Name Name;
 	nos::Name TypeName;
 	nos::Buffer Value;
-	uint64_t RefCount;
+	std::unordered_set<uuid> References;
 };
 	
 struct VariableManager
@@ -60,29 +60,29 @@ struct VariableManager
 		return NOS_RESULT_SUCCESS;
 	}
 
-	nosResult IncreaseRefCount(nosName name, uint64_t* outOptRefCount)
+	nosResult AddNodeReference(nosName name, nosUUID nodeId)
 	{
 		std::unique_lock lock(VariablesMutex);
 		auto it = Variables.find(name);
 		if (it == Variables.end())
 			return NOS_RESULT_NOT_FOUND;
-		it->second.RefCount++;
-		if (outOptRefCount)
-			*outOptRefCount = it->second.RefCount;
+		it->second.References.insert(nodeId);
+		SendVariableReferencesToEditors(it->second);
 		return NOS_RESULT_SUCCESS;
 	}
 
-	nosResult DecreaseRefCount(nosName name, uint64_t* outOptRefCount)
+	nosResult DeleteNodeReference(nosName name, nosUUID nodeId)
 	{
 		std::unique_lock lock(VariablesMutex);
 		auto it = Variables.find(name);
 		if (it == Variables.end())
 			return NOS_RESULT_NOT_FOUND;
-		if (it->second.RefCount == 0)
+		auto& refs = it->second.References;
+		auto refIt = refs.find(nodeId);
+		if (refIt == refs.end())
 			return NOS_RESULT_FAILED;
-		it->second.RefCount--;
-		if (outOptRefCount)
-			*outOptRefCount = it->second.RefCount;
+		refs.erase(refIt);
+		SendVariableReferencesToEditors(it->second);
 		return NOS_RESULT_SUCCESS;
 	}
 
@@ -92,9 +92,9 @@ struct VariableManager
 		auto it = Variables.find(name);
 		if (it == Variables.end())
 			return NOS_RESULT_NOT_FOUND;
-		if (it->second.RefCount > 0)
+		if (!it->second.References.empty())
 		{
-			nosEngine.LogE("Cannot delete variable %s, it still has %d references", name.AsCStr(), it->second.RefCount);
+			nosEngine.LogE("Cannot delete variable %s, it still has %d references", name.AsCStr(), it->second.References.size());
 			return NOS_RESULT_FAILED;
 		}
 		nosEngine.LogI("Deleting variable %s", name.AsCStr());
@@ -130,6 +130,8 @@ struct VariableManager
 	void OnEditorConnected(uint64_t editorId)
 	{
 		SendVariableListToEditors(editorId);
+		for (auto& [id, variable] : Variables)
+			SendVariableReferencesToEditors(variable, editorId);
 	}
 
 private:
@@ -223,6 +225,27 @@ protected:
 		}
 	}
 
+	void SendVariableReferencesToEditors(VariableInfo& variable, std::optional<uint64_t> optEditorId = std::nullopt)
+	{
+		flatbuffers::FlatBufferBuilder fbb;
+		std::vector<fb::UUID> refs;
+		for (auto& ref : variable.References)
+			refs.push_back(ref);
+		auto refsEvent = editor::CreateVariableReferencesDirect(fbb, variable.Name.AsCStr(), &refs);
+		auto event = editor::CreateFromSubsystem(fbb, editor::FromSubsystemUnion::VariableReferences, refsEvent.Union());
+		fbb.Finish(event);
+		nos::Buffer buf = fbb.Release();
+		nosSendEditorMessageParams params{ .Message = buf };
+		if (optEditorId)
+		{
+			params.DispatchType = NOS_EDITOR_MESSAGE_DISPATCH_TYPE_TO_SELECTED;
+			params.ToSelected = { .EditorId = *optEditorId };
+		}
+		else
+			params.DispatchType = NOS_EDITOR_MESSAGE_DISPATCH_TYPE_BROADCAST;
+		nosEngine.SendEditorMessage(&params);
+	}
+
 	static VariableManager Instance;
 
 	std::shared_mutex VariablesMutex;
@@ -247,16 +270,6 @@ nosResult NOSAPI_CALL Get(nosName name, nosName* outTypeName, nosBuffer* outValu
 	return VariableManager::GetInstance().Get(name, outTypeName, outValue);
 }
 
-nosResult NOSAPI_CALL IncreaseRefCount(nosName name, uint64_t* outOptRefCount)
-{
-	return VariableManager::GetInstance().IncreaseRefCount(name, outOptRefCount);
-}
-
-nosResult NOSAPI_CALL DecreaseRefCount(nosName name, uint64_t* outOptRefCount)
-{
-	return VariableManager::GetInstance().DecreaseRefCount(name, outOptRefCount);
-}
-
 int32_t NOSAPI_CALL RegisterVariableUpdateCallback(nosName name, nosVariableUpdateCallback callback, void* userData)
 {
 	return VariableManager::GetInstance().RegisterVariableUpdateCallback(name, callback, userData);
@@ -265,6 +278,16 @@ int32_t NOSAPI_CALL RegisterVariableUpdateCallback(nosName name, nosVariableUpda
 nosResult NOSAPI_CALL UnregisterVariableUpdateCallback(nosName name, int32_t callbackId)
 {
 	return VariableManager::GetInstance().UnregisterVariableUpdateCallback(name, callbackId);
+}
+
+nosResult NOSAPI_CALL AddNodeReference(nosName name, nosUUID nodeId)
+{
+	return VariableManager::GetInstance().AddNodeReference(name, nodeId);
+}
+
+nosResult NOSAPI_CALL DeleteNodeReference(nosName name, nosUUID nodeId)
+{
+	return VariableManager::GetInstance().DeleteNodeReference(name, nodeId);
 }
 	
 nosResult NOSAPI_CALL Export(uint32_t minorVersion, void** outSubsystemContext)
@@ -278,10 +301,10 @@ nosResult NOSAPI_CALL Export(uint32_t minorVersion, void** outSubsystemContext)
 	auto* subsystem = new nosVariableSubsystem();
 	subsystem->Get = Get;
 	subsystem->Set = Set;
-	subsystem->IncreaseRefCount = IncreaseRefCount;
-	subsystem->DecreaseRefCount = DecreaseRefCount;
 	subsystem->RegisterVariableUpdateCallback = RegisterVariableUpdateCallback;
 	subsystem->UnregisterVariableUpdateCallback = UnregisterVariableUpdateCallback;
+	subsystem->AddNodeReference = AddNodeReference;
+	subsystem->DeleteNodeReference = DeleteNodeReference;
 	*outSubsystemContext = subsystem;
 	GExportedSubsystemVersions[minorVersion] = subsystem;
 	return NOS_RESULT_SUCCESS;

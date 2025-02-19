@@ -17,10 +17,10 @@ typedef void (*nosVariableUpdateCallback)(nosName name, void* userData, nosName 
 typedef struct nosVariableSubsystem {
 	nosResult (NOSAPI_CALL *Get)(nosName name, nosName* outTypeName, nosBuffer* outValue);
 	nosResult (NOSAPI_CALL *Set)(nosName name, nosName typeName, const nosBuffer* value);
-	nosResult (NOSAPI_CALL *IncreaseRefCount)(nosName name, uint64_t* outOptRefCount);
-	nosResult (NOSAPI_CALL *DecreaseRefCount)(nosName name, uint64_t* outOptRefCount); // returns true if ref count is zero
 	int32_t (NOSAPI_CALL *RegisterVariableUpdateCallback)(nosName name, nosVariableUpdateCallback callback, void* userData);
 	nosResult (NOSAPI_CALL *UnregisterVariableUpdateCallback)(nosName name, int32_t callbackId);
+	nosResult (NOSAPI_CALL *AddNodeReference)(nosName name, nosUUID nodeId);
+	nosResult (NOSAPI_CALL *DeleteNodeReference)(nosName name, nosUUID nodeId);
 } nosVariableSubsystem;
 
 #pragma region Helper Declarations & Macros

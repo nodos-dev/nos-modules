@@ -1,4 +1,5 @@
 include "Variable.fbs";
+include "Common.fbs";
 
 namespace nos.sys.variables.editor;
 
@@ -7,10 +8,17 @@ table VariableDeleted
 	name: string;
 }
 
+table VariableReferences
+{
+	variable_name: string;
+	referencing_nodes: [nos.fb.UUID];
+}
+
 union FromSubsystemUnion {
 	VariableList,
 	nos.sys.variables.Variable,
-	VariableDeleted
+	VariableDeleted,
+	VariableReferences,
 }
 
 table FromSubsystem {

@@ -27,8 +27,7 @@ struct VariableNodeBase : NodeContext
 
 	~VariableNodeBase() override
 	{
-		uint64_t refCount{};
-		auto res = nosVariables->DecreaseRefCount(Name, &refCount);
+		auto res = nosVariables->DeleteNodeReference(Name, NodeId);
 		NOS_SOFT_CHECK(res == NOS_RESULT_SUCCESS);
 	}
 
@@ -104,7 +103,7 @@ struct SetVariableNode : VariableNodeBase
 			if (oldValue)
 			{
 				nos::Name oldName(static_cast<const char*>(oldValue->Data()));
-				nosVariables->DecreaseRefCount(oldName, nullptr);
+				nosVariables->DeleteNodeReference(oldName, NodeId);
 				nosVariables->UnregisterVariableUpdateCallback(oldName, CallbackId);
 				CallbackId = -1;
 			}
@@ -121,7 +120,7 @@ struct SetVariableNode : VariableNodeBase
 				auto res = nosVariables->Get(Name, &outTypeName, &outValue);
 				if (res == NOS_RESULT_SUCCESS)
 				{
-					nosVariables->IncreaseRefCount(Name, nullptr);
+					nosVariables->AddNodeReference(Name, NodeId);
 					// If type is already set, reset it to the correct type.
 					if (HasType())
 					{
@@ -290,7 +289,7 @@ struct GetVariableNode : VariableNodeBase
 				if (oldValue)
 				{
 					nos::Name oldName(static_cast<const char*>(oldValue->Data()));
-					nosVariables->DecreaseRefCount(oldName, nullptr);
+					nosVariables->DeleteNodeReference(oldName, NodeId);
 					nosVariables->UnregisterVariableUpdateCallback(oldName, CallbackId);
 					CallbackId = -1;
 				}
@@ -320,7 +319,7 @@ struct GetVariableNode : VariableNodeBase
 					}
 					return;
 				}
-				nosVariables->IncreaseRefCount(Name, nullptr);
+				nosVariables->AddNodeReference(Name, NodeId);
 				CallbackId = nosVariables->RegisterVariableUpdateCallback(Name, &GetVariableNode::VariableUpdateCallback, this);
 				ClearStatus(VariableStatusItem::VariableName);
 				SetPinType(NOS_NAME("Value"), outTypeName);
@@ -344,7 +343,7 @@ struct GetVariableNode : VariableNodeBase
 			SetPinValue(NOS_NAME("Name"), "");
 			return;
 		}
-		nosVariables->IncreaseRefCount(Name, nullptr);
+		nosVariables->AddNodeReference(Name, NodeId);
 		CallbackId = nosVariables->RegisterVariableUpdateCallback(Name, &GetVariableNode::VariableUpdateCallback, this);
 	}
 
