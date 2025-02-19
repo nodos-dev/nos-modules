@@ -466,7 +466,8 @@
             "name": "Value",
             "type_name": "nos.Generic",
             "show_as": "INPUT_PIN",
-            "can_show_as": "INPUT_PIN_OR_PROPERTY"
+            "can_show_as": "INPUT_PIN_OR_PROPERTY",
+            "connection_conditions": "!resource"
           }
         ]
       }
@@ -498,7 +499,8 @@
             "name": "Value",
             "type_name": "nos.Generic",
             "show_as": "OUTPUT_PIN",
-            "can_show_as": "OUTPUT_PIN_ONLY"
+            "can_show_as": "OUTPUT_PIN_ONLY",
+            "connection_conditions": "!resource"
           }
         ],
         "functions": [

@@ -32,6 +32,19 @@ struct VariableNodeBase : NodeContext
 		NOS_SOFT_CHECK(res == NOS_RESULT_SUCCESS);
 	}
 
+	nosResult OnResolvePinDataTypes(nosResolvePinDataTypesParams* params) override
+	{
+		nos::TypeInfo incomingType(params->IncomingTypeName);
+		for (int i = 0; i < incomingType->AttributeCount; ++i)
+		{
+			if (incomingType->Attributes[i].Name == NOS_NAME_STATIC("resource")) {
+				strcpy(params->OutErrorMessage, "Resource types are not supported");
+				return NOS_RESULT_FAILED;
+			}
+		}
+		return NOS_RESULT_SUCCESS;
+	}
+
 	void UpdateStatus()
 	{
 		std::vector<fb::TNodeStatusMessage> messages;
@@ -198,6 +211,24 @@ struct SetVariableNode : VariableNodeBase
 			return;
 		std::vector<flatbuffers::Offset<nos::ContextMenuItem>> types;
 		uint32_t index = 0;
+		for (auto it = AllTypeNames.begin(); it != AllTypeNames.end();)
+		{
+			nos::Name typeName(*it);
+			nos::TypeInfo info(typeName);
+			bool skip = false;
+			for (int i = 0; i < info->AttributeCount; ++i)
+			{
+				if (info->Attributes[i].Name == NOS_NAME("resource"))
+				{
+					skip = true;
+					break;
+				}
+			}
+			if (skip)
+				it = AllTypeNames.erase(it);
+			else
+				++it;
+		}
 		for (auto ty : AllTypeNames)
 			types.push_back(nos::CreateContextMenuItemDirect(fbb, nos::Name(ty).AsCStr(), index++));
 		std::vector<flatbuffers::Offset<nos::ContextMenuItem>> items;
