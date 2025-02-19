@@ -135,7 +135,10 @@ struct SetVariableNode : VariableNodeBase
 			if (HasType())
 			{
 				if (Value)
+				{
 					nosVariables->Set(Name, TypeName, Value->GetInternal());
+					nosVariables->AddNodeReference(Name, NodeId);
+				}
 				else
 					SetDefaultValue();
 			}
@@ -148,6 +151,7 @@ struct SetVariableNode : VariableNodeBase
 			if (!HasName())
 				return;
 			nosVariables->Set(Name, TypeName, Value->GetInternal());
+			nosVariables->AddNodeReference(Name, NodeId);
 		});
 	}
 
@@ -168,7 +172,10 @@ struct SetVariableNode : VariableNodeBase
 			if (!Value)
 				SetDefaultValue();
 			else
+			{
 				nosVariables->Set(Name, TypeName, Value->GetInternal());
+				nosVariables->AddNodeReference(Name, NodeId);
+			}
 		}
 	}
 
