@@ -2,7 +2,7 @@
     "info": {
         "id": {
             "name": "nos.filters",
-            "version": "1.5.1"
+            "version": "1.5.2"
         },
         "display_name": "Filters",
         "description": "Collection of image filters.",
@@ -17,7 +17,7 @@
             },
             {
                 "name": "nos.mediaio",
-                "version": "2.5.1"
+                "version": "2.5.0"
             }
         ],
         "category": "Image Processing"
