@@ -3,9 +3,9 @@
 #include <Nodos/PluginHelpers.hpp>
 #include "Builtins_generated.h"
 #include <AppService_generated.h>
-
-#include <stb_image.h>
-#include <stb_image_write.h>
+#define STBIW_WINDOWS_UTF8
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#include <stb/stb_image_write.h>
 
 #include <nosVulkanSubsystem/Helpers.hpp>
 
@@ -65,7 +65,7 @@ struct WriteImage : NodeContext {
         nos::NodeExecuteParams execParams(params->FunctionNodeExecuteParams);
         
         std::unique_lock<std::mutex> lock(Mutex);
-        Path = std::string((const char*)execParams[NSN_Path].Data->Data, execParams[NSN_Path].Data->Size);
+        Path = std::utf8_to_wstring(std::string((const char*)execParams[NSN_Path].Data->Data, execParams[NSN_Path].Data->Size));
         IncludeAlpha = *(bool*)execParams[NSN_IncludeAlpha].Data->Data;
         assert(Event == 0);
         nosCmd cmd = vkss::BeginCmd(NOS_NAME("Write Image Copy To"), NodeId);
@@ -85,16 +85,16 @@ struct WriteImage : NodeContext {
     }
 
     void WriteImageToFile() {
-        auto& path = this->Path;
+        std::string UTF8Path = std::wstring_to_utf8(this->Path);
         try {
-            if (!std::filesystem::exists(path.parent_path()))
-                std::filesystem::create_directories(path.parent_path());
+            if (!std::filesystem::exists(this->Path.parent_path()))
+                std::filesystem::create_directories(this->Path.parent_path());
         }
         catch (std::filesystem::filesystem_error& e) {
-            nosEngine.LogE("WriteImage - %s: %s", path.string().c_str(), e.what());
+            nosEngine.LogE("WriteImage - %s: %s", UTF8Path.c_str(), e.what());
             return;
         }
-        nosEngine.LogI("WriteImage: Writing frame to file %s", path.string().c_str());
+        nosEngine.LogI("WriteImage: Writing frame to file %s", UTF8Path.c_str());
 
 		auto optBuf = vkss::Resource::DownloadTextureSync(*TempSrgbCopy, "TempSrgbCopy Downloaded");
         if (!optBuf) {
@@ -109,10 +109,10 @@ struct WriteImage : NodeContext {
                 for (size_t i = 3; i < buf.Info.Buffer.Size; i += 4)
                     buf2write[i] = 0xff;
 
-            if (!stbi_write_png(Path.string().c_str(), TempSrgbCopy->Info.Texture.Width, TempSrgbCopy->Info.Texture.Height, 4, buf2write, TempSrgbCopy->Info.Texture.Width * 4))
+            if (!stbi_write_png(UTF8Path.c_str(), TempSrgbCopy->Info.Texture.Width, TempSrgbCopy->Info.Texture.Height, 4, buf2write, TempSrgbCopy->Info.Texture.Width * 4))
                 nosEngine.LogE("WriteImage: Unable to write frame to file", "");
             else
-                nosEngine.LogI("WriteImage: Wrote frame to file %s", Path.string().c_str());
+                nosEngine.LogI("WriteImage: Wrote frame to file %s", UTF8Path.c_str());
         }
         TempSrgbCopy = {};
     }

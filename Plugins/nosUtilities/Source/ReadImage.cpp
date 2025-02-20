@@ -3,8 +3,11 @@
 #include <Nodos/PluginHelpers.hpp>
 
 // External
-#include <stb_image.h>
-#include <stb_image_write.h>
+#include <stb/stb_image.h>
+#define STBI_WINDOWS_UTF8
+#define STB_IMAGE_IMPLEMENTATION
+#include <stb/stb_image.h>
+#include <nosCppUtilities.hpp>
 
 // Framework
 #include <Builtins_generated.h>
@@ -46,7 +49,7 @@ struct ReadImageContext : NodeContext
 		CurrentState(State::Idle), 
 		TimeStarted(Clock::now())
 	{
-		std::filesystem::path path;
+		std::string path;
 		bool sRGB = false;
 		for (auto* pin : *node->pins())
 		{
@@ -55,7 +58,7 @@ struct ReadImageContext : NodeContext
 			if (!data || !data->size())
 				continue;
 			if (strcmp(name, "Path") == 0)
-				path = std::string(reinterpret_cast<const char*>(data->data()));
+				path = reinterpret_cast<const char*>(data->data());
 			else if (strcmp(name, "sRGB") == 0)
 				sRGB = *reinterpret_cast<const bool*>(data->data());
 		}
@@ -87,7 +90,8 @@ struct ReadImageContext : NodeContext
         {
 			std::stringstream ss;
 			auto dt = std::chrono::duration_cast<std::chrono::milliseconds>(Clock::now() - TimeStarted).count();
-			auto statusText = std::string("Image ") + FilePath.filename().string() + " loaded in " + std::to_string(dt) + "ms";
+			std::string fileName = std::wstring_to_utf8(FilePath.filename());
+			auto statusText = std::string("Image ") + fileName + " loaded in " + std::to_string(dt) + "ms";
 			msg.push_back(fb::CreateNodeStatusMessageDirect(fbb, statusText.c_str(), fb::NodeStatusMessageType::INFO));
             break;
         }
@@ -105,26 +109,19 @@ struct ReadImageContext : NodeContext
 		OutPendingImageRefs.clear();
 	}
 
-	nosResult LoadImage(std::filesystem::path path, nosUUID outPinId, bool sRGB)
+	nosResult LoadImage(std::string path, nosUUID outPinId, bool sRGB)
 	{
 		UpdateStatus(State::Loading);
-		FilePath = path.string();
+		FilePath = std::utf8_to_wstring(path);
 		std::thread([this, outPinId, path, sRGB]() mutable {
 			try
 			{
-				if (!std::filesystem::exists(path))
-				{
-					nosEngine.LogE("Read Image cannot load file %s", path.string().c_str());
-					UpdateStatus(State::Failed);
-					return;
-				}
-
 				int w, h, n;
-				uint8_t* img = stbi_load(path.string().c_str(), &w, &h, &n, 4);
+				uint8_t* img = stbi_load(path.c_str(), &w, &h, &n, 4);
 				if (!img)
 				{
-					nosEngine.LogE("CouBldn't load image from %s.", path.string().c_str());
-					UpdateStatus(State::Failed);
+						nosEngine.LogE("Couldn't load image from %s.", path.c_str());
+						UpdateStatus(State::Failed);
 					return;
 				}
 
@@ -146,7 +143,7 @@ struct ReadImageContext : NodeContext
 				auto outRes = std::move(*outResOpt);
 
 				nosCmd cmd{};
-				nosCmdBeginParams beginParams {
+					nosCmdBeginParams beginParams {
 					.Name = NOS_NAME("ReadImage Load"),
 					.AssociatedNodeId = this->NodeId,
 					.OutCmdHandle = &cmd
@@ -162,17 +159,17 @@ struct ReadImageContext : NodeContext
 					std::lock_guard<std::mutex> lock(this->OutImageDecRefCallbacksMutex);
 					OutPendingImageRefs.push_back(std::move(outRes));
 				}
-				
+
 				nosEngine.CallNodeFunction(this->NodeId, NOS_NAME_STATIC("OnImageLoaded"));
 
 				free(img);
-				UpdateStatus(State::Idle);
-			}
-			catch (const std::exception& e)
-			{
-				nosEngine.LogE("Error while loading image: %s", e.what());
-				UpdateStatus(State::Failed);
-			}
+					UpdateStatus(State::Idle);
+				}
+				catch (const std::exception& e)
+				{
+					nosEngine.LogE("Error while loading image: %s", e.what());
+					UpdateStatus(State::Failed);
+				}
 
 		}).detach();
 		return NOS_RESULT_SUCCESS;
@@ -195,7 +192,7 @@ struct ReadImageContext : NodeContext
 		}
 
 		nos::NodeExecuteParams nodeParams(params->ParentNodeExecuteParams);
-		std::filesystem::path path = InterpretPinValue<const char>(nodeParams[NSN_Path].Data->Data);
+		std::string path = InterpretPinValue<const char>(nodeParams[NSN_Path].Data->Data);
 		auto outPinId = nodeParams[NSN_Out].Id;
 		auto sRGB = *InterpretPinValue<bool>(nodeParams[NSN_sRGB].Data->Data);
 
